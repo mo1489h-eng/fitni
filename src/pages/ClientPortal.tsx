@@ -28,7 +28,7 @@ const ClientPortal = () => {
       <header className="sticky top-0 z-50 bg-primary px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center gap-2">
           <Dumbbell className="w-6 h-6 text-primary-foreground" />
-          <span className="font-bold text-lg text-primary-foreground">تمريني</span>
+          <span className="font-black text-lg text-primary-foreground">مدربي</span>
         </div>
       </header>
 

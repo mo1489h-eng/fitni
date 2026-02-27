@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Plus, Search, Target, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +38,7 @@ const Clients = () => {
   const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "" });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -45,6 +47,7 @@ const Clients = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!user,
   });
 
   const addMutation = useMutation({
@@ -54,6 +57,7 @@ const Clients = () => {
       endDate.setDate(endDate.getDate() + 30);
 
       const { error } = await supabase.from("clients").insert({
+        trainer_id: user!.id,
         name: form.name,
         phone: form.phone,
         goal: form.goal,
@@ -86,17 +90,13 @@ const Clients = () => {
           <span className="text-sm text-muted-foreground">{clients.length} عميل</span>
         </div>
 
-        {/* Search */}
         <div className="relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="بحث عن عميل..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-10" />
         </div>
 
-        {/* Client Cards */}
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
+          <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             {search ? "لا توجد نتائج" : "لا يوجد عملاء بعد. أضف أول عميل!"}
@@ -128,7 +128,6 @@ const Clients = () => {
           </div>
         )}
 
-        {/* Floating Add Button */}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <button className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity">
@@ -139,13 +138,7 @@ const Clients = () => {
             <DialogHeader>
               <DialogTitle>إضافة عميل جديد</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                addMutation.mutate();
-              }}
-              className="space-y-3"
-            >
+            <form onSubmit={(e) => { e.preventDefault(); addMutation.mutate(); }} className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-foreground">الاسم</label>
                 <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="اسم العميل" />

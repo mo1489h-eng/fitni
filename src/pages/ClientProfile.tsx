@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MessageCircle, TrendingDown, TrendingUp, CreditCard, ClipboardList,
-  Loader2, ArrowLeft, Check, Dumbbell, Scale, Flame, Calendar,
+  Loader2, ArrowLeft, Check, Dumbbell, Scale, Flame, Calendar, Copy, Send,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import { Progress } from "@/components/ui/progress";
 
@@ -57,6 +58,7 @@ const ClientProfile = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [newWeight, setNewWeight] = useState("");
   const [newFat, setNewFat] = useState("");
+  const { toast } = useToast();
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
@@ -161,6 +163,41 @@ const ClientProfile = () => {
             ))}
           </div>
         </Card>
+
+        {/* Portal Link */}
+        {client.portal_token && (
+          <Card className="p-4">
+            <h3 className="font-bold text-card-foreground mb-2">رابط المتدرب</h3>
+            <p className="text-xs text-muted-foreground mb-3">شارك هذا الرابط مع عميلك لمتابعة تمارينه</p>
+            <div className="bg-secondary rounded-lg p-2.5 text-xs text-secondary-foreground dir-ltr text-left mb-3 break-all">
+              {window.location.origin}/client-portal/{client.portal_token}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/client-portal/${client.portal_token}`);
+                  toast({ title: "تم نسخ الرابط 📋" });
+                }}
+              >
+                <Copy className="w-4 h-4" />
+                نسخ الرابط 📋
+              </Button>
+              <a
+                href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلاً! برنامجك جاهز على مدربي، افتح الرابط لتشوف تمارينك 💪 ${window.location.origin}/client-portal/${client.portal_token}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm" className="gap-1 w-full">
+                  <Send className="w-4 h-4" />
+                  إرسال واتساب 📲
+                </Button>
+              </a>
+            </div>
+          </Card>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b border-border">

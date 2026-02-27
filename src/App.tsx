@@ -3,7 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import AuthGuard from "@/components/AuthGuard";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientProfile from "./pages/ClientProfile";
@@ -22,18 +26,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/clients/:id" element={<ClientProfile />} />
-          <Route path="/programs" element={<ProgramBuilder />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/client-portal" element={<PortalHome />} />
-          <Route path="/client-portal/workout" element={<PortalWorkout />} />
-          <Route path="/client-portal/progress" element={<PortalProgress />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+            <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
+            <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />
+            <Route path="/programs" element={<AuthGuard><ProgramBuilder /></AuthGuard>} />
+            <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
+            <Route path="/client-portal/:token" element={<PortalHome />} />
+            <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />
+            <Route path="/client-portal/:token/progress" element={<PortalProgress />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

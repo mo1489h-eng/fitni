@@ -22,8 +22,10 @@ export type Database = {
           last_workout_date: string
           name: string
           phone: string
+          portal_token: string | null
           subscription_end_date: string
           subscription_price: number
+          trainer_id: string | null
           week_number: number
         }
         Insert: {
@@ -33,8 +35,10 @@ export type Database = {
           last_workout_date?: string
           name: string
           phone?: string
+          portal_token?: string | null
           subscription_end_date?: string
           subscription_price?: number
+          trainer_id?: string | null
           week_number?: number
         }
         Update: {
@@ -44,9 +48,32 @@ export type Database = {
           last_workout_date?: string
           name?: string
           phone?: string
+          portal_token?: string | null
           subscription_end_date?: string
           subscription_price?: number
+          trainer_id?: string | null
           week_number?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }

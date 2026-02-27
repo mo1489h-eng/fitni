@@ -9,7 +9,9 @@ import Clients from "./pages/Clients";
 import ClientProfile from "./pages/ClientProfile";
 import ProgramBuilder from "./pages/ProgramBuilder";
 import Payments from "./pages/Payments";
-import ClientPortal from "./pages/ClientPortal";
+import PortalHome from "./pages/portal/PortalHome";
+import PortalWorkout from "./pages/portal/PortalWorkout";
+import PortalProgress from "./pages/portal/PortalProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +29,9 @@ const App = () => (
           <Route path="/clients/:id" element={<ClientProfile />} />
           <Route path="/programs" element={<ProgramBuilder />} />
           <Route path="/payments" element={<Payments />} />
-          <Route path="/portal" element={<ClientPortal />} />
+          <Route path="/client-portal" element={<PortalHome />} />
+          <Route path="/client-portal/workout" element={<PortalWorkout />} />
+          <Route path="/client-portal/progress" element={<PortalProgress />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

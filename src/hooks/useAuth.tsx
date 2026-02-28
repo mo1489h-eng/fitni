@@ -7,6 +7,7 @@ interface Profile {
   created_at: string;
   subscription_plan: string | null;
   subscribed_at: string | null;
+  logo_url: string | null;
 }
 
 interface AuthContextType {
@@ -61,10 +62,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, created_at, subscription_plan, subscribed_at")
+      .select("full_name, created_at, subscription_plan, subscribed_at, logo_url")
       .eq("user_id", userId)
       .maybeSingle();
-    if (data) setProfile(data);
+    if (data) setProfile(data as Profile);
   };
 
   const refreshProfile = async () => {

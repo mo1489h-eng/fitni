@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dumbbell, Loader2 } from "lucide-react";
+import { Dumbbell, Loader2, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,12 +11,35 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoResult, setPromoResult] = useState<{ valid: boolean; days?: number; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
+
+  const validatePromo = async (code: string) => {
+    if (!code.trim()) {
+      setPromoResult(null);
+      return;
+    }
+    const { data } = await supabase
+      .from("promo_codes")
+      .select("*")
+      .eq("code", code.trim().toUpperCase())
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!data) {
+      setPromoResult({ valid: false, message: "كود غير صالح" });
+    } else if (data.used_count >= data.max_uses) {
+      setPromoResult({ valid: false, message: "هذا الكود انتهت صلاحيته" });
+    } else {
+      setPromoResult({ valid: true, days: data.duration_days, message: `🎉 تم تفعيل ${data.duration_days} يوم مجاناً!` });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,9 +57,30 @@ const Register = () => {
       return;
     }
 
-    // Insert demo clients for new trainer
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
+      // Apply promo code if valid
+      if (promoResult?.valid && promoCode.trim()) {
+        const upperCode = promoCode.trim().toUpperCase();
+        // Update profile with pro plan
+        await supabase.from("profiles").update({
+          subscription_plan: "pro",
+          subscribed_at: new Date().toISOString(),
+        }).eq("user_id", newUser.id);
+
+        // Increment used_count
+        // Increment used_count via raw update
+        const { data: promoData } = await supabase
+          .from("promo_codes")
+          .select("id, used_count")
+          .eq("code", upperCode)
+          .maybeSingle();
+        if (promoData) {
+          await (supabase as any).from("promo_codes").update({ used_count: promoData.used_count + 1 }).eq("id", promoData.id);
+        }
+      }
+
+      // Insert demo clients
       const demoClients = [
         { trainer_id: newUser.id, name: "أحمد الغامدي", phone: "0551234567", goal: "خسارة وزن", subscription_price: 800, week_number: 4 },
         { trainer_id: newUser.id, name: "فهد العتيبي", phone: "0559876543", goal: "بناء عضل", subscription_price: 1000, week_number: 8 },
@@ -45,7 +89,7 @@ const Register = () => {
       await supabase.from("clients").insert(demoClients);
     }
 
-    toast({ title: "تم إنشاء الحساب بنجاح 🎉" });
+    toast({ title: promoResult?.valid ? promoResult.message : "تم إنشاء الحساب بنجاح 🎉" });
     navigate("/dashboard");
     setLoading(false);
   };
@@ -75,6 +119,27 @@ const Register = () => {
           <div>
             <label className="block text-sm font-medium mb-1.5 text-foreground">كلمة المرور</label>
             <Input type="password" placeholder="••••••" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" required minLength={6} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-foreground flex items-center gap-1.5">
+              <Gift className="w-4 h-4 text-primary" />
+              كود ترويجي (اختياري)
+            </label>
+            <Input
+              placeholder="BETA2024"
+              value={promoCode}
+              onChange={(e) => {
+                setPromoCode(e.target.value);
+                setPromoResult(null);
+              }}
+              onBlur={() => validatePromo(promoCode)}
+              dir="ltr"
+            />
+            {promoResult && (
+              <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-green-600" : "text-destructive"}`}>
+                {promoResult.message}
+              </p>
+            )}
           </div>
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "إنشاء حساب"}

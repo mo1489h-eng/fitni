@@ -111,7 +111,7 @@ const Register = () => {
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Dumbbell className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-2xl font-black text-foreground">مدربي</span>
+          <span className="text-2xl font-black text-foreground">fitni</span>
         </div>
 
         <h2 className="text-2xl font-bold text-foreground text-center mb-2">إنشاء حساب جديد</h2>

@@ -170,6 +170,7 @@ export type Database = {
           name: string
           reps: number
           sets: number
+          video_url: string | null
           weight: number
         }
         Insert: {
@@ -180,6 +181,7 @@ export type Database = {
           name: string
           reps?: number
           sets?: number
+          video_url?: string | null
           weight?: number
         }
         Update: {
@@ -190,6 +192,7 @@ export type Database = {
           name?: string
           reps?: number
           sets?: number
+          video_url?: string | null
           weight?: number
         }
         Relationships: [
@@ -225,6 +228,44 @@ export type Database = {
           weeks?: number
         }
         Relationships: []
+      }
+      progress_photos: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          photo_type: string
+          photo_url: string
+          trainer_id: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          photo_type: string
+          photo_url: string
+          trainer_id?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          photo_type?: string
+          photo_url?: string
+          trainer_id?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_photos_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promo_codes: {
         Row: {

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users,
+  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users, Video,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -45,6 +45,7 @@ interface LocalExercise {
   sets: number;
   reps: number;
   weight: number;
+  video_url: string;
 }
 
 interface LocalDay {
@@ -68,6 +69,7 @@ const ProgramBuilder = () => {
   const [newExSets, setNewExSets] = useState("3");
   const [newExReps, setNewExReps] = useState("10");
   const [newExWeight, setNewExWeight] = useState("0");
+  const [newExVideoUrl, setNewExVideoUrl] = useState("");
 
   // View state
   const [viewProgramId, setViewProgramId] = useState<string | null>(null);
@@ -159,7 +161,8 @@ const ProgramBuilder = () => {
             reps: ex.reps,
             weight: ex.weight,
             exercise_order: idx,
-          });
+            video_url: ex.video_url || null,
+          } as any);
         });
       }
 
@@ -213,7 +216,8 @@ const ProgramBuilder = () => {
         sets: exercise.sets,
         reps: exercise.reps,
         weight: exercise.weight,
-      });
+        video_url: exercise.video_url || null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -223,6 +227,7 @@ const ProgramBuilder = () => {
       setNewExSets("3");
       setNewExReps("10");
       setNewExWeight("0");
+      setNewExVideoUrl("");
     },
   });
 
@@ -247,13 +252,14 @@ const ProgramBuilder = () => {
       ...prev,
       [day]: [
         ...(prev[day] || []),
-        { name: newExName, sets: Number(newExSets) || 3, reps: Number(newExReps) || 10, weight: Number(newExWeight) || 0 },
+        { name: newExName, sets: Number(newExSets) || 3, reps: Number(newExReps) || 10, weight: Number(newExWeight) || 0, video_url: newExVideoUrl },
       ],
     }));
     setNewExName("");
     setNewExSets("3");
     setNewExReps("10");
     setNewExWeight("0");
+    setNewExVideoUrl("");
     setExpandedDay(null);
   };
 
@@ -325,7 +331,14 @@ const ProgramBuilder = () => {
                       {exercises.map((ex: any) => (
                         <div key={ex.id} className="flex items-center justify-between bg-secondary rounded-lg p-3">
                           <div>
-                            <p className="font-medium text-secondary-foreground">{ex.name}</p>
+                            <p className="font-medium text-secondary-foreground">
+                              {ex.name}
+                              {ex.video_url && (
+                                <a href={ex.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex mr-1.5 text-primary hover:text-primary/80">
+                                  <Video className="w-4 h-4" />
+                                </a>
+                              )}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {ex.sets} مجموعات × {ex.reps} تكرار
                               {ex.weight > 0 && ` • ${ex.weight} كجم`}
@@ -365,6 +378,11 @@ const ProgramBuilder = () => {
                               <Input type="number" dir="ltr" value={newExWeight} onChange={(e) => setNewExWeight(e.target.value)} />
                             </div>
                           </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">رابط فيديو شرح (اختياري)</label>
+                            <Input type="url" dir="ltr" placeholder="https://youtube.com/..." value={newExVideoUrl} onChange={(e) => setNewExVideoUrl(e.target.value)} />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">YouTube أو Google Drive</p>
+                          </div>
                           <div className="flex gap-2">
                             <Button
                               size="sm"
@@ -372,7 +390,7 @@ const ProgramBuilder = () => {
                               disabled={!newExName || addExerciseMutation.isPending}
                               onClick={() => addExerciseMutation.mutate({
                                 dayId: day.id,
-                                exercise: { name: newExName, sets: Number(newExSets), reps: Number(newExReps), weight: Number(newExWeight) },
+                                exercise: { name: newExName, sets: Number(newExSets), reps: Number(newExReps), weight: Number(newExWeight), video_url: newExVideoUrl },
                               })}
                             >
                               حفظ
@@ -477,7 +495,14 @@ const ProgramBuilder = () => {
                         {exs.map((ex, idx) => (
                           <div key={idx} className="flex items-center justify-between bg-secondary rounded-lg p-3">
                             <div>
-                              <p className="font-medium text-secondary-foreground">{ex.name}</p>
+                              <p className="font-medium text-secondary-foreground">
+                                {ex.name}
+                                {ex.video_url && (
+                                  <a href={ex.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex mr-1.5 text-primary hover:text-primary/80">
+                                    <Video className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </p>
                               <p className="text-xs text-muted-foreground">
                                 {ex.sets} × {ex.reps}
                                 {ex.weight > 0 && ` • ${ex.weight} كجم`}
@@ -512,6 +537,11 @@ const ProgramBuilder = () => {
                               <label className="text-xs text-muted-foreground">الوزن (كجم)</label>
                               <Input type="number" dir="ltr" value={newExWeight} onChange={(e) => setNewExWeight(e.target.value)} />
                             </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">رابط فيديو شرح (اختياري)</label>
+                            <Input type="url" dir="ltr" placeholder="https://youtube.com/..." value={newExVideoUrl} onChange={(e) => setNewExVideoUrl(e.target.value)} />
+                            <p className="text-[10px] text-muted-foreground mt-0.5">YouTube أو Google Drive</p>
                           </div>
                           <Button
                             size="sm"

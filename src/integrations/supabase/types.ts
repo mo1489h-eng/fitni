@@ -67,6 +67,41 @@ export type Database = {
           },
         ]
       }
+      measurements: {
+        Row: {
+          client_id: string
+          created_at: string
+          fat_percentage: number
+          id: string
+          recorded_at: string
+          weight: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          fat_percentage?: number
+          id?: string
+          recorded_at?: string
+          weight?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          fat_percentage?: number
+          id?: string
+          recorded_at?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

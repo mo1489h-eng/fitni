@@ -130,7 +130,7 @@ const Register = () => {
               كود ترويجي (اختياري)
             </label>
             <Input
-              placeholder="BETA2024"
+              placeholder="FITNI-XXXXX"
               value={promoCode}
               onChange={(e) => {
                 setPromoCode(e.target.value);
@@ -139,10 +139,12 @@ const Register = () => {
               onBlur={() => validatePromo(promoCode)}
               dir="ltr"
             />
-            {promoResult && (
+            {promoResult ? (
               <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-green-600" : "text-destructive"}`}>
                 {promoResult.message}
               </p>
+            ) : (
+              <p className="text-xs mt-1.5 text-muted-foreground">إذا عندك كود احصل على تجربة مجانية</p>
             )}
           </div>
           <Button type="submit" className="w-full" size="lg" disabled={loading}>

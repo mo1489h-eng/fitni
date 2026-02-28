@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
@@ -8,12 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Users, DollarSign, AlertTriangle, Clock, Loader2,
-  Plus, ClipboardList, MessageCircle, CheckCircle, Activity,
+  MessageCircle, CheckCircle, Activity, CreditCard,
 } from "lucide-react";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [showPlans, setShowPlans] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -59,8 +61,14 @@ const Dashboard = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 animate-fade-in">
-        <TrialBanner />
-        <h1 className="text-2xl font-bold text-foreground">مرحباً {profile?.full_name || ""} 👋</h1>
+        <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">مرحباً {profile?.full_name || ""} 👋</h1>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowPlans(true)}>
+            <CreditCard className="w-4 h-4" />
+            الباقات
+          </Button>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -79,17 +87,12 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button className="h-12 gap-2" onClick={() => navigate("/clients")}>
-                <Plus className="w-4 h-4" />
-                إضافة عميل
-              </Button>
-              <Button variant="outline" className="h-12 gap-2" onClick={() => navigate("/programs")}>
-                <ClipboardList className="w-4 h-4" />
-                إنشاء برنامج
-              </Button>
-            </div>
+            {/* Alerts Section */}
+            {inactiveClients.length === 0 && expiringClients.length === 0 && (
+              <div className="rounded-xl px-4 py-3 bg-success/10 text-success text-sm font-medium text-center">
+                ✅ كل شيء على ما يرام
+              </div>
+            )}
 
             {/* Inactive Clients Alert */}
             {inactiveClients.length > 0 && (

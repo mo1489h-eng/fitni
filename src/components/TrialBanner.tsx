@@ -60,25 +60,50 @@ const plans = [
 
 interface TrialBannerProps {
   onSubscribe?: () => void;
+  showPlans?: boolean;
+  onShowPlansChange?: (open: boolean) => void;
 }
 
-const TrialBanner = ({ onSubscribe }: TrialBannerProps) => {
+const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansChange }: TrialBannerProps) => {
   const { profile, user, refreshProfile } = useAuth();
-  const [showPlans, setShowPlans] = useState(false);
+  const [internalShowPlans, setInternalShowPlans] = useState(false);
   const [annual, setAnnual] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const { toast } = useToast();
 
+  const showPlans = externalShowPlans ?? internalShowPlans;
+  const setShowPlans = (open: boolean) => {
+    onShowPlansChange?.(open);
+    setInternalShowPlans(open);
+  };
+
   if (!profile) return null;
 
-  // If already subscribed, don't show banner
-  if (profile.subscription_plan) return null;
+  const isSubscribed = !!profile.subscription_plan;
 
   const createdAt = new Date(profile.created_at);
   const now = new Date();
   const daysSinceCreation = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
   const daysLeft = Math.max(TRIAL_DAYS - daysSinceCreation, 0);
   const expired = daysLeft <= 0;
+
+  // Banner: only show if not subscribed
+  const banner = !isSubscribed ? (
+    <div
+      className={`rounded-xl px-4 py-3 flex items-center justify-between text-sm ${
+        expired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+      }`}
+    >
+      <span className="font-medium">
+        {expired
+          ? "انتهت التجربة المجانية — اشترك للاستمرار"
+          : `🎉 تجربة مجانية — باقي ${daysLeft} يوم`}
+      </span>
+      <Button size="sm" variant={expired ? "destructive" : "default"} onClick={() => setShowPlans(true)}>
+        {expired ? "اشترك الآن" : "الباقات"}
+      </Button>
+    </div>
+  ) : null;
 
   const handleSubscribe = async (planKey: string) => {
     setSubscribing(true);
@@ -102,7 +127,6 @@ const TrialBanner = ({ onSubscribe }: TrialBannerProps) => {
 
       setShowPlans(false);
 
-      // Open WhatsApp
       const planName = plans.find((p) => p.key === planKey)?.name || planKey;
       const price = annual
         ? plans.find((p) => p.key === planKey)?.annualPrice
@@ -123,20 +147,7 @@ const TrialBanner = ({ onSubscribe }: TrialBannerProps) => {
 
   return (
     <>
-      <div
-        className={`rounded-xl px-4 py-3 flex items-center justify-between text-sm ${
-          expired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-        }`}
-      >
-        <span className="font-medium">
-          {expired
-            ? "انتهت التجربة المجانية — اشترك للاستمرار"
-            : `🎉 تجربة مجانية — باقي ${daysLeft} يوم`}
-        </span>
-        <Button size="sm" variant={expired ? "destructive" : "default"} onClick={() => setShowPlans(true)}>
-          {expired ? "اشترك الآن" : "الباقات"}
-        </Button>
-      </div>
+      {banner}
 
       <Dialog open={showPlans} onOpenChange={setShowPlans}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
@@ -168,20 +179,27 @@ const TrialBanner = ({ onSubscribe }: TrialBannerProps) => {
           <div className="space-y-4">
             {plans.map((plan) => {
               const price = annual ? plan.annualPrice : plan.monthlyPrice;
+              const isCurrent = isSubscribed && profile.subscription_plan === plan.key;
               return (
                 <Card
                   key={plan.key}
-                  className={`p-5 relative ${plan.popular ? "border-primary border-2 shadow-lg" : ""}`}
+                  className={`p-5 relative ${plan.popular ? "border-primary border-2 shadow-lg" : ""} ${isCurrent ? "border-success border-2" : ""}`}
                 >
-                  {plan.popular && (
+                  {plan.popular && !isCurrent && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full font-medium flex items-center gap-1">
                       <Star className="w-3 h-3" />
                       الأكثر طلباً
                     </span>
                   )}
+                  {isCurrent && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs bg-success text-white px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      باقتك الحالية
+                    </span>
+                  )}
 
                   <div className="flex items-center gap-2 mb-2">
-                    <plan.icon className={`w-5 h-5 ${plan.popular ? "text-primary" : "text-muted-foreground"}`} />
+                    <plan.icon className={`w-5 h-5 ${isCurrent ? "text-success" : plan.popular ? "text-primary" : "text-muted-foreground"}`} />
                     <h3 className="text-lg font-bold text-card-foreground">{plan.name}</h3>
                   </div>
 
@@ -205,14 +223,21 @@ const TrialBanner = ({ onSubscribe }: TrialBannerProps) => {
                     ))}
                   </ul>
 
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                    disabled={subscribing}
-                    onClick={() => handleSubscribe(plan.key)}
-                  >
-                    اشترك
-                  </Button>
+                  {isCurrent ? (
+                    <Button className="w-full" variant="outline" disabled>
+                      <Check className="w-4 h-4 ml-1" />
+                      مفعّلة
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                      disabled={subscribing}
+                      onClick={() => handleSubscribe(plan.key)}
+                    >
+                      {isSubscribed ? "ترقية" : "اشترك"}
+                    </Button>
+                  )}
                 </Card>
               );
             })}

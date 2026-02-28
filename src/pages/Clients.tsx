@@ -78,8 +78,8 @@ const Clients = () => {
     },
   });
 
-  const filtered = clients.filter(
-    (c) => c.name.includes(search) || c.goal.includes(search)
+  const filtered = (clients ?? []).filter(
+    (c) => (c.name ?? "").includes(search) || (c.goal ?? "").includes(search)
   );
 
   return (

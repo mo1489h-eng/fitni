@@ -1,22 +1,29 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, Calendar, Copy, Send,
+  TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-type TabKey = "overview" | "program" | "payments";
+type TabKey = "overview" | "program" | "payments" | "measurements";
 const tabs: { key: TabKey; label: string }[] = [
   { key: "overview", label: "نظرة عامة" },
   { key: "program", label: "البرنامج" },
   { key: "payments", label: "المدفوعات" },
+  { key: "measurements", label: "القياسات" },
 ];
 
 function getPaymentStatus(endDate: string) {
@@ -29,7 +36,11 @@ function getPaymentStatus(endDate: string) {
 const ClientProfile = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [showProgramModal, setShowProgramModal] = useState(false);
+  const [newWeight, setNewWeight] = useState("");
+  const [newFat, setNewFat] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
@@ -39,6 +50,73 @@ const ClientProfile = () => {
       return data;
     },
     enabled: !!id,
+  });
+
+  const { data: measurements } = useQuery({
+    queryKey: ["measurements", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("measurements")
+        .select("*")
+        .eq("client_id", id!)
+        .order("recorded_at", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: programs } = useQuery({
+    queryKey: ["programs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("programs").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: assignedProgram } = useQuery({
+    queryKey: ["assigned-program", client?.program_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programs")
+        .select("*, program_days(*, program_exercises(*))")
+        .eq("id", client!.program_id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!client?.program_id,
+  });
+
+  const addMeasurement = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("measurements").insert({
+        client_id: id!,
+        weight: parseFloat(newWeight),
+        fat_percentage: parseFloat(newFat || "0"),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["measurements", id] });
+      setNewWeight("");
+      setNewFat("");
+      toast({ title: "تم حفظ القياس ✅" });
+    },
+  });
+
+  const assignProgram = useMutation({
+    mutationFn: async (programId: string) => {
+      const { error } = await supabase.from("clients").update({ program_id: programId }).eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client", id] });
+      queryClient.invalidateQueries({ queryKey: ["assigned-program"] });
+      setShowProgramModal(false);
+      toast({ title: "تم تعيين البرنامج ✅" });
+    },
   });
 
   if (isLoading) {
@@ -63,6 +141,11 @@ const ClientProfile = () => {
   const progressPercent = Math.min((client.week_number / totalWeeks) * 100, 100);
   const lastWorkoutDays = Math.ceil((Date.now() - new Date(client.last_workout_date).getTime()) / 86400000);
   const daysUntilEnd = Math.ceil((new Date(client.subscription_end_date).getTime() - Date.now()) / 86400000);
+
+  const chartData = (measurements || []).map((m) => ({
+    date: new Date(m.recorded_at).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }),
+    weight: Number(m.weight),
+  }));
 
   return (
     <TrainerLayout>
@@ -98,7 +181,6 @@ const ClientProfile = () => {
             </div>
           </div>
 
-          {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
               <span>الأسبوع {client.week_number} من {totalWeeks}</span>
@@ -107,7 +189,6 @@ const ClientProfile = () => {
             <Progress value={progressPercent} className="h-2" />
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: "آخر تمرين", value: lastWorkoutDays === 0 ? "اليوم" : `${lastWorkoutDays}`, unit: lastWorkoutDays === 0 ? "" : "يوم", icon: Calendar },
@@ -134,26 +215,15 @@ const ClientProfile = () => {
               {window.location.origin}/client-portal/{client.portal_token}
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/client-portal/${client.portal_token}`);
-                  toast({ title: "تم نسخ الرابط 📋" });
-                }}
-              >
-                <Copy className="w-4 h-4" />
-                نسخ الرابط 📋
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/client-portal/${client.portal_token}`);
+                toast({ title: "تم نسخ الرابط 📋" });
+              }}>
+                <Copy className="w-4 h-4" /> نسخ الرابط 📋
               </Button>
-              <a
-                href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلاً! برنامجك جاهز على مدربي، افتح الرابط لتشوف تمارينك 💪 ${window.location.origin}/client-portal/${client.portal_token}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلاً! برنامجك جاهز على مدربي، افتح الرابط لتشوف تمارينك 💪 ${window.location.origin}/client-portal/${client.portal_token}`)}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="gap-1 w-full">
-                  <Send className="w-4 h-4" />
-                  إرسال واتساب 📲
+                  <Send className="w-4 h-4" /> إرسال واتساب 📲
                 </Button>
               </a>
             </div>
@@ -161,12 +231,12 @@ const ClientProfile = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-border overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 text-center py-2.5 text-sm font-medium transition-colors relative ${
+              className={`flex-1 text-center py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap px-2 ${
                 activeTab === tab.key ? "text-primary" : "text-muted-foreground"
               }`}
             >
@@ -180,8 +250,36 @@ const ClientProfile = () => {
 
         {/* Tab Content */}
         <div className="animate-fade-in">
+          {/* ===== OVERVIEW TAB ===== */}
           {activeTab === "overview" && (
             <div className="space-y-4">
+              {/* Weight Chart */}
+              <Card className="p-4">
+                <h3 className="font-bold text-card-foreground mb-3 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-primary" />
+                  تطور الوزن
+                </h3>
+                {chartData.length > 0 ? (
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                        <YAxis domain={["dataMin - 2", "dataMax + 2"]} tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} name="الوزن" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Scale className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">لا توجد قياسات بعد</p>
+                    <p className="text-xs mt-1">أضف قياسات من تبويب "القياسات"</p>
+                  </div>
+                )}
+              </Card>
+
+              {/* Subscription Info */}
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -201,6 +299,7 @@ const ClientProfile = () => {
                 </div>
               </Card>
 
+              {/* Client Info */}
               <Card className="p-4">
                 <h3 className="font-bold text-card-foreground mb-2">معلومات العميل</h3>
                 <div className="space-y-2 text-sm">
@@ -221,14 +320,56 @@ const ClientProfile = () => {
             </div>
           )}
 
+          {/* ===== PROGRAM TAB ===== */}
           {activeTab === "program" && (
-            <div className="text-center py-10 text-muted-foreground">
-              <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">لم يتم تعيين برنامج بعد</p>
-              <p className="text-xs mt-1">سيتم إضافة إدارة البرامج قريباً</p>
+            <div className="space-y-4">
+              {client.program_id && assignedProgram ? (
+                <>
+                  <Card className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-card-foreground">{assignedProgram.name}</h3>
+                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {assignedProgram.weeks} أسابيع
+                      </span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setShowProgramModal(true)}>
+                      تغيير البرنامج
+                    </Button>
+                  </Card>
+                  {(assignedProgram as any).program_days?.sort((a: any, b: any) => a.day_order - b.day_order).map((day: any) => (
+                    <Card key={day.id} className="p-4">
+                      <h4 className="font-bold text-card-foreground mb-2">{day.day_name}</h4>
+                      {day.program_exercises?.length > 0 ? (
+                        <div className="space-y-2">
+                          {day.program_exercises.sort((a: any, b: any) => a.exercise_order - b.exercise_order).map((ex: any) => (
+                            <div key={ex.id} className="flex items-center justify-between bg-secondary rounded-lg p-2.5">
+                              <span className="text-sm text-secondary-foreground font-medium">{ex.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {ex.sets}×{ex.reps} {ex.weight > 0 && `• ${ex.weight} كجم`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">لا توجد تمارين</p>
+                      )}
+                    </Card>
+                  ))}
+                </>
+              ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                  <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">لم يتم تعيين برنامج بعد</p>
+                  <Button className="mt-4 gap-1" onClick={() => setShowProgramModal(true)}>
+                    <Dumbbell className="w-4 h-4" />
+                    تعيين برنامج
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
+          {/* ===== PAYMENTS TAB ===== */}
           {activeTab === "payments" && (
             <div className="space-y-4">
               <Card className="p-4">
@@ -255,8 +396,129 @@ const ClientProfile = () => {
               </div>
             </div>
           )}
+
+          {/* ===== MEASUREMENTS TAB ===== */}
+          {activeTab === "measurements" && (
+            <div className="space-y-4">
+              {/* Add Measurement Form */}
+              <Card className="p-4">
+                <h3 className="font-bold text-card-foreground mb-3">إضافة قياس جديد</h3>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">الوزن (كجم)</label>
+                    <Input
+                      type="number"
+                      placeholder="75"
+                      value={newWeight}
+                      onChange={(e) => setNewWeight(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">نسبة الدهون %</label>
+                    <Input
+                      type="number"
+                      placeholder="20"
+                      value={newFat}
+                      onChange={(e) => setNewFat(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={!newWeight || addMeasurement.isPending}
+                  onClick={() => addMeasurement.mutate()}
+                >
+                  {addMeasurement.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ"}
+                </Button>
+              </Card>
+
+              {/* Measurements History */}
+              <Card className="p-4">
+                <h3 className="font-bold text-card-foreground mb-3">سجل القياسات</h3>
+                {measurements && measurements.length > 0 ? (
+                  <div className="space-y-2">
+                    {[...measurements].reverse().map((m, i, arr) => {
+                      const prev = arr[i + 1];
+                      const weightDiff = prev ? Number(m.weight) - Number(prev.weight) : 0;
+                      const fatDiff = prev ? Number(m.fat_percentage) - Number(prev.fat_percentage) : 0;
+                      return (
+                        <div key={m.id} className="flex items-center justify-between bg-secondary rounded-lg p-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(m.recorded_at).toLocaleDateString("ar-SA")}
+                            </p>
+                            <p className="text-sm font-bold text-secondary-foreground">
+                              {Number(m.weight)} كجم
+                              {Number(m.fat_percentage) > 0 && (
+                                <span className="text-xs font-normal text-muted-foreground mr-2">
+                                  دهون {Number(m.fat_percentage)}%
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          {prev && (
+                            <div className="flex items-center gap-2">
+                              {weightDiff !== 0 && (
+                                <span className={`flex items-center text-xs font-medium ${weightDiff < 0 ? "text-success" : "text-destructive"}`}>
+                                  {weightDiff < 0 ? <TrendingDown className="w-3 h-3 ml-0.5" /> : <TrendingUp className="w-3 h-3 ml-0.5" />}
+                                  {Math.abs(weightDiff).toFixed(1)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <Scale className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                    <p className="text-xs">لا توجد قياسات بعد</p>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Program Assignment Modal */}
+      <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعيين برنامج</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {programs && programs.length > 0 ? (
+              programs.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => assignProgram.mutate(p.id)}
+                  className={`w-full text-right p-3 rounded-lg border transition-colors ${
+                    client.program_id === p.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-card-foreground">{p.name}</span>
+                    {client.program_id === p.id && <Check className="w-4 h-4 text-primary" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{p.weeks} أسابيع</p>
+                </button>
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Dumbbell className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">لا توجد برامج متاحة</p>
+                <Link to="/programs">
+                  <Button variant="outline" size="sm" className="mt-2">إنشاء برنامج</Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </TrainerLayout>
   );
 };

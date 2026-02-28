@@ -15,6 +15,7 @@ import ProgramBuilder from "./pages/ProgramBuilder";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Nutrition from "./pages/Nutrition";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalWorkout from "./pages/portal/PortalWorkout";
 import PortalProgress from "./pages/portal/PortalProgress";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/programs" element={<AuthGuard><ProgramBuilder /></AuthGuard>} />
             <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
             <Route path="/reports" element={<AuthGuard><Reports /></AuthGuard>} />
+            <Route path="/nutrition" element={<AuthGuard><Nutrition /></AuthGuard>} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
             <Route path="/client-portal/:token" element={<PortalHome />} />
             <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />

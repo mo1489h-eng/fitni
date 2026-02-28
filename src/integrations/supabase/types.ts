@@ -226,6 +226,36 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          max_uses: number
+          used_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          used_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          used_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -136,7 +136,6 @@ const Register = () => {
                 setPromoCode(e.target.value);
                 setPromoResult(null);
               }}
-              onBlur={() => validatePromo(promoCode)}
               dir="ltr"
             />
             {promoResult ? (

@@ -50,16 +50,15 @@ const Landing = () => {
           </div>
 
           {/* Main headline - Arabic */}
-          <div className="flex items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            <h1 className="text-5xl md:text-7xl font-black leading-tight">
-              حوّل طريقة تدريبك
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl md:text-6xl font-black leading-tight">
+              أنت تبني أجساداً — <span className="text-[#4ade80]">نحن نبني مسيرتك</span>
             </h1>
-            <Zap className="w-12 h-12 md:w-14 md:h-14 text-[#4ade80] flex-shrink-0" strokeWidth={2.5} />
           </div>
 
           {/* Sub-headline - English */}
           <p className="text-xl md:text-2xl text-white/40 font-light tracking-wide animate-fade-in-up" style={{ animationDelay: "0.2s", fontFamily: "'Inter', sans-serif" }} dir="ltr">
-            Transform the way you train
+            You build bodies. We build your career.
           </p>
 
           {/* Description - Arabic */}
@@ -78,8 +77,8 @@ const Landing = () => {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <p className="text-sm text-white/30 mt-4" style={{ fontFamily: "'Inter', sans-serif" }}>
-              No credit card required • Cancel anytime
+            <p className="text-sm text-white/30 mt-4" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">
+              <span className="text-[#4ade80]/50 font-medium">fitni</span> — Where Excellence Begins
             </p>
           </div>
 

@@ -67,6 +67,91 @@ export type Database = {
           },
         ]
       }
+      meal_items: {
+        Row: {
+          calories: number
+          carbs: number
+          created_at: string
+          fats: number
+          food_name: string
+          id: string
+          item_order: number
+          meal_name: string
+          meal_plan_id: string
+          protein: number
+          quantity: string | null
+        }
+        Insert: {
+          calories?: number
+          carbs?: number
+          created_at?: string
+          fats?: number
+          food_name: string
+          id?: string
+          item_order?: number
+          meal_name?: string
+          meal_plan_id: string
+          protein?: number
+          quantity?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          created_at?: string
+          fats?: number
+          food_name?: string
+          id?: string
+          item_order?: number
+          meal_name?: string
+          meal_plan_id?: string
+          protein?: number
+          quantity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_items_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_plans: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          trainer_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          trainer_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurements: {
         Row: {
           client_id: string

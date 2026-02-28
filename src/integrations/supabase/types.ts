@@ -421,6 +421,33 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_posts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          post_type: string
+          trainer_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_type?: string
+          trainer_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_type?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

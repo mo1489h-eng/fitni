@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, UtensilsCrossed, Apple, ChevronDown, ChevronUp, UserCircle } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Apple, ChevronDown, ChevronUp, UserCircle, Copy } from "lucide-react";
 
 interface Client {
   id: string;
@@ -59,6 +60,10 @@ const Nutrition = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingPlan, setEditingPlan] = useState<MealPlan | null>(null);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [copyPlanId, setCopyPlanId] = useState<string | null>(null);
+  const [selectedCopyClients, setSelectedCopyClients] = useState<string[]>([]);
+  const [copying, setCopying] = useState(false);
 
   // Form state
   const [planName, setPlanName] = useState("");
@@ -229,6 +234,65 @@ const Nutrition = () => {
     }
   };
 
+  const openCopyDialog = (planId: string) => {
+    setCopyPlanId(planId);
+    setSelectedCopyClients([]);
+    setShowCopyDialog(true);
+  };
+
+  const toggleCopyClient = (clientId: string) => {
+    setSelectedCopyClients((prev) =>
+      prev.includes(clientId) ? prev.filter((id) => id !== clientId) : [...prev, clientId]
+    );
+  };
+
+  const handleCopyPlan = async () => {
+    if (!copyPlanId || selectedCopyClients.length === 0) return;
+    setCopying(true);
+    try {
+      const plan = plans.find((p) => p.id === copyPlanId);
+      if (!plan) return;
+
+      for (const clientId of selectedCopyClients) {
+        const { data: newPlan, error } = await supabase
+          .from("meal_plans")
+          .insert({
+            trainer_id: user!.id,
+            name: plan.name,
+            notes: plan.notes,
+            client_id: clientId,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+
+        if (plan.items && plan.items.length > 0) {
+          await supabase.from("meal_items").insert(
+            plan.items.map((item, idx) => ({
+              meal_plan_id: newPlan.id,
+              meal_name: item.meal_name,
+              food_name: item.food_name,
+              calories: item.calories,
+              protein: item.protein,
+              carbs: item.carbs,
+              fats: item.fats,
+              quantity: item.quantity,
+              item_order: idx,
+            }))
+          );
+        }
+      }
+
+      toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل ✅` });
+      setShowCopyDialog(false);
+      fetchPlans();
+    } catch (err: any) {
+      toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
+    } finally {
+      setCopying(false);
+    }
+  };
+
   const totalMacros = (planItems: MealItem[]) => {
     return planItems.reduce(
       (acc, i) => ({
@@ -305,6 +369,14 @@ const Nutrition = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); openCopyDialog(plan.id); }}
+                        title="نسخ للعملاء"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -493,6 +565,34 @@ const Nutrition = () => {
               {saving ? "جاري الحفظ..." : editingPlan ? "تحديث الخطة" : "حفظ الخطة"}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Plan Dialog */}
+      <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>نسخ الخطة للعملاء</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-3">اختر العملاء لنسخ الخطة الغذائية لهم</p>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {clients.map((c) => (
+              <label key={c.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
+                <Checkbox
+                  checked={selectedCopyClients.includes(c.id)}
+                  onCheckedChange={() => toggleCopyClient(c.id)}
+                />
+                <span className="text-sm font-medium text-foreground">{c.name}</span>
+              </label>
+            ))}
+          </div>
+          <Button
+            className="w-full mt-3"
+            disabled={selectedCopyClients.length === 0 || copying}
+            onClick={handleCopyPlan}
+          >
+            {copying ? "جاري النسخ..." : `نسخ لـ ${selectedCopyClients.length} عميل`}
+          </Button>
         </DialogContent>
       </Dialog>
     </TrainerLayout>

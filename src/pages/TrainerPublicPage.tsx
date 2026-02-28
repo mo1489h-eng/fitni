@@ -1,15 +1,9 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import PostCard from "@/components/PostCard";
 import { Card } from "@/components/ui/card";
 import { Dumbbell, Loader2 } from "lucide-react";
-
-const POST_EMOJI: Record<string, string> = {
-  "نصيحة": "💡",
-  "تمرين": "🏋️",
-  "وجبة": "🥗",
-  "تحفيز": "🔥",
-};
 
 const TrainerPublicPage = () => {
   const { trainerId } = useParams();
@@ -37,7 +31,8 @@ const TrainerPublicPage = () => {
         .eq("trainer_id", trainerId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      // Filter to only public posts (audience = 'all')
+      return (data || []).filter((p: any) => p.audience === "all");
     },
     enabled: !!trainerId,
   });
@@ -60,7 +55,7 @@ const TrainerPublicPage = () => {
       </header>
 
       <main className="max-w-lg mx-auto p-4 space-y-4">
-        {/* Trainer Profile Header */}
+        {/* Profile Header */}
         <Card className="p-6 text-center">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full mx-auto mb-3 object-cover" />
@@ -77,30 +72,18 @@ const TrainerPublicPage = () => {
               {profile.specialization}
             </span>
           )}
-          {profile?.bio && (
-            <p className="text-sm text-muted-foreground mt-3">{profile.bio}</p>
-          )}
+          {profile?.bio && <p className="text-sm text-muted-foreground mt-3">{profile.bio}</p>}
         </Card>
 
-        {/* Posts Feed */}
+        {/* Posts */}
         {posts.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <p className="text-sm">لا توجد منشورات بعد</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {posts.map((post: any) => (
-              <Card key={post.id} className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
-                    {POST_EMOJI[post.post_type] || "📝"} {post.post_type}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(post.created_at).toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
-                  </span>
-                </div>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{post.content}</p>
-              </Card>
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
         )}

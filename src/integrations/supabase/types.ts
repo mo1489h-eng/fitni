@@ -423,28 +423,43 @@ export type Database = {
       }
       trainer_posts: {
         Row: {
+          audience: string
+          audience_client_ids: string[] | null
           content: string
           created_at: string
           id: string
           image_url: string | null
+          link_url: string | null
           post_type: string
           trainer_id: string
+          video_url: string | null
+          views_count: number
         }
         Insert: {
+          audience?: string
+          audience_client_ids?: string[] | null
           content: string
           created_at?: string
           id?: string
           image_url?: string | null
+          link_url?: string | null
           post_type?: string
           trainer_id: string
+          video_url?: string | null
+          views_count?: number
         }
         Update: {
+          audience?: string
+          audience_client_ids?: string[] | null
           content?: string
           created_at?: string
           id?: string
           image_url?: string | null
+          link_url?: string | null
           post_type?: string
           trainer_id?: string
+          video_url?: string | null
+          views_count?: number
         }
         Relationships: []
       }

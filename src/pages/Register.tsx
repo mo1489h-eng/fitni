@@ -20,11 +20,12 @@ const Register = () => {
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
 
-  const validatePromo = async (code: string) => {
+  const validatePromo = async (code: string, forEmail?: string) => {
     if (!code.trim()) {
       setPromoResult(null);
       return;
     }
+    const checkEmail = forEmail || email;
     const { data } = await supabase
       .from("promo_codes")
       .select("*")
@@ -33,9 +34,11 @@ const Register = () => {
       .maybeSingle();
 
     if (!data) {
-      setPromoResult({ valid: false, message: "كود غير صالح" });
-    } else if (data.used_count >= data.max_uses) {
-      setPromoResult({ valid: false, message: "هذا الكود انتهت صلاحيته" });
+      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
+    } else if (data.used_count > 0) {
+      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
+    } else if (data.assigned_to_email && data.assigned_to_email.toLowerCase() !== checkEmail.toLowerCase()) {
+      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
     } else {
       setPromoResult({ valid: true, days: data.duration_days, message: `🎉 تم تفعيل ${data.duration_days} يوم مجاناً!` });
     }
@@ -44,6 +47,11 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Re-validate promo before submit
+    if (promoCode.trim()) {
+      await validatePromo(promoCode, email);
+    }
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -68,16 +76,12 @@ const Register = () => {
           subscribed_at: new Date().toISOString(),
         }).eq("user_id", newUser.id);
 
-        // Increment used_count
-        // Increment used_count via raw update
-        const { data: promoData } = await supabase
-          .from("promo_codes")
-          .select("id, used_count")
-          .eq("code", upperCode)
-          .maybeSingle();
-        if (promoData) {
-          await (supabase as any).from("promo_codes").update({ used_count: promoData.used_count + 1 }).eq("id", promoData.id);
-        }
+        // Mark code as used
+        await (supabase as any).from("promo_codes").update({
+          used_count: 1,
+          used_by_trainer_id: newUser.id,
+          used_at: new Date().toISOString(),
+        }).eq("code", upperCode);
       }
 
       // Insert demo clients

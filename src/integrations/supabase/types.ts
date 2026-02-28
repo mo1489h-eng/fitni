@@ -228,30 +228,39 @@ export type Database = {
       }
       promo_codes: {
         Row: {
+          assigned_to_email: string | null
           code: string
           created_at: string
           duration_days: number
           id: string
           is_active: boolean
           max_uses: number
+          used_at: string | null
+          used_by_trainer_id: string | null
           used_count: number
         }
         Insert: {
+          assigned_to_email?: string | null
           code: string
           created_at?: string
           duration_days?: number
           id?: string
           is_active?: boolean
           max_uses?: number
+          used_at?: string | null
+          used_by_trainer_id?: string | null
           used_count?: number
         }
         Update: {
+          assigned_to_email?: string | null
           code?: string
           created_at?: string
           duration_days?: number
           id?: string
           is_active?: boolean
           max_uses?: number
+          used_at?: string | null
+          used_by_trainer_id?: string | null
           used_count?: number
         }
         Relationships: []

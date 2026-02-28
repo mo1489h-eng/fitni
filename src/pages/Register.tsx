@@ -130,7 +130,7 @@ const Register = () => {
               كود ترويجي (اختياري)
             </label>
             <Input
-              placeholder="FITNI-XXXXX"
+              placeholder="أدخل الكود هنا"
               value={promoCode}
               onChange={(e) => {
                 setPromoCode(e.target.value);
@@ -144,7 +144,7 @@ const Register = () => {
                 {promoResult.message}
               </p>
             ) : (
-              <p className="text-xs mt-1.5 text-muted-foreground">إذا عندك كود احصل على تجربة مجانية</p>
+              <p className="text-xs mt-1.5 text-muted-foreground">الكود يُرسل لك شخصياً من فريق فتني</p>
             )}
           </div>
           <Button type="submit" className="w-full" size="lg" disabled={loading}>

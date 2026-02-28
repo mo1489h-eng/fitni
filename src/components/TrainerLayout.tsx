@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Dumbbell, LayoutDashboard, Users, ClipboardList, CreditCard, LogOut } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, ClipboardList, CreditCard, BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
   { label: "المدفوعات", href: "/payments", icon: CreditCard },
+  { label: "التقارير", href: "/reports", icon: BarChart3 },
 ];
 
 const TrainerLayout = ({ children }: { children: React.ReactNode }) => {

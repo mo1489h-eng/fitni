@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, Clock, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3 } from "lucide-react";
+import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, Clock, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3, Zap, Target } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
@@ -50,10 +50,12 @@ const Landing = () => {
           </div>
 
           {/* Main headline - Arabic */}
-          <h1 className="text-5xl md:text-7xl font-black leading-tight animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            حوّل طريقة تدريبك{" "}
-            <span className="text-[#4ade80]">💪</span>
-          </h1>
+          <div className="flex items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-5xl md:text-7xl font-black leading-tight">
+              حوّل طريقة تدريبك
+            </h1>
+            <Zap className="w-12 h-12 md:w-14 md:h-14 text-[#4ade80] flex-shrink-0" strokeWidth={2.5} />
+          </div>
 
           {/* Sub-headline - English */}
           <p className="text-xl md:text-2xl text-white/40 font-light tracking-wide animate-fade-in-up" style={{ animationDelay: "0.2s", fontFamily: "'Inter', sans-serif" }} dir="ltr">
@@ -84,11 +86,12 @@ const Landing = () => {
           {/* Stats Row */}
           <div className="flex items-center justify-center gap-6 md:gap-12 pt-8 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
             {[
-              { num: "500+", labelAr: "مدرب نشط", labelEn: "Active Trainers" },
-              { num: "98%", labelAr: "رضا العملاء", labelEn: "Client Satisfaction" },
-              { num: "4.9★", labelAr: "التقييم", labelEn: "App Rating" },
+              { num: "500+", labelAr: "مدرب نشط", labelEn: "Active Trainers", icon: Users },
+              { num: "98%", labelAr: "رضا العملاء", labelEn: "Client Satisfaction", icon: TrendingUp },
+              { num: "4.9", labelAr: "التقييم", labelEn: "App Rating", icon: Star },
             ].map((stat) => (
               <div key={stat.labelEn} className="text-center">
+                <stat.icon className="w-5 h-5 text-[#4ade80]/60 mx-auto mb-1.5" />
                 <div className="text-2xl md:text-3xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>
                   {stat.num}
                 </div>
@@ -117,17 +120,19 @@ const Landing = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { emoji: "💪", titleAr: "وفّر 3 ساعات يومياً", titleEn: "Save 3 hours daily", desc: "أتمت إدارة عملائك" },
-              { emoji: "📈", titleAr: "تابع التقدم لحظياً", titleEn: "Real-time tracking", desc: "قياسات وتقارير فورية" },
-              { emoji: "💰", titleAr: "لا تخسر ريال واحد", titleEn: "Never miss a payment", desc: "تنبيهات مدفوعات ذكية" },
-              { emoji: "🏆", titleAr: "كن الأفضل", titleEn: "Be the best trainer", desc: "تميّز عن منافسيك" },
+              { icon: Dumbbell, titleAr: "وفّر 3 ساعات يومياً", titleEn: "Save 3 hours daily", desc: "أتمت إدارة عملائك" },
+              { icon: TrendingUp, titleAr: "تابع التقدم لحظياً", titleEn: "Real-time tracking", desc: "قياسات وتقارير فورية" },
+              { icon: DollarSign, titleAr: "لا تخسر ريال واحد", titleEn: "Never miss a payment", desc: "تنبيهات مدفوعات ذكية" },
+              { icon: Trophy, titleAr: "كن الأفضل", titleEn: "Be the best trainer", desc: "تميّز عن منافسيك" },
             ].map((item, i) => (
               <div
                 key={item.titleEn}
                 className="group relative bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.06] hover:border-[#16a34a]/30 transition-all duration-500 animate-fade-in-up"
                 style={{ animationDelay: `${0.1 * i}s` }}
               >
-                <div className="text-4xl mb-4">{item.emoji}</div>
+                <div className="w-10 h-10 rounded-xl bg-[#16a34a]/10 border border-[#16a34a]/20 flex items-center justify-center mb-4">
+                  <item.icon className="w-5 h-5 text-[#4ade80]" />
+                </div>
                 <h3 className="text-base font-bold text-white mb-1">{item.titleAr}</h3>
                 <p className="text-xs text-white/30 mb-2 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">
                   {item.titleEn}

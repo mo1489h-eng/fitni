@@ -1,19 +1,24 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import TrialBanner from "@/components/TrialBanner";
 import {
   Users, TrendingDown, TrendingUp, Minus, Activity,
   DollarSign, AlertTriangle, Loader2, Send, MessageCircle,
-  CheckCircle, XCircle, Clock,
+  CheckCircle, XCircle, Clock, Lock,
 } from "lucide-react";
 
 const Reports = () => {
   const { user } = useAuth();
+  const { hasReportsAccess, plan } = usePlanLimits();
   const [sendingIndex, setSendingIndex] = useState<number | null>(null);
+  const [showPlans, setShowPlans] = useState(false);
 
   const { data: clients = [], isLoading: loadingClients } = useQuery({
     queryKey: ["report-clients"],
@@ -115,6 +120,25 @@ const Reports = () => {
     { label: "إيرادات الشهر", value: `${monthlyRevenue.toLocaleString()} ر.س`, icon: DollarSign, color: "bg-success/10 text-success" },
     { label: "متأخرين بالدفع", value: overdueClients.length, icon: AlertTriangle, color: "bg-destructive/10 text-destructive" },
   ];
+
+  // If not pro/gym, show locked state
+  if (!hasReportsAccess) {
+    return (
+      <TrainerLayout>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center">
+            <Lock className="w-8 h-8 text-warning" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">التقارير المتقدمة</h2>
+          <p className="text-muted-foreground text-sm max-w-xs">
+            التقارير المتقدمة متاحة في الباقة الاحترافية وباقة الجيم
+          </p>
+          <Button onClick={() => setShowPlans(true)}>ترقية الآن</Button>
+          <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        </div>
+      </TrainerLayout>
+    );
+  }
 
   return (
     <TrainerLayout>

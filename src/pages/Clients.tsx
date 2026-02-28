@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
+import UpgradeModal from "@/components/UpgradeModal";
 import { Plus, Search, Target, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -35,10 +37,24 @@ const statusBadgeColors = {
 const Clients = () => {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "" });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { canAddClient, getAddClientBlockReason } = usePlanLimits();
+  const [blockReason, setBlockReason] = useState<{ title: string; description: string } | null>(null);
+
+  const handleAddClick = () => {
+    const reason = getAddClientBlockReason();
+    if (reason?.blocked) {
+      setBlockReason(reason);
+      setShowUpgrade(true);
+    } else {
+      setOpen(true);
+    }
+  };
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -128,12 +144,25 @@ const Clients = () => {
           </div>
         )}
 
+        <button
+          onClick={handleAddClick}
+          className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+
+        <UpgradeModal
+          open={showUpgrade}
+          onOpenChange={setShowUpgrade}
+          title={blockReason?.title || ""}
+          description={blockReason?.description || ""}
+          onUpgrade={() => {
+            setShowUpgrade(false);
+            setShowPlans(true);
+          }}
+        />
+
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <button className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity">
-              <Plus className="w-6 h-6" />
-            </button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>إضافة عميل جديد</DialogTitle>
@@ -165,9 +194,20 @@ const Clients = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Plans dialog reusing TrialBanner */}
+        {showPlans && (
+          <TrialBannerPlans open={showPlans} onOpenChange={setShowPlans} />
+        )}
       </div>
     </TrainerLayout>
   );
 };
+
+// Minimal wrapper to show plans dialog
+import TrialBanner from "@/components/TrialBanner";
+const TrialBannerPlans = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => (
+  <TrialBanner showPlans={open} onShowPlansChange={onOpenChange} />
+);
 
 export default Clients;

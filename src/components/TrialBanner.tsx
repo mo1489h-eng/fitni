@@ -40,7 +40,7 @@ const TrialBanner = () => {
       </div>
 
       <Dialog open={showPlans} onOpenChange={setShowPlans}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>اختر باقتك</DialogTitle>
           </DialogHeader>

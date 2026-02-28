@@ -20,10 +20,10 @@ const Register = () => {
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
 
-  const validatePromo = async (code: string, forEmail?: string) => {
+  const validatePromo = async (code: string, forEmail?: string): Promise<{ valid: boolean; days?: number; message: string } | null> => {
     if (!code.trim()) {
       setPromoResult(null);
-      return;
+      return null;
     }
     const checkEmail = forEmail || email;
     const { data } = await supabase
@@ -33,24 +33,32 @@ const Register = () => {
       .eq("is_active", true)
       .maybeSingle();
 
+    let result: { valid: boolean; days?: number; message: string };
     if (!data) {
-      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
+      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
     } else if (data.used_count > 0) {
-      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
+      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
     } else if (data.assigned_to_email && data.assigned_to_email.toLowerCase() !== checkEmail.toLowerCase()) {
-      setPromoResult({ valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" });
+      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
     } else {
-      setPromoResult({ valid: true, days: data.duration_days, message: `🎉 تم تفعيل ${data.duration_days} يوم مجاناً!` });
+      result = { valid: true, days: data.duration_days, message: `🎉 تم تفعيل ${data.duration_days} يوم مجاناً!` };
     }
+    setPromoResult(result);
+    return result;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Re-validate promo before submit
+    // Validate promo before submit and use returned result directly
+    let validatedPromo: { valid: boolean; days?: number; message: string } | null = null;
     if (promoCode.trim()) {
-      await validatePromo(promoCode, email);
+      validatedPromo = await validatePromo(promoCode, email);
+      if (validatedPromo && !validatedPromo.valid) {
+        setLoading(false);
+        return;
+      }
     }
 
     const { error } = await supabase.auth.signUp({
@@ -68,15 +76,13 @@ const Register = () => {
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
       // Apply promo code if valid
-      if (promoResult?.valid && promoCode.trim()) {
+      if (validatedPromo?.valid && promoCode.trim()) {
         const upperCode = promoCode.trim().toUpperCase();
-        // Update profile with pro plan
         await supabase.from("profiles").update({
           subscription_plan: "pro",
           subscribed_at: new Date().toISOString(),
         }).eq("user_id", newUser.id);
 
-        // Mark code as used
         await (supabase as any).from("promo_codes").update({
           used_count: 1,
           used_by_trainer_id: newUser.id,
@@ -93,7 +99,7 @@ const Register = () => {
       await supabase.from("clients").insert(demoClients);
     }
 
-    toast({ title: promoResult?.valid ? promoResult.message : "تم إنشاء الحساب بنجاح 🎉" });
+    toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح 🎉" });
     navigate("/dashboard");
     setLoading(false);
   };

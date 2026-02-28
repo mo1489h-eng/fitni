@@ -23,6 +23,7 @@ export type Database = {
           name: string
           phone: string
           portal_token: string | null
+          program_id: string | null
           subscription_end_date: string
           subscription_price: number
           trainer_id: string | null
@@ -36,6 +37,7 @@ export type Database = {
           name: string
           phone?: string
           portal_token?: string | null
+          program_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
@@ -49,12 +51,21 @@ export type Database = {
           name?: string
           phone?: string
           portal_token?: string | null
+          program_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
           week_number?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -74,6 +85,103 @@ export type Database = {
           full_name?: string
           id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      program_days: {
+        Row: {
+          created_at: string
+          day_name: string
+          day_order: number
+          id: string
+          program_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_name: string
+          day_order?: number
+          id?: string
+          program_id: string
+        }
+        Update: {
+          created_at?: string
+          day_name?: string
+          day_order?: number
+          id?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_days_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_exercises: {
+        Row: {
+          created_at: string
+          day_id: string
+          exercise_order: number
+          id: string
+          name: string
+          reps: number
+          sets: number
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          day_id: string
+          exercise_order?: number
+          id?: string
+          name: string
+          reps?: number
+          sets?: number
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          day_id?: string
+          exercise_order?: number
+          id?: string
+          name?: string
+          reps?: number
+          sets?: number
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_exercises_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "program_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          trainer_id: string
+          weeks: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          trainer_id: string
+          weeks?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          trainer_id?: string
+          weeks?: number
         }
         Relationships: []
       }

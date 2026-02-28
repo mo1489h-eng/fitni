@@ -24,7 +24,7 @@ const Landing = () => {
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <Dumbbell className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-black text-foreground">مدربي</span>
+            <span className="text-xl font-black text-foreground">fitni</span>
           </div>
           <Link to="/login">
             <Button variant="outline" size="sm">تسجيل الدخول</Button>
@@ -68,7 +68,7 @@ const Landing = () => {
 
       {/* Footer */}
       <footer className="border-t border-border px-4 py-6 text-center">
-        <p className="text-sm text-muted-foreground">© ٢٠٢٦ مدربي. جميع الحقوق محفوظة</p>
+        <p className="text-sm text-muted-foreground">© ٢٠٢٦ fitni. جميع الحقوق محفوظة</p>
       </footer>
     </div>
   );

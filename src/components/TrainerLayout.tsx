@@ -27,7 +27,7 @@ const TrainerLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Dumbbell className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-black text-foreground">مدربي</span>
+            <span className="font-black text-foreground">fitni</span>
           </div>
           <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
             <LogOut className="w-5 h-5" />

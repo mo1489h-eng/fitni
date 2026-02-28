@@ -1,8 +1,11 @@
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
-import { TrendingUp, Calendar, Dumbbell, Flame, Trophy } from "lucide-react";
+import { TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2 } from "lucide-react";
+import ProgressPhotos from "@/components/ProgressPhotos";
 
 const weightData = [
   { week: "أسبوع 1", weight: 95 },
@@ -40,6 +43,21 @@ const PortalProgress = () => {
   const monthName = new Date(year, month).toLocaleDateString("ar-SA", { month: "long", year: "numeric" });
   const dayNames = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 
+  // Fetch client by token to get client_id
+  const { data: client } = useQuery({
+    queryKey: ["portal-client", token],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, trainer_id")
+        .eq("portal_token", token!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!token,
+  });
+
   return (
     <ClientPortalLayout>
       <div className="space-y-5 animate-fade-in">
@@ -59,6 +77,11 @@ const PortalProgress = () => {
             </Card>
           ))}
         </div>
+
+        {/* Progress Photos */}
+        {client && (
+          <ProgressPhotos clientId={client.id} uploadedBy="client" trainerId={client.trainer_id || undefined} />
+        )}
 
         {/* Weight Chart */}
         <Card className="p-4">

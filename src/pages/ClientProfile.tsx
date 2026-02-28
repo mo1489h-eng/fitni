@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ProgressPhotos from "@/components/ProgressPhotos";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, Calendar, Copy, Send,
-  TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp,
+  TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -221,7 +222,7 @@ const ClientProfile = () => {
               }}>
                 <Copy className="w-4 h-4" /> نسخ الرابط 📋
               </Button>
-              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلاً! برنامجك جاهز على مدربي، افتح الرابط لتشوف تمارينك 💪 ${window.location.origin}/client-portal/${client.portal_token}`)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلاً! برنامجك جاهز على fitni، افتح الرابط لتشوف تمارينك 💪 ${window.location.origin}/client-portal/${client.portal_token}`)}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="gap-1 w-full">
                   <Send className="w-4 h-4" /> إرسال واتساب 📲
                 </Button>
@@ -343,7 +344,14 @@ const ClientProfile = () => {
                         <div className="space-y-2">
                           {day.program_exercises.sort((a: any, b: any) => a.exercise_order - b.exercise_order).map((ex: any) => (
                             <div key={ex.id} className="flex items-center justify-between bg-secondary rounded-lg p-2.5">
-                              <span className="text-sm text-secondary-foreground font-medium">{ex.name}</span>
+                              <span className="text-sm text-secondary-foreground font-medium">
+                                {ex.name}
+                                {ex.video_url && (
+                                  <a href={ex.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex mr-1.5 text-primary hover:text-primary/80">
+                                    <Video className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </span>
                               <span className="text-xs text-muted-foreground">
                                 {ex.sets}×{ex.reps} {ex.weight > 0 && `• ${ex.weight} كجم`}
                               </span>
@@ -477,6 +485,9 @@ const ClientProfile = () => {
                   </div>
                 )}
               </Card>
+
+              {/* Progress Photos */}
+              <ProgressPhotos clientId={id!} uploadedBy="trainer" trainerId={client.trainer_id || undefined} />
             </div>
           )}
         </div>

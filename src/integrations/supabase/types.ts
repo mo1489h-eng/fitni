@@ -104,31 +104,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
+          brand_color: string | null
           created_at: string
           full_name: string
           id: string
           logo_url: string | null
+          notify_inactive: boolean | null
+          notify_payments: boolean | null
+          notify_weekly_report: boolean | null
+          phone: string | null
+          specialization: string | null
           subscribed_at: string | null
           subscription_plan: string | null
           user_id: string
+          welcome_message: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          brand_color?: string | null
           created_at?: string
           full_name?: string
           id?: string
           logo_url?: string | null
+          notify_inactive?: boolean | null
+          notify_payments?: boolean | null
+          notify_weekly_report?: boolean | null
+          phone?: string | null
+          specialization?: string | null
           subscribed_at?: string | null
           subscription_plan?: string | null
           user_id: string
+          welcome_message?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          brand_color?: string | null
           created_at?: string
           full_name?: string
           id?: string
           logo_url?: string | null
+          notify_inactive?: boolean | null
+          notify_payments?: boolean | null
+          notify_weekly_report?: boolean | null
+          phone?: string | null
+          specialization?: string | null
           subscribed_at?: string | null
           subscription_plan?: string | null
           user_id?: string
+          welcome_message?: string | null
         }
         Relationships: []
       }

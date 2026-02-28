@@ -1,47 +1,126 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, Lock, Loader2, Trash2, User } from "lucide-react";
+import {
+  Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
+  LogOut, CreditCard, KeyRound, Save, CheckCircle,
+} from "lucide-react";
+
+const SPECIALIZATIONS = [
+  "لياقة عامة",
+  "كمال أجسام",
+  "تخسيس",
+  "تأهيل",
+  "رياضات قتالية",
+  "أخرى",
+];
 
 const Settings = () => {
-  const { user, profile, refreshProfile } = useAuth();
-  const { plan, hasReportsAccess } = usePlanLimits();
+  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { plan } = usePlanLimits();
   const isPro = plan === "pro" || plan === "gym";
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
-  const logoUrl = (profile as any)?.logo_url as string | null;
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  // Form state
+  const [form, setForm] = useState({
+    full_name: "",
+    phone: "",
+    specialization: "",
+    bio: "",
+    notify_inactive: true,
+    notify_payments: true,
+    notify_weekly_report: false,
+    brand_color: "#16a34a",
+    welcome_message: "",
+  });
 
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        specialization: profile.specialization || "",
+        bio: profile.bio || "",
+        notify_inactive: profile.notify_inactive ?? true,
+        notify_payments: profile.notify_payments ?? true,
+        notify_weekly_report: profile.notify_weekly_report ?? false,
+        brand_color: profile.brand_color || "#16a34a",
+        welcome_message: profile.welcome_message || "",
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: form.full_name.trim(),
+          phone: form.phone.trim(),
+          specialization: form.specialization,
+          bio: form.bio.trim(),
+          notify_inactive: form.notify_inactive,
+          notify_payments: form.notify_payments,
+          notify_weekly_report: form.notify_weekly_report,
+          brand_color: form.brand_color,
+          welcome_message: form.welcome_message.trim(),
+        })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      await refreshProfile();
+      toast({ title: "تم حفظ التغييرات ✅" });
+    } catch {
+      toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (
+    file: File,
+    folder: string,
+    column: string,
+    setLoading: (v: boolean) => void
+  ) => {
+    if (!user) return;
     if (file.size > 2 * 1024 * 1024) {
       toast({ title: "حجم الصورة يجب أن يكون أقل من 2MB", variant: "destructive" });
       return;
     }
-
-    setUploading(true);
+    setLoading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `logos/${user.id}/logo.${ext}`;
-
+      const path = `${folder}/${user.id}/img.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("progress-photos")
         .upload(path, file, { upsert: true });
-
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
@@ -50,37 +129,51 @@ const Settings = () => {
 
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ logo_url: urlData.publicUrl })
+        .update({ [column]: urlData.publicUrl })
         .eq("user_id", user.id);
-
       if (updateError) throw updateError;
 
       await refreshProfile();
-      toast({ title: "تم رفع الشعار بنجاح ✅" });
+      toast({ title: "تم رفع الصورة بنجاح ✅" });
     } catch {
-      toast({ title: "حدث خطأ في رفع الشعار", variant: "destructive" });
+      toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {
-      setUploading(false);
+      setLoading(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteImage = async (column: string) => {
     if (!user) return;
-    setUploading(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ logo_url: null })
-        .eq("user_id", user.id);
-
-      if (error) throw error;
+      await supabase.from("profiles").update({ [column]: null }).eq("user_id", user.id);
       await refreshProfile();
-      toast({ title: "تم حذف الشعار" });
+      toast({ title: "تم الحذف" });
     } catch {
       toast({ title: "حدث خطأ", variant: "destructive" });
-    } finally {
-      setUploading(false);
     }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ title: "كلمة المرور يجب أن تكون 6 أحرف على الأقل", variant: "destructive" });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword("");
+      toast({ title: "تم تغيير كلمة المرور بنجاح ✅" });
+    } catch {
+      toast({ title: "حدث خطأ في تغيير كلمة المرور", variant: "destructive" });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
   };
 
   const planLabels: Record<string, string> = {
@@ -90,100 +183,287 @@ const Settings = () => {
     gym: "جيم",
   };
 
+  const planColors: Record<string, string> = {
+    free: "bg-muted text-muted-foreground",
+    basic: "bg-primary/10 text-primary",
+    pro: "bg-accent text-accent-foreground",
+    gym: "bg-warning/10 text-warning",
+  };
+
   return (
     <TrainerLayout>
-      <div className="space-y-5 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-8">
         <h1 className="text-2xl font-bold text-foreground">الإعدادات ⚙️</h1>
 
-        {/* Profile Info */}
-        <Card className="p-5">
+        {/* ━━━ 1. PROFILE ━━━ */}
+        <Card className="p-5 space-y-5">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">الملف الشخصي</h2>
+          </div>
+
+          {/* Avatar */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-6 h-6 text-primary" />
+            <div className="relative">
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="صورة شخصية"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-border"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border">
+                  <User className="w-8 h-8 text-primary" />
+                </div>
+              )}
+              <button
+                onClick={() => avatarRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="absolute -bottom-1 -left-1 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity"
+              >
+                {uploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
+              </button>
             </div>
-            <div>
-              <h3 className="font-bold text-card-foreground">{profile?.full_name || "—"}</h3>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-card-foreground">صورة الملف الشخصي</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG — أقصى 2MB</p>
+              {profile?.avatar_url && (
+                <button
+                  onClick={() => handleDeleteImage("avatar_url")}
+                  className="text-xs text-destructive mt-1 hover:underline"
+                >
+                  حذف الصورة
+                </button>
+              )}
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">الباقة الحالية:</span>
-            <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-              {planLabels[plan || "free"]}
-            </span>
+          <input
+            ref={avatarRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleImageUpload(f, "avatars", "avatar_url", setUploadingAvatar);
+            }}
+          />
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">الاسم الكامل</label>
+              <Input
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                placeholder="اسمك الكامل"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">رقم الجوال</label>
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="05XXXXXXXX"
+                type="tel"
+                dir="ltr"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">التخصص</label>
+              <Select
+                value={form.specialization}
+                onValueChange={(v) => setForm({ ...form, specialization: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر تخصصك" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPECIALIZATIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">نبذة عنك</label>
+              <Textarea
+                value={form.bio}
+                onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                placeholder="اكتب نبذة قصيرة عنك وعن خبرتك..."
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground mt-1 text-left" dir="ltr">
+                {form.bio.length}/500
+              </p>
+            </div>
           </div>
         </Card>
 
-        {/* Logo Upload */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-card-foreground">شعارك الخاص 🎨</h3>
+        {/* ━━━ 2. NOTIFICATIONS ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">الإشعارات</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-card-foreground">تذكير عملاء غير نشطين</p>
+                <p className="text-xs text-muted-foreground">إشعار عند عدم تسجيل تمارين لأكثر من 5 أيام</p>
+              </div>
+              <Switch
+                checked={form.notify_inactive}
+                onCheckedChange={(v) => setForm({ ...form, notify_inactive: v })}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-card-foreground">تنبيه مدفوعات متأخرة</p>
+                <p className="text-xs text-muted-foreground">إشعار عند تأخر الاشتراكات</p>
+              </div>
+              <Switch
+                checked={form.notify_payments}
+                onCheckedChange={(v) => setForm({ ...form, notify_payments: v })}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-card-foreground">تقرير أسبوعي تلقائي</p>
+                <p className="text-xs text-muted-foreground">استلام ملخص أسبوعي عن أداء العملاء</p>
+              </div>
+              <Switch
+                checked={form.notify_weekly_report}
+                onCheckedChange={(v) => setForm({ ...form, notify_weekly_report: v })}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* ━━━ 3. BRANDING ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-card-foreground">العلامة التجارية</h2>
+            </div>
             {!isPro && (
               <span className="text-xs bg-warning/10 text-warning px-2 py-1 rounded-full flex items-center gap-1">
                 <Lock className="w-3 h-3" />
-                باقة احترافية
+                احترافي
               </span>
             )}
           </div>
 
           {isPro ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                ارفع شعارك ليظهر في بوابة العميل بدلاً من شعار fitni
-              </p>
+            <div className="space-y-5">
+              {/* Logo */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">شعارك الخاص</label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  يظهر في بوابة العميل بدلاً من شعار fitni
+                </p>
+                {profile?.logo_url ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-xl border border-border overflow-hidden bg-secondary">
+                      <img src={profile.logo_url} alt="شعار" className="w-full h-full object-contain" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => logoRef.current?.click()} disabled={uploadingLogo}>
+                        <Camera className="w-4 h-4 ml-1" />
+                        تغيير
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteImage("logo_url")}>
+                        <Trash2 className="w-4 h-4 ml-1" />
+                        حذف
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => logoRef.current?.click()}
+                    disabled={uploadingLogo}
+                    className="w-full border-2 border-dashed border-border rounded-xl py-6 flex flex-col items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <>
+                        <Camera className="w-6 h-6" />
+                        <span className="text-sm">اضغط لرفع الشعار</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <input
+                  ref={logoRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImageUpload(f, "logos", "logo_url", setUploadingLogo);
+                  }}
+                />
+              </div>
 
-              {logoUrl ? (
-                <div className="space-y-3">
-                  <div className="w-24 h-24 rounded-xl border border-border overflow-hidden bg-secondary">
-                    <img src={logoUrl} alt="شعار المدرب" className="w-full h-full object-contain" />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileRef.current?.click()}
-                      disabled={uploading}
-                    >
-                      <Camera className="w-4 h-4 ml-1" />
-                      تغيير
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={handleDelete}
-                      disabled={uploading}
-                    >
-                      <Trash2 className="w-4 h-4 ml-1" />
-                      حذف
-                    </Button>
-                  </div>
+              <Separator />
+
+              {/* Color Picker */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">لون منصتك الخاص</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={form.brand_color}
+                    onChange={(e) => setForm({ ...form, brand_color: e.target.value })}
+                    className="w-10 h-10 rounded-lg border border-border cursor-pointer"
+                  />
+                  <Input
+                    value={form.brand_color}
+                    onChange={(e) => setForm({ ...form, brand_color: e.target.value })}
+                    dir="ltr"
+                    className="w-32 font-mono text-sm"
+                    maxLength={7}
+                  />
+                  <div
+                    className="w-10 h-10 rounded-lg border border-border"
+                    style={{ backgroundColor: form.brand_color }}
+                  />
                 </div>
-              ) : (
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  className="w-full border-2 border-dashed border-border rounded-xl py-8 flex flex-col items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                >
-                  {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  ) : (
-                    <>
-                      <Camera className="w-8 h-8" />
-                      <span className="text-sm font-medium">اضغط لرفع الشعار</span>
-                      <span className="text-xs">PNG, JPG — أقصى حجم 2MB</span>
-                    </>
-                  )}
-                </button>
-              )}
+              </div>
 
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleUpload}
-              />
+              <Separator />
+
+              {/* Welcome Message */}
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">رسالة ترحيب للمتدربين</label>
+                <Textarea
+                  value={form.welcome_message}
+                  onChange={(e) => setForm({ ...form, welcome_message: e.target.value })}
+                  placeholder="مثال: أهلاً بك في برنامجك التدريبي! 💪"
+                  rows={2}
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground mt-1 text-left" dir="ltr">
+                  {form.welcome_message.length}/200
+                </p>
+              </div>
             </div>
           ) : (
             <div className="text-center py-6 space-y-3">
@@ -191,7 +471,7 @@ const Settings = () => {
                 <Lock className="w-7 h-7 text-warning" />
               </div>
               <p className="text-sm text-muted-foreground">
-                رفع الشعار الخاص متاح فقط في الباقة الاحترافية
+                العلامة التجارية المخصصة متاحة فقط في الباقة الاحترافية
               </p>
               <Button size="sm" onClick={() => setShowUpgrade(true)}>
                 ترقية الآن
@@ -200,11 +480,103 @@ const Settings = () => {
           )}
         </Card>
 
+        {/* ━━━ SAVE BUTTON ━━━ */}
+        <Button className="w-full gap-2" onClick={handleSave} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          حفظ التغييرات
+        </Button>
+
+        {/* ━━━ 4. ACCOUNT ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">الحساب</h2>
+          </div>
+
+          {/* Plan Info */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">الباقة الحالية</p>
+              <span className={`text-sm font-semibold px-3 py-1 rounded-full inline-block mt-1 ${planColors[plan || "free"]}`}>
+                {planLabels[plan || "free"]}
+              </span>
+            </div>
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowPlans(true)}>
+              <CreditCard className="w-4 h-4" />
+              تغيير الباقة
+            </Button>
+          </div>
+
+          {profile?.subscribed_at && (
+            <div>
+              <p className="text-sm text-muted-foreground">تاريخ الاشتراك</p>
+              <p className="text-sm font-medium text-card-foreground">
+                {new Date(profile.subscribed_at).toLocaleDateString("ar-SA", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Change Password */}
+          <div>
+            <p className="text-sm font-medium text-card-foreground mb-2">تغيير كلمة المرور</p>
+            <div className="flex gap-2">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="كلمة المرور الجديدة"
+                dir="ltr"
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleChangePassword}
+                disabled={changingPassword || !newPassword}
+                className="gap-1 shrink-0"
+              >
+                {changingPassword ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <KeyRound className="w-4 h-4" />
+                )}
+                تغيير
+              </Button>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Email */}
+          <div>
+            <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
+            <p className="text-sm font-medium text-card-foreground" dir="ltr">{user?.email}</p>
+          </div>
+
+          <Separator />
+
+          {/* Logout */}
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" />
+            تسجيل الخروج
+          </Button>
+        </Card>
+
         <UpgradeModal
           open={showUpgrade}
           onOpenChange={setShowUpgrade}
           title="ميزة الباقة الاحترافية"
-          description="رفع الشعار الخاص متاح فقط في الباقة الاحترافية وباقة الجيم"
+          description="العلامة التجارية المخصصة متاحة في الباقة الاحترافية وباقة الجيم"
           onUpgrade={() => {
             setShowUpgrade(false);
             setShowPlans(true);

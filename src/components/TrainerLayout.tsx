@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, BarChart3, Settings, LogOut } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, CalendarDays, Lightbulb, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { label: "لوحة التحكم", href: "/dashboard", icon: LayoutDashboard },
+  { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
   { label: "التغذية", href: "/nutrition", icon: UtensilsCrossed },
-  { label: "التقارير", href: "/reports", icon: BarChart3 },
+  { label: "التقويم", href: "/calendar", icon: CalendarDays },
+  { label: "المحتوى", href: "/content", icon: Lightbulb },
   { label: "الإعدادات", href: "/settings", icon: Settings },
 ];
 

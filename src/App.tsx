@@ -16,10 +16,14 @@ import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Nutrition from "./pages/Nutrition";
+import Calendar from "./pages/Calendar";
+import TrainerContent from "./pages/TrainerContent";
+import TrainerPublicPage from "./pages/TrainerPublicPage";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalWorkout from "./pages/portal/PortalWorkout";
 import PortalProgress from "./pages/portal/PortalProgress";
 import PortalNutrition from "./pages/portal/PortalNutrition";
+import PortalContent from "./pages/portal/PortalContent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,11 +46,15 @@ const App = () => (
             <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
             <Route path="/reports" element={<AuthGuard><Reports /></AuthGuard>} />
             <Route path="/nutrition" element={<AuthGuard><Nutrition /></AuthGuard>} />
+            <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
+            <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
+            <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
             <Route path="/client-portal/:token" element={<PortalHome />} />
             <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />
             <Route path="/client-portal/:token/progress" element={<PortalProgress />} />
             <Route path="/client-portal/:token/nutrition" element={<PortalNutrition />} />
+            <Route path="/client-portal/:token/content" element={<PortalContent />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

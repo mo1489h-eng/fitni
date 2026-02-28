@@ -64,10 +64,22 @@ const Dashboard = () => {
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">مرحباً {profile?.full_name || ""} 👋</h1>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowPlans(true)}>
-            <CreditCard className="w-4 h-4" />
-            الباقات
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => {
+              clients.forEach((c, i) => {
+                const phone = `966${c.phone.replace(/^0/, "")}`;
+                const msg = encodeURIComponent(`أهلاً ${c.name}! تذكر تمرينك اليوم 💪 لا تفوّته!`);
+                setTimeout(() => window.open(`https://wa.me/${phone}?text=${msg}`, "_blank"), i * 500);
+              });
+            }}>
+              <MessageCircle className="w-3.5 h-3.5" />
+              تذكير الكل
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowPlans(true)}>
+              <CreditCard className="w-4 h-4" />
+              الباقات
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (

@@ -300,6 +300,33 @@ const ClientProfile = () => {
                 </div>
               </Card>
 
+              {/* WhatsApp Quick Reminders */}
+              <Card className="p-4">
+                <h3 className="font-bold text-card-foreground mb-3 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-primary" />
+                  تذكيرات سريعة
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { emoji: "💧", label: "تذكير شرب الماء", msg: `أهلاً ${client.name}! تذكر تشرب ماء كافي اليوم 💧 على الأقل 3 لتر` },
+                    { emoji: "🥗", label: "باقي وجبة", msg: `أهلاً ${client.name}! لا تنسى وجبتك القادمة 🥗 الالتزام بالحمية مهم جداً` },
+                    { emoji: "💪", label: "موعد تمرينك", msg: `أهلاً ${client.name}! موعد تمرينك اليوم 💪 لا تفوّته!` },
+                    { emoji: "✅", label: "أحسنت!", msg: `أحسنت ${client.name}! أكمل تمارينك وحميتك ✅ استمر على هذا المستوى 🔥` },
+                  ].map((r) => (
+                    <a
+                      key={r.label}
+                      href={`${whatsappUrl}?text=${encodeURIComponent(r.msg)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" size="sm" className="w-full gap-1 text-xs">
+                        {r.emoji} {r.label}
+                      </Button>
+                    </a>
+                  ))}
+                </div>
+              </Card>
+
               {/* Client Info */}
               <Card className="p-4">
                 <h3 className="font-bold text-card-foreground mb-2">معلومات العميل</h3>

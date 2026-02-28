@@ -107,6 +107,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          logo_url: string | null
           subscribed_at: string | null
           subscription_plan: string | null
           user_id: string
@@ -115,6 +116,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          logo_url?: string | null
           subscribed_at?: string | null
           subscription_plan?: string | null
           user_id: string
@@ -123,6 +125,7 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          logo_url?: string | null
           subscribed_at?: string | null
           subscription_plan?: string | null
           user_id?: string

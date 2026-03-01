@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import AuthGuard from "@/components/AuthGuard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -55,12 +56,18 @@ const App = () => (
             <Route path="/client-login" element={<ClientLogin />} />
             <Route path="/client-register/:token" element={<ClientRegister />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-            <Route path="/client-portal/:token" element={<PortalHome />} />
-            <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />
-            <Route path="/client-portal/:token/progress" element={<PortalProgress />} />
-            <Route path="/client-portal/:token/nutrition" element={<PortalNutrition />} />
-            <Route path="/client-portal/:token/body-scan" element={<PortalBodyScan />} />
-            <Route path="/client-portal/:token/content" element={<PortalContent />} />
+
+            {/* Portal entry with token — captures & redirects to clean URL */}
+            <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
+
+            {/* Clean portal routes (token in sessionStorage) */}
+            <Route path="/portal" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
+            <Route path="/portal/workout" element={<PortalTokenProvider><PortalWorkout /></PortalTokenProvider>} />
+            <Route path="/portal/progress" element={<PortalTokenProvider><PortalProgress /></PortalTokenProvider>} />
+            <Route path="/portal/nutrition" element={<PortalTokenProvider><PortalNutrition /></PortalTokenProvider>} />
+            <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
+            <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ const exercises: ExerciseData[] = [
 
 const PortalWorkout = () => {
   const navigate = useNavigate();
-  const { token } = useParams();
+  const { token } = usePortalToken();
   const [currentExIdx, setCurrentExIdx] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
   const [actualWeight, setActualWeight] = useState("");
@@ -73,7 +74,7 @@ const PortalWorkout = () => {
             <div><p className="text-2xl font-bold text-primary">{totalSets}</p><p className="text-xs text-muted-foreground">سيت</p></div>
             <div><p className="text-2xl font-bold text-primary">{mins || 1}</p><p className="text-xs text-muted-foreground">دقيقة</p></div>
           </div>
-          <Button className="w-full max-w-xs py-6 text-base" onClick={() => navigate(`/client-portal/${token}`)}>عودة للرئيسية</Button>
+          <Button className="w-full max-w-xs py-6 text-base" onClick={() => navigate(`/portal`)}>عودة للرئيسية</Button>
         </div>
       </ClientPortalLayout>
     );

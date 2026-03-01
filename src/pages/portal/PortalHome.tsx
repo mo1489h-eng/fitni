@@ -1,5 +1,6 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import PortalMoodSelector from "@/components/PortalMoodSelector";
 import PortalPrivacySettings from "@/components/PortalPrivacySettings";
@@ -18,7 +19,7 @@ const todayIndex = 4;
 
 const PortalHome = () => {
   const navigate = useNavigate();
-  const { token } = useParams();
+  const { token } = usePortalToken();
 
   const { data: client, isLoading, error } = useQuery({
     queryKey: ["portal-client", token],
@@ -84,7 +85,7 @@ const PortalHome = () => {
             <p>• تراي بوش داون 3×12 (25 كجم)</p>
           </div>
 
-          <Button className="w-full text-base py-6 gap-2" onClick={() => navigate(`/client-portal/${token}/workout`)}>
+          <Button className="w-full text-base py-6 gap-2" onClick={() => navigate(`/portal/workout`)}>
             <Play className="w-5 h-5" />
             ابدأ التمرين 💪
           </Button>

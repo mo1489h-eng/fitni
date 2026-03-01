@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Card } from "@/components/ui/card";
@@ -38,7 +38,7 @@ const generateCalendar = () => {
 };
 
 const PortalProgress = () => {
-  const { token } = useParams();
+  const { token } = usePortalToken();
   const { daysInMonth, firstDay, workoutDays, month, year } = generateCalendar();
   const monthName = new Date(year, month).toLocaleDateString("ar-SA", { month: "long", year: "numeric" });
   const dayNames = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];

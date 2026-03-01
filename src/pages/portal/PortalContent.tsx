@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
@@ -6,7 +6,7 @@ import PostCard from "@/components/PostCard";
 import { Loader2 } from "lucide-react";
 
 const PortalContent = () => {
-  const { token } = useParams();
+  const { token } = usePortalToken();
 
   const { data: client } = useQuery({
     queryKey: ["portal-client", token],

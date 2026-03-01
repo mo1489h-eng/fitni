@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, CalendarDays, Lightbulb, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import TrainerNotifications from "@/components/TrainerNotifications";
 
 const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
@@ -32,9 +33,12 @@ const TrainerLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <span className="font-black text-foreground">fitni</span>
           </div>
-          <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <TrainerNotifications />
+            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 

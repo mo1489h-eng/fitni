@@ -100,6 +100,41 @@ export type Database = {
           },
         ]
       }
+      client_moods: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          mood: string
+          mood_date: string
+          note: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          mood: string
+          mood_date?: string
+          note?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          mood?: string
+          mood_date?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_moods_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           auth_user_id: string | null
@@ -108,10 +143,14 @@ export type Database = {
           goal: string
           id: string
           invite_token: string | null
+          last_active_at: string | null
           last_workout_date: string
           name: string
           phone: string
           portal_token: string | null
+          privacy_photos: boolean
+          privacy_scans: boolean
+          privacy_weight: boolean
           program_id: string | null
           subscription_end_date: string
           subscription_price: number
@@ -125,10 +164,14 @@ export type Database = {
           goal?: string
           id?: string
           invite_token?: string | null
+          last_active_at?: string | null
           last_workout_date?: string
           name: string
           phone?: string
           portal_token?: string | null
+          privacy_photos?: boolean
+          privacy_scans?: boolean
+          privacy_weight?: boolean
           program_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
@@ -142,10 +185,14 @@ export type Database = {
           goal?: string
           id?: string
           invite_token?: string | null
+          last_active_at?: string | null
           last_workout_date?: string
           name?: string
           phone?: string
           portal_token?: string | null
+          privacy_photos?: boolean
+          privacy_scans?: boolean
+          privacy_weight?: boolean
           program_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
@@ -555,6 +602,47 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_notifications: {
+        Row: {
+          body: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          title: string
+          trainer_id: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title: string
+          trainer_id: string
+          type?: string
+        }
+        Update: {
+          body?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title?: string
+          trainer_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainer_posts: {
         Row: {
           audience: string
@@ -653,10 +741,14 @@ export type Database = {
           goal: string
           id: string
           invite_token: string | null
+          last_active_at: string | null
           last_workout_date: string
           name: string
           phone: string
           portal_token: string | null
+          privacy_photos: boolean
+          privacy_scans: boolean
+          privacy_weight: boolean
           program_id: string | null
           subscription_end_date: string
           subscription_price: number
@@ -793,8 +885,22 @@ export type Database = {
         Args: { p_auth_user_id: string; p_invite_token: string }
         Returns: string
       }
+      log_portal_mood: {
+        Args: { p_mood: string; p_note?: string; p_token: string }
+        Returns: string
+      }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }
+        Returns: boolean
+      }
+      update_portal_activity: { Args: { p_token: string }; Returns: undefined }
+      update_portal_privacy: {
+        Args: {
+          p_privacy_photos: boolean
+          p_privacy_scans: boolean
+          p_privacy_weight: boolean
+          p_token: string
+        }
         Returns: boolean
       }
       validate_and_redeem_promo: {

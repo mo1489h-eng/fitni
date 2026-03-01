@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -54,7 +54,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Array<{
+      const items = data as Array<{
         id: string;
         client_id: string;
         photo_type: string;
@@ -62,6 +62,17 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
         uploaded_by: string;
         created_at: string;
       }>;
+      // Resolve signed URLs for non-http paths (new format)
+      const resolved = await Promise.all(
+        items.map(async (item) => {
+          if (item.photo_url.startsWith("http")) return item;
+          const { data: signedData } = await supabase.storage
+            .from("progress-photos")
+            .createSignedUrl(item.photo_url, 60 * 60); // 1 hour
+          return { ...item, photo_url: signedData?.signedUrl || item.photo_url };
+        })
+      );
+      return resolved;
     },
     enabled: !!clientId,
   });
@@ -77,9 +88,8 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
         .upload(path, compressed, { contentType: "image/jpeg" });
       if (uploadErr) throw uploadErr;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("progress-photos")
-        .getPublicUrl(path);
+      // Store the storage path, not the public URL
+      const storagePath = path;
 
       const { error: dbErr } = await (supabase as any)
         .from("progress_photos")
@@ -87,7 +97,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
           client_id: clientId,
           trainer_id: trainerId || null,
           photo_type: type,
-          photo_url: publicUrl,
+          photo_url: storagePath,
           uploaded_by: uploadedBy,
         });
       if (dbErr) throw dbErr;
@@ -103,12 +113,14 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
 
   const deleteMutation = useMutation({
     mutationFn: async (photo: { id: string; photo_url: string }) => {
-      // Extract path from URL
-      const url = new URL(photo.photo_url);
-      const pathParts = url.pathname.split("/storage/v1/object/public/progress-photos/");
-      if (pathParts[1]) {
-        await supabase.storage.from("progress-photos").remove([decodeURIComponent(pathParts[1])]);
+      // photo_url is either a storage path or a full public URL (legacy)
+      let storagePath = photo.photo_url;
+      if (photo.photo_url.startsWith("http")) {
+        const url = new URL(photo.photo_url);
+        const pathParts = url.pathname.split("/storage/v1/object/public/progress-photos/");
+        storagePath = pathParts[1] ? decodeURIComponent(pathParts[1]) : photo.photo_url;
       }
+      await supabase.storage.from("progress-photos").remove([storagePath]);
       const { error } = await (supabase as any).from("progress_photos").delete().eq("id", photo.id);
       if (error) throw error;
     },

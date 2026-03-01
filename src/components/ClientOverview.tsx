@@ -74,8 +74,8 @@ const ClientOverview = ({ clients, measurements }: ClientOverviewProps) => {
     return (da.isPaid ? 1 : 0) - (db.isPaid ? 1 : 0);
   });
 
-  const formatWhatsApp = (phone: string) =>
-    `https://wa.me/966${phone.replace(/^0/, "")}`;
+  const formatWhatsApp = (phone: string | undefined) =>
+    `https://wa.me/966${(phone || "").replace(/^0/, "")}`;
 
   const getCommitmentColor = (percent: number) => {
     if (percent >= 80) return "text-success bg-success/10";

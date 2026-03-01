@@ -8,9 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users, Video,
+  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users, Video, Copy,
 } from "lucide-react";
 import ProgramTemplates from "@/components/ProgramTemplates";
+import CopyProgramModal from "@/components/CopyProgramModal";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -94,12 +95,16 @@ const ProgramBuilder = () => {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, program_id");
+      const { data, error } = await supabase.from("clients").select("id, name, program_id");
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
+
+  // Copy program modal state
+  const [copyProgramId, setCopyProgramId] = useState<string | null>(null);
+  const copyProgram = programs.find((p) => p.id === copyProgramId);
 
   // Fetch days + exercises for viewed program
   const { data: programDays = [] } = useQuery({
@@ -611,23 +616,44 @@ const ProgramBuilder = () => {
             {programs.map((program) => (
               <Card
                 key={program.id}
-                className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setViewProgramId(program.id)}
+                className="p-4 hover:shadow-md transition-shadow"
               >
-                <h3 className="font-bold text-card-foreground mb-2">{program.name}</h3>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {program.weeks} أسابيع
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" />
-                    {getClientCount(program.id)} متدرب
-                  </span>
+                <div className="cursor-pointer" onClick={() => setViewProgramId(program.id)}>
+                  <h3 className="font-bold text-card-foreground mb-2">{program.name}</h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {program.weeks} أسابيع
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" />
+                      {getClientCount(program.id)} متدرب
+                    </span>
+                  </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 gap-1 text-xs w-full"
+                  onClick={(e) => { e.stopPropagation(); setCopyProgramId(program.id); }}
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  نسخ للعملاء
+                </Button>
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Copy Program Modal */}
+        {copyProgram && (
+          <CopyProgramModal
+            open={!!copyProgramId}
+            onOpenChange={(open) => { if (!open) setCopyProgramId(null); }}
+            program={copyProgram}
+            clients={clients as any}
+            programs={programs}
+          />
         )}
       </div>
     </TrainerLayout>

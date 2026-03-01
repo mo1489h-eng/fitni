@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
 import ClientOverview from "@/components/ClientOverview";
+import ImportClientsModal from "@/components/ImportClientsModal";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -10,13 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Users, DollarSign, AlertTriangle, Clock, Loader2,
-  MessageCircle, CheckCircle, Activity, CreditCard,
+  MessageCircle, CheckCircle, Activity, CreditCard, Upload,
 } from "lucide-react";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -75,7 +77,11 @@ const Dashboard = () => {
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">مرحباً {profile?.full_name || ""} 👋</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => setShowImport(true)}>
+              <Upload className="w-3.5 h-3.5" />
+              استيراد عملاء
+            </Button>
             <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => {
               clients.forEach((c, i) => {
                 const phone = `966${c.phone.replace(/^0/, "")}`;
@@ -198,6 +204,7 @@ const Dashboard = () => {
           </>
         )}
       </div>
+      <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
     </TrainerLayout>
   );
 };

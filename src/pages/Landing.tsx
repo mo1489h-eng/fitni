@@ -73,12 +73,12 @@ const Landing = () => {
                 size="lg"
                 className="text-lg px-10 py-7 gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white border-0 rounded-2xl animate-glow-pulse shadow-2xl shadow-[#16a34a]/30"
               >
-                ابدأ مجاناً 14 يوم
+                ابدأ مجاناً لسنة كاملة ←
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             </Link>
-            <p className="text-sm text-white/30 mt-4" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">
-              <span className="text-[#4ade80]/50 font-medium">fitni</span> — Where Excellence Begins
+            <p className="text-sm text-white/30 mt-4">
+              بدون بطاقة ائتمان • سنة كاملة مجاناً
             </p>
           </div>
 
@@ -268,11 +268,11 @@ const Landing = () => {
               size="lg"
               className="text-lg px-12 py-7 gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white border-0 rounded-2xl animate-glow-pulse shadow-2xl shadow-[#16a34a]/30 mt-4"
             >
-              ابدأ مجاناً ←
+              ابدأ مجاناً لسنة كاملة ←
             </Button>
           </Link>
-          <p className="text-sm text-white/25" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">
-            No credit card • Free 14-day trial • Cancel anytime
+          <p className="text-sm text-white/25 mt-4">
+            بدون بطاقة ائتمان • سنة كاملة مجاناً
           </p>
         </div>
       </section>

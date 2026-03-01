@@ -31,7 +31,7 @@ const SPECIALIZATIONS = [
 const Settings = () => {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { plan } = usePlanLimits();
-  const isPro = plan === "pro" || plan === "gym";
+  const isPro = plan === "pro";
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -177,17 +177,15 @@ const Settings = () => {
   };
 
   const planLabels: Record<string, string> = {
-    free: "تجربة مجانية",
+    free: "مجاني (سنة كاملة)",
     basic: "أساسي",
     pro: "احترافي",
-    gym: "جيم",
   };
 
   const planColors: Record<string, string> = {
     free: "bg-muted text-muted-foreground",
     basic: "bg-primary/10 text-primary",
     pro: "bg-accent text-accent-foreground",
-    gym: "bg-warning/10 text-warning",
   };
 
   return (

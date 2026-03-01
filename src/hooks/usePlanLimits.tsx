@@ -2,15 +2,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type PlanType = "free" | "basic" | "pro" | "gym" | null;
+export type PlanType = "free" | "basic" | "pro" | null;
 
-const TRIAL_DAYS = 14;
+const FREE_YEAR_DAYS = 365;
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
-  free: { maxClients: 3 },
+  free: { maxClients: Infinity },
   basic: { maxClients: 10 },
   pro: { maxClients: Infinity },
-  gym: { maxClients: Infinity },
 };
 
 export function usePlanLimits() {
@@ -34,14 +33,15 @@ export function usePlanLimits() {
   const daysSinceCreation = Math.floor(
     (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
   );
-  const trialDaysLeft = Math.max(TRIAL_DAYS - daysSinceCreation, 0);
-  const isTrialExpired = plan === "free" && trialDaysLeft <= 0;
-  const isOnTrial = plan === "free" && trialDaysLeft > 0;
+  const freeYearDaysLeft = Math.max(FREE_YEAR_DAYS - daysSinceCreation, 0);
+  const freeYearEndDate = new Date(createdAt.getTime() + FREE_YEAR_DAYS * 24 * 60 * 60 * 1000);
+  const isTrialExpired = plan === "free" && freeYearDaysLeft <= 0;
+  const isOnTrial = plan === "free" && freeYearDaysLeft > 0;
 
   const maxClients = PLAN_LIMITS[plan]?.maxClients ?? 3;
   const canAddClient = clientCount < maxClients && !isTrialExpired;
 
-  const hasReportsAccess = plan === "pro" || plan === "gym";
+  const hasReportsAccess = plan === "pro";
 
   const getAddClientBlockReason = (): {
     blocked: boolean;
@@ -51,18 +51,11 @@ export function usePlanLimits() {
     if (isTrialExpired) {
       return {
         blocked: true,
-        title: "انتهت تجربتك المجانية",
+        title: "انتهت السنة المجانية",
         description: "اشترك للاستمرار في إضافة عملاء وإدارة برامجك",
       };
     }
     if (clientCount >= maxClients) {
-      if (plan === "free") {
-        return {
-          blocked: true,
-          title: "وصلت للحد الأقصى في التجربة المجانية",
-          description: "التجربة المجانية تسمح بـ 3 عملاء فقط. اشترك لإضافة عملاء أكثر",
-        };
-      }
       if (plan === "basic") {
         return {
           blocked: true,
@@ -82,7 +75,8 @@ export function usePlanLimits() {
     hasReportsAccess,
     isTrialExpired,
     isOnTrial,
-    trialDaysLeft,
+    freeYearDaysLeft,
+    freeYearEndDate,
     getAddClientBlockReason,
   };
 }

@@ -12,7 +12,7 @@ interface MoyasarPaymentProps {
   onBack: () => void;
 }
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_MOYASAR_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";
 
 const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
   const formRef = useRef<HTMLDivElement>(null);

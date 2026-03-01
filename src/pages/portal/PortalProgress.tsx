@@ -77,7 +77,7 @@ const PortalProgress = () => {
 
         {/* Progress Photos */}
         {client && (
-          <ProgressPhotos clientId={client.id} uploadedBy="client" trainerId={client.trainer_id || undefined} />
+          <ProgressPhotos clientId={client.id} uploadedBy="client" trainerId={client.trainer_id || undefined} portalToken={token} />
         )}
 
         {/* Weight Chart */}

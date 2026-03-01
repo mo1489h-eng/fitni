@@ -203,12 +203,12 @@ const Nutrition = () => {
         const { error } = await supabase.from("meal_items").insert(
           validItems.map((item, idx) => ({
             meal_plan_id: planId,
-            meal_name: item.meal_name,
-            food_name: item.food_name,
-            calories: item.calories,
-            protein: item.protein,
-            carbs: item.carbs,
-            fats: item.fats,
+            meal_name: (item.meal_name || "وجبة").slice(0, 200),
+            food_name: item.food_name.trim().slice(0, 200),
+            calories: Math.max(0, Number(item.calories) || 0),
+            protein: Math.max(0, Number(item.protein) || 0),
+            carbs: Math.max(0, Number(item.carbs) || 0),
+            fats: Math.max(0, Number(item.fats) || 0),
             quantity: item.quantity,
             item_order: idx,
           }))

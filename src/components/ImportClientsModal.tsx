@@ -16,7 +16,7 @@ import {
   Upload, FileSpreadsheet, Download, Loader2, CheckCircle, AlertTriangle,
   Zap, ArrowLeft,
 } from "lucide-react";
-import * as XLSX from "xlsx";
+
 
 interface ImportClientsModalProps {
   open: boolean;
@@ -78,6 +78,18 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
     setTimeout(resetState, 300);
   };
 
+  const parseCsv = (text: string): RawRow[] => {
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+    return lines.slice(1).map((line) => {
+      const values = line.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
+      const row: RawRow = {};
+      headers.forEach((h, i) => { row[h] = values[i] || ""; });
+      return row;
+    });
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -85,9 +97,8 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
-        const wb = XLSX.read(evt.target?.result, { type: "binary" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json<RawRow>(ws);
+        const text = evt.target?.result as string;
+        const json = parseCsv(text);
         if (json.length === 0) {
           toast({ title: "الملف فارغ", variant: "destructive" });
           return;
@@ -96,7 +107,6 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
         setRawData(json);
         setColumns(cols);
 
-        // Auto-map by name matching
         const autoMap: Record<string, string> = {};
         COLUMN_FIELDS.forEach((field) => {
           const match = cols.find((c) =>
@@ -110,7 +120,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
         toast({ title: "خطأ في قراءة الملف", variant: "destructive" });
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -138,15 +148,19 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
   };
 
   const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
-    const data = [
-      ["الاسم", "رقم الجوال", "الهدف", "سعر الاشتراك", "تاريخ نهاية الاشتراك", "ملاحظات"],
-      ["أحمد محمد", "0501234567", "تخسيس", 500, "2026-04-01", ""],
-      ["سارة علي", "0559876543", "بناء عضلات", 800, "2026-05-15", ""],
+    const headers = ["الاسم", "رقم الجوال", "الهدف", "سعر الاشتراك", "تاريخ نهاية الاشتراك"];
+    const rows = [
+      ["أحمد محمد", "0501234567", "تخسيس", "500", "2026-04-01"],
+      ["سارة علي", "0559876543", "بناء عضلات", "800", "2026-05-15"],
     ];
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Clients");
-    XLSX.writeFile(wb, "fitni_clients_template.xlsx");
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fitni_clients_template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const applyMapping = () => {
@@ -251,7 +265,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
                 </div>
               </div>
             </Card>
-            <input ref={fileRef} type="file" accept=".xlsx,.csv,.xls" className="hidden" onChange={handleFileUpload} />
+            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
 
             {/* Manual entry */}
             <Card className="p-4">

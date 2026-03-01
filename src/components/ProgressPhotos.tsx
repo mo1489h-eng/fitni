@@ -10,6 +10,7 @@ interface ProgressPhotosProps {
   clientId: string;
   uploadedBy: "trainer" | "client";
   trainerId?: string;
+  portalToken?: string;
 }
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
@@ -38,7 +39,7 @@ const compressImage = (file: File, maxSize: number): Promise<File> => {
   });
 };
 
-const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps) => {
+const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: ProgressPhotosProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState<"before" | "after" | null>(null);
@@ -46,15 +47,9 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
   const afterRef = useRef<HTMLInputElement>(null);
 
   const { data: photos = [], isLoading } = useQuery({
-    queryKey: ["progress-photos", clientId],
+    queryKey: ["progress-photos", clientId, portalToken],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("progress_photos")
-        .select("*")
-        .eq("client_id", clientId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      const items = data as Array<{
+      let items: Array<{
         id: string;
         client_id: string;
         photo_type: string;
@@ -62,13 +57,32 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
         uploaded_by: string;
         created_at: string;
       }>;
+
+      if (portalToken) {
+        // Portal access: use secure RPC
+        const { data, error } = await supabase.rpc("get_portal_progress_photos" as any, {
+          p_token: portalToken,
+        });
+        if (error) throw error;
+        items = (data || []) as typeof items;
+      } else {
+        // Trainer access: direct query (RLS enforced)
+        const { data, error } = await (supabase as any)
+          .from("progress_photos")
+          .select("*")
+          .eq("client_id", clientId)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        items = data as typeof items;
+      }
+
       // Resolve signed URLs for non-http paths (new format)
       const resolved = await Promise.all(
         items.map(async (item) => {
           if (item.photo_url.startsWith("http")) return item;
           const { data: signedData } = await supabase.storage
             .from("progress-photos")
-            .createSignedUrl(item.photo_url, 60 * 60); // 1 hour
+            .createSignedUrl(item.photo_url, 60 * 60);
           return { ...item, photo_url: signedData?.signedUrl || item.photo_url };
         })
       );
@@ -88,21 +102,31 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
         .upload(path, compressed, { contentType: "image/jpeg" });
       if (uploadErr) throw uploadErr;
 
-      // Store the storage path, not the public URL
       const storagePath = path;
 
-      const { error: dbErr } = await (supabase as any)
-        .from("progress_photos")
-        .insert({
-          client_id: clientId,
-          trainer_id: trainerId || null,
-          photo_type: type,
-          photo_url: storagePath,
-          uploaded_by: uploadedBy,
+      if (portalToken) {
+        // Portal: use secure RPC to insert
+        const { error: dbErr } = await supabase.rpc("insert_portal_progress_photo" as any, {
+          p_token: portalToken,
+          p_photo_type: type,
+          p_photo_url: storagePath,
         });
-      if (dbErr) throw dbErr;
+        if (dbErr) throw dbErr;
+      } else {
+        // Trainer: direct insert (RLS enforced)
+        const { error: dbErr } = await (supabase as any)
+          .from("progress_photos")
+          .insert({
+            client_id: clientId,
+            trainer_id: trainerId || null,
+            photo_type: type,
+            photo_url: storagePath,
+            uploaded_by: uploadedBy,
+          });
+        if (dbErr) throw dbErr;
+      }
 
-      queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId, portalToken] });
       toast({ title: "تم رفع الصورة بنجاح 📸" });
     } catch (err: any) {
       toast({ title: "خطأ في رفع الصورة", description: err.message, variant: "destructive" });
@@ -125,7 +149,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId }: ProgressPhotosProps
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId, portalToken] });
       toast({ title: "تم حذف الصورة" });
     },
   });

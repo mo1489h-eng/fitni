@@ -500,10 +500,6 @@ export type Database = {
       }
     }
     Functions: {
-      client_has_portal_token: {
-        Args: { p_client_id: string }
-        Returns: boolean
-      }
       get_client_by_portal_token: {
         Args: { p_token: string }
         Returns: {
@@ -527,6 +523,29 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_portal_meal_plans: { Args: { p_token: string }; Returns: Json }
+      get_portal_progress_photos: {
+        Args: { p_token: string }
+        Returns: {
+          client_id: string
+          created_at: string
+          id: string
+          photo_type: string
+          photo_url: string
+          trainer_id: string | null
+          uploaded_by: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "progress_photos"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      insert_portal_progress_photo: {
+        Args: { p_photo_type: string; p_photo_url: string; p_token: string }
+        Returns: string
+      }
       validate_and_redeem_promo: {
         Args: { p_code: string; p_email: string; p_trainer_id: string }
         Returns: Json
@@ -534,6 +553,10 @@ export type Database = {
       validate_promo_code: {
         Args: { p_code: string; p_email: string }
         Returns: Json
+      }
+      verify_portal_access: {
+        Args: { p_client_id: string; p_token: string }
+        Returns: boolean
       }
     }
     Enums: {

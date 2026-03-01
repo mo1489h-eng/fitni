@@ -49,29 +49,15 @@ const PortalNutrition = () => {
   });
 
   const { data: plans, isLoading } = useQuery({
-    queryKey: ["portal-nutrition", client?.id],
+    queryKey: ["portal-nutrition", token],
     queryFn: async () => {
-      const { data: mealPlans, error } = await supabase
-        .from("meal_plans")
-        .select("id, name, notes")
-        .eq("client_id", client!.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_portal_meal_plans" as any, {
+        p_token: token!,
+      });
       if (error) throw error;
-      if (!mealPlans || mealPlans.length === 0) return [];
-
-      const enriched: MealPlan[] = await Promise.all(
-        mealPlans.map(async (plan) => {
-          const { data: items } = await supabase
-            .from("meal_items")
-            .select("*")
-            .eq("meal_plan_id", plan.id)
-            .order("item_order");
-          return { ...plan, items: items || [] };
-        })
-      );
-      return enriched;
+      return (data || []) as MealPlan[];
     },
-    enabled: !!client?.id,
+    enabled: !!token,
   });
 
   const groupByMeal = (items: MealItem[]) => {

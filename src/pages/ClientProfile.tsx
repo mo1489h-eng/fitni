@@ -12,6 +12,7 @@ import {
   Loader2, ArrowLeft, Check, Dumbbell, Calendar, Copy, Send,
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video,
 } from "lucide-react";
+import ClientPdfReport from "@/components/ClientPdfReport";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -151,18 +152,21 @@ const ClientProfile = () => {
   return (
     <TrainerLayout>
       <div className="space-y-4 animate-fade-in">
-        {/* Back + WhatsApp */}
+        {/* Back + Actions */}
         <div className="flex items-center justify-between">
           <Link to="/clients" className="flex items-center gap-1 text-sm text-primary hover:underline font-medium">
             العملاء
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm" className="gap-1">
-              <MessageCircle className="w-4 h-4" />
-              واتساب
-            </Button>
-          </a>
+          <div className="flex items-center gap-2">
+            <ClientPdfReport client={client} measurements={measurements || []} />
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-1">
+                <MessageCircle className="w-4 h-4" />
+                واتساب
+              </Button>
+            </a>
+          </div>
         </div>
 
         {/* Header Card */}

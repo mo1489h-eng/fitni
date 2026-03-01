@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
+import ClientOverview from "@/components/ClientOverview";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +22,16 @@ const Dashboard = () => {
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: allMeasurements = [] } = useQuery({
+    queryKey: ["dashboard-measurements"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("measurements").select("client_id, weight, recorded_at").order("recorded_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -181,6 +192,9 @@ const Dashboard = () => {
                 </div>
               </Card>
             )}
+
+            {/* Client Quick Overview */}
+            <ClientOverview clients={clients} measurements={allMeasurements as any} />
           </>
         )}
       </div>

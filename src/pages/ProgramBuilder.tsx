@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users, Video,
 } from "lucide-react";
+import ProgramTemplates from "@/components/ProgramTemplates";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -578,7 +579,7 @@ const ProgramBuilder = () => {
   // ===== PROGRAMS LIST =====
   return (
     <TrainerLayout>
-      <div className="space-y-4 animate-fade-in">
+      <div className="space-y-5 animate-fade-in">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">البرامج التدريبية</h1>
           <Button size="sm" onClick={() => setShowCreate(true)}>
@@ -587,13 +588,19 @@ const ProgramBuilder = () => {
           </Button>
         </div>
 
+        {/* Templates Section */}
+        <ProgramTemplates />
+
+        {/* Trainer's Programs */}
+        <h2 className="text-lg font-bold text-foreground">برامجك</h2>
+
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : programs.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="text-center py-10">
             <ClipboardList className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-40" />
             <p className="text-foreground font-medium mb-1">لا توجد برامج بعد</p>
-            <p className="text-sm text-muted-foreground mb-4">أنشئ أول برنامج تدريبي لعملائك</p>
+            <p className="text-sm text-muted-foreground mb-4">أنشئ برنامج أو استخدم قالب جاهز</p>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="w-4 h-4 ml-1" />
               إنشاء برنامج جديد

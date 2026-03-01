@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -12,6 +12,31 @@ serve(async (req) => {
   }
 
   try {
+    // Auth check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = claimsData.claims.sub;
+
     const { clientName, clientEmail, trainerName, inviteToken } = await req.json();
 
     if (!clientEmail || !inviteToken) {
@@ -21,15 +46,27 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    // Verify the caller is the trainer for this invite token
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Build the registration link - use the published URL if available
-    const appUrl = Deno.env.get("APP_URL") || supabaseUrl.replace(".supabase.co", ".lovable.app");
+    const { data: client } = await supabase
+      .from("clients")
+      .select("trainer_id")
+      .eq("invite_token", inviteToken)
+      .single();
+
+    if (!client || client.trainer_id !== userId) {
+      return new Response(JSON.stringify({ error: "Access denied" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Build the registration link
     const setupLink = `https://fitni.lovable.app/client-register/${inviteToken}`;
 
-    // Send email via Supabase Auth admin API (using built-in email service)
+    // Send email via Supabase Auth admin API
     const { error } = await supabase.auth.admin.inviteUserByEmail(clientEmail, {
       redirectTo: setupLink,
       data: {
@@ -40,13 +77,9 @@ serve(async (req) => {
       },
     });
 
-    // If invite fails (user may already exist), send a custom email via Resend or fallback
-    // For now, we'll use a simpler approach: generate a magic link style email
     if (error) {
-      console.log("Auth invite failed (user may exist), using direct SMTP:", error.message);
+      console.log("Auth invite failed (user may exist), using Resend:", error.message);
       
-      // Fallback: Send email using Supabase's built-in email
-      // We'll use the Resend API if available, otherwise log the link
       const resendKey = Deno.env.get("RESEND_API_KEY");
       
       if (resendKey) {
@@ -91,7 +124,6 @@ serve(async (req) => {
           });
         }
       } else {
-        // No Resend key - return the link so the trainer can share it manually
         console.log("No RESEND_API_KEY configured. Registration link:", setupLink);
         return new Response(JSON.stringify({ success: true, setupLink, emailSent: false, message: "لم يتم إعداد خدمة الإيميل. شارك الرابط يدوياً" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

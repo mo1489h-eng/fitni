@@ -468,7 +468,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      client_has_portal_token: {
+        Args: { p_client_id: string }
+        Returns: boolean
+      }
+      get_client_by_portal_token: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          goal: string
+          id: string
+          last_workout_date: string
+          name: string
+          phone: string
+          portal_token: string | null
+          program_id: string | null
+          subscription_end_date: string
+          subscription_price: number
+          trainer_id: string | null
+          week_number: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "clients"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       [_ in never]: never

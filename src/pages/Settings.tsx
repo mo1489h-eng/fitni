@@ -123,13 +123,14 @@ const Settings = () => {
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      // Create a long-lived signed URL for profile images
+      const { data: signedData } = await supabase.storage
         .from("progress-photos")
-        .getPublicUrl(path);
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
 
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ [column]: urlData.publicUrl })
+        .update({ [column]: signedData?.signedUrl || path })
         .eq("user_id", user.id);
       if (updateError) throw updateError;
 

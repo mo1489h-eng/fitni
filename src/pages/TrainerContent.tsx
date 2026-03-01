@@ -127,8 +127,9 @@ const TrainerContent = () => {
     const fileName = `${user!.id}/${folder}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("post-media").upload(fileName, file);
     if (error) throw error;
-    const { data: urlData } = supabase.storage.from("post-media").getPublicUrl(fileName);
-    return urlData.publicUrl;
+    // Store the path; create signed URL when displaying
+    const { data } = await supabase.storage.from("post-media").createSignedUrl(fileName, 60 * 60 * 24 * 365);
+    return data?.signedUrl || fileName;
   };
 
   const handlePublish = async () => {

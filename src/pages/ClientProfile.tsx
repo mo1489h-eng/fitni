@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
+import ClientBodyScans from "@/components/ClientBodyScans";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
@@ -20,10 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-type TabKey = "overview" | "program" | "payments" | "measurements";
+type TabKey = "overview" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string }[] = [
   { key: "overview", label: "نظرة عامة" },
   { key: "program", label: "البرنامج" },
+  { key: "bodyscans", label: "بيانات الجسم 📊" },
   { key: "payments", label: "المدفوعات" },
   { key: "measurements", label: "القياسات" },
 ];
@@ -406,6 +408,11 @@ const ClientProfile = () => {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ===== BODY SCANS TAB ===== */}
+          {activeTab === "bodyscans" && (
+            <ClientBodyScans clientId={id!} />
           )}
 
           {/* ===== PAYMENTS TAB ===== */}

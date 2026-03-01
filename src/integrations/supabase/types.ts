@@ -35,7 +35,9 @@ export type Database = {
           notes: string | null
           scan_date: string
           tdee: number
+          visceral_fat: number | null
           waist: number | null
+          water_percentage: number | null
           weight: number
         }
         Insert: {
@@ -58,7 +60,9 @@ export type Database = {
           notes?: string | null
           scan_date?: string
           tdee?: number
+          visceral_fat?: number | null
           waist?: number | null
+          water_percentage?: number | null
           weight?: number
         }
         Update: {
@@ -81,7 +85,9 @@ export type Database = {
           notes?: string | null
           scan_date?: string
           tdee?: number
+          visceral_fat?: number | null
           waist?: number | null
+          water_percentage?: number | null
           weight?: number
         }
         Relationships: [
@@ -664,7 +670,9 @@ export type Database = {
           notes: string | null
           scan_date: string
           tdee: number
+          visceral_fat: number | null
           waist: number | null
+          water_percentage: number | null
           weight: number
         }[]
         SetofOptions: {
@@ -699,28 +707,53 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      insert_portal_body_scan: {
-        Args: {
-          p_activity_level: string
-          p_age: number
-          p_bmi?: number
-          p_bmr?: number
-          p_body_fat?: number
-          p_gender: string
-          p_height: number
-          p_hip?: number
-          p_ideal_weight_max?: number
-          p_ideal_weight_min?: number
-          p_muscle_mass?: number
-          p_neck?: number
-          p_notes?: string
-          p_tdee?: number
-          p_token: string
-          p_waist?: number
-          p_weight: number
-        }
-        Returns: string
-      }
+      insert_portal_body_scan:
+        | {
+            Args: {
+              p_activity_level: string
+              p_age: number
+              p_bmi?: number
+              p_bmr?: number
+              p_body_fat?: number
+              p_gender: string
+              p_height: number
+              p_hip?: number
+              p_ideal_weight_max?: number
+              p_ideal_weight_min?: number
+              p_muscle_mass?: number
+              p_neck?: number
+              p_notes?: string
+              p_tdee?: number
+              p_token: string
+              p_waist?: number
+              p_weight: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_activity_level: string
+              p_age: number
+              p_bmi?: number
+              p_bmr?: number
+              p_body_fat?: number
+              p_gender: string
+              p_height: number
+              p_hip?: number
+              p_ideal_weight_max?: number
+              p_ideal_weight_min?: number
+              p_muscle_mass?: number
+              p_neck?: number
+              p_notes?: string
+              p_tdee?: number
+              p_token: string
+              p_visceral_fat?: number
+              p_waist?: number
+              p_water_percentage?: number
+              p_weight: number
+            }
+            Returns: string
+          }
       insert_portal_progress_photo: {
         Args: { p_photo_type: string; p_photo_url: string; p_token: string }
         Returns: string

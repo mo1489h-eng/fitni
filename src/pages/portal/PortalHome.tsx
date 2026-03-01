@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
+import PortalMoodSelector from "@/components/PortalMoodSelector";
+import PortalPrivacySettings from "@/components/PortalPrivacySettings";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Flame, Play, Loader2 } from "lucide-react";
@@ -119,6 +121,12 @@ const PortalHome = () => {
             </Card>
           ))}
         </div>
+
+        {/* Mood Selector */}
+        <PortalMoodSelector />
+
+        {/* Privacy Settings */}
+        <PortalPrivacySettings />
       </div>
     </ClientPortalLayout>
   );

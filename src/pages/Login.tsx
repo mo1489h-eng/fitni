@@ -35,8 +35,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-4 left-4">
+        <Link to="/" className="text-sm text-primary hover:underline font-medium">العودة للرئيسية ←</Link>
+      </div>
+      <Link to="/" className="absolute top-4 right-4 flex items-center gap-2">
+        <span className="text-xl font-black text-foreground">fitni</span>
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+          <Dumbbell className="w-4 h-4 text-primary-foreground" />
+        </div>
+      </Link>
+      <div className="w-full max-w-sm animate-fade-in mt-16">
         <div className="flex items-center gap-2 mb-8 justify-center">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Dumbbell className="w-5 h-5 text-primary-foreground" />

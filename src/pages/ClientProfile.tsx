@@ -237,6 +237,30 @@ const ClientProfile = () => {
           </Card>
         )}
 
+        {/* Invite Link for Registration */}
+        {(client as any).invite_token && (
+          <Card className="p-4 border-[#16a34a]/30 bg-[#16a34a]/5">
+            <h3 className="font-bold text-card-foreground mb-2">🔗 رابط تسجيل المتدرب</h3>
+            <p className="text-xs text-muted-foreground mb-3">أرسل هذا الرابط لعميلك لإنشاء حسابه الخاص</p>
+            <div className="bg-secondary rounded-lg p-2.5 text-xs text-secondary-foreground dir-ltr text-left mb-3 break-all">
+              {window.location.origin}/client-register/{(client as any).invite_token}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/client-register/${(client as any).invite_token}`);
+                toast({ title: "تم نسخ رابط التسجيل 📋" });
+              }}>
+                <Copy className="w-4 h-4" /> نسخ الرابط
+              </Button>
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`مرحباً ${client.name} 👋\nمدربك أضافك على fitni\nأنشئ حسابك المجاني:\n${window.location.origin}/client-register/${(client as any).invite_token}`)}`} target="_blank" rel="noopener noreferrer">
+                <Button size="sm" className="gap-1 w-full bg-[#16a34a] hover:bg-[#15803d] text-white">
+                  <Send className="w-4 h-4" /> إرسال دعوة واتساب
+                </Button>
+              </a>
+            </div>
+          </Card>
+        )}
+
         {/* Tabs */}
         <div className="flex border-b border-border overflow-x-auto">
           {tabs.map((tab) => (

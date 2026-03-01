@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +12,7 @@ const moods = [
 ];
 
 const PortalMoodSelector = () => {
-  const { token } = useParams();
+  const { token } = usePortalToken();
   const { toast } = useToast();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

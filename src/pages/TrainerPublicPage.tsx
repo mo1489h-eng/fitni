@@ -11,13 +11,12 @@ const TrainerPublicPage = () => {
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["public-profile", trainerId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("public_profiles")
-        .select("full_name, specialization, bio, avatar_url")
-        .eq("user_id", trainerId!)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("get_public_profile" as any, {
+        p_user_id: trainerId!,
+      });
       if (error) throw error;
-      return data as { full_name: string; specialization: string | null; bio: string | null; avatar_url: string | null } | null;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row as { full_name: string; specialization: string | null; bio: string | null; avatar_url: string | null } | null;
     },
     enabled: !!trainerId,
   });

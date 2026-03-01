@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Shield, Eye, EyeOff, Scale, Camera, ScanLine } from "lucide-react";
 
 const PortalPrivacySettings = () => {
-  const { token } = useParams();
+  const { token } = usePortalToken();
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     privacy_weight: true,

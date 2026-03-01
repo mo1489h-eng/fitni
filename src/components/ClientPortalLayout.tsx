@@ -1,16 +1,15 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Dumbbell, Home, Activity, TrendingUp, Apple, Lightbulb, ScanLine } from "lucide-react";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { token } = useParams();
 
   const navItems = [
-    { label: "اليوم", href: `/client-portal/${token}`, icon: Home },
-    { label: "التمرين", href: `/client-portal/${token}/workout`, icon: Activity },
-    { label: "سكان", href: `/client-portal/${token}/body-scan`, icon: ScanLine },
-    { label: "التغذية", href: `/client-portal/${token}/nutrition`, icon: Apple },
-    { label: "تقدمي", href: `/client-portal/${token}/progress`, icon: TrendingUp },
+    { label: "اليوم", href: `/portal`, icon: Home },
+    { label: "التمرين", href: `/portal/workout`, icon: Activity },
+    { label: "سكان", href: `/portal/body-scan`, icon: ScanLine },
+    { label: "التغذية", href: `/portal/nutrition`, icon: Apple },
+    { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
   ];
 
   return (

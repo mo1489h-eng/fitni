@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Card } from "@/components/ui/card";
@@ -69,7 +69,7 @@ function calculateScan(
 }
 
 const PortalBodyScan = () => {
-  const { token } = useParams();
+  const { token } = usePortalToken();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);

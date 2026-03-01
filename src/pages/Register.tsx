@@ -115,7 +115,7 @@ const Register = () => {
         </div>
 
         <h2 className="text-2xl font-bold text-foreground text-center mb-2">إنشاء حساب جديد</h2>
-        <p className="text-muted-foreground text-center text-sm mb-8">ابدأ تجربتك المجانية لمدة 14 يوم</p>
+        <p className="text-muted-foreground text-center text-sm mb-8">ابدأ مجاناً لمدة سنة كاملة 🎉</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

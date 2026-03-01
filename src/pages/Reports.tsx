@@ -200,7 +200,7 @@ const Reports = () => {
     }
   };
 
-  // If not pro/gym, show locked state
+  // If not pro, show locked state
   if (!hasReportsAccess) {
     return (
       <TrainerLayout>

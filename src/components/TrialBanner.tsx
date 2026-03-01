@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Check, Star, Building2 } from "lucide-react";
+import { Check, Star, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const TRIAL_DAYS = 14;
-const WHATSAPP_NUMBER = "966500000000"; // Replace with real number
+const WHATSAPP_NUMBER = "966500000000";
 
 const plans = [
   {
@@ -36,24 +36,8 @@ const plans = [
       "عملاء غير محدودين",
       "كل مميزات الأساسي",
       "شعارك الخاص",
-      "رابط خاص بك",
       "تقارير متقدمة",
       "أولوية في الدعم",
-    ],
-  },
-  {
-    key: "gym",
-    name: "جيم",
-    monthlyPrice: 599,
-    annualPrice: 479,
-    icon: Building2,
-    popular: false,
-    features: [
-      "حتى 10 مدربين",
-      "لوحة تحكم المدير",
-      "كل مميزات الاحترافي",
-      "تقارير الجيم كامل",
-      "إعداد شخصي مجاني",
     ],
   },
 ];
@@ -66,9 +50,11 @@ interface TrialBannerProps {
 
 const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansChange }: TrialBannerProps) => {
   const { profile, user, refreshProfile } = useAuth();
+  const { isOnTrial, freeYearEndDate, isTrialExpired } = usePlanLimits();
   const [internalShowPlans, setInternalShowPlans] = useState(false);
   const [annual, setAnnual] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const { toast } = useToast();
 
   const showPlans = externalShowPlans ?? internalShowPlans;
@@ -79,30 +65,29 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
 
   if (!profile) return null;
 
-  const isSubscribed = !!profile.subscription_plan;
+  const isSubscribed = profile.subscription_plan && profile.subscription_plan !== "free";
 
-  const createdAt = new Date(profile.created_at);
-  const now = new Date();
-  const daysSinceCreation = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-  const daysLeft = Math.max(TRIAL_DAYS - daysSinceCreation, 0);
-  const expired = daysLeft <= 0;
-
-  // Banner: only show if not subscribed
-  const banner = !isSubscribed ? (
-    <div
-      className={`rounded-xl px-4 py-3 flex items-center justify-between text-sm ${
-        expired ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
-      }`}
-    >
-      <span className="font-medium">
-        {expired
-          ? "انتهت التجربة المجانية — اشترك للاستمرار"
-          : `🎉 تجربة مجانية — باقي ${daysLeft} يوم`}
-      </span>
-      <Button size="sm" variant={expired ? "destructive" : "default"} onClick={() => setShowPlans(true)}>
-        {expired ? "اشترك الآن" : "الباقات"}
-      </Button>
-    </div>
+  // Free year banner
+  const banner = !isSubscribed && !dismissed ? (
+    isTrialExpired ? (
+      <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-destructive/10 text-destructive">
+        <span className="font-medium">انتهت السنة المجانية — اشترك للاستمرار</span>
+        <Button size="sm" variant="destructive" onClick={() => setShowPlans(true)}>
+          اشترك الآن
+        </Button>
+      </div>
+    ) : isOnTrial ? (
+      <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-success/10 text-success">
+        <span className="font-medium">
+          🎉 أنت تستمتع بالوصول الكامل مجاناً لمدة سنة كاملة — ينتهي في {freeYearEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+        </span>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" className="text-success hover:text-success h-7 w-7 p-0" onClick={() => setDismissed(true)}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    ) : null
   ) : null;
 
   const handleSubscribe = async (planKey: string) => {
@@ -117,7 +102,6 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
         .eq("user_id", user!.id);
 
       if (error) throw error;
-
       await refreshProfile();
 
       toast({
@@ -154,6 +138,13 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
           <DialogHeader>
             <DialogTitle className="text-center text-xl">اختر باقتك</DialogTitle>
           </DialogHeader>
+
+          <p className="text-center text-sm text-muted-foreground mb-1">
+            الأسعار تبدأ بعد انتهاء السنة المجانية
+          </p>
+          <p className="text-center text-xs text-success font-medium mb-4">
+            ابدأ الآن مجاناً - لا حاجة لبطاقة ائتمان
+          </p>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-2 mb-2">

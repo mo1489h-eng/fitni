@@ -39,7 +39,7 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "" });
+  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "" });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -77,16 +77,17 @@ const Clients = () => {
         name: form.name,
         phone: form.phone,
         goal: form.goal,
+        email: form.email || null,
         subscription_price: Number(form.price) || 0,
         subscription_end_date: endDate.toISOString().split("T")[0],
         last_workout_date: new Date().toISOString().split("T")[0],
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
-      setForm({ name: "", phone: "", goal: "", price: "", startDate: "" });
+      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "" });
       toast({ title: "تم إضافة العميل بنجاح" });
     },
     onError: () => {
@@ -183,6 +184,11 @@ const Clients = () => {
               <div>
                 <label className="text-sm font-medium text-foreground">سعر الاشتراك (ر.س)</label>
                 <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number" dir="ltr" placeholder="800" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground">البريد الإلكتروني (اختياري)</label>
+                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" dir="ltr" placeholder="client@email.com" />
+                <p className="text-xs text-muted-foreground mt-1">لإرسال رابط تسجيل الدخول للمتدرب</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground">تاريخ البدء</label>

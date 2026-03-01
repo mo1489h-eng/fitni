@@ -102,9 +102,12 @@ export type Database = {
       }
       clients: {
         Row: {
+          auth_user_id: string | null
           created_at: string
+          email: string | null
           goal: string
           id: string
+          invite_token: string | null
           last_workout_date: string
           name: string
           phone: string
@@ -116,9 +119,12 @@ export type Database = {
           week_number: number
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string
+          email?: string | null
           goal?: string
           id?: string
+          invite_token?: string | null
           last_workout_date?: string
           name: string
           phone?: string
@@ -130,9 +136,12 @@ export type Database = {
           week_number?: number
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string
+          email?: string | null
           goal?: string
           id?: string
+          invite_token?: string | null
           last_workout_date?: string
           name?: string
           phone?: string
@@ -625,12 +634,25 @@ export type Database = {
       }
     }
     Functions: {
+      get_client_by_invite_token: {
+        Args: { p_token: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          phone: string
+          trainer_name: string
+        }[]
+      }
       get_client_by_portal_token: {
         Args: { p_token: string }
         Returns: {
+          auth_user_id: string | null
           created_at: string
+          email: string | null
           goal: string
           id: string
+          invite_token: string | null
           last_workout_date: string
           name: string
           phone: string
@@ -647,6 +669,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_client_profile: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          portal_token: string
+          trainer_id: string
+        }[]
       }
       get_portal_body_scans: {
         Args: { p_token: string }
@@ -756,6 +787,10 @@ export type Database = {
           }
       insert_portal_progress_photo: {
         Args: { p_photo_type: string; p_photo_url: string; p_token: string }
+        Returns: string
+      }
+      link_client_account: {
+        Args: { p_auth_user_id: string; p_invite_token: string }
         Returns: string
       }
       toggle_portal_meal_log: {

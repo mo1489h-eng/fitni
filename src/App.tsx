@@ -19,6 +19,7 @@ import Nutrition from "./pages/Nutrition";
 import Calendar from "./pages/Calendar";
 import TrainerContent from "./pages/TrainerContent";
 import TrainerPublicPage from "./pages/TrainerPublicPage";
+import ClientLogin from "./pages/ClientLogin";
 import PortalHome from "./pages/portal/PortalHome";
 import PortalWorkout from "./pages/portal/PortalWorkout";
 import PortalProgress from "./pages/portal/PortalProgress";
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
             <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
             <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
+            <Route path="/client-login" element={<ClientLogin />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
             <Route path="/client-portal/:token" element={<PortalHome />} />
             <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />

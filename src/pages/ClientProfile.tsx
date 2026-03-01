@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
-import ClientBodyScans from "@/components/ClientBodyScans";
+import TrainerBodyScans from "@/components/TrainerBodyScans";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
@@ -436,7 +436,7 @@ const ClientProfile = () => {
 
           {/* ===== BODY SCANS TAB ===== */}
           {activeTab === "bodyscans" && (
-            <ClientBodyScans clientId={id!} />
+            <TrainerBodyScans clientId={id!} clientPhone={client.phone} clientName={client.name} portalToken={client.portal_token} />
           )}
 
           {/* ===== PAYMENTS TAB ===== */}

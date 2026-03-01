@@ -500,9 +500,9 @@ const Settings = () => {
                 {planLabels[plan || "free"]}
               </span>
             </div>
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowPlans(true)}>
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate("/subscription")}>
               <CreditCard className="w-4 h-4" />
-              تغيير الباقة
+              إدارة الاشتراك
             </Button>
           </div>
 

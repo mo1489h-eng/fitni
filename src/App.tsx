@@ -24,6 +24,7 @@ import PortalWorkout from "./pages/portal/PortalWorkout";
 import PortalProgress from "./pages/portal/PortalProgress";
 import PortalNutrition from "./pages/portal/PortalNutrition";
 import PortalContent from "./pages/portal/PortalContent";
+import PortalBodyScan from "./pages/portal/PortalBodyScan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/client-portal/:token/workout" element={<PortalWorkout />} />
             <Route path="/client-portal/:token/progress" element={<PortalProgress />} />
             <Route path="/client-portal/:token/nutrition" element={<PortalNutrition />} />
+            <Route path="/client-portal/:token/body-scan" element={<PortalBodyScan />} />
             <Route path="/client-portal/:token/content" element={<PortalContent />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_scans: {
+        Row: {
+          activity_level: string
+          age: number
+          bmi: number
+          bmr: number
+          body_fat: number
+          client_id: string
+          created_at: string
+          gender: string
+          height: number
+          hip: number | null
+          id: string
+          ideal_weight_max: number
+          ideal_weight_min: number
+          is_manual_edit: boolean
+          muscle_mass: number
+          neck: number | null
+          notes: string | null
+          scan_date: string
+          tdee: number
+          waist: number | null
+          weight: number
+        }
+        Insert: {
+          activity_level?: string
+          age?: number
+          bmi?: number
+          bmr?: number
+          body_fat?: number
+          client_id: string
+          created_at?: string
+          gender?: string
+          height?: number
+          hip?: number | null
+          id?: string
+          ideal_weight_max?: number
+          ideal_weight_min?: number
+          is_manual_edit?: boolean
+          muscle_mass?: number
+          neck?: number | null
+          notes?: string | null
+          scan_date?: string
+          tdee?: number
+          waist?: number | null
+          weight?: number
+        }
+        Update: {
+          activity_level?: string
+          age?: number
+          bmi?: number
+          bmr?: number
+          body_fat?: number
+          client_id?: string
+          created_at?: string
+          gender?: string
+          height?: number
+          hip?: number | null
+          id?: string
+          ideal_weight_max?: number
+          ideal_weight_min?: number
+          is_manual_edit?: boolean
+          muscle_mass?: number
+          neck?: number | null
+          notes?: string | null
+          scan_date?: string
+          tdee?: number
+          waist?: number | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_scans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string
@@ -113,6 +193,45 @@ export type Database = {
             columns: ["meal_plan_id"]
             isOneToOne: false
             referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_logs: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          logged_at: string
+          meal_item_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          logged_at?: string
+          meal_item_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          logged_at?: string
+          meal_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_logs_meal_item_id_fkey"
+            columns: ["meal_item_id"]
+            isOneToOne: false
+            referencedRelation: "meal_items"
             referencedColumns: ["id"]
           },
         ]
@@ -523,6 +642,44 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_portal_body_scans: {
+        Args: { p_token: string }
+        Returns: {
+          activity_level: string
+          age: number
+          bmi: number
+          bmr: number
+          body_fat: number
+          client_id: string
+          created_at: string
+          gender: string
+          height: number
+          hip: number | null
+          id: string
+          ideal_weight_max: number
+          ideal_weight_min: number
+          is_manual_edit: boolean
+          muscle_mass: number
+          neck: number | null
+          notes: string | null
+          scan_date: string
+          tdee: number
+          waist: number | null
+          weight: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "body_scans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_portal_meal_logs: {
+        Args: { p_date?: string; p_token: string }
+        Returns: {
+          meal_item_id: string
+        }[]
+      }
       get_portal_meal_plans: { Args: { p_token: string }; Returns: Json }
       get_portal_progress_photos: {
         Args: { p_token: string }
@@ -542,9 +699,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      insert_portal_body_scan: {
+        Args: {
+          p_activity_level: string
+          p_age: number
+          p_bmi?: number
+          p_bmr?: number
+          p_body_fat?: number
+          p_gender: string
+          p_height: number
+          p_hip?: number
+          p_ideal_weight_max?: number
+          p_ideal_weight_min?: number
+          p_muscle_mass?: number
+          p_neck?: number
+          p_notes?: string
+          p_tdee?: number
+          p_token: string
+          p_waist?: number
+          p_weight: number
+        }
+        Returns: string
+      }
       insert_portal_progress_photo: {
         Args: { p_photo_type: string; p_photo_url: string; p_token: string }
         Returns: string
+      }
+      toggle_portal_meal_log: {
+        Args: { p_meal_item_id: string; p_token: string }
+        Returns: boolean
       }
       validate_and_redeem_promo: {
         Args: { p_code: string; p_email: string; p_trainer_id: string }

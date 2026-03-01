@@ -57,7 +57,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "fitni <noreply@fitni.lovable.app>",
+            from: "fitni <onboarding@resend.dev>",
             to: [clientEmail],
             subject: `مرحباً ${clientName} 👋 - دعوة من ${trainerName}`,
             html: `

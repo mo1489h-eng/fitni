@@ -66,13 +66,22 @@ const Clients = () => {
     enabled: !!user,
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["trainer-profile"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("full_name").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const addMutation = useMutation({
     mutationFn: async () => {
       const startDate = form.startDate ? new Date(form.startDate) : new Date();
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30);
 
-      const { error } = await supabase.from("clients").insert({
+      const { data: newClient, error } = await supabase.from("clients").insert({
         trainer_id: user!.id,
         name: form.name,
         phone: form.phone,
@@ -81,14 +90,40 @@ const Clients = () => {
         subscription_price: Number(form.price) || 0,
         subscription_end_date: endDate.toISOString().split("T")[0],
         last_workout_date: new Date().toISOString().split("T")[0],
-      } as any);
+      } as any).select("invite_token").single();
       if (error) throw error;
+
+      // Send invitation email if email provided
+      if (form.email && newClient?.invite_token) {
+        try {
+          const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
+            body: {
+              clientName: form.name,
+              clientEmail: form.email,
+              trainerName: profile?.full_name || "مدربك",
+              inviteToken: newClient.invite_token,
+            },
+          });
+          if (emailResult?.emailSent) {
+            toast({ title: "تم إرسال الدعوة بالإيميل 📧", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
+          } else if (emailResult?.setupLink) {
+            toast({ title: "تم إضافة العميل ✅", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
+          }
+        } catch (e) {
+          console.error("Email send error:", e);
+          toast({ title: "تم إضافة العميل ✅", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
+        }
+      }
+
+      return newClient;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
       setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "" });
-      toast({ title: "تم إضافة العميل بنجاح" });
+      if (!form.email) {
+        toast({ title: "تم إضافة العميل بنجاح" });
+      }
     },
     onError: () => {
       toast({ title: "حدث خطأ", variant: "destructive" });

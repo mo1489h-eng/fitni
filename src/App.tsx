@@ -16,6 +16,7 @@ import ProgramBuilder from "./pages/ProgramBuilder";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Subscription from "./pages/Subscription";
 import Nutrition from "./pages/Nutrition";
 import Calendar from "./pages/Calendar";
 import TrainerContent from "./pages/TrainerContent";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/client-login" element={<ClientLogin />} />
             <Route path="/client-register/:token" element={<ClientRegister />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+            <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
 
             {/* Portal entry with token — captures & redirects to clean URL */}
             <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />

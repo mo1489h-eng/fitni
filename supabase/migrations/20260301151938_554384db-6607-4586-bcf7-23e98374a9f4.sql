@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can read profiles via view" ON public.profiles;

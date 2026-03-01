@@ -41,12 +41,9 @@ const PortalNutrition = () => {
     queryKey: ["portal-client", token],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("clients")
-        .select("id, name")
-        .eq("portal_token", token!)
-        .maybeSingle();
+        .rpc("get_client_by_portal_token", { p_token: token! });
       if (error) throw error;
-      return data;
+      return (data && data.length > 0) ? data[0] : null;
     },
     enabled: !!token,
   });

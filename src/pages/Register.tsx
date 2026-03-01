@@ -26,22 +26,16 @@ const Register = () => {
       return null;
     }
     const checkEmail = forEmail || email;
-    const { data } = await supabase
-      .from("promo_codes")
-      .select("*")
-      .eq("code", code.trim().toUpperCase())
-      .eq("is_active", true)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("validate_promo_code" as any, {
+      p_code: code.trim(),
+      p_email: checkEmail,
+    });
 
-    let result: { valid: boolean; days?: number; message: string };
-    if (!data) {
-      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
-    } else if (data.used_count > 0) {
-      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
-    } else if (data.assigned_to_email && data.assigned_to_email.toLowerCase() !== checkEmail.toLowerCase()) {
-      result = { valid: false, message: "هذا الكود غير صالح أو تم استخدامه مسبقاً" };
-    } else {
-      result = { valid: true, days: data.duration_days, message: `🎉 تم تفعيل ${data.duration_days} يوم مجاناً!` };
+    const result = (data as any) || { valid: false, message: "حدث خطأ" };
+    if (error) {
+      const errResult = { valid: false, message: "حدث خطأ في التحقق من الكود" };
+      setPromoResult(errResult);
+      return errResult;
     }
     setPromoResult(result);
     return result;
@@ -75,19 +69,13 @@ const Register = () => {
 
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
-      // Apply promo code if valid
+      // Atomically redeem promo code if valid (handles race conditions server-side)
       if (validatedPromo?.valid && promoCode.trim()) {
-        const upperCode = promoCode.trim().toUpperCase();
-        await supabase.from("profiles").update({
-          subscription_plan: "pro",
-          subscribed_at: new Date().toISOString(),
-        }).eq("user_id", newUser.id);
-
-        await (supabase as any).from("promo_codes").update({
-          used_count: 1,
-          used_by_trainer_id: newUser.id,
-          used_at: new Date().toISOString(),
-        }).eq("code", upperCode);
+        await supabase.rpc("validate_and_redeem_promo" as any, {
+          p_code: promoCode.trim(),
+          p_email: email,
+          p_trainer_id: newUser.id,
+        });
       }
 
       // Insert demo clients

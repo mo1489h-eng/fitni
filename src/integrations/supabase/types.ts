@@ -465,7 +465,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          brand_color: string | null
+          full_name: string | null
+          logo_url: string | null
+          specialization: string | null
+          user_id: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          brand_color?: string | null
+          full_name?: string | null
+          logo_url?: string | null
+          specialization?: string | null
+          user_id?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          brand_color?: string | null
+          full_name?: string | null
+          logo_url?: string | null
+          specialization?: string | null
+          user_id?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       client_has_portal_token: {
@@ -494,6 +526,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      validate_and_redeem_promo: {
+        Args: { p_code: string; p_email: string; p_trainer_id: string }
+        Returns: Json
+      }
+      validate_promo_code: {
+        Args: { p_code: string; p_email: string }
+        Returns: Json
       }
     }
     Enums: {

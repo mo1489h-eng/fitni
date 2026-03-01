@@ -11,13 +11,13 @@ const TrainerPublicPage = () => {
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["public-profile", trainerId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
+      const { data, error } = await (supabase as any)
+        .from("public_profiles")
         .select("full_name, specialization, bio, avatar_url")
         .eq("user_id", trainerId!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as { full_name: string; specialization: string | null; bio: string | null; avatar_url: string | null } | null;
     },
     enabled: !!trainerId,
   });

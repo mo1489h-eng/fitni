@@ -148,6 +148,7 @@ export type Database = {
           name: string
           phone: string
           portal_token: string | null
+          portal_token_expires_at: string | null
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean
@@ -169,6 +170,7 @@ export type Database = {
           name: string
           phone?: string
           portal_token?: string | null
+          portal_token_expires_at?: string | null
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -190,6 +192,7 @@ export type Database = {
           name?: string
           phone?: string
           portal_token?: string | null
+          portal_token_expires_at?: string | null
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -755,6 +758,7 @@ export type Database = {
           name: string
           phone: string
           portal_token: string | null
+          portal_token_expires_at: string | null
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean

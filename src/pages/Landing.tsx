@@ -86,7 +86,7 @@ const Landing = () => {
           </div>
 
           <p className="text-sm text-white/30 mt-2">
-            بدون بطاقة ائتمان • سنة كاملة مجاناً للمدربين
+            بدون بطاقة ائتمان • 6 شهور مجاناً للمدربين
           </p>
 
           {/* Stats Row */}
@@ -217,7 +217,7 @@ const Landing = () => {
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-white/25 mt-4">بدون بطاقة ائتمان • سنة كاملة مجاناً</p>
+          <p className="text-sm text-white/25 mt-4">بدون بطاقة ائتمان • 6 شهور مجاناً</p>
         </div>
       </section>
 

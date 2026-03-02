@@ -11,8 +11,8 @@ const plans = [
   {
     key: "basic" as const,
     name: "أساسي",
-    price: 99,
-    amountHalalas: 9900,
+    price: 49,
+    amountHalalas: 4900,
     icon: Check,
     popular: false,
     features: [
@@ -25,8 +25,8 @@ const plans = [
   {
     key: "pro" as const,
     name: "احترافي",
-    price: 199,
-    amountHalalas: 19900,
+    price: 69,
+    amountHalalas: 6900,
     icon: Star,
     popular: true,
     features: [
@@ -47,7 +47,7 @@ interface TrialBannerProps {
 
 const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansChange }: TrialBannerProps) => {
   const { profile } = useAuth();
-  const { isOnTrial, freeYearEndDate, isTrialExpired } = usePlanLimits();
+  const { isOnTrial, trialEndDate, isTrialExpired } = usePlanLimits();
   const [internalShowPlans, setInternalShowPlans] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -66,7 +66,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
   const banner = !isSubscribed && !dismissed ? (
     isTrialExpired ? (
       <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-destructive/10 text-destructive">
-        <span className="font-medium">انتهت السنة المجانية — اشترك للاستمرار</span>
+        <span className="font-medium">انتهت الفترة التجريبية — اشترك للاستمرار</span>
         <Button size="sm" variant="destructive" onClick={() => setShowPlans(true)}>
           اشترك الآن
         </Button>
@@ -74,7 +74,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
     ) : isOnTrial ? (
       <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-success/10 text-success">
         <span className="font-medium">
-          🎉 أنت تستمتع بالوصول الكامل مجاناً لمدة سنة كاملة — ينتهي في {freeYearEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+          🎉 أنت تستمتع بالوصول الكامل مجاناً لمدة 6 شهور — ينتهي في {trialEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
         </span>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="ghost" className="text-success hover:text-success h-7 w-7 p-0" onClick={() => setDismissed(true)}>
@@ -109,7 +109,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
           ) : (
             <>
               <p className="text-center text-sm text-muted-foreground mb-1">
-                الأسعار تبدأ بعد انتهاء السنة المجانية
+                الأسعار تبدأ بعد انتهاء الفترة التجريبية
               </p>
               <p className="text-center text-xs text-success font-medium mb-4">
                 ابدأ الآن مجاناً - لا حاجة لبطاقة ائتمان

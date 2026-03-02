@@ -23,7 +23,7 @@ const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
   const navigate = useNavigate();
   const initializedRef = useRef(false);
 
-  const amount = plan === "basic" ? 9900 : 19900;
+  const amount = plan === "basic" ? 4900 : 6900;
   const planName = plan === "basic" ? "أساسي" : "احترافي";
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type PlanType = "free" | "basic" | "pro" | null;
 
-const FREE_YEAR_DAYS = 365;
+const FREE_TRIAL_DAYS = 183; // 6 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
   free: { maxClients: Infinity },
@@ -33,10 +33,10 @@ export function usePlanLimits() {
   const daysSinceCreation = Math.floor(
     (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
   );
-  const freeYearDaysLeft = Math.max(FREE_YEAR_DAYS - daysSinceCreation, 0);
-  const freeYearEndDate = new Date(createdAt.getTime() + FREE_YEAR_DAYS * 24 * 60 * 60 * 1000);
-  const isTrialExpired = plan === "free" && freeYearDaysLeft <= 0;
-  const isOnTrial = plan === "free" && freeYearDaysLeft > 0;
+  const trialDaysLeft = Math.max(FREE_TRIAL_DAYS - daysSinceCreation, 0);
+  const trialEndDate = new Date(createdAt.getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const isTrialExpired = plan === "free" && trialDaysLeft <= 0;
+  const isOnTrial = plan === "free" && trialDaysLeft > 0;
 
   const maxClients = PLAN_LIMITS[plan]?.maxClients ?? 3;
   const canAddClient = clientCount < maxClients && !isTrialExpired;
@@ -51,7 +51,7 @@ export function usePlanLimits() {
     if (isTrialExpired) {
       return {
         blocked: true,
-        title: "انتهت السنة المجانية",
+        title: "انتهت الفترة التجريبية",
         description: "اشترك للاستمرار في إضافة عملاء وإدارة برامجك",
       };
     }
@@ -75,8 +75,8 @@ export function usePlanLimits() {
     hasReportsAccess,
     isTrialExpired,
     isOnTrial,
-    freeYearDaysLeft,
-    freeYearEndDate,
+    trialDaysLeft,
+    trialEndDate,
     getAddClientBlockReason,
   };
 }

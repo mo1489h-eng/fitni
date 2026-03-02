@@ -20,17 +20,17 @@ const PLAN_INFO: Record<string, { name: string; price: number; icon: any; featur
     name: "مجاني (فترة تجريبية)",
     price: 0,
     icon: Shield,
-    features: ["جميع المميزات", "سنة كاملة مجاناً"],
+    features: ["جميع المميزات", "6 شهور مجاناً"],
   },
   basic: {
     name: "أساسي",
-    price: 99,
+    price: 49,
     icon: CheckCircle,
     features: ["حتى 10 عملاء", "برامج تدريب غير محدودة", "متابعة التقدم", "استقبال مدفوعات"],
   },
   pro: {
     name: "احترافي",
-    price: 199,
+    price: 69,
     icon: Crown,
     features: ["عملاء غير محدودين", "كل مميزات الأساسي", "شعارك الخاص", "تقارير متقدمة", "أولوية في الدعم"],
   },
@@ -38,7 +38,7 @@ const PLAN_INFO: Record<string, { name: string; price: number; icon: any; featur
 
 const Subscription = () => {
   const { user, profile, refreshProfile } = useAuth();
-  const { plan, isOnTrial, freeYearDaysLeft, freeYearEndDate, isTrialExpired, clientCount, maxClients } = usePlanLimits();
+  const { plan, isOnTrial, trialDaysLeft, trialEndDate, isTrialExpired, clientCount, maxClients } = usePlanLimits();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -182,7 +182,7 @@ const Subscription = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">نهاية الفترة التجريبية</p>
                 <p className="text-sm font-medium text-card-foreground">
-                  {freeYearEndDate.toLocaleDateString("ar-SA", {
+                  {trialEndDate.toLocaleDateString("ar-SA", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -191,7 +191,7 @@ const Subscription = () => {
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">الأيام المتبقية</p>
-                <span className="text-sm font-bold text-primary">{freeYearDaysLeft} يوم</span>
+                <span className="text-sm font-bold text-primary">{trialDaysLeft} يوم</span>
               </div>
             </>
           )}

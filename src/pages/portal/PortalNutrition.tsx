@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UtensilsCrossed, Apple, Check } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Loader2, UtensilsCrossed, Check, Plus, Minus, Droplets } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MealItem {
@@ -29,20 +28,47 @@ interface MealPlan {
 }
 
 const MEAL_ICONS: Record<string, string> = {
-  "فطور": "🌅",
-  "وجبة خفيفة صباحية": "🍎",
-  "غداء": "🍽️",
-  "وجبة خفيفة مسائية": "🥜",
-  "عشاء": "🌙",
-  "وجبة قبل التمرين": "⚡",
-  "وجبة بعد التمرين": "💪",
-  "سناكس": "🍿",
+  "فطور": "🌅", "وجبة خفيفة صباحية": "🍎", "غداء": "🍽️",
+  "وجبة خفيفة مسائية": "🥜", "عشاء": "🌙", "وجبة قبل التمرين": "⚡",
+  "وجبة بعد التمرين": "💪", "سناكس": "🍿",
+};
+
+// Circular ring component
+const MacroRing = ({ value, target, color, label, icon, size = 72 }: {
+  value: number; target: number; color: string; label: string; icon: string; size?: number;
+}) => {
+  const radius = (size - 8) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = target > 0 ? Math.min(value / target, 1) : 0;
+  const dashOffset = circumference * (1 - progress);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg className="w-full h-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="5" />
+          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke={color} strokeWidth="5"
+            strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
+            className="transition-all duration-700 ease-out" />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm">{icon}</span>
+        </div>
+      </div>
+      <p className="text-xs font-bold text-foreground mt-1">{value}</p>
+      <p className="text-[10px] text-muted-foreground">/ {target} {label}</p>
+    </div>
+  );
 };
 
 const PortalNutrition = () => {
   const { token } = usePortalToken();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [waterGlasses, setWaterGlasses] = useState(() => {
+    const saved = sessionStorage.getItem("water_today");
+    return saved ? Number(saved) : 0;
+  });
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["portal-nutrition", token],
@@ -77,9 +103,22 @@ const PortalNutrition = () => {
     },
   });
 
+  const logged = loggedMeals || [];
+
+  const addWater = () => {
+    const next = Math.min(waterGlasses + 1, 12);
+    setWaterGlasses(next);
+    sessionStorage.setItem("water_today", String(next));
+  };
+  const removeWater = () => {
+    const next = Math.max(waterGlasses - 1, 0);
+    setWaterGlasses(next);
+    sessionStorage.setItem("water_today", String(next));
+  };
+
   const groupByMeal = (items: MealItem[]) => {
     const groups: Record<string, MealItem[]> = {};
-    items.forEach((item) => {
+    items.forEach(item => {
       if (!groups[item.meal_name]) groups[item.meal_name] = [];
       groups[item.meal_name].push(item);
     });
@@ -87,17 +126,37 @@ const PortalNutrition = () => {
   };
 
   const totalMacros = (items: MealItem[]) =>
-    items.reduce(
-      (acc, i) => ({
+    items.reduce((acc, i) => ({
+      calories: acc.calories + (i.calories || 0),
+      protein: acc.protein + (i.protein || 0),
+      carbs: acc.carbs + (i.carbs || 0),
+      fats: acc.fats + (i.fats || 0),
+    }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+
+  // Calculate logged macros
+  const loggedMacros = useMemo(() => {
+    if (!plans?.length) return { calories: 0, protein: 0, carbs: 0, fats: 0 };
+    const allItems = plans.flatMap(p => p.items || []);
+    return allItems
+      .filter(i => logged.includes(i.id))
+      .reduce((acc, i) => ({
         calories: acc.calories + (i.calories || 0),
         protein: acc.protein + (i.protein || 0),
         carbs: acc.carbs + (i.carbs || 0),
         fats: acc.fats + (i.fats || 0),
-      }),
-      { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    );
+      }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
+  }, [plans, logged]);
 
-  const logged = loggedMeals || [];
+  const targetMacros = useMemo(() => {
+    if (!plans?.length) return { calories: 0, protein: 0, carbs: 0, fats: 0 };
+    return plans.reduce((acc, p) => {
+      const t = totalMacros(p.items || []);
+      return { calories: acc.calories + t.calories, protein: acc.protein + t.protein, carbs: acc.carbs + t.carbs, fats: acc.fats + t.fats };
+    }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
+  }, [plans]);
+
+  // Check streak
+  const allMealsLogged = plans?.length ? plans.every(p => p.items.every(i => logged.includes(i.id))) : false;
 
   if (isLoading) {
     return (
@@ -111,11 +170,8 @@ const PortalNutrition = () => {
 
   return (
     <ClientPortalLayout>
-      <div className="space-y-5 animate-fade-in" dir="rtl">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">جدولي الغذائي 🥗</h1>
-          <p className="text-sm text-muted-foreground mt-1">وجباتك اليومية المخصصة من مدربك</p>
-        </div>
+      <div className="space-y-4 animate-fade-in" dir="rtl">
+        <h1 className="text-xl font-bold text-foreground">جدولي الغذائي 🥗</h1>
 
         {!plans || plans.length === 0 ? (
           <Card className="p-10 text-center">
@@ -124,106 +180,111 @@ const PortalNutrition = () => {
             <p className="text-sm text-muted-foreground">مدربك لم يضف لك خطة غذائية حتى الآن</p>
           </Card>
         ) : (
-          plans.map((plan) => {
-            const totals = totalMacros(plan.items);
-            const grouped = groupByMeal(plan.items);
-            const loggedCalories = plan.items
-              .filter(i => logged.includes(i.id))
-              .reduce((sum, i) => sum + (i.calories || 0), 0);
-            const calorieProgress = totals.calories > 0 ? Math.min((loggedCalories / totals.calories) * 100, 100) : 0;
+          <>
+            {/* Circular Macro Rings */}
+            <Card className="p-4">
+              <div className="grid grid-cols-4 gap-2 justify-items-center">
+                <MacroRing value={loggedMacros.calories} target={targetMacros.calories} color="hsl(var(--primary))" label="سعرة" icon="🔥" />
+                <MacroRing value={loggedMacros.protein} target={targetMacros.protein} color="hsl(220, 70%, 55%)" label="بروتين" icon="💪" />
+                <MacroRing value={loggedMacros.carbs} target={targetMacros.carbs} color="hsl(35, 90%, 55%)" label="كارب" icon="🍚" />
+                <MacroRing value={loggedMacros.fats} target={targetMacros.fats} color="hsl(340, 70%, 55%)" label="دهون" icon="🥑" />
+              </div>
+            </Card>
 
-            return (
-              <div key={plan.id} className="space-y-3">
+            {/* Water Tracking */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Apple className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-bold text-foreground">{plan.name}</h2>
+                  <Droplets className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-bold text-foreground">💧 شرب الماء</span>
                 </div>
+                <span className="text-xs text-muted-foreground">{waterGlasses} / 8 أكواب</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={removeWater}>
+                  <Minus className="w-3 h-3" />
+                </Button>
+                <div className="flex-1 flex gap-1">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className={`flex-1 h-3 rounded-full transition-colors ${i < waterGlasses ? "bg-blue-500" : "bg-muted"}`} />
+                  ))}
+                </div>
+                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={addWater}>
+                  <Plus className="w-3 h-3" />
+                </Button>
+              </div>
+            </Card>
 
-                {/* Daily progress */}
-                <Card className="p-4 bg-primary/5 border-primary/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground">تقدم اليوم</p>
-                    <p className="text-xs font-bold text-primary">
-                      {loggedCalories} من {totals.calories} سعرة
-                    </p>
-                  </div>
-                  <Progress value={calorieProgress} className="h-2.5 mb-3" />
-                  <div className="grid grid-cols-4 gap-2 text-center">
-                    <div>
-                      <div className="text-lg font-bold text-foreground">{totals.calories}</div>
-                      <div className="text-[10px] text-muted-foreground">سعرة</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-primary">{totals.protein}g</div>
-                      <div className="text-[10px] text-muted-foreground">بروتين</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-foreground">{totals.carbs}g</div>
-                      <div className="text-[10px] text-muted-foreground">كربوهيدرات</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-foreground">{totals.fats}g</div>
-                      <div className="text-[10px] text-muted-foreground">دهون</div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Meals */}
-                {Object.entries(grouped).map(([mealName, mealItems]) => {
-                  const mealTotals = totalMacros(mealItems);
-                  const allLogged = mealItems.every(i => logged.includes(i.id));
-                  return (
-                    <Card key={mealName} className={`overflow-hidden transition-all ${allLogged ? "opacity-60" : ""}`}>
-                      <div className="bg-muted/50 px-4 py-2.5 flex items-center justify-between border-b border-border">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">{MEAL_ICONS[mealName] || "🍴"}</span>
-                          <h3 className="font-semibold text-sm text-foreground">{mealName}</h3>
+            {/* Meals */}
+            {plans.map(plan => {
+              const grouped = groupByMeal(plan.items);
+              return (
+                <div key={plan.id} className="space-y-3">
+                  {Object.entries(grouped).map(([mealName, mealItems]) => {
+                    const mealTotals = totalMacros(mealItems);
+                    const allLogged = mealItems.every(i => logged.includes(i.id));
+                    return (
+                      <Card key={mealName} className={`overflow-hidden transition-all ${allLogged ? "opacity-60" : ""}`}>
+                        <div className="bg-muted/50 px-4 py-2.5 flex items-center justify-between border-b border-border">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{MEAL_ICONS[mealName] || "🍴"}</span>
+                            <h3 className="font-semibold text-sm text-foreground">{mealName}</h3>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{mealTotals.calories} سعرة</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">{mealTotals.calories} سعرة</span>
-                      </div>
-                      <div className="p-3 space-y-2">
-                        {mealItems.map((item) => {
-                          const isLogged = logged.includes(item.id);
-                          return (
-                            <div key={item.id} className={`flex items-center justify-between py-1.5 border-b border-border/40 last:border-0 ${isLogged ? "opacity-50" : ""}`}>
-                              <div className="flex items-center gap-2 flex-1">
-                                <button
-                                  onClick={() => toggleMeal.mutate(item.id)}
-                                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    isLogged ? "bg-primary border-primary" : "border-muted-foreground/30 hover:border-primary"
-                                  }`}
-                                >
-                                  {isLogged && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                                </button>
-                                <div>
-                                  <p className={`text-sm font-medium ${isLogged ? "line-through text-muted-foreground" : "text-foreground"}`}>{item.food_name}</p>
-                                  {item.quantity && (
-                                    <p className="text-xs text-muted-foreground">{item.quantity}</p>
-                                  )}
+                        <div className="p-3 space-y-2">
+                          {mealItems.map(item => {
+                            const isLogged = logged.includes(item.id);
+                            return (
+                              <div key={item.id} className={`flex items-center justify-between py-1.5 border-b border-border/40 last:border-0 ${isLogged ? "opacity-50" : ""}`}>
+                                <div className="flex items-center gap-2 flex-1">
+                                  <button
+                                    onClick={() => toggleMeal.mutate(item.id)}
+                                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                      isLogged ? "bg-primary border-primary" : "border-muted-foreground/30 hover:border-primary"
+                                    }`}
+                                  >
+                                    {isLogged && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                                  </button>
+                                  <div>
+                                    <p className={`text-sm font-medium ${isLogged ? "line-through text-muted-foreground" : "text-foreground"}`}>{item.food_name}</p>
+                                    {item.quantity && <p className="text-xs text-muted-foreground">{item.quantity}</p>}
+                                  </div>
+                                </div>
+                                <div className="flex gap-1.5 text-[10px] text-muted-foreground">
+                                  <span className="bg-muted px-1.5 py-0.5 rounded">{item.calories}</span>
+                                  <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded">P:{item.protein}</span>
                                 </div>
                               </div>
-                              <div className="flex gap-2 text-[10px] text-muted-foreground">
-                                <span className="bg-muted px-1.5 py-0.5 rounded">{item.calories} cal</span>
-                                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded">P:{item.protein}</span>
-                                <span className="bg-muted px-1.5 py-0.5 rounded">C:{item.carbs}</span>
-                                <span className="bg-muted px-1.5 py-0.5 rounded">F:{item.fats}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                        {allLogged && (
+                          <div className="px-4 py-2 bg-primary/5 text-center">
+                            <span className="text-xs text-primary font-medium">✅ تم تسجيل الوجبة</span>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                  {plan.notes && (
+                    <Card className="p-3 bg-accent/50">
+                      <p className="text-xs text-muted-foreground">📝 ملاحظات المدرب: {plan.notes}</p>
                     </Card>
-                  );
-                })}
+                  )}
+                </div>
+              );
+            })}
 
-                {plan.notes && (
-                  <Card className="p-3 bg-accent/50">
-                    <p className="text-xs text-muted-foreground">📝 ملاحظات المدرب: {plan.notes}</p>
-                  </Card>
-                )}
-              </div>
-            );
-          })
+            {/* Completion Banner */}
+            {allMealsLogged && (
+              <Card className="p-4 bg-primary/10 border-primary/20 text-center animate-fade-in">
+                <p className="text-lg mb-1">✅</p>
+                <p className="text-sm font-bold text-foreground">أكملت خطتك الغذائية اليوم!</p>
+                <p className="text-xs text-muted-foreground mt-1">🔥 استمر على هذا النهج</p>
+              </Card>
+            )}
+          </>
         )}
       </div>
     </ClientPortalLayout>

@@ -1,17 +1,19 @@
 import { useState } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import TrainerBodyScans from "@/components/TrainerBodyScans";
+import ClientPaymentModal from "@/components/ClientPaymentModal";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, Calendar, Copy, Send,
-  TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video,
+  TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +31,126 @@ const tabs: { key: TabKey; label: string }[] = [
   { key: "payments", label: "المدفوعات" },
   { key: "measurements", label: "القياسات" },
 ];
+
+function ClientPaymentsTab({ client, status, clientId, queryClient }: { client: any; status: string; clientId: string; queryClient: any }) {
+  const [editPrice, setEditPrice] = useState(String(client.subscription_price || ""));
+  const [editCycle, setEditCycle] = useState((client as any).billing_cycle || "monthly");
+  const [saving, setSaving] = useState(false);
+  const [showPayModal, setShowPayModal] = useState(false);
+  const { toast } = useToast();
+
+  const { data: clientPayments = [] } = useQuery({
+    queryKey: ["client-payments", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_payments").select("*").eq("client_id", clientId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const saveSettings = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("clients").update({
+      subscription_price: parseFloat(editPrice) || 0,
+      billing_cycle: editCycle,
+    }).eq("id", clientId);
+    setSaving(false);
+    if (error) { toast({ title: "خطأ", variant: "destructive" }); return; }
+    queryClient.invalidateQueries({ queryKey: ["client", clientId] });
+    toast({ title: "تم حفظ الإعدادات ✅" });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Subscription Settings */}
+      <Card className="p-4">
+        <h3 className="font-bold text-card-foreground mb-3 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-primary" /> إعدادات الاشتراك
+        </h3>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">السعر (ريال)</label>
+            <Input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="500" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">دورة الدفع</label>
+            <Select value={editCycle} onValueChange={setEditCycle}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">شهري</SelectItem>
+                <SelectItem value="quarterly">ربع سنوي (3 شهور)</SelectItem>
+                <SelectItem value="yearly">سنوي</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button className="w-full" onClick={saveSettings} disabled={saving}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ الإعدادات"}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Current Status */}
+      <Card className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">الاشتراك الحالي</p>
+            <p className="text-2xl font-bold text-card-foreground">{client.subscription_price} ر.س</p>
+            <p className="text-xs text-muted-foreground mt-1">ينتهي: {new Date(client.subscription_end_date).toLocaleDateString("ar-SA")}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+              status === "active" ? "bg-primary/10 text-primary" :
+              status === "overdue" ? "bg-destructive/10 text-destructive" :
+              "bg-warning/10 text-warning"
+            }`}>
+              {status === "active" ? "نشط" : status === "overdue" ? "منتهي" : "ينتهي قريباً"}
+            </span>
+            <Button size="sm" onClick={() => setShowPayModal(true)}>
+              <CreditCard className="w-4 h-4 ml-1" /> تسجيل دفعة
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Payment History */}
+      <Card className="p-4">
+        <h3 className="font-bold text-card-foreground mb-3">سجل المدفوعات</h3>
+        {clientPayments.length > 0 ? (
+          <div className="space-y-2">
+            {clientPayments.map(p => (
+              <div key={p.id} className="flex items-center justify-between bg-secondary rounded-lg p-3">
+                <div>
+                  <p className="text-sm font-medium text-secondary-foreground">{Number(p.amount)} ر.س</p>
+                  <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString("ar-SA")}</p>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded-full ${p.status === "paid" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                  {p.status === "paid" ? "مدفوع ✅" : "معلق"}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-muted-foreground">
+            <ClipboardList className="w-6 h-6 mx-auto mb-2 opacity-40" />
+            <p className="text-xs">لا توجد مدفوعات مسجلة</p>
+          </div>
+        )}
+      </Card>
+
+      {showPayModal && (
+        <ClientPaymentModal
+          open={showPayModal}
+          onClose={() => setShowPayModal(false)}
+          clientId={clientId}
+          clientName={client.name}
+          amount={client.subscription_price || 0}
+          billingCycle={(client as any).billing_cycle || "monthly"}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ["client-payments", clientId] })}
+        />
+      )}
+    </div>
+  );
+}
 
 function getPaymentStatus(endDate: string) {
   const diff = Math.ceil((new Date(endDate).getTime() - Date.now()) / 86400000);
@@ -441,30 +563,7 @@ const ClientProfile = () => {
 
           {/* ===== PAYMENTS TAB ===== */}
           {activeTab === "payments" && (
-            <div className="space-y-4">
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">سعر الاشتراك</p>
-                    <p className="text-2xl font-bold text-card-foreground">{client.subscription_price} ر.س</p>
-                  </div>
-                  <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${
-                    status === "active" ? "bg-success/10 text-success" :
-                    status === "overdue" ? "bg-destructive/10 text-destructive" :
-                    "bg-warning/10 text-warning"
-                  }`}>
-                    {status === "active" ? "نشط" : status === "overdue" ? "منتهي" : "ينتهي قريباً"}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  ينتهي: {new Date(client.subscription_end_date).toLocaleDateString("ar-SA")}
-                </p>
-              </Card>
-              <div className="text-center py-6 text-muted-foreground">
-                <ClipboardList className="w-6 h-6 mx-auto mb-2 opacity-40" />
-                <p className="text-xs">سجل المدفوعات التفصيلي سيكون متاحاً قريباً</p>
-              </div>
-            </div>
+            <ClientPaymentsTab client={client} status={status} clientId={id!} queryClient={queryClient} />
           )}
 
           {/* ===== MEASUREMENTS TAB ===== */}

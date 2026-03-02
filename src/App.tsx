@@ -29,6 +29,7 @@ import PortalProgress from "./pages/portal/PortalProgress";
 import PortalNutrition from "./pages/portal/PortalNutrition";
 import PortalContent from "./pages/portal/PortalContent";
 import PortalBodyScan from "./pages/portal/PortalBodyScan";
+import PortalSubscription from "./pages/portal/PortalSubscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/portal/nutrition" element={<PortalTokenProvider><PortalNutrition /></PortalTokenProvider>} />
             <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
             <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
+            <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

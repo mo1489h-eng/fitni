@@ -135,9 +135,66 @@ export type Database = {
           },
         ]
       }
+      client_payments: {
+        Row: {
+          amount: number
+          billing_cycle: string
+          client_id: string
+          created_at: string
+          currency: string
+          id: string
+          moyasar_payment_id: string | null
+          notes: string | null
+          payment_method: string | null
+          period_end: string
+          period_start: string
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          amount?: number
+          billing_cycle?: string
+          client_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          moyasar_payment_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          amount?: number
+          billing_cycle?: string
+          client_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          moyasar_payment_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           auth_user_id: string | null
+          billing_cycle: string
           created_at: string
           email: string | null
           goal: string
@@ -160,6 +217,7 @@ export type Database = {
         }
         Insert: {
           auth_user_id?: string | null
+          billing_cycle?: string
           created_at?: string
           email?: string | null
           goal?: string
@@ -182,6 +240,7 @@ export type Database = {
         }
         Update: {
           auth_user_id?: string | null
+          billing_cycle?: string
           created_at?: string
           email?: string | null
           goal?: string
@@ -792,6 +851,7 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           auth_user_id: string | null
+          billing_cycle: string
           created_at: string
           email: string | null
           goal: string

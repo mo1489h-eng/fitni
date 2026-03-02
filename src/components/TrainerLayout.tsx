@@ -1,16 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, CalendarDays, Lightbulb, Settings, LogOut } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, CalendarDays, Lightbulb, Settings, LogOut, DollarSign } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import TrainerNotifications from "@/components/TrainerNotifications";
 
 const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
+  { label: "المدفوعات", href: "/payments", icon: DollarSign },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
   { label: "التغذية", href: "/nutrition", icon: UtensilsCrossed },
-  { label: "التقويم", href: "/calendar", icon: CalendarDays },
-  { label: "المحتوى", href: "/content", icon: Lightbulb },
-  { label: "الإعدادات", href: "/settings", icon: Settings },
 ];
 
 const TrainerLayout = ({ children }: { children: React.ReactNode }) => {

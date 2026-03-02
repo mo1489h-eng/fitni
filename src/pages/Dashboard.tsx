@@ -199,6 +199,31 @@ const Dashboard = () => {
               </Card>
             )}
 
+            {/* Client Subscriptions Card */}
+            <Card className="p-4 cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate("/payments")}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-card-foreground flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  اشتراكات العملاء 💰
+                </h3>
+                <span className="text-xs text-primary">عرض الكل ←</span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-primary">{activeSubscriptions}</p>
+                  <p className="text-[10px] text-muted-foreground">نشط</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-warning">{expiringClients.length}</p>
+                  <p className="text-[10px] text-muted-foreground">قريب الانتهاء</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-card-foreground">{monthlyRevenue.toLocaleString()} <span className="text-xs">ر.س</span></p>
+                  <p className="text-[10px] text-muted-foreground">الإيرادات</p>
+                </div>
+              </div>
+            </Card>
+
             {/* Client Quick Overview */}
             <ClientOverview clients={clients} measurements={allMeasurements as any} />
           </>

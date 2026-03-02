@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Dumbbell, Home, Activity, TrendingUp, Apple, Lightbulb, ScanLine } from "lucide-react";
+import { Dumbbell, Home, Activity, TrendingUp, Apple, Lightbulb, ScanLine, CreditCard } from "lucide-react";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -9,7 +9,7 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "التمرين", href: `/portal/workout`, icon: Activity },
     { label: "سكان", href: `/portal/body-scan`, icon: ScanLine },
     { label: "التغذية", href: `/portal/nutrition`, icon: Apple },
-    { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
+    { label: "اشتراكي", href: `/portal/subscription`, icon: CreditCard },
   ];
 
   return (

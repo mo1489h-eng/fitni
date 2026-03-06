@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.copilot-apply]
 verify_jwt = false
+
+[functions.public-purchase]
+verify_jwt = false

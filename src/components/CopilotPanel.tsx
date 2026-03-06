@@ -3,10 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   Bot, Loader2, Sparkles, Check, X, Dumbbell, Apple,
   ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Zap,
+  Pencil, Plus, Trash2, Save,
 } from "lucide-react";
 
 interface CopilotPanelProps {
@@ -19,7 +21,6 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
   const queryClient = useQueryClient();
   const [expandedRec, setExpandedRec] = useState<string | null>(null);
 
-  // Fetch existing recommendations
   const { data: recommendations = [], isLoading: loadingRecs } = useQuery({
     queryKey: ["copilot-recommendations", clientId],
     queryFn: async () => {
@@ -33,7 +34,6 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
   });
 
-  // Generate program mutation
   const generateProgram = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("copilot-generate", {
@@ -52,7 +52,6 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
   });
 
-  // Weekly evaluation mutation
   const weeklyEval = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("copilot-generate", {
@@ -71,11 +70,10 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
   });
 
-  // Apply recommendation
   const applyRec = useMutation({
-    mutationFn: async ({ id, decision }: { id: string; decision: "accepted" | "rejected" }) => {
+    mutationFn: async ({ id, decision, editedPayload }: { id: string; decision: "accepted" | "rejected"; editedPayload?: any }) => {
       const { data, error } = await supabase.functions.invoke("copilot-apply", {
-        body: { recommendation_id: id, decision },
+        body: { recommendation_id: id, decision, edited_payload: editedPayload },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -125,34 +123,17 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
           </div>
           <div>
             <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي 🤖</h3>
-            <p className="text-xs text-muted-foreground">إنشاء برامج وتقييمات تلقائية لـ {clientName}</p>
+            <p className="text-xs text-muted-foreground">إنشاء برامج وتقييمات مخصصة لـ {clientName}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => generateProgram.mutate()}
-            disabled={isGenerating}
-            className="gap-1.5"
-          >
-            {generateProgram.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
+          <Button onClick={() => generateProgram.mutate()} disabled={isGenerating} className="gap-1.5">
+            {generateProgram.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             إنشاء برنامج AI
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => weeklyEval.mutate()}
-            disabled={isGenerating}
-            className="gap-1.5"
-          >
-            {weeklyEval.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Zap className="w-4 h-4" />
-            )}
+          <Button variant="outline" onClick={() => weeklyEval.mutate()} disabled={isGenerating} className="gap-1.5">
+            {weeklyEval.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
             تقييم أسبوعي
           </Button>
         </div>
@@ -160,7 +141,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         {isGenerating && (
           <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="w-3 h-3 animate-spin" />
-            جاري التحليل والإنشاء... قد يستغرق بضع ثوانٍ
+            جاري التحليل بناءً على بيانات العميل... قد يستغرق بضع ثوانٍ
           </div>
         )}
       </Card>
@@ -174,14 +155,15 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
               توصيات بانتظار الموافقة ({pendingRecs.length})
             </h3>
           </div>
+          <p className="text-xs text-muted-foreground mb-3">يمكنك تعديل البرنامج قبل اعتماده ✏️</p>
           <div className="space-y-3">
             {pendingRecs.map((rec: any) => (
-              <RecommendationCard
+              <EditableRecommendationCard
                 key={rec.id}
                 rec={rec}
                 expanded={expandedRec === rec.id}
                 onToggle={() => setExpandedRec(expandedRec === rec.id ? null : rec.id)}
-                onAccept={() => applyRec.mutate({ id: rec.id, decision: "accepted" })}
+                onAccept={(editedPayload) => applyRec.mutate({ id: rec.id, decision: "accepted", editedPayload })}
                 onReject={() => applyRec.mutate({ id: rec.id, decision: "rejected" })}
                 isApplying={applyRec.isPending}
                 getTypeIcon={getTypeIcon}
@@ -221,14 +203,16 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="text-center py-8 text-muted-foreground">
           <Bot className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">لم يتم استخدام المساعد الذكي بعد</p>
-          <p className="text-xs mt-1">اضغط "إنشاء برنامج AI" للبدء</p>
+          <p className="text-xs mt-1">اضغط "إنشاء برنامج AI" لإنشاء برنامج مخصص بناءً على بيانات العميل</p>
         </div>
       )}
     </div>
   );
 };
 
-function RecommendationCard({
+// ──── Editable Recommendation Card ────
+
+function EditableRecommendationCard({
   rec,
   expanded,
   onToggle,
@@ -240,26 +224,92 @@ function RecommendationCard({
   rec: any;
   expanded: boolean;
   onToggle: () => void;
-  onAccept: () => void;
+  onAccept: (editedPayload: any) => void;
   onReject: () => void;
   isApplying: boolean;
   getTypeIcon: (type: string) => React.ReactNode;
 }) {
-  const payload = rec.payload || {};
+  const [editing, setEditing] = useState(false);
+  const [editPayload, setEditPayload] = useState<any>(null);
+
+  const startEditing = () => {
+    setEditPayload(JSON.parse(JSON.stringify(rec.payload)));
+    setEditing(true);
+  };
+
+  const currentPayload = editing ? editPayload : rec.payload || {};
+
+  // ── Exercise Editing Helpers ──
+
+  const updateExercise = (dayIdx: number, exIdx: number, field: string, value: any) => {
+    const updated = { ...editPayload };
+    updated.program.days[dayIdx].exercises[exIdx][field] = value;
+    setEditPayload(updated);
+  };
+
+  const removeExercise = (dayIdx: number, exIdx: number) => {
+    const updated = { ...editPayload };
+    updated.program.days[dayIdx].exercises.splice(exIdx, 1);
+    setEditPayload({ ...updated });
+  };
+
+  const addExercise = (dayIdx: number) => {
+    const updated = { ...editPayload };
+    const exercises = updated.program.days[dayIdx].exercises;
+    exercises.push({
+      name: "تمرين جديد",
+      sets: 3,
+      reps: 10,
+      weight: 0,
+      exercise_order: exercises.length,
+    });
+    setEditPayload({ ...updated });
+  };
+
+  const updateDayName = (dayIdx: number, name: string) => {
+    const updated = { ...editPayload };
+    updated.program.days[dayIdx].day_name = name;
+    setEditPayload(updated);
+  };
+
+  // ── Meal Editing Helpers ──
+
+  const updateMeal = (mealIdx: number, field: string, value: any) => {
+    const updated = { ...editPayload };
+    updated.meal_plan.meals[mealIdx][field] = value;
+    setEditPayload(updated);
+  };
+
+  const removeMeal = (mealIdx: number) => {
+    const updated = { ...editPayload };
+    updated.meal_plan.meals.splice(mealIdx, 1);
+    setEditPayload({ ...updated });
+  };
+
+  const addMeal = () => {
+    const updated = { ...editPayload };
+    if (!updated.meal_plan) updated.meal_plan = { name: "خطة تغذية", meals: [], notes: "" };
+    updated.meal_plan.meals.push({
+      meal_name: "وجبة",
+      food_name: "طعام جديد",
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fats: 0,
+      quantity: "",
+      item_order: updated.meal_plan.meals.length,
+    });
+    setEditPayload({ ...updated });
+  };
 
   return (
     <div className="bg-card rounded-lg border border-border p-3">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between text-right"
-      >
+      <button onClick={onToggle} className="w-full flex items-center justify-between text-right">
         <div className="flex items-center gap-2">
           {getTypeIcon(rec.type)}
           <div>
             <p className="text-sm font-bold text-card-foreground">{rec.title}</p>
-            {rec.summary && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{rec.summary}</p>
-            )}
+            {rec.summary && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{rec.summary}</p>}
           </div>
         </div>
         {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -267,34 +317,140 @@ function RecommendationCard({
 
       {expanded && (
         <div className="mt-3 space-y-3 animate-fade-in">
-          {/* Program Preview */}
-          {rec.type === "program" && payload.program && (
+          {/* Edit toggle button */}
+          {rec.type === "program" && !editing && (
+            <Button variant="outline" size="sm" className="gap-1 w-full" onClick={startEditing}>
+              <Pencil className="w-3 h-3" /> تعديل البرنامج قبل الاعتماد
+            </Button>
+          )}
+          {editing && (
+            <div className="flex items-center gap-2 text-xs text-primary font-medium">
+              <Pencil className="w-3 h-3" /> وضع التعديل — عدّل ثم اعتمد
+            </div>
+          )}
+
+          {/* Program Preview / Edit */}
+          {rec.type === "program" && currentPayload.program && (
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-card-foreground flex items-center gap-1">
-                <Dumbbell className="w-3 h-3" /> البرنامج: {payload.program.name}
+                <Dumbbell className="w-3 h-3" /> البرنامج: {currentPayload.program.name}
               </h4>
-              {payload.program.days?.map((day: any, i: number) => (
-                <div key={i} className="bg-secondary rounded-lg p-2">
-                  <p className="text-xs font-bold text-secondary-foreground mb-1">{day.day_name}</p>
-                  {day.exercises?.map((ex: any, j: number) => (
-                    <p key={j} className="text-[11px] text-muted-foreground">
-                      • {ex.name} — {ex.sets}×{ex.reps} {ex.weight > 0 && `(${ex.weight} كجم)`}
-                    </p>
-                  ))}
+              {currentPayload.program.days?.map((day: any, dayIdx: number) => (
+                <div key={dayIdx} className="bg-secondary rounded-lg p-2.5 space-y-1.5">
+                  {editing ? (
+                    <Input
+                      value={day.day_name}
+                      onChange={(e) => updateDayName(dayIdx, e.target.value)}
+                      className="h-7 text-xs font-bold bg-card"
+                    />
+                  ) : (
+                    <p className="text-xs font-bold text-secondary-foreground">{day.day_name}</p>
+                  )}
+
+                  {day.exercises?.map((ex: any, exIdx: number) =>
+                    editing ? (
+                      <div key={exIdx} className="flex items-center gap-1.5 bg-card rounded p-1.5">
+                        <Input
+                          value={ex.name}
+                          onChange={(e) => updateExercise(dayIdx, exIdx, "name", e.target.value)}
+                          className="h-6 text-[11px] flex-1"
+                          placeholder="اسم التمرين"
+                        />
+                        <Input
+                          type="number"
+                          value={ex.sets}
+                          onChange={(e) => updateExercise(dayIdx, exIdx, "sets", parseInt(e.target.value) || 0)}
+                          className="h-6 text-[11px] w-12 text-center"
+                          placeholder="مج"
+                        />
+                        <span className="text-[10px] text-muted-foreground">×</span>
+                        <Input
+                          type="number"
+                          value={ex.reps}
+                          onChange={(e) => updateExercise(dayIdx, exIdx, "reps", parseInt(e.target.value) || 0)}
+                          className="h-6 text-[11px] w-12 text-center"
+                          placeholder="تكرار"
+                        />
+                        <Input
+                          type="number"
+                          value={ex.weight}
+                          onChange={(e) => updateExercise(dayIdx, exIdx, "weight", parseFloat(e.target.value) || 0)}
+                          className="h-6 text-[11px] w-14 text-center"
+                          placeholder="كجم"
+                        />
+                        <button onClick={() => removeExercise(dayIdx, exIdx)} className="text-destructive hover:text-destructive/80 p-0.5">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <p key={exIdx} className="text-[11px] text-muted-foreground">
+                        • {ex.name} — {ex.sets}×{ex.reps} {ex.weight > 0 && `(${ex.weight} كجم)`}
+                      </p>
+                    )
+                  )}
+
+                  {editing && (
+                    <button
+                      onClick={() => addExercise(dayIdx)}
+                      className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 mt-1"
+                    >
+                      <Plus className="w-3 h-3" /> إضافة تمرين
+                    </button>
+                  )}
                 </div>
               ))}
 
-              {payload.meal_plan && (
+              {/* Meal Plan */}
+              {currentPayload.meal_plan && (
                 <>
                   <h4 className="text-xs font-bold text-card-foreground flex items-center gap-1 mt-2">
-                    <Apple className="w-3 h-3" /> التغذية: {payload.meal_plan.name}
+                    <Apple className="w-3 h-3" /> التغذية: {currentPayload.meal_plan.name}
                   </h4>
-                  <div className="bg-secondary rounded-lg p-2">
-                    {payload.meal_plan.meals?.map((meal: any, i: number) => (
-                      <p key={i} className="text-[11px] text-muted-foreground">
-                        • {meal.meal_name}: {meal.food_name} ({meal.calories} سعرة | بروتين {meal.protein}g)
-                      </p>
-                    ))}
+                  <div className="bg-secondary rounded-lg p-2.5 space-y-1.5">
+                    {currentPayload.meal_plan.meals?.map((meal: any, mealIdx: number) =>
+                      editing ? (
+                        <div key={mealIdx} className="flex items-center gap-1.5 bg-card rounded p-1.5">
+                          <Input
+                            value={meal.meal_name}
+                            onChange={(e) => updateMeal(mealIdx, "meal_name", e.target.value)}
+                            className="h-6 text-[11px] w-16"
+                            placeholder="وجبة"
+                          />
+                          <Input
+                            value={meal.food_name}
+                            onChange={(e) => updateMeal(mealIdx, "food_name", e.target.value)}
+                            className="h-6 text-[11px] flex-1"
+                            placeholder="اسم الطعام"
+                          />
+                          <Input
+                            type="number"
+                            value={meal.calories}
+                            onChange={(e) => updateMeal(mealIdx, "calories", parseInt(e.target.value) || 0)}
+                            className="h-6 text-[11px] w-14 text-center"
+                            placeholder="سعرات"
+                          />
+                          <Input
+                            type="number"
+                            value={meal.protein}
+                            onChange={(e) => updateMeal(mealIdx, "protein", parseInt(e.target.value) || 0)}
+                            className="h-6 text-[11px] w-12 text-center"
+                            placeholder="بروتين"
+                          />
+                          <button onClick={() => removeMeal(mealIdx)} className="text-destructive hover:text-destructive/80 p-0.5">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p key={mealIdx} className="text-[11px] text-muted-foreground">
+                          • {meal.meal_name}: {meal.food_name} ({meal.calories} سعرة | بروتين {meal.protein}g)
+                        </p>
+                      )
+                    )}
+                    {editing && (
+                      <button onClick={addMeal} className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 mt-1">
+                        <Plus className="w-3 h-3" /> إضافة وجبة
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -302,9 +458,9 @@ function RecommendationCard({
           )}
 
           {/* Evaluation Preview */}
-          {rec.type === "evaluation" && payload.recommendations && (
+          {rec.type === "evaluation" && currentPayload.recommendations && (
             <div className="space-y-2">
-              {payload.recommendations.map((r: any, i: number) => (
+              {currentPayload.recommendations.map((r: any, i: number) => (
                 <div key={i} className={`rounded-lg p-2.5 border ${
                   r.priority === "high" ? "border-destructive/30 bg-destructive/5" :
                   r.priority === "medium" ? "border-warning/30 bg-warning/5" :
@@ -322,19 +478,13 @@ function RecommendationCard({
             <Button
               size="sm"
               className="flex-1 gap-1"
-              onClick={onAccept}
+              onClick={() => onAccept(editing ? editPayload : undefined)}
               disabled={isApplying}
             >
               {isApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-              {rec.type === "program" ? "اعتماد وتطبيق" : "موافقة"}
+              {editing ? "اعتماد بعد التعديل" : rec.type === "program" ? "اعتماد وتطبيق" : "موافقة"}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1"
-              onClick={onReject}
-              disabled={isApplying}
-            >
+            <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
               <X className="w-3 h-3" /> رفض
             </Button>
           </div>

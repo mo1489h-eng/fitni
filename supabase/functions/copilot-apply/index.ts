@@ -24,7 +24,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { recommendation_id, decision } = await req.json();
+    const { recommendation_id, decision, edited_payload } = await req.json();
     if (!recommendation_id || !decision) throw new Error("recommendation_id and decision are required");
     if (!["accepted", "rejected"].includes(decision)) throw new Error("Invalid decision");
 
@@ -37,15 +37,19 @@ serve(async (req) => {
       .maybeSingle();
     if (recErr || !rec) throw new Error("Recommendation not found");
 
-    // Update status
-    await supabaseUser.from("copilot_recommendations").update({
+    // If trainer edited the payload, update it in the record
+    const updateData: any = {
       status: decision,
       resolved_at: new Date().toISOString(),
-    }).eq("id", recommendation_id);
+    };
+    if (edited_payload && decision === "accepted") {
+      updateData.payload = edited_payload;
+    }
+    await supabaseUser.from("copilot_recommendations").update(updateData).eq("id", recommendation_id);
 
-    // If accepted and type is program, create the actual program and meal plan
+    // Use edited payload if provided, otherwise use original
     if (decision === "accepted" && rec.type === "program") {
-      const payload = rec.payload as any;
+      const payload = (edited_payload || rec.payload) as any;
 
       if (payload.program) {
         // Create program

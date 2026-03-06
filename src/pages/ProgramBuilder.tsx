@@ -702,7 +702,7 @@ const ProgramBuilder = () => {
   if (view === "step2") {
     return (
       <TrainerLayout>
-        <div className="animate-fade-in pb-24" dir="rtl">
+        <div className="animate-fade-in pb-32" dir="rtl">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -878,8 +878,8 @@ const ProgramBuilder = () => {
             </div>
           )}
 
-          {/* Sticky Bottom Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-50 max-w-screen-xl mx-auto">
+          {/* Sticky Bottom Bar - above bottom nav */}
+          <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
             <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => {
               toast({ title: "تم حفظ المسودة 📝" });
             }}>
@@ -990,13 +990,16 @@ const ProgramBuilder = () => {
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
             {templates.map(t => (
               <button key={t.name} onClick={() => applyTemplate(t)}
-                className="flex-shrink-0 w-40 rounded-xl border border-border p-3 text-right hover:border-primary/50 hover:bg-primary/5 transition-all">
+                className="flex-shrink-0 w-44 rounded-xl border border-border p-3 text-right hover:border-primary/50 hover:bg-primary/5 transition-all group">
                 <t.icon className="w-5 h-5 text-primary mb-1" />
                 <p className="text-xs font-bold text-foreground leading-tight">{t.name}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
                 <div className="flex gap-1.5 mt-1.5 text-[9px] text-muted-foreground">
                   <span>{t.weeks} أسابيع</span><span>•</span>
                   <span>{t.days.filter(d => !d.isRest).length} أيام</span>
+                </div>
+                <div className="mt-2 text-[10px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3 rotate-180" />عدّل وأضف للبرامج
                 </div>
               </button>
             ))}

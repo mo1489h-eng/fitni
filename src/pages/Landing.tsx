@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
+import PublicMarketplace from "@/components/PublicMarketplace";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -197,6 +198,9 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Public Marketplace */}
+      <PublicMarketplace />
 
       {/* Final CTA */}
       <section className="px-4 py-24 relative">

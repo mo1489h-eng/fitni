@@ -16,6 +16,7 @@ import {
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
+import CopilotPanel from "@/components/CopilotPanel";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -23,9 +24,10 @@ import {
 } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-type TabKey = "overview" | "program" | "payments" | "measurements" | "bodyscans";
+type TabKey = "overview" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string }[] = [
   { key: "overview", label: "نظرة عامة" },
+  { key: "copilot", label: "المساعد 🤖" },
   { key: "program", label: "البرنامج" },
   { key: "bodyscans", label: "بيانات الجسم 📊" },
   { key: "payments", label: "المدفوعات" },
@@ -498,6 +500,11 @@ const ClientProfile = () => {
                 </div>
               </Card>
             </div>
+          )}
+
+          {/* ===== COPILOT TAB ===== */}
+          {activeTab === "copilot" && (
+            <CopilotPanel clientId={id!} clientName={client.name} />
           )}
 
           {/* ===== PROGRAM TAB ===== */}

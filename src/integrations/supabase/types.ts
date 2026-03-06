@@ -271,6 +271,53 @@ export type Database = {
           },
         ]
       }
+      copilot_recommendations: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          payload: Json
+          resolved_at: string | null
+          status: string
+          summary: string | null
+          title: string
+          trainer_id: string
+          type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          resolved_at?: string | null
+          status?: string
+          summary?: string | null
+          title?: string
+          trainer_id: string
+          type?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          resolved_at?: string | null
+          status?: string
+          summary?: string | null
+          title?: string
+          trainer_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_recommendations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_items: {
         Row: {
           calories: number

@@ -1,1 +1,7 @@
 project_id = "rxhjjpaxnntdrdjvvtml"
+
+[functions.copilot-generate]
+verify_jwt = false
+
+[functions.copilot-apply]
+verify_jwt = false

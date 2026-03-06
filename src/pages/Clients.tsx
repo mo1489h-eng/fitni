@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
-import { Plus, Search, Target, Loader2 } from "lucide-react";
+import { Plus, Search, Target, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,7 +40,8 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "" });
+  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -90,7 +92,14 @@ const Clients = () => {
         subscription_price: Number(form.price) || 0,
         subscription_end_date: endDate.toISOString().split("T")[0],
         last_workout_date: new Date().toISOString().split("T")[0],
-      } as any).select("invite_token").single();
+        age: form.age ? parseInt(form.age) : null,
+        weight: form.weight ? parseFloat(form.weight) : null,
+        height: form.height ? parseFloat(form.height) : null,
+        experience: form.experience || "مبتدئ",
+        days_per_week: parseInt(form.daysPerWeek) || 4,
+        injuries: form.injuries || null,
+        preferred_equipment: form.equipment || null,
+      } as any).select("id, invite_token").single();
       if (error) throw error;
 
       // Send invitation email if email provided
@@ -115,12 +124,25 @@ const Clients = () => {
         }
       }
 
+      // Auto-trigger copilot generation if we have enough data
+      if (newClient?.id && form.goal && (form.weight || form.height)) {
+        try {
+          await supabase.functions.invoke("copilot-generate", {
+            body: { client_id: newClient.id, action: "generate_program" },
+          });
+          toast({ title: "تم إنشاء برنامج AI تلقائياً 🤖✅", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
+        } catch (e) {
+          console.error("Auto copilot error:", e);
+        }
+      }
+
       return newClient;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
-      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "" });
+      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+      setShowAdvanced(false);
       if (!form.email) {
         toast({ title: "تم إضافة العميل بنجاح" });
       }
@@ -242,6 +264,63 @@ const Clients = () => {
                 <label className="text-sm font-medium text-foreground">تاريخ البدء</label>
                 <Input value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} type="date" dir="ltr" />
               </div>
+
+              {/* Advanced Fields Toggle */}
+              <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center gap-1 text-sm text-primary font-medium w-full justify-center py-1">
+                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                بيانات متقدمة (لتوليد برنامج AI تلقائي)
+              </button>
+
+              {showAdvanced && (
+                <div className="space-y-3 border border-primary/20 rounded-lg p-3 bg-primary/5">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-foreground">العمر</label>
+                      <Input value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} type="number" placeholder="25" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-foreground">الوزن (كجم)</label>
+                      <Input value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} type="number" placeholder="80" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-foreground">الطول (سم)</label>
+                      <Input value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} type="number" placeholder="175" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-foreground">الخبرة</label>
+                      <Select value={form.experience} onValueChange={(v) => setForm({ ...form, experience: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="مبتدئ">مبتدئ</SelectItem>
+                          <SelectItem value="متوسط">متوسط</SelectItem>
+                          <SelectItem value="متقدم">متقدم</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-foreground">أيام التدريب / أسبوع</label>
+                      <Select value={form.daysPerWeek} onValueChange={(v) => setForm({ ...form, daysPerWeek: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {[2,3,4,5,6].map(n => <SelectItem key={n} value={String(n)}>{n} أيام</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-foreground">إصابات أو قيود (اختياري)</label>
+                    <Input value={form.injuries} onChange={(e) => setForm({ ...form, injuries: e.target.value })} placeholder="مثال: مشكلة في الركبة" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-foreground">الأدوات المتوفرة (اختياري)</label>
+                    <Input value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} placeholder="مثال: دمبلز، بار، أجهزة نادي" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center">✨ تعبئة هذه البيانات تمكّن المساعد الذكي من إنشاء برنامج تدريب وتغذية مخصص تلقائياً</p>
+                </div>
+              )}
+
               <Button type="submit" className="w-full" disabled={addMutation.isPending}>
                 {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ"}
               </Button>

@@ -31,6 +31,11 @@ import PortalContent from "./pages/portal/PortalContent";
 import PortalBodyScan from "./pages/portal/PortalBodyScan";
 import PortalSubscription from "./pages/portal/PortalSubscription";
 import NotFound from "./pages/NotFound";
+import Marketplace from "./pages/Marketplace";
+import Challenges from "./pages/Challenges";
+import GulfFoods from "./pages/GulfFoods";
+import Discover from "./pages/Discover";
+import LeadsInbox from "./pages/LeadsInbox";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +76,12 @@ const App = () => (
             <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
             <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
             <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
+
+            <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
+            <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />
+            <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

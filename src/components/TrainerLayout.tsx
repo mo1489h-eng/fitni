@@ -1,25 +1,39 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Dumbbell, LayoutDashboard, Users, ClipboardList, UtensilsCrossed, CalendarDays, Lightbulb, Settings, LogOut, DollarSign } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, ClipboardList, LogOut, DollarSign, MoreHorizontal, UtensilsCrossed, Store, Trophy, Apple, Inbox, Settings, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import TrainerNotifications from "@/components/TrainerNotifications";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "المدفوعات", href: "/payments", icon: DollarSign },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
+];
+
+const moreItems = [
   { label: "التغذية", href: "/nutrition", icon: UtensilsCrossed },
+  { label: "سوق البرامج", href: "/marketplace", icon: Store },
+  { label: "التحديات", href: "/challenges", icon: Trophy },
+  { label: "الأطعمة الخليجية", href: "/gulf-foods", icon: Apple },
+  { label: "العملاء المحتملين", href: "/leads", icon: Inbox },
+  { label: "التقارير", href: "/reports", icon: FileText },
+  { label: "الإعدادات", href: "/settings", icon: Settings },
 ];
 
 const TrainerLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
     navigate("/login");
   };
+
+  const isMoreActive = moreItems.some(item => location.pathname === item.href);
 
   return (
     <div className="min-h-screen bg-background">
@@ -53,6 +67,32 @@ const TrainerLayout = ({ children }: { children: React.ReactNode }) => {
               </Link>
             );
           })}
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetTrigger asChild>
+              <button className={`flex-1 flex flex-col items-center py-2 text-xs transition-colors ${isMoreActive ? "text-primary" : "text-muted-foreground"}`}>
+                <MoreHorizontal className="w-5 h-5 mb-1" />
+                المزيد
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl pb-8">
+              <div className="grid grid-cols-3 gap-4 py-4">
+                {moreItems.map((item) => {
+                  const active = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      <item.icon className="w-6 h-6" />
+                      <span className="text-xs font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>

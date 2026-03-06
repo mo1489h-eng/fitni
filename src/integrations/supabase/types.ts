@@ -100,6 +100,223 @@ export type Database = {
           },
         ]
       }
+      challenge_entries: {
+        Row: {
+          id: string
+          notes: string | null
+          participant_id: string
+          submitted_at: string
+          value: number
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          participant_id: string
+          submitted_at?: string
+          value?: number
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          participant_id?: string
+          submitted_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_entries_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_participants: {
+        Row: {
+          badges: string[] | null
+          best_value: number
+          challenge_id: string
+          client_id: string
+          current_value: number
+          id: string
+          joined_at: string
+          rank: number | null
+        }
+        Insert: {
+          badges?: string[] | null
+          best_value?: number
+          challenge_id: string
+          client_id: string
+          current_value?: number
+          id?: string
+          joined_at?: string
+          rank?: number | null
+        }
+        Update: {
+          badges?: string[] | null
+          best_value?: number
+          challenge_id?: string
+          client_id?: string
+          current_value?: number
+          id?: string
+          joined_at?: string
+          rank?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_participants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          currency: string
+          description: string
+          end_date: string
+          entry_fee: number
+          id: string
+          image_url: string | null
+          kpi_metric: string
+          kpi_unit: string
+          max_participants: number | null
+          prize_description: string | null
+          start_date: string
+          status: string
+          title: string
+          trainer_id: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          end_date?: string
+          entry_fee?: number
+          id?: string
+          image_url?: string | null
+          kpi_metric?: string
+          kpi_unit?: string
+          max_participants?: number | null
+          prize_description?: string | null
+          start_date?: string
+          status?: string
+          title: string
+          trainer_id: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          end_date?: string
+          entry_fee?: number
+          id?: string
+          image_url?: string | null
+          kpi_metric?: string
+          kpi_unit?: string
+          max_participants?: number | null
+          prize_description?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
+      client_intakes: {
+        Row: {
+          budget_max: number
+          budget_min: number
+          city: string
+          created_at: string
+          email: string | null
+          goal: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          status: string
+          training_mode: string
+        }
+        Insert: {
+          budget_max?: number
+          budget_min?: number
+          city?: string
+          created_at?: string
+          email?: string | null
+          goal?: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          training_mode?: string
+        }
+        Update: {
+          budget_max?: number
+          budget_min?: number
+          city?: string
+          created_at?: string
+          email?: string | null
+          goal?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          status?: string
+          training_mode?: string
+        }
+        Relationships: []
+      }
+      client_matches: {
+        Row: {
+          created_at: string
+          id: string
+          intake_id: string
+          match_score: number
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          intake_id: string
+          match_score?: number
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          intake_id?: string
+          match_score?: number
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_matches_intake_id_fkey"
+            columns: ["intake_id"]
+            isOneToOne: false
+            referencedRelation: "client_intakes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_moods: {
         Row: {
           client_id: string
@@ -314,6 +531,172 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gulf_foods: {
+        Row: {
+          added_by_trainer_id: string | null
+          calories: number
+          carbs: number
+          category: string
+          created_at: string
+          fats: number
+          fiber: number
+          id: string
+          is_verified: boolean
+          name_ar: string
+          name_en: string
+          protein: number
+          serving_size: string
+        }
+        Insert: {
+          added_by_trainer_id?: string | null
+          calories?: number
+          carbs?: number
+          category?: string
+          created_at?: string
+          fats?: number
+          fiber?: number
+          id?: string
+          is_verified?: boolean
+          name_ar: string
+          name_en?: string
+          protein?: number
+          serving_size?: string
+        }
+        Update: {
+          added_by_trainer_id?: string | null
+          calories?: number
+          carbs?: number
+          category?: string
+          created_at?: string
+          fats?: number
+          fiber?: number
+          id?: string
+          is_verified?: boolean
+          name_ar?: string
+          name_en?: string
+          protein?: number
+          serving_size?: string
+        }
+        Relationships: []
+      }
+      marketplace_listings: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string
+          difficulty: string
+          duration_weeks: number
+          equipment: string[] | null
+          id: string
+          language: string
+          preview_images: string[] | null
+          preview_video_url: string | null
+          price: number
+          program_id: string | null
+          purchase_count: number
+          rating_avg: number
+          rating_count: number
+          status: string
+          tags: string[] | null
+          title: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string
+          difficulty?: string
+          duration_weeks?: number
+          equipment?: string[] | null
+          id?: string
+          language?: string
+          preview_images?: string[] | null
+          preview_video_url?: string | null
+          price?: number
+          program_id?: string | null
+          purchase_count?: number
+          rating_avg?: number
+          rating_count?: number
+          status?: string
+          tags?: string[] | null
+          title?: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string
+          difficulty?: string
+          duration_weeks?: number
+          equipment?: string[] | null
+          id?: string
+          language?: string
+          preview_images?: string[] | null
+          preview_video_url?: string | null
+          price?: number
+          program_id?: string | null
+          purchase_count?: number
+          rating_avg?: number
+          rating_count?: number
+          status?: string
+          tags?: string[] | null
+          title?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_listings_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          commission_rate: number
+          created_at: string
+          currency: string
+          id: string
+          listing_id: string
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          amount?: number
+          buyer_id: string
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id: string
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id?: string
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_purchases_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
             referencedColumns: ["id"]
           },
         ]
@@ -717,6 +1100,48 @@ export type Database = {
           used_at?: string | null
           used_by_trainer_id?: string | null
           used_count?: number
+        }
+        Relationships: []
+      }
+      trainer_discovery_profiles: {
+        Row: {
+          city: string
+          created_at: string
+          featured: boolean
+          id: string
+          is_discoverable: boolean
+          price_range_max: number
+          price_range_min: number
+          specialties: string[] | null
+          trainer_id: string
+          training_modes: string[] | null
+          trial_sessions: boolean
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          is_discoverable?: boolean
+          price_range_max?: number
+          price_range_min?: number
+          specialties?: string[] | null
+          trainer_id: string
+          training_modes?: string[] | null
+          trial_sessions?: boolean
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          is_discoverable?: boolean
+          price_range_max?: number
+          price_range_min?: number
+          specialties?: string[] | null
+          trainer_id?: string
+          training_modes?: string[] | null
+          trial_sessions?: boolean
         }
         Relationships: []
       }

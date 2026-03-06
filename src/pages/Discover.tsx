@@ -138,26 +138,45 @@ const Discover = () => {
               <Card key={m.trainer_id} className={i === 0 ? "border-primary" : ""}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary shrink-0">
-                      {m.profile?.full_name?.[0] || "?"}
-                    </div>
+                    {m.profile?.avatar_url ? (
+                      <img src={m.profile.avatar_url} alt={m.profile.full_name} className="w-14 h-14 rounded-full object-cover border-2 border-border shrink-0" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary shrink-0">
+                        {m.profile?.full_name?.[0] || "?"}
+                      </div>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-lg">{m.profile?.full_name || "مدرب"}</h3>
                         {i === 0 && <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">أفضل تطابق</Badge>}
+                        {m.featured && <Badge className="bg-primary/10 text-primary border-primary/30">مميز ⭐</Badge>}
                       </div>
-                      {m.profile?.specialization && <p className="text-sm text-primary">{m.profile.specialization}</p>}
+                      {m.profile?.specialization && <p className="text-sm text-primary font-medium">{m.profile.specialization}</p>}
                       {m.profile?.bio && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{m.profile.bio}</p>}
+                      
+                      {(m.specialties?.length > 0) && (
+                        <div className="flex gap-1 flex-wrap mt-2">
+                          {m.specialties.map((s: string) => (
+                            <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground flex-wrap">
                         {m.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.city}</span>}
-                        <span>{m.price_range_min}-{m.price_range_max} ر.س/شهر</span>
+                        <span>💰 {m.price_range_min}–{m.price_range_max} ر.س/شهر</span>
+                        {m.training_modes?.map((mode: string) => (
+                          <Badge key={mode} variant="secondary" className="text-xs">
+                            {mode === "online" ? "أونلاين" : mode === "in_person" ? "حضوري" : "مدمج"}
+                          </Badge>
+                        ))}
                         <Badge variant="outline" className="text-xs">{Math.round(m.score)}% تطابق</Badge>
                       </div>
                       <div className="flex gap-2 mt-3">
                         {m.profile?.user_id && (
                           <Button size="sm" asChild><a href={`/trainer/${m.profile.user_id}`}>عرض الملف <ArrowRight className="w-3 h-3 mr-1" /></a></Button>
                         )}
-                        {m.trial_sessions && <Badge variant="secondary">جلسة تجريبية</Badge>}
+                        {m.trial_sessions && <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/30">🎁 جلسة تجريبية</Badge>}
                       </div>
                     </div>
                   </div>

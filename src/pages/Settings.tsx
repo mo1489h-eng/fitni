@@ -16,8 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
-  LogOut, CreditCard, KeyRound, Save, CheckCircle,
+  LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [
   "لياقة عامة",
@@ -42,6 +43,24 @@ const Settings = () => {
   const [showPlans, setShowPlans] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [savingDiscovery, setSavingDiscovery] = useState(false);
+  const [discovery, setDiscovery] = useState({
+    is_discoverable: false,
+    city: "",
+    price_range_min: 0,
+    price_range_max: 500,
+    specialties: [] as string[],
+    training_modes: ["online"] as string[],
+    trial_sessions: false,
+  });
+
+  const CITIES = ["الرياض", "جدة", "الدمام", "مكة", "المدينة", "الخبر", "أبها", "تبوك", "حائل", "جازان", "أخرى"];
+  const TRAINING_MODES_OPTIONS = [
+    { value: "online", label: "أونلاين" },
+    { value: "in_person", label: "حضوري" },
+    { value: "hybrid", label: "مدمج" },
+  ];
+  const SPECIALTIES_OPTIONS = ["لياقة عامة", "كمال أجسام", "تخسيس", "تأهيل", "رياضات قتالية", "يوغا", "كروس فت", "تغذية رياضية"];
 
   const avatarRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -74,6 +93,69 @@ const Settings = () => {
       });
     }
   }, [profile]);
+
+  // Fetch discovery profile
+  useEffect(() => {
+    if (!user) return;
+    const fetchDiscovery = async () => {
+      const { data } = await supabase
+        .from("trainer_discovery_profiles")
+        .select("*")
+        .eq("trainer_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setDiscovery({
+          is_discoverable: data.is_discoverable,
+          city: data.city || "",
+          price_range_min: data.price_range_min || 0,
+          price_range_max: data.price_range_max || 500,
+          specialties: (data.specialties as string[]) || [],
+          training_modes: (data.training_modes as string[]) || ["online"],
+          trial_sessions: data.trial_sessions || false,
+        });
+      }
+    };
+    fetchDiscovery();
+  }, [user]);
+
+  const handleSaveDiscovery = async () => {
+    if (!user) return;
+    setSavingDiscovery(true);
+    try {
+      const payload = {
+        trainer_id: user.id,
+        is_discoverable: discovery.is_discoverable,
+        city: discovery.city,
+        price_range_min: discovery.price_range_min,
+        price_range_max: discovery.price_range_max,
+        specialties: discovery.specialties,
+        training_modes: discovery.training_modes,
+        trial_sessions: discovery.trial_sessions,
+      };
+      const { data: existing } = await supabase
+        .from("trainer_discovery_profiles")
+        .select("id")
+        .eq("trainer_id", user.id)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await supabase
+          .from("trainer_discovery_profiles")
+          .update(payload)
+          .eq("trainer_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("trainer_discovery_profiles")
+          .insert(payload);
+        if (error) throw error;
+      }
+      toast({ title: "تم حفظ ملف الاكتشاف ✅" });
+    } catch {
+      toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
+    } finally {
+      setSavingDiscovery(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -477,6 +559,133 @@ const Settings = () => {
               </Button>
             </div>
           )}
+        </Card>
+
+        {/* ━━━ 4. DISCOVERY PROFILE ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">ملف الاكتشاف</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            فعّل ظهورك في محرك البحث ليجدك العملاء المحتملون
+          </p>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-card-foreground">الظهور في محرك البحث</p>
+              <p className="text-xs text-muted-foreground">يمكن للعملاء إيجادك عبر صفحة الاكتشاف</p>
+            </div>
+            <Switch
+              checked={discovery.is_discoverable}
+              onCheckedChange={(v) => setDiscovery({ ...discovery, is_discoverable: v })}
+            />
+          </div>
+
+          <Separator />
+
+          <div>
+            <label className="text-sm font-medium text-foreground">المدينة</label>
+            <Select value={discovery.city} onValueChange={(v) => setDiscovery({ ...discovery, city: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر مدينتك" />
+              </SelectTrigger>
+              <SelectContent>
+                {CITIES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">أقل سعر (ر.س/شهر)</label>
+              <Input
+                type="number"
+                value={discovery.price_range_min}
+                onChange={(e) => setDiscovery({ ...discovery, price_range_min: +e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">أعلى سعر (ر.س/شهر)</label>
+              <Input
+                type="number"
+                value={discovery.price_range_max}
+                onChange={(e) => setDiscovery({ ...discovery, price_range_max: +e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">التخصصات</label>
+            <div className="flex flex-wrap gap-2">
+              {SPECIALTIES_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    const has = discovery.specialties.includes(s);
+                    setDiscovery({
+                      ...discovery,
+                      specialties: has
+                        ? discovery.specialties.filter((x) => x !== s)
+                        : [...discovery.specialties, s],
+                    });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    discovery.specialties.includes(s)
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary text-secondary-foreground border-border hover:border-primary"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">طريقة التدريب</label>
+            <div className="flex flex-wrap gap-2">
+              {TRAINING_MODES_OPTIONS.map((m) => (
+                <button
+                  key={m.value}
+                  onClick={() => {
+                    const has = discovery.training_modes.includes(m.value);
+                    setDiscovery({
+                      ...discovery,
+                      training_modes: has
+                        ? discovery.training_modes.filter((x) => x !== m.value)
+                        : [...discovery.training_modes, m.value],
+                    });
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    discovery.training_modes.includes(m.value)
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary text-secondary-foreground border-border hover:border-primary"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-card-foreground">جلسة تجريبية مجانية</p>
+              <p className="text-xs text-muted-foreground">عرض حصة تجريبية للعملاء الجدد</p>
+            </div>
+            <Switch
+              checked={discovery.trial_sessions}
+              onCheckedChange={(v) => setDiscovery({ ...discovery, trial_sessions: v })}
+            />
+          </div>
+
+          <Button className="w-full gap-2" variant="outline" onClick={handleSaveDiscovery} disabled={savingDiscovery}>
+            {savingDiscovery ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+            حفظ ملف الاكتشاف
+          </Button>
         </Card>
 
         {/* ━━━ SAVE BUTTON ━━━ */}

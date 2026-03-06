@@ -410,12 +410,17 @@ export type Database = {
       }
       clients: {
         Row: {
+          age: number | null
           auth_user_id: string | null
           billing_cycle: string
           created_at: string
+          days_per_week: number | null
           email: string | null
+          experience: string | null
           goal: string
+          height: number | null
           id: string
+          injuries: string | null
           invite_token: string | null
           last_active_at: string | null
           last_workout_date: string
@@ -423,6 +428,7 @@ export type Database = {
           phone: string
           portal_token: string | null
           portal_token_expires_at: string | null
+          preferred_equipment: string | null
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean
@@ -431,14 +437,20 @@ export type Database = {
           subscription_price: number
           trainer_id: string | null
           week_number: number
+          weight: number | null
         }
         Insert: {
+          age?: number | null
           auth_user_id?: string | null
           billing_cycle?: string
           created_at?: string
+          days_per_week?: number | null
           email?: string | null
+          experience?: string | null
           goal?: string
+          height?: number | null
           id?: string
+          injuries?: string | null
           invite_token?: string | null
           last_active_at?: string | null
           last_workout_date?: string
@@ -446,6 +458,7 @@ export type Database = {
           phone?: string
           portal_token?: string | null
           portal_token_expires_at?: string | null
+          preferred_equipment?: string | null
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -454,14 +467,20 @@ export type Database = {
           subscription_price?: number
           trainer_id?: string | null
           week_number?: number
+          weight?: number | null
         }
         Update: {
+          age?: number | null
           auth_user_id?: string | null
           billing_cycle?: string
           created_at?: string
+          days_per_week?: number | null
           email?: string | null
+          experience?: string | null
           goal?: string
+          height?: number | null
           id?: string
+          injuries?: string | null
           invite_token?: string | null
           last_active_at?: string | null
           last_workout_date?: string
@@ -469,6 +488,7 @@ export type Database = {
           phone?: string
           portal_token?: string | null
           portal_token_expires_at?: string | null
+          preferred_equipment?: string | null
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -477,6 +497,7 @@ export type Database = {
           subscription_price?: number
           trainer_id?: string | null
           week_number?: number
+          weight?: number | null
         }
         Relationships: [
           {
@@ -1322,12 +1343,17 @@ export type Database = {
       get_client_by_portal_token: {
         Args: { p_token: string }
         Returns: {
+          age: number | null
           auth_user_id: string | null
           billing_cycle: string
           created_at: string
+          days_per_week: number | null
           email: string | null
+          experience: string | null
           goal: string
+          height: number | null
           id: string
+          injuries: string | null
           invite_token: string | null
           last_active_at: string | null
           last_workout_date: string
@@ -1335,6 +1361,7 @@ export type Database = {
           phone: string
           portal_token: string | null
           portal_token_expires_at: string | null
+          preferred_equipment: string | null
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean
@@ -1343,6 +1370,7 @@ export type Database = {
           subscription_price: number
           trainer_id: string | null
           week_number: number
+          weight: number | null
         }[]
         SetofOptions: {
           from: "*"

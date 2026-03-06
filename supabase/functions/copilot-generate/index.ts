@@ -78,15 +78,19 @@ serve(async (req) => {
     const clientProfile = {
       name: client.name,
       goal: client.goal,
-      weight: scan?.weight || measurements?.[0]?.weight || "unknown",
-      height: scan?.height || "unknown",
-      age: scan?.age || "unknown",
+      weight: client.weight || scan?.weight || measurements?.[0]?.weight || "unknown",
+      height: client.height || scan?.height || "unknown",
+      age: client.age || scan?.age || "unknown",
       gender: scan?.gender || "unknown",
       bodyFat: scan?.body_fat || "unknown",
       bmi: scan?.bmi || "unknown",
       activityLevel: scan?.activity_level || "unknown",
       tdee: scan?.tdee || "unknown",
       weekNumber: client.week_number,
+      experience: client.experience || "مبتدئ",
+      daysPerWeek: client.days_per_week || 4,
+      injuries: client.injuries || null,
+      equipment: client.preferred_equipment || null,
     };
 
     let systemPrompt = "";
@@ -144,20 +148,27 @@ serve(async (req) => {
 - الوزن: ${clientProfile.weight} كجم
 - الطول: ${clientProfile.height} سم
 - العمر: ${clientProfile.age}
-- الجنس: ${clientProfile.gender === "male" ? "ذكر" : "أنثى"}
+- الجنس: ${clientProfile.gender === "male" ? "ذكر" : clientProfile.gender === "female" ? "أنثى" : "غير محدد"}
 - نسبة الدهون: ${clientProfile.bodyFat}%
 - BMI: ${clientProfile.bmi}
 - مستوى النشاط: ${clientProfile.activityLevel}
 - TDEE: ${clientProfile.tdee} سعرة
 - الأسبوع الحالي: ${clientProfile.weekNumber}
+- مستوى الخبرة: ${clientProfile.experience}
+- أيام التدريب في الأسبوع: ${clientProfile.daysPerWeek}
+${clientProfile.injuries ? `- إصابات أو قيود: ${clientProfile.injuries}` : ""}
+${clientProfile.equipment ? `- الأدوات المتوفرة: ${clientProfile.equipment}` : ""}
 
 🎯 توجيه الهدف:
 ${goalContext}
 
 ${existingProgram ? `📌 البرنامج الحالي: ${existingProgram.name} (${existingProgram.weeks} أسابيع) — أنشئ برنامج محدث وأفضل` : "لا يوجد برنامج حالي — أنشئ برنامج من الصفر"}
 
-أنشئ 4-5 أيام تدريب مع تقسيم عضلي مناسب للهدف.
-أضف 5-7 وجبات يومية مع الماكروز المحسوبة بدقة بناءً على TDEE والهدف.`;
+أنشئ ${clientProfile.daysPerWeek} أيام تدريب مع تقسيم عضلي مناسب للهدف والمستوى.
+${clientProfile.injuries ? `⚠️ تجنب التمارين التي تؤثر على: ${clientProfile.injuries}` : ""}
+${clientProfile.equipment ? `🏋️ استخدم فقط: ${clientProfile.equipment}` : ""}
+أضف 5-7 وجبات يومية مع الماكروز المحسوبة بدقة بناءً على TDEE والهدف.
+اقترح أوزان مبدئية مناسبة لمستوى ${clientProfile.experience}.`;
 
     } else if (action === "weekly_evaluation") {
       systemPrompt = `أنت مدرب لياقة محترف. حلل تقدم العميل وقدم توصيات محددة.

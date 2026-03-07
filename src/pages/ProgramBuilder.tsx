@@ -1012,12 +1012,14 @@ const ProgramBuilder = () => {
           {isLoading ? (
             <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
           ) : programs.length === 0 ? (
-            <Card className="p-10 text-center">
-              <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-40" />
-              <p className="font-medium text-foreground mb-1">لا توجد برامج</p>
-              <p className="text-sm text-muted-foreground mb-4">أنشئ برنامج أو استخدم قالب جاهز</p>
-              <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" />إنشاء برنامج</Button>
-            </Card>
+            <div className="text-center py-16 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                <ClipboardList className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">ما بنيت برامج بعد 📋</h3>
+              <p className="text-sm text-muted-foreground">استخدم قالب جاهز أو ابنِ من الصفر</p>
+              <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" />برنامج جديد</Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {programs.map(program => {

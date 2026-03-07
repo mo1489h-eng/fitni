@@ -199,6 +199,59 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="px-4 py-20 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16a34a]/3 to-transparent" />
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-black mb-3">أسعار <span className="text-[#4ade80]">بسيطة</span></h2>
+            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">Simple pricing, no surprises</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {/* Free Trial */}
+            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-7 text-center space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16a34a]/10 border border-[#16a34a]/20 text-[#4ade80] text-xs font-bold">
+                🎁 الأكثر شعبية
+              </div>
+              <h3 className="text-2xl font-black text-white">6 شهور مجاناً</h3>
+              <div className="text-5xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>0 <span className="text-lg text-white/40">ر.س</span></div>
+              <p className="text-sm text-white/50">ابدأ بدون أي تكلفة — كل المميزات متاحة</p>
+              <ul className="text-sm text-white/60 space-y-2 text-right">
+                <li>✅ عدد عملاء غير محدود</li>
+                <li>✅ برامج تدريب وتغذية</li>
+                <li>✅ بوابة عملاء احترافية</li>
+                <li>✅ تقارير ومتابعة مدفوعات</li>
+              </ul>
+              <Link to="/register">
+                <Button size="lg" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white text-lg py-6 rounded-xl mt-2">
+                  ابدأ مجاناً ←
+                </Button>
+              </Link>
+            </div>
+            {/* Pro Plan */}
+            <div className="bg-white/[0.03] border border-[#16a34a]/30 rounded-2xl p-7 text-center space-y-4 ring-1 ring-[#16a34a]/20">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16a34a]/20 border border-[#16a34a]/30 text-[#4ade80] text-xs font-bold">
+                ⚡ احترافي
+              </div>
+              <h3 className="text-2xl font-black text-white">الباقة الاحترافية</h3>
+              <div className="text-5xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>49 <span className="text-lg text-white/40">ر.س/شهر</span></div>
+              <p className="text-sm text-white/50">بعد انتهاء الفترة المجانية</p>
+              <ul className="text-sm text-white/60 space-y-2 text-right">
+                <li>✅ كل مميزات الفترة المجانية</li>
+                <li>✅ براندينج وشعار خاص</li>
+                <li>✅ سوق البرامج</li>
+                <li>✅ دعم أولوية</li>
+              </ul>
+              <Link to="/register">
+                <Button size="lg" variant="outline" className="w-full border-[#16a34a]/50 text-[#4ade80] hover:bg-[#16a34a]/10 bg-transparent text-lg py-6 rounded-xl mt-2">
+                  ابدأ التجربة المجانية
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Public Marketplace */}
       <PublicMarketplace />
 

@@ -46,6 +46,7 @@ const Settings = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [discovery, setDiscovery] = useState({
     is_discoverable: false,
     city: "",
@@ -768,6 +769,23 @@ const Settings = () => {
             <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
             <p className="text-sm font-medium text-card-foreground" dir="ltr">{user?.email}</p>
           </div>
+
+          <Separator />
+
+          {/* Replay Tour */}
+          <Button
+            variant="outline"
+            className="w-full gap-2 text-primary hover:text-primary"
+            onClick={async () => {
+              if (user) {
+                await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
+              }
+              setShowTour(true);
+            }}
+          >
+            <RotateCcw className="w-4 h-4" />
+            إعادة الجولة التعريفية
+          </Button>
 
           <Separator />
 

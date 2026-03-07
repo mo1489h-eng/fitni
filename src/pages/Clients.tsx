@@ -172,8 +172,28 @@ const Clients = () => {
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            {search ? "لا توجد نتائج" : "لا يوجد عملاء بعد. أضف أول عميل!"}
+          <div className="text-center py-20 space-y-4">
+            {search ? (
+              <p className="text-muted-foreground">لا توجد نتائج</p>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                  <Users className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">ما أضفت عملاء بعد 👥</h3>
+                <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
+                <Button className="gap-1" onClick={() => {
+                  if (!canAddClient()) {
+                    const reason = getAddClientBlockReason();
+                    if (reason) setBlockReason(reason);
+                    return;
+                  }
+                  setOpen(true);
+                }}>
+                  <Plus className="w-4 h-4" /> إضافة عميل
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3 pb-20">

@@ -231,6 +231,7 @@ const Dashboard = () => {
         )}
       </div>
       <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
+      <OnboardingTour />
     </TrainerLayout>
   );
 };

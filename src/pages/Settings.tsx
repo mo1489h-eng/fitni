@@ -17,7 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
   LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
+  RotateCcw,
 } from "lucide-react";
+import OnboardingTour from "@/components/OnboardingTour";
 import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [
@@ -44,6 +46,7 @@ const Settings = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [discovery, setDiscovery] = useState({
     is_discoverable: false,
     city: "",
@@ -769,6 +772,23 @@ const Settings = () => {
 
           <Separator />
 
+          {/* Replay Tour */}
+          <Button
+            variant="outline"
+            className="w-full gap-2 text-primary hover:text-primary"
+            onClick={async () => {
+              if (user) {
+                await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
+              }
+              setShowTour(true);
+            }}
+          >
+            <RotateCcw className="w-4 h-4" />
+            إعادة الجولة التعريفية
+          </Button>
+
+          <Separator />
+
           {/* Logout */}
           <Button
             variant="ghost"
@@ -791,6 +811,9 @@ const Settings = () => {
           }}
         />
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        {showTour && (
+          <OnboardingTour forceShow onForceClose={() => setShowTour(false)} />
+        )}
       </div>
     </TrainerLayout>
   );

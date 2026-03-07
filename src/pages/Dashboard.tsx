@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
@@ -232,6 +232,7 @@ const Dashboard = () => {
       </div>
       <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
       <OnboardingTour />
+      {/* Tour is self-contained - checks Supabase for onboarding_completed */}
     </TrainerLayout>
   );
 };

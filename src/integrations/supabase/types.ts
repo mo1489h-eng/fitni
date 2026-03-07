@@ -894,6 +894,7 @@ export type Database = {
           notify_inactive: boolean | null
           notify_payments: boolean | null
           notify_weekly_report: boolean | null
+          onboarding_completed: boolean | null
           payment_status: string | null
           phone: string | null
           specialization: string | null
@@ -915,6 +916,7 @@ export type Database = {
           notify_inactive?: boolean | null
           notify_payments?: boolean | null
           notify_weekly_report?: boolean | null
+          onboarding_completed?: boolean | null
           payment_status?: string | null
           phone?: string | null
           specialization?: string | null
@@ -936,6 +938,7 @@ export type Database = {
           notify_inactive?: boolean | null
           notify_payments?: boolean | null
           notify_weekly_report?: boolean | null
+          onboarding_completed?: boolean | null
           payment_status?: string | null
           phone?: string | null
           specialization?: string | null

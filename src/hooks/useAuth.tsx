@@ -17,6 +17,7 @@ interface Profile {
   notify_weekly_report: boolean;
   brand_color: string;
   welcome_message: string;
+  onboarding_completed: boolean;
 }
 
 interface AuthContextType {
@@ -71,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, created_at, subscription_plan, subscribed_at, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message")
+      .select("full_name, created_at, subscription_plan, subscribed_at, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed")
       .eq("user_id", userId)
       .maybeSingle();
     if (data) setProfile(data as Profile);

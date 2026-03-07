@@ -17,7 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
   LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
+  RotateCcw,
 } from "lucide-react";
+import OnboardingTour from "@/components/OnboardingTour";
 import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [

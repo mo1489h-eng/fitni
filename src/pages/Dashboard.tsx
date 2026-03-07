@@ -4,6 +4,7 @@ import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
 import ClientOverview from "@/components/ClientOverview";
 import ImportClientsModal from "@/components/ImportClientsModal";
+import OnboardingTour from "@/components/OnboardingTour";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";

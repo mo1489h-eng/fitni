@@ -183,7 +183,7 @@ const Clients = () => {
                 <h3 className="text-lg font-bold text-foreground">ما أضفت عملاء بعد 👥</h3>
                 <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
                 <Button className="gap-1" onClick={() => {
-                  if (!canAddClient()) {
+                  if (!canAddClient) {
                     const reason = getAddClientBlockReason();
                     if (reason) setBlockReason(reason);
                     return;

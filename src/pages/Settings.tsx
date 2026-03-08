@@ -715,6 +715,125 @@ const Settings = () => {
           </Button>
         </Card>
 
+        {/* ━━━ PAYMENT SETTINGS ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Banknote className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">إعدادات الدفع 💰</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">أضف بيانات حسابك البنكي لاستقبال المدفوعات من العملاء</p>
+
+          <div>
+            <label className="text-sm font-medium text-foreground">اسم صاحب الحساب</label>
+            <Input
+              value={paymentForm.account_holder_name}
+              onChange={(e) => setPaymentForm({ ...paymentForm, account_holder_name: e.target.value })}
+              placeholder="الاسم كما يظهر في الحساب البنكي"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">رقم الآيبان (IBAN)</label>
+            <Input
+              value={paymentForm.iban}
+              onChange={(e) => setPaymentForm({ ...paymentForm, iban: e.target.value })}
+              placeholder="SA..."
+              dir="ltr"
+              maxLength={24}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">اسم البنك</label>
+            <Input
+              value={paymentForm.bank_name}
+              onChange={(e) => setPaymentForm({ ...paymentForm, bank_name: e.target.value })}
+              placeholder="مثال: الراجحي، الأهلي..."
+            />
+          </div>
+          <Button
+            className="w-full gap-2"
+            variant="outline"
+            disabled={savingPayment}
+            onClick={async () => {
+              if (!user) return;
+              setSavingPayment(true);
+              try {
+                const payload = { trainer_id: user.id, ...paymentForm };
+                const { data: existing } = await supabase
+                  .from("trainer_payment_settings")
+                  .select("id")
+                  .eq("trainer_id", user.id)
+                  .maybeSingle();
+                if (existing) {
+                  await supabase.from("trainer_payment_settings").update(paymentForm).eq("trainer_id", user.id);
+                } else {
+                  await supabase.from("trainer_payment_settings").insert(payload);
+                }
+                toast({ title: "تم حفظ بيانات الدفع ✅" });
+              } catch {
+                toast({ title: "حدث خطأ", variant: "destructive" });
+              } finally {
+                setSavingPayment(false);
+              }
+            }}
+          >
+            {savingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ بيانات الدفع
+          </Button>
+        </Card>
+
+        {/* ━━━ USERNAME ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">رابط الدفع العام</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">اختر اسم مستخدم فريد لرابط الدفع الخاص بك</p>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-medium text-foreground">اسم المستخدم</label>
+              <Input
+                value={usernameForm}
+                onChange={(e) => setUsernameForm(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                placeholder="your-name"
+                dir="ltr"
+              />
+            </div>
+            <Button
+              variant="outline"
+              disabled={savingUsername || !usernameForm.trim()}
+              onClick={async () => {
+                if (!user) return;
+                setSavingUsername(true);
+                try {
+                  const { error } = await supabase
+                    .from("profiles")
+                    .update({ username: usernameForm.trim() } as any)
+                    .eq("user_id", user.id);
+                  if (error) {
+                    if (error.message.includes("unique")) {
+                      toast({ title: "اسم المستخدم مستخدم بالفعل", variant: "destructive" });
+                    } else throw error;
+                  } else {
+                    await refreshProfile();
+                    toast({ title: "تم حفظ اسم المستخدم ✅" });
+                  }
+                } catch {
+                  toast({ title: "حدث خطأ", variant: "destructive" });
+                } finally {
+                  setSavingUsername(false);
+                }
+              }}
+            >
+              {savingUsername ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            </Button>
+          </div>
+          {usernameForm && (
+            <p className="text-xs text-muted-foreground" dir="ltr">
+              {window.location.origin}/pay/{usernameForm}
+            </p>
+          )}
+        </Card>
+
         {/* ━━━ SAVE BUTTON ━━━ */}
         <Button className="w-full gap-2" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

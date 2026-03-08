@@ -105,7 +105,7 @@ const Settings = () => {
     }
   }, [profile]);
 
-  // Fetch discovery profile
+  // Fetch discovery profile & payment settings
   useEffect(() => {
     if (!user) return;
     const fetchDiscovery = async () => {
@@ -126,7 +126,23 @@ const Settings = () => {
         });
       }
     };
+    const fetchPaymentSettings = async () => {
+      const { data } = await supabase
+        .from("trainer_payment_settings")
+        .select("*")
+        .eq("trainer_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setPaymentForm({
+          iban: data.iban || "",
+          bank_name: data.bank_name || "",
+          account_holder_name: data.account_holder_name || "",
+        });
+      }
+    };
     fetchDiscovery();
+    fetchPaymentSettings();
+    setUsernameForm(profile?.username || "");
   }, [user]);
 
   const handleSaveDiscovery = async () => {

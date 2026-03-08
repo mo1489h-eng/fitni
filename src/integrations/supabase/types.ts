@@ -881,6 +881,45 @@ export type Database = {
           },
         ]
       }
+      payout_requests: {
+        Row: {
+          account_holder_name: string
+          amount: number
+          bank_name: string
+          iban: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          requested_at: string
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          account_holder_name?: string
+          amount?: number
+          bank_name?: string
+          iban?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          amount?: number
+          bank_name?: string
+          iban?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          requested_at?: string
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -902,6 +941,7 @@ export type Database = {
           subscription_end_date: string | null
           subscription_plan: string | null
           user_id: string
+          username: string | null
           welcome_message: string | null
         }
         Insert: {
@@ -924,6 +964,7 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_plan?: string | null
           user_id: string
+          username?: string | null
           welcome_message?: string | null
         }
         Update: {
@@ -946,6 +987,7 @@ export type Database = {
           subscription_end_date?: string | null
           subscription_plan?: string | null
           user_id?: string
+          username?: string | null
           welcome_message?: string | null
         }
         Relationships: []
@@ -1209,6 +1251,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trainer_packages: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          currency: string
+          custom_features: string[] | null
+          description: string
+          id: string
+          includes_followup: boolean
+          includes_nutrition: boolean
+          includes_program: boolean
+          is_active: boolean
+          name: string
+          price: number
+          sessions_per_week: number
+          trainer_id: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          currency?: string
+          custom_features?: string[] | null
+          description?: string
+          id?: string
+          includes_followup?: boolean
+          includes_nutrition?: boolean
+          includes_program?: boolean
+          is_active?: boolean
+          name?: string
+          price?: number
+          sessions_per_week?: number
+          trainer_id: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          currency?: string
+          custom_features?: string[] | null
+          description?: string
+          id?: string
+          includes_followup?: boolean
+          includes_nutrition?: boolean
+          includes_program?: boolean
+          is_active?: boolean
+          name?: string
+          price?: number
+          sessions_per_week?: number
+          trainer_id?: string
+        }
+        Relationships: []
+      }
+      trainer_payment_settings: {
+        Row: {
+          account_holder_name: string
+          bank_name: string
+          created_at: string
+          iban: string
+          id: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder_name?: string
+          bank_name?: string
+          created_at?: string
+          iban?: string
+          id?: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder_name?: string
+          bank_name?: string
+          created_at?: string
+          iban?: string
+          id?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       trainer_posts: {
         Row: {

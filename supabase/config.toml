@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.public-purchase]
 verify_jwt = false
+
+[functions.verify-package-payment]
+verify_jwt = false

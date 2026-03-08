@@ -36,6 +36,8 @@ import Challenges from "./pages/Challenges";
 import GulfFoods from "./pages/GulfFoods";
 import Discover from "./pages/Discover";
 import LeadsInbox from "./pages/LeadsInbox";
+import TrainerPackages from "./pages/TrainerPackages";
+import PublicPayment from "./pages/PublicPayment";
 
 const queryClient = new QueryClient();
 
@@ -64,11 +66,16 @@ const App = () => (
             <Route path="/client-register/:token" element={<ClientRegister />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
             <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
+            <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
 
-            {/* Portal entry with token — captures & redirects to clean URL */}
+            {/* Public payment pages */}
+            <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
+            <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />
+
+            {/* Portal entry with token */}
             <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
 
-            {/* Clean portal routes (token in sessionStorage) */}
+            {/* Clean portal routes */}
             <Route path="/portal" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
             <Route path="/portal/workout" element={<PortalTokenProvider><PortalWorkout /></PortalTokenProvider>} />
             <Route path="/portal/progress" element={<PortalTokenProvider><PortalProgress /></PortalTokenProvider>} />

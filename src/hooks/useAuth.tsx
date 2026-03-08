@@ -18,6 +18,7 @@ interface Profile {
   brand_color: string;
   welcome_message: string;
   onboarding_completed: boolean;
+  username: string | null;
 }
 
 interface AuthContextType {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Dumbbell, LayoutDashboard, Users, ClipboardList, LogOut, DollarSign, MoreHorizontal, UtensilsCrossed, Store, Trophy, Apple, Inbox, Settings, FileText } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users, ClipboardList, LogOut, DollarSign, MoreHorizontal, UtensilsCrossed, Store, Trophy, Apple, Inbox, Settings, FileText, Package } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import TrainerNotifications from "@/components/TrainerNotifications";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -13,6 +13,7 @@ const navItems = [
 ];
 
 const moreItems = [
+  { label: "باقاتي", href: "/packages", icon: Package },
   { label: "التغذية", href: "/nutrition", icon: UtensilsCrossed },
   { label: "سوق البرامج", href: "/marketplace", icon: Store },
   { label: "التحديات", href: "/challenges", icon: Trophy },

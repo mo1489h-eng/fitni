@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { DollarSign, Loader2, CreditCard, TrendingUp, AlertTriangle, Users, CalendarClock, ChevronDown, ChevronUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 import ClientPaymentModal from "@/components/ClientPaymentModal";
+import TrainerPayoutSection from "@/components/TrainerPayoutSection";
 
 const Payments = () => {
   const { user } = useAuth();
@@ -232,6 +233,9 @@ const Payments = () => {
                 <p>لا توجد بيانات مدفوعات بعد</p>
               </div>
             )}
+
+            {/* Payout Section */}
+            <TrainerPayoutSection />
           </>
         )}
       </div>

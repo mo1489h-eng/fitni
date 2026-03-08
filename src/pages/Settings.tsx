@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
   LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
-  RotateCcw,
+  RotateCcw, Banknote,
 } from "lucide-react";
 import OnboardingTour from "@/components/OnboardingTour";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +47,14 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    iban: "",
+    bank_name: "",
+    account_holder_name: "",
+  });
+  const [usernameForm, setUsernameForm] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
   const [discovery, setDiscovery] = useState({
     is_discoverable: false,
     city: "",

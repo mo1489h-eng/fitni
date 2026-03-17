@@ -1,6 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ADMIN_PASSWORD = "fitni-admin-2024";
+const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET");
+
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +24,7 @@ Deno.serve(async (req) => {
   try {
     const { password, action, month, payout_id } = await req.json();
 
-    if (password !== ADMIN_PASSWORD) {
+    if (!ADMIN_SECRET || !password || !constantTimeCompare(password, ADMIN_SECRET)) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

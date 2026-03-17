@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Users, DollarSign, AlertTriangle, Clock, MessageCircle,
-  Activity, CreditCard, Upload, Plus, ChevronLeft,
+  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Eye, Pencil,
 } from "lucide-react";
 
 function getTimeGreeting(name: string) {

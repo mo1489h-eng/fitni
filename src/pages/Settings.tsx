@@ -19,7 +19,7 @@ import {
    LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
    RotateCcw, Banknote, Share2, Copy, Link, Instagram, Twitter, Plus, X, Image, MessageCircle,
 } from "lucide-react";
-import OnboardingTour from "@/components/OnboardingTour";
+import { useTutorial } from "@/hooks/useTutorial";
 import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [
@@ -46,7 +46,7 @@ const Settings = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
-  const [showTour, setShowTour] = useState(false);
+  const { startTutorial } = useTutorial();
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     iban: "",
@@ -1181,7 +1181,7 @@ const Settings = () => {
               if (user) {
                 await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
               }
-              setShowTour(true);
+              startTutorial();
             }}
           >
             <RotateCcw className="w-4 h-4" />
@@ -1212,9 +1212,6 @@ const Settings = () => {
           }}
         />
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
-        {showTour && (
-          <OnboardingTour forceShow onForceClose={() => setShowTour(false)} />
-        )}
       </div>
     </TrainerLayout>
   );

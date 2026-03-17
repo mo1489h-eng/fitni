@@ -4,7 +4,7 @@ import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
 import ClientOverview from "@/components/ClientOverview";
 import ImportClientsModal from "@/components/ImportClientsModal";
-import OnboardingTour from "@/components/OnboardingTour";
+
 import AnimatedCounter from "@/components/AnimatedCounter";
 import PremiumSkeleton from "@/components/PremiumSkeleton";
 import { Card } from "@/components/ui/card";
@@ -273,7 +273,7 @@ const Dashboard = () => {
         </button>
       </div>
       <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
-      <OnboardingTour />
+      
     </TrainerLayout>
   );
 };

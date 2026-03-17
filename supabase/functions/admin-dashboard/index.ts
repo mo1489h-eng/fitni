@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   try {
     const { password, action, month, payout_id } = await req.json();
 
-    if (password !== ADMIN_PASSWORD) {
+    if (!ADMIN_SECRET || !password || !constantTimeCompare(password, ADMIN_SECRET)) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

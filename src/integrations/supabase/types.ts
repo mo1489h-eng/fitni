@@ -1533,41 +1533,20 @@ export type Database = {
       get_client_by_portal_token: {
         Args: { p_token: string }
         Returns: {
-          age: number | null
-          auth_user_id: string | null
           billing_cycle: string
-          created_at: string
-          days_per_week: number | null
-          email: string | null
-          experience: string | null
           goal: string
-          height: number | null
           id: string
-          injuries: string | null
-          invite_token: string | null
-          last_active_at: string | null
-          last_workout_date: string
           name: string
-          phone: string
-          portal_token: string | null
-          portal_token_expires_at: string | null
-          preferred_equipment: string | null
+          portal_token: string
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean
-          program_id: string | null
+          program_id: string
           subscription_end_date: string
           subscription_price: number
-          trainer_id: string | null
+          trainer_id: string
           week_number: number
-          weight: number | null
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "clients"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_my_client_profile: {
         Args: never

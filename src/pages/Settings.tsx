@@ -1055,7 +1055,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                      const url = `${window.location.origin}/t/${usernameForm}`;
+                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       navigator.clipboard.writeText(url);
                       toast({ title: "تم نسخ الرابط — الصقه في انستقرام ✅" });
                     }}

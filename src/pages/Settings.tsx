@@ -1212,9 +1212,6 @@ const Settings = () => {
           }}
         />
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
-        {showTour && (
-          <OnboardingTour forceShow onForceClose={() => setShowTour(false)} />
-        )}
       </div>
     </TrainerLayout>
   );

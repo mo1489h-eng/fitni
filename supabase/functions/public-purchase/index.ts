@@ -11,7 +11,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { listing_id, amount } = await req.json();
+    // Require authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = claimsData.claims.sub;
+
+    const { listing_id } = await req.json();
     if (!listing_id) {
       return new Response(JSON.stringify({ error: "listing_id required" }), {
         status: 400,
@@ -24,28 +50,41 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Increment purchase count
-    const { data: listing } = await supabase
+    // Get listing details to validate amount
+    const { data: listing, error: listingError } = await supabase
       .from("marketplace_listings")
-      .select("purchase_count, trainer_id")
+      .select("purchase_count, trainer_id, price, status")
       .eq("id", listing_id)
       .single();
 
-    if (listing) {
-      await supabase
-        .from("marketplace_listings")
-        .update({ purchase_count: (listing.purchase_count || 0) + 1 })
-        .eq("id", listing_id);
-
-      // Record anonymous purchase
-      await supabase.from("marketplace_purchases").insert({
-        listing_id,
-        buyer_id: listing.trainer_id, // placeholder for anonymous
-        trainer_id: listing.trainer_id,
-        amount: amount || 0,
-        status: "completed",
+    if (listingError || !listing) {
+      return new Response(JSON.stringify({ error: "Listing not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    if (listing.status !== "published") {
+      return new Response(JSON.stringify({ error: "Listing not available" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Increment purchase count
+    await supabase
+      .from("marketplace_listings")
+      .update({ purchase_count: (listing.purchase_count || 0) + 1 })
+      .eq("id", listing_id);
+
+    // Record purchase with actual buyer_id and validated amount
+    await supabase.from("marketplace_purchases").insert({
+      listing_id,
+      buyer_id: userId,
+      trainer_id: listing.trainer_id,
+      amount: listing.price,
+      status: "completed",
+    });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

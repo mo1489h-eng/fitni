@@ -1456,6 +1456,10 @@ export type Database = {
       }
     }
     Functions: {
+      create_client_matches: {
+        Args: { p_intake_id: string; p_matches: Json }
+        Returns: number
+      }
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {

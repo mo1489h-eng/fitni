@@ -1634,6 +1634,40 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_public_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          brand_color: string
+          full_name: string
+          gallery_images: string[]
+          logo_url: string
+          social_links: Json
+          specialization: string
+          title: string
+          user_id: string
+          username: string
+          welcome_message: string
+        }[]
+      }
+      get_trainer_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          brand_color: string
+          full_name: string
+          gallery_images: string[]
+          logo_url: string
+          social_links: Json
+          specialization: string
+          title: string
+          user_id: string
+          username: string
+          welcome_message: string
+        }[]
+      }
       insert_portal_body_scan:
         | {
             Args: {

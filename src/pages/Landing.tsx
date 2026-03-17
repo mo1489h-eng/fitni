@@ -1,149 +1,300 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3 } from "lucide-react";
+import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3, Menu, X, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import PublicMarketplace from "@/components/PublicMarketplace";
+import { useEffect, useRef, useState, useCallback } from "react";
+
+/* ─── Animated counter on scroll ─── */
+const CountUp = ({ end, suffix = "" }: { end: number; suffix?: string }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [val, setVal] = useState(0);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const duration = 1400;
+          const tick = (now: number) => {
+            const p = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            setVal(Math.round(end * eased));
+            if (p < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [end]);
+
+  return <span ref={ref}>{val}{suffix}</span>;
+};
+
+/* ─── Scroll reveal hook ─── */
+const useReveal = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVisible(true); },
+      { threshold: 0.1 }
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return { ref, visible };
+};
+
+const RevealSection = ({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) => {
+  const { ref, visible } = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(24px)",
+        transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
 
 const Landing = () => {
   const { user, loading } = useAuth();
+  const [mobileMenu, setMobileMenu] = useState(false);
 
   if (!loading && user) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden" dir="rtl">
-      {/* Header */}
-      <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-[#0a0a0a]/80 border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen text-white overflow-hidden relative" dir="rtl" style={{ background: "#080808" }}>
+      {/* ━━━ Noise texture overlay ━━━ */}
+      <div className="fixed inset-0 pointer-events-none z-[1]" style={{ opacity: 0.025, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+
+      {/* ━━━ NAVBAR ━━━ */}
+      <header className="fixed top-0 inset-x-0 z-50" style={{ background: "rgba(8,8,8,0.8)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-between" style={{ height: 64 }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#16a34a] flex items-center justify-center shadow-lg shadow-[#16a34a]/30">
-              <Dumbbell className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-[#16a34a] flex items-center justify-center" style={{ boxShadow: "0 0 20px rgba(22,163,74,0.3)" }}>
+              <Dumbbell className="w-4 h-4 text-white" />
             </div>
-            <span className="text-2xl font-black text-white tracking-tight">fitni</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: "#22c55e" }}>fitni</span>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            {[
+              { label: "المميزات", href: "#features" },
+              { label: "الأسعار", href: "#pricing" },
+              { label: "آراء المدربين", href: "#testimonials" },
+            ].map(l => (
+              <a key={l.href} href={l.href} className="relative group" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}>
+                {l.label}
+                <span className="absolute -bottom-1 right-0 w-full h-px bg-[#22c55e] origin-right scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
+              </a>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex items-center gap-2">
             <Link to="/client-login">
-              <Button variant="outline" size="sm" className="border-[#16a34a]/50 text-[#4ade80] hover:bg-[#16a34a]/10 hover:text-[#4ade80] bg-transparent">
-                دخول المتدرب 💪
-              </Button>
+              <button style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", padding: "8px 16px", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}>
+                دخول المتدرب
+              </button>
             </Link>
             <Link to="/login">
-              <Button size="sm" className="bg-[#16a34a] hover:bg-[#15803d] text-white border-0 shadow-lg shadow-[#16a34a]/20">
-                دخول المدرب 👨‍💼
-              </Button>
+              <button style={{
+                background: "#16a34a", borderRadius: 10, padding: "10px 22px", fontWeight: 700, fontSize: 13, color: "#fff", border: "none", cursor: "pointer", transition: "box-shadow 0.2s",
+              }}
+                onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 0 24px rgba(22,163,74,0.5)")}
+                onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
+                دخول المدرب
+              </button>
             </Link>
           </div>
+
+          {/* Mobile hamburger */}
+          <button className="md:hidden p-2" onClick={() => setMobileMenu(!mobileMenu)}>
+            {mobileMenu ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
+          </button>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenu && (
+          <div className="md:hidden px-4 pb-4 space-y-3" style={{ background: "rgba(8,8,8,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <Link to="/login" className="block" onClick={() => setMobileMenu(false)}>
+              <button className="w-full text-center py-3 rounded-xl text-white font-bold" style={{ background: "#16a34a", fontSize: 14 }}>دخول المدرب</button>
+            </Link>
+            <Link to="/client-login" className="block" onClick={() => setMobileMenu(false)}>
+              <button className="w-full text-center py-3 rounded-xl font-bold" style={{ border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontSize: 14, background: "transparent" }}>دخول المتدرب</button>
+            </Link>
+          </div>
+        )}
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#16a34a]/8 via-transparent to-transparent" />
-        <div className="absolute top-20 right-1/4 w-96 h-96 bg-[#16a34a]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-[#16a34a]/3 rounded-full blur-[100px]" />
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10 space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#16a34a]/30 bg-[#16a34a]/10 text-[#4ade80] text-sm animate-fade-in-up">
-            <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse" />
-            المنصة #1 للمدربين في السعودية
-          </div>
+      {/* ━━━ HERO ━━━ */}
+      <section className="relative flex items-center justify-center px-4" style={{ minHeight: "100vh" }}>
+        {/* Background effects */}
+        <div className="absolute inset-0 z-0" style={{ background: "radial-gradient(ellipse 800px 600px at 50% 0%, rgba(22,163,74,0.12) 0%, transparent 70%)" }} />
+        <div className="absolute inset-0 z-0" style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            <h1 className="text-4xl md:text-6xl font-black leading-tight">
-              أنت تبني أجساداً — <span className="text-[#4ade80]">نحن نبني مسيرتك</span>
+        <div className="max-w-4xl mx-auto text-center relative z-10 space-y-8 pt-16">
+          {/* Badge */}
+          <RevealSection>
+            <div className="inline-flex items-center gap-2 rounded-full" style={{ background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.3)", padding: "6px 16px", fontSize: 12, color: "#22c55e" }}>
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+              المنصة #1 للمدربين في السعودية
+            </div>
+          </RevealSection>
+
+          {/* Headline */}
+          <RevealSection delay={0.1}>
+            <h1 style={{ fontSize: "clamp(48px, 8vw, 96px)", fontWeight: 900, letterSpacing: -2, lineHeight: 1.1 }}>
+              أنت تبني أجساداً —{" "}
+              <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                نحن نبني مسيرتك
+              </span>
             </h1>
-          </div>
+          </RevealSection>
 
-          <p className="text-xl md:text-2xl text-white/40 font-light tracking-wide animate-fade-in-up" style={{ animationDelay: "0.2s", fontFamily: "'Inter', sans-serif" }} dir="ltr">
-            You build bodies. We build your career.
-          </p>
+          <RevealSection delay={0.2}>
+            <p style={{ fontSize: "clamp(16px, 3vw, 24px)", color: "rgba(255,255,255,0.4)", fontWeight: 300, letterSpacing: 1, fontFamily: "'Inter', sans-serif" }} dir="ltr">
+              You build bodies. We build your career.
+            </p>
+          </RevealSection>
 
-          <p className="text-lg text-white/60 max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            المنصة الأولى للمدربين الشخصيين في السعودية — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية
-          </p>
+          <RevealSection delay={0.3}>
+            <p style={{ fontSize: 18, color: "rgba(255,255,255,0.55)", lineHeight: 1.8, maxWidth: 640, margin: "0 auto" }}>
+              المنصة الأولى للمدربين الشخصيين في السعودية — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية
+            </p>
+          </RevealSection>
 
-          {/* Dual Entry Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            <Link to="/login" className="block">
-              <div className="group bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 hover:bg-[#16a34a]/10 hover:border-[#16a34a]/40 transition-all duration-300 text-center space-y-3">
-                <div className="text-4xl">👨‍💼</div>
-                <h3 className="text-lg font-bold text-white">أنا مدرب</h3>
-                <p className="text-sm text-white/40">أدر عملاءك وبرامجهم</p>
-                <Button size="sm" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white mt-2">
-                  دخول / تسجيل
-                </Button>
-              </div>
-            </Link>
-            <Link to="/client-login" className="block">
-              <div className="group bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 hover:bg-[#16a34a]/10 hover:border-[#16a34a]/40 transition-all duration-300 text-center space-y-3">
-                <div className="text-4xl">💪</div>
-                <h3 className="text-lg font-bold text-white">أنا متدرب</h3>
-                <p className="text-sm text-white/40">تابع تمارينك وتقدمك</p>
-                <Button size="sm" variant="outline" className="w-full border-[#16a34a]/50 text-[#4ade80] hover:bg-[#16a34a]/10 bg-transparent mt-2">
-                  دخول
-                </Button>
-              </div>
-            </Link>
-          </div>
+          {/* CTAs */}
+          <RevealSection delay={0.4}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/register">
+                <button className="active:scale-[0.97]" style={{
+                  height: 52, padding: "0 32px", background: "linear-gradient(135deg, #16a34a, #0d7a38)", borderRadius: 14, fontSize: 15, fontWeight: 700, color: "#fff", border: "none", cursor: "pointer",
+                  boxShadow: "0 8px 32px rgba(22,163,74,0.35)", transition: "all 0.2s ease",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(22,163,74,0.45)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(22,163,74,0.35)"; }}>
+                  ابدأ مجاناً — 6 شهور ←
+                </button>
+              </Link>
+              <Link to="/client-login">
+                <button className="active:scale-[0.97]" style={{
+                  height: 52, padding: "0 32px", background: "transparent", borderRadius: 14, fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer",
+                  border: "1px solid rgba(255,255,255,0.12)", transition: "all 0.2s ease",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(22,163,74,0.5)"; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}>
+                  دخول المتدرب 💪
+                </button>
+              </Link>
+            </div>
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", marginTop: 12 }}>بدون بطاقة ائتمان • 6 شهور مجاناً للمدربين</p>
+          </RevealSection>
 
-          <p className="text-sm text-white/30 mt-2">
-            بدون بطاقة ائتمان • 6 شهور مجاناً للمدربين
-          </p>
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-center gap-6 md:gap-12 pt-8 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
-            {[
-              { num: "500+", labelAr: "مدرب نشط", labelEn: "Active Trainers", icon: Users },
-              { num: "98%", labelAr: "رضا العملاء", labelEn: "Client Satisfaction", icon: TrendingUp },
-              { num: "4.9", labelAr: "التقييم", labelEn: "App Rating", icon: Star },
-            ].map((stat) => (
-              <div key={stat.labelEn} className="text-center">
-                <stat.icon className="w-5 h-5 text-[#4ade80]/60 mx-auto mb-1.5" />
-                <div className="text-2xl md:text-3xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.num}</div>
-                <div className="text-sm text-white/60 font-medium mt-1">{stat.labelAr}</div>
-                <div className="text-[10px] text-white/25 mt-0.5 tracking-wider uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>{stat.labelEn}</div>
-              </div>
-            ))}
-          </div>
+          {/* Stats */}
+          <RevealSection delay={0.5}>
+            <div className="flex items-center justify-center gap-8 md:gap-16 pt-8">
+              {[
+                { num: 500, suffix: "+", label: "مدرب نشط" },
+                { num: 98, suffix: "%", label: "رضا العملاء" },
+                { num: 4.9, suffix: "", label: "التقييم" },
+              ].map((s, i) => (
+                <div key={i} className="text-center relative">
+                  {i > 0 && <div className="absolute top-1/2 -translate-y-1/2 -right-4 md:-right-8 w-px h-10" style={{ background: "rgba(255,255,255,0.08)" }} />}
+                  <div className="tabular-nums" style={{ fontSize: 28, fontWeight: 800, color: "#22c55e", fontFamily: "'Inter', sans-serif" }}>
+                    {s.num === 4.9 ? "4.9" : <CountUp end={s.num} suffix={s.suffix} />}
+                  </div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 4, fontWeight: 500 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </RevealSection>
         </div>
       </section>
 
-      {/* Motivation Section */}
-      <section className="px-4 py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16a34a]/3 to-transparent" />
-        <div className="max-w-5xl mx-auto relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">لماذا <span className="text-[#4ade80]">fitni</span>؟</h2>
-            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">Why choose fitni?</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* ━━━ Section divider ━━━ */}
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
+
+      {/* ━━━ WHY FITNI ━━━ */}
+      <section className="px-4 relative" style={{ padding: "80px 16px" }} id="features">
+        <div className="max-w-5xl mx-auto">
+          <RevealSection>
+            <div className="text-center mb-14">
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#16a34a", textTransform: "uppercase", marginBottom: 12, fontFamily: "'Inter', sans-serif" }} dir="ltr">WHY FITNI</div>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900 }}>
+                لماذا <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>fitni</span>؟
+              </h2>
+            </div>
+          </RevealSection>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Dumbbell, titleAr: "وفّر 3 ساعات يومياً", titleEn: "Save 3 hours daily", desc: "أتمت إدارة عملائك" },
               { icon: TrendingUp, titleAr: "تابع التقدم لحظياً", titleEn: "Real-time tracking", desc: "قياسات وتقارير فورية" },
               { icon: DollarSign, titleAr: "لا تخسر ريال واحد", titleEn: "Never miss a payment", desc: "تنبيهات مدفوعات ذكية" },
               { icon: Trophy, titleAr: "كن الأفضل", titleEn: "Be the best trainer", desc: "تميّز عن منافسيك" },
             ].map((item, i) => (
-              <div key={item.titleEn} className="group relative bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 hover:bg-white/[0.06] hover:border-[#16a34a]/30 transition-all duration-500 animate-fade-in-up" style={{ animationDelay: `${0.1 * i}s` }}>
-                <div className="w-10 h-10 rounded-xl bg-[#16a34a]/10 border border-[#16a34a]/20 flex items-center justify-center mb-4">
-                  <item.icon className="w-5 h-5 text-[#4ade80]" />
+              <RevealSection key={item.titleEn} delay={0.1 * i}>
+                <div
+                  className="group rounded-2xl p-6 transition-all duration-[250ms] cursor-default"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(22,163,74,0.4)";
+                    e.currentTarget.style.boxShadow = "0 0 40px rgba(22,163,74,0.08)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.2)" }}>
+                    <item.icon className="w-5 h-5" style={{ color: "#22c55e" }} />
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{item.titleAr}</h3>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", letterSpacing: 1, fontFamily: "'Inter', sans-serif", marginBottom: 8 }} dir="ltr">{item.titleEn}</p>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>{item.desc}</p>
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">{item.titleAr}</h3>
-                <p className="text-xs text-white/30 mb-2 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">{item.titleEn}</p>
-                <p className="text-sm text-white/50">{item.desc}</p>
-              </div>
+              </RevealSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="px-4 py-20">
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
+
+      {/* ━━━ FEATURES ━━━ */}
+      <section className="px-4" style={{ padding: "80px 16px" }}>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">كل ما تحتاجه في <span className="text-[#4ade80]">منصة واحدة</span></h2>
-            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">Everything you need in one platform</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <RevealSection>
+            <div className="text-center mb-14">
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#16a34a", textTransform: "uppercase", marginBottom: 12, fontFamily: "'Inter', sans-serif" }} dir="ltr">FEATURES</div>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900 }}>
+                كل ما تحتاجه في{" "}
+                <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>منصة واحدة</span>
+              </h2>
+            </div>
+          </RevealSection>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {[
               { icon: Users, titleAr: "إدارة العملاء", titleEn: "Smart Client Management", descEn: "Track progress, manage subscriptions, and keep all client data organized in one powerful dashboard." },
               { icon: Dumbbell, titleAr: "برامج التدريب", titleEn: "Custom Training Programs", descEn: "Build personalized workout plans with exercises, sets, reps and share them instantly with clients." },
@@ -152,146 +303,276 @@ const Landing = () => {
               { icon: CalendarDays, titleAr: "التقويم", titleEn: "Training Calendar", descEn: "Visual monthly calendar showing all client sessions at a glance with color-coded schedules." },
               { icon: BarChart3, titleAr: "التقارير", titleEn: "Analytics & Reports", descEn: "Detailed insights into your business growth, client activity, and revenue performance." },
             ].map((f, i) => (
-              <div key={f.titleEn} className="group relative bg-white/[0.03] border border-white/[0.06] rounded-2xl p-7 hover:bg-white/[0.06] hover:border-[#16a34a]/30 transition-all duration-500 animate-fade-in-up" style={{ animationDelay: `${0.1 * i}s` }}>
-                <div className="w-14 h-14 rounded-2xl bg-[#16a34a]/10 border border-[#16a34a]/20 flex items-center justify-center mb-5 group-hover:bg-[#16a34a]/20 transition-colors">
-                  <f.icon className="w-7 h-7 text-[#4ade80]" />
+              <RevealSection key={f.titleEn} delay={0.1 * i}>
+                <div
+                  className="group rounded-2xl p-7 transition-all duration-[250ms] cursor-default relative overflow-hidden"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(22,163,74,0.4)";
+                    e.currentTarget.style.boxShadow = "0 0 40px rgba(22,163,74,0.08)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderLeftWidth = "2px";
+                    e.currentTarget.style.borderLeftColor = "#16a34a";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderLeftWidth = "1px";
+                    e.currentTarget.style.borderLeftColor = "rgba(255,255,255,0.07)";
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-colors duration-200" style={{ background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.2)" }}>
+                    <f.icon className="w-6 h-6" style={{ color: "#22c55e" }} />
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{f.titleAr}</h3>
+                  <p style={{ fontSize: 11, color: "rgba(34,197,94,0.6)", letterSpacing: 1, fontWeight: 500, fontFamily: "'Inter', sans-serif", marginBottom: 10 }} dir="ltr">{f.titleEn}</p>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, fontFamily: "'Inter', sans-serif" }} dir="ltr">{f.descEn}</p>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-1">{f.titleAr}</h3>
-                <p className="text-xs text-[#4ade80]/60 mb-3 tracking-wide font-medium" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">{f.titleEn}</p>
-                <p className="text-sm text-white/40 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">{f.descEn}</p>
-              </div>
+              </RevealSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="px-4 py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16a34a]/3 to-transparent" />
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
+
+      {/* ━━━ TESTIMONIALS ━━━ */}
+      <section className="px-4 relative" style={{ padding: "80px 16px" }} id="testimonials">
         <div className="max-w-5xl mx-auto relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">ماذا يقول <span className="text-[#4ade80]">المدربون</span>؟</h2>
-            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">What trainers say about us</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
+          <RevealSection>
+            <div className="text-center mb-14">
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#16a34a", textTransform: "uppercase", marginBottom: 12, fontFamily: "'Inter', sans-serif" }} dir="ltr">TESTIMONIALS</div>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900 }}>
+                ماذا يقول{" "}
+                <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>المدربون</span>؟
+              </h2>
+            </div>
+          </RevealSection>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               { name: "أحمد الشمري", role: "مدرب لياقة بدنية", text: "fitni غيّرت طريقة شغلي تماماً. قبل كنت أضيع وقت كثير بالواتساب والجداول، الحين كل شيء منظم ومرتب.", stars: 5 },
               { name: "سارة القحطاني", role: "مدربة يوغا وتغذية", text: "أفضل استثمار سويته لمشروعي كمدربة. عملائي يحبون البوابة الخاصة فيهم ويتابعون برامجهم بسهولة.", stars: 5 },
               { name: "فهد العتيبي", role: "مدرب كمال أجسام", text: "من أول أسبوع وفّرت ساعتين يومياً. إدارة المدفوعات والتذكيرات التلقائية ريحتني بشكل كبير.", stars: 5 },
             ].map((t, i) => (
-              <div key={t.name} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 animate-fade-in-up" style={{ animationDelay: `${0.15 * i}s` }}>
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.stars }).map((_, j) => <Star key={j} className="w-4 h-4 text-[#facc15] fill-[#facc15]" />)}
-                </div>
-                <p className="text-sm text-white/70 leading-relaxed mb-5">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#16a34a]/20 border border-[#16a34a]/30 flex items-center justify-center">
-                    <span className="text-sm font-bold text-[#4ade80]">{t.name.split(" ").map(w => w[0]).join("")}</span>
+              <RevealSection key={t.name} delay={0.15 * i}>
+                <div
+                  className="rounded-2xl p-6 transition-all duration-[250ms]"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = "rgba(22,163,74,0.3)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: t.stars }).map((_, j) => (
+                      <Star key={j} className="w-4 h-4" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">{t.name}</p>
-                    <p className="text-xs text-white/40">{t.role}</p>
+                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "rgba(255,255,255,0.7)", fontStyle: "italic", marginBottom: 20 }}>"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(22,163,74,0.3), rgba(22,163,74,0.1))", border: "1px solid rgba(22,163,74,0.3)" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#22c55e" }}>{t.name.split(" ").map(w => w[0]).join("")}</span>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{t.name}</p>
+                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{t.role}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </RevealSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="px-4 py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16a34a]/3 to-transparent" />
-        <div className="max-w-4xl mx-auto relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-black mb-3">أسعار <span className="text-[#4ade80]">بسيطة</span></h2>
-            <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">Simple pricing, no surprises</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {/* Free Trial */}
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-7 text-center space-y-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16a34a]/10 border border-[#16a34a]/20 text-[#4ade80] text-xs font-bold">
-                🎁 الأكثر شعبية
-              </div>
-              <h3 className="text-2xl font-black text-white">6 شهور مجاناً</h3>
-              <div className="text-5xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>0 <span className="text-lg text-white/40">ر.س</span></div>
-              <p className="text-sm text-white/50">ابدأ بدون أي تكلفة — كل المميزات متاحة</p>
-              <ul className="text-sm text-white/60 space-y-2 text-right">
-                <li>✅ عدد عملاء غير محدود</li>
-                <li>✅ برامج تدريب وتغذية</li>
-                <li>✅ بوابة عملاء احترافية</li>
-                <li>✅ تقارير ومتابعة مدفوعات</li>
-              </ul>
-              <Link to="/register">
-                <Button size="lg" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white text-lg py-6 rounded-xl mt-2">
-                  ابدأ مجاناً ←
-                </Button>
-              </Link>
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
+
+      {/* ━━━ PRICING ━━━ */}
+      <section className="px-4 relative" style={{ padding: "80px 16px" }} id="pricing">
+        <div className="max-w-3xl mx-auto relative z-10">
+          <RevealSection>
+            <div className="text-center mb-14">
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#16a34a", textTransform: "uppercase", marginBottom: 12, fontFamily: "'Inter', sans-serif" }} dir="ltr">PRICING</div>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900 }}>
+                أسعار{" "}
+                <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>بسيطة</span>
+              </h2>
             </div>
-            {/* Pro Plan */}
-            <div className="bg-white/[0.03] border border-[#16a34a]/30 rounded-2xl p-7 text-center space-y-4 ring-1 ring-[#16a34a]/20">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16a34a]/20 border border-[#16a34a]/30 text-[#4ade80] text-xs font-bold">
-                ⚡ احترافي
+          </RevealSection>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Free */}
+            <RevealSection delay={0.1}>
+              <div className="rounded-2xl p-7 text-center space-y-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.2)", color: "#22c55e" }}>
+                  🎁 ابدأ مجاناً
+                </div>
+                <h3 style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>6 شهور مجاناً</h3>
+                <div className="tabular-nums" style={{ fontSize: 52, fontWeight: 900, color: "#22c55e", fontFamily: "'Inter', sans-serif" }}>
+                  0 <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>ر.س</span>
+                </div>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>ابدأ بدون أي تكلفة — كل المميزات متاحة</p>
+                <ul className="space-y-3 text-right">
+                  {["عدد عملاء غير محدود", "برامج تدريب وتغذية", "بوابة عملاء احترافية", "تقارير ومتابعة مدفوعات"].map(f => (
+                    <li key={f} className="flex items-center gap-2" style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
+                      <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#22c55e" }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/register" className="block">
+                  <button className="w-full active:scale-[0.97]" style={{
+                    height: 48, background: "linear-gradient(135deg, #16a34a, #0d7a38)", borderRadius: 12, fontSize: 15, fontWeight: 700, color: "#fff", border: "none", cursor: "pointer",
+                    boxShadow: "0 8px 32px rgba(22,163,74,0.35)", transition: "all 0.2s",
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(22,163,74,0.45)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(22,163,74,0.35)"; }}>
+                    ابدأ مجاناً ←
+                  </button>
+                </Link>
               </div>
-              <h3 className="text-2xl font-black text-white">الباقة الاحترافية</h3>
-              <div className="text-5xl font-black text-[#4ade80]" style={{ fontFamily: "'Inter', sans-serif" }}>49 <span className="text-lg text-white/40">ر.س/شهر</span></div>
-              <p className="text-sm text-white/50">بعد انتهاء الفترة المجانية</p>
-              <ul className="text-sm text-white/60 space-y-2 text-right">
-                <li>✅ كل مميزات الفترة المجانية</li>
-                <li>✅ براندينج وشعار خاص</li>
-                <li>✅ سوق البرامج</li>
-                <li>✅ دعم أولوية</li>
-              </ul>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="w-full border-[#16a34a]/50 text-[#4ade80] hover:bg-[#16a34a]/10 bg-transparent text-lg py-6 rounded-xl mt-2">
-                  ابدأ التجربة المجانية
-                </Button>
-              </Link>
-            </div>
+            </RevealSection>
+
+            {/* Pro */}
+            <RevealSection delay={0.2}>
+              <div className="rounded-2xl p-7 text-center space-y-5 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(22,163,74,0.08), rgba(8,8,8,0))", border: "1px solid rgba(22,163,74,0.5)" }}>
+                {/* Popular badge */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2" style={{ background: "#16a34a", color: "#fff", fontSize: 11, fontWeight: 700, padding: "4px 14px", borderRadius: "0 0 10px 10px" }}>
+                  الأكثر شيوعاً
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mt-2" style={{ background: "rgba(22,163,74,0.2)", border: "1px solid rgba(22,163,74,0.3)", color: "#22c55e" }}>
+                  ⚡ احترافي
+                </div>
+                <h3 style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>الباقة الاحترافية</h3>
+                <div className="tabular-nums" style={{ fontSize: 52, fontWeight: 900, color: "#22c55e", fontFamily: "'Inter', sans-serif" }}>
+                  49 <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>ر.س/شهر</span>
+                </div>
+                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>بعد انتهاء الفترة المجانية</p>
+                <ul className="space-y-3 text-right">
+                  {["كل مميزات الفترة المجانية", "براندينج وشعار خاص", "سوق البرامج", "دعم أولوية"].map(f => (
+                    <li key={f} className="flex items-center gap-2" style={{ fontSize: 14, color: "rgba(255,255,255,0.6)" }}>
+                      <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#22c55e" }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/register" className="block">
+                  <button className="w-full active:scale-[0.97]" style={{
+                    height: 48, background: "transparent", borderRadius: 12, fontSize: 15, fontWeight: 700, color: "#22c55e", cursor: "pointer",
+                    border: "1px solid rgba(22,163,74,0.5)", transition: "all 0.2s",
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(22,163,74,0.1)"; e.currentTarget.style.borderColor = "#22c55e"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(22,163,74,0.5)"; }}>
+                    ابدأ التجربة المجانية
+                  </button>
+                </Link>
+              </div>
+            </RevealSection>
           </div>
         </div>
       </section>
+
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
 
       {/* Public Marketplace */}
       <PublicMarketplace />
 
-      {/* Final CTA */}
-      <section className="px-4 py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#16a34a]/10 to-transparent" />
-        <div className="max-w-3xl mx-auto text-center relative z-10 space-y-6">
-          <h2 className="text-4xl md:text-5xl font-black">جاهز <span className="text-[#4ade80]">تبدأ</span>؟</h2>
-          <p className="text-xl text-white/30 tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">Start your journey today</p>
-          <p className="text-white/50 text-lg">انضم لمئات المدربين اللي طوّروا عملهم مع fitni</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
-            <Link to="/register">
-              <Button size="lg" className="text-lg px-10 py-7 gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white border-0 rounded-2xl shadow-2xl shadow-[#16a34a]/30">
-                ابدأ كمدرب — مجاناً ←
-              </Button>
-            </Link>
-            <Link to="/client-login">
-              <Button size="lg" variant="outline" className="text-lg px-10 py-7 gap-3 border-[#16a34a]/40 text-[#4ade80] hover:bg-[#16a34a]/10 bg-transparent rounded-2xl">
-                دخول المتدرب 💪
-              </Button>
-            </Link>
+      {/* ━━━ FINAL CTA ━━━ */}
+      <section className="px-4 relative" style={{ padding: "96px 16px" }}>
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(22,163,74,0.1), transparent)" }} />
+        <RevealSection>
+          <div className="max-w-3xl mx-auto text-center relative z-10 space-y-6">
+            <h2 style={{ fontSize: "clamp(32px, 6vw, 52px)", fontWeight: 900 }}>
+              جاهز{" "}
+              <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>تبدأ</span>؟
+            </h2>
+            <p style={{ fontSize: 18, color: "rgba(255,255,255,0.3)", letterSpacing: 1, fontFamily: "'Inter', sans-serif" }} dir="ltr">Start your journey today</p>
+            <p style={{ fontSize: 18, color: "rgba(255,255,255,0.55)", lineHeight: 1.8 }}>انضم لمئات المدربين اللي طوّروا عملهم مع fitni</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+              <Link to="/register">
+                <button className="active:scale-[0.97]" style={{
+                  height: 56, padding: "0 40px", background: "linear-gradient(135deg, #16a34a, #0d7a38)", borderRadius: 16, fontSize: 17, fontWeight: 700, color: "#fff", border: "none", cursor: "pointer",
+                  boxShadow: "0 8px 32px rgba(22,163,74,0.35)", transition: "all 0.2s",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(22,163,74,0.45)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(22,163,74,0.35)"; }}>
+                  ابدأ كمدرب — مجاناً ←
+                </button>
+              </Link>
+              <Link to="/client-login">
+                <button className="active:scale-[0.97]" style={{
+                  height: 56, padding: "0 40px", background: "transparent", borderRadius: 16, fontSize: 17, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer",
+                  border: "1px solid rgba(255,255,255,0.12)", transition: "all 0.2s",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(22,163,74,0.5)"; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}>
+                  دخول المتدرب 💪
+                </button>
+              </Link>
+            </div>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", marginTop: 16 }}>بدون بطاقة ائتمان • 6 شهور مجاناً</p>
           </div>
-          <p className="text-sm text-white/25 mt-4">بدون بطاقة ائتمان • 6 شهور مجاناً</p>
-        </div>
+        </RevealSection>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 px-4 py-8">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#16a34a] flex items-center justify-center">
-              <Dumbbell className="w-4 h-4 text-white" />
+      {/* ━━━ FOOTER ━━━ */}
+      <footer style={{ background: "#050505", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="max-w-6xl mx-auto px-4" style={{ padding: "48px 16px 24px" }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            {/* Logo col */}
+            <div className="col-span-2 md:col-span-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#16a34a] flex items-center justify-center">
+                  <Dumbbell className="w-4 h-4 text-white" />
+                </div>
+                <span style={{ fontWeight: 900, color: "#fff" }}>fitni</span>
+              </div>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>منصة المدرب الشخصي الأولى في السعودية</p>
             </div>
-            <span className="font-black text-white">fitni</span>
+            {/* Links */}
+            <div>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 12 }}>روابط</h4>
+              <div className="space-y-2">
+                {["المميزات", "الأسعار", "سوق البرامج"].map(l => (
+                  <a key={l} href="#" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.4)", transition: "color 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>{l}</a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 12 }}>قانوني</h4>
+              <div className="space-y-2">
+                {["سياسة الخصوصية", "الشروط والأحكام"].map(l => (
+                  <a key={l} href="#" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.4)", transition: "color 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>{l}</a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 12 }}>تواصل</h4>
+              <div className="space-y-2">
+                {["الدعم", "تويتر", "إنستقرام"].map(l => (
+                  <a key={l} href="#" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.4)", transition: "color 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>{l}</a>
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-white/30">© 2026 fitni. جميع الحقوق محفوظة</p>
-          <div className="flex gap-6 text-xs text-white/25" style={{ fontFamily: "'Inter', sans-serif" }}>
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Contact</span>
+          {/* Bottom bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>© 2026 fitni. جميع الحقوق محفوظة</p>
+            <div className="flex gap-6" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "'Inter', sans-serif" }}>
+              <span>Privacy</span>
+              <span>Terms</span>
+              <span>Contact</span>
+            </div>
           </div>
         </div>
       </footer>

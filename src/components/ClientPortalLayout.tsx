@@ -9,7 +9,7 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "التمرين", href: `/portal/workout`, icon: Activity },
     { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
     { label: "سكان", href: `/portal/body-scan`, icon: ScanLine },
-    { label: "التغذية", href: `/portal/nutrition`, icon: Apple },
+    { label: "اشتراكي", href: `/portal/subscription`, icon: CreditCard },
   ];
 
   return (

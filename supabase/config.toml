@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.signup-client]
 verify_jwt = false
+
+[functions.renew-subscription]
+verify_jwt = false
+
+[functions.subscription-reminders]
+verify_jwt = false

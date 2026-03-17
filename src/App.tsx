@@ -38,6 +38,7 @@ import Discover from "./pages/Discover";
 import LeadsInbox from "./pages/LeadsInbox";
 import TrainerPackages from "./pages/TrainerPackages";
 import PublicPayment from "./pages/PublicPayment";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 

@@ -153,6 +153,26 @@ const Settings = () => {
     fetchDiscovery();
     fetchPaymentSettings();
     setUsernameForm(profile?.username || "");
+
+    // Fetch personal page data
+    const fetchPersonalPage = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("title, social_links, gallery_images")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) {
+        const links = (data as any).social_links || {};
+        setPersonalPageForm({
+          title: (data as any).title || "",
+          social_instagram: links.instagram || "",
+          social_twitter: links.twitter || "",
+          social_tiktok: links.tiktok || "",
+        });
+        setGalleryImages((data as any).gallery_images || []);
+      }
+    };
+    fetchPersonalPage();
   }, [user]);
 
   const handleSaveDiscovery = async () => {

@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Users, DollarSign, AlertTriangle, Clock, MessageCircle,
+  UserCheck, DollarSign, AlertTriangle, Clock, MessageCircle,
   Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Pencil,
 } from "lucide-react";
 

@@ -1044,7 +1044,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                      const url = `${window.location.origin}/t/${usernameForm}`;
+                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${url}`)}`, "_blank");
                     }}
                   >

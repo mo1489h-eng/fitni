@@ -189,7 +189,8 @@ const PageBuilder = () => {
     }
   };
 
-  const pageUrl = profile?.username ? `${window.location.origin}/t/${profile.username}` : "";
+  const publicDomain = "https://fitni.lovable.app";
+  const pageUrl = profile?.username ? `${publicDomain}/t/${profile.username}` : "";
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">

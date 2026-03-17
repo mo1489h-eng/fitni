@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Users, DollarSign, AlertTriangle, Clock, MessageCircle,
-  Activity, CreditCard, Upload, Plus, ChevronLeft,
+  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Eye, Pencil,
 } from "lucide-react";
 
 function getTimeGreeting(name: string) {
@@ -87,6 +87,28 @@ const Dashboard = () => {
     <TrainerLayout>
       <div className="space-y-5 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+
+        {/* ━━━ PERSONAL PAGE CARD ━━━ */}
+        {profile?.username && (
+          <Card className="p-4 border-primary/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Globe className="w-4 h-4 text-primary" />
+              <h3 className="font-bold text-sm text-card-foreground">صفحتك الشخصية 🌐</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3 truncate" dir="ltr">fitni.lovable.app/t/{profile.username}</p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/t/${profile.username}`); }}>
+                <Copy className="w-3 h-3" /> نسخ الرابط
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => window.open(`/t/${profile.username}`, "_blank")}>
+                <Eye className="w-3 h-3" /> معاينة
+              </Button>
+              <Button size="sm" className="gap-1 text-xs" onClick={() => navigate("/settings/page")}>
+                <Pencil className="w-3 h-3" /> تخصيص
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Greeting & Quick Actions */}
         <div className="flex items-center justify-between">

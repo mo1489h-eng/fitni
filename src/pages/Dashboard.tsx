@@ -97,7 +97,7 @@ const Dashboard = () => {
             </div>
             <p className="text-xs text-muted-foreground mb-3 truncate" dir="ltr">fitni.lovable.app/t/{profile.username}</p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/t/${profile.username}`); }}>
+              <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${profile.username}`); }}>
                 <Copy className="w-3 h-3" /> نسخ الرابط
               </Button>
               <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => window.open(`/t/${profile.username}`, "_blank")}>

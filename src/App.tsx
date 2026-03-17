@@ -63,6 +63,7 @@ const App = () => (
             <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
             <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
             <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
+            <Route path="/t/:username" element={<TrainerPublicPage />} />
             <Route path="/client-login" element={<ClientLogin />} />
             <Route path="/client-register/:token" element={<ClientRegister />} />
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />

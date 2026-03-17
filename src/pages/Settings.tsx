@@ -55,6 +55,16 @@ const Settings = () => {
   });
   const [usernameForm, setUsernameForm] = useState("");
   const [savingUsername, setSavingUsername] = useState(false);
+  const [personalPageForm, setPersonalPageForm] = useState({
+    title: "",
+    social_instagram: "",
+    social_twitter: "",
+    social_tiktok: "",
+  });
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [savingPersonalPage, setSavingPersonalPage] = useState(false);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [discovery, setDiscovery] = useState({
     is_discoverable: false,
     city: "",

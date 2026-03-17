@@ -38,6 +38,7 @@ import Discover from "./pages/Discover";
 import LeadsInbox from "./pages/LeadsInbox";
 import TrainerPackages from "./pages/TrainerPackages";
 import PublicPayment from "./pages/PublicPayment";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
+            <Route path="/admin-fitni-dashboard" element={<AdminDashboard />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

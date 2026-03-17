@@ -42,19 +42,14 @@ const PublicMarketplace = () => {
   const handleDownload = async (listing: any) => {
     setPurchasing(true);
     try {
-      // Record anonymous purchase via edge function
+      // Record purchase via edge function (requires auth)
       await supabase.functions.invoke("public-purchase", {
-        body: { listing_id: listing.id, amount: listing.price },
+        body: { listing_id: listing.id },
       });
     } catch (e) {
-      // Continue even if tracking fails
+      // Continue even if tracking fails (e.g. unauthenticated)
       console.error("Purchase tracking error:", e);
     }
-
-    // Update purchase count
-    await supabase.from("marketplace_listings").update({ 
-      purchase_count: (listing.purchase_count || 0) + 1 
-    } as any).eq("id", listing.id);
 
     setPurchasing(false);
     setSelectedListing(null);

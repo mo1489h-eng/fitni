@@ -6,11 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  Dumbbell, Loader2, CheckCircle, ArrowDown, MapPin,
-  Instagram, Twitter, ChevronLeft, CreditCard, User, Eye, EyeOff, Star,
+  Dumbbell, Loader2, CheckCircle, ArrowDown,
+  Instagram, Twitter, ChevronLeft, CreditCard, Eye, EyeOff, Star,
 } from "lucide-react";
 
 interface TrainerProfile {
@@ -75,10 +73,13 @@ const DEFAULT_ORDER = ["hero", "stats", "specialties", "about", "gallery", "pack
 const TrainerPublicPage = () => {
   const { username } = useParams();
   const [selectedPackage, setSelectedPackage] = useState<TrainerPackage | null>(null);
+  // step: 0=landing, 1=payment, 2=registration, 3=success
   const [step, setStep] = useState(0);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const moyasarRef = useRef<HTMLDivElement>(null);
   const moyasarInitRef = useRef(false);
   const packagesRef = useRef<HTMLDivElement>(null);
@@ -134,22 +135,13 @@ const TrainerPublicPage = () => {
   const handleSelectPackage = (pkg: TrainerPackage) => {
     setSelectedPackage(pkg);
     setStep(1);
+    moyasarInitRef.current = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleInfoNext = () => {
-    if (!clientForm.full_name.trim() || !clientForm.phone.trim()) return;
-    setStep(2);
-  };
-
-  const handleAccountNext = () => {
-    if (!clientForm.email.trim() || clientForm.password.length < 6) return;
-    if (clientForm.password !== clientForm.confirm_password) return;
-    setStep(3);
-  };
-
+  // Step 1: Init Moyasar payment
   useEffect(() => {
-    if (step !== 3 || !selectedPackage || moyasarInitRef.current) return;
+    if (step !== 1 || !selectedPackage || moyasarInitRef.current) return;
     const loadMoyasar = () => {
       if (!document.getElementById("moyasar-css")) {
         const link = document.createElement("link");
@@ -169,7 +161,12 @@ const TrainerPublicPage = () => {
           callback_url: window.location.href,
           methods: ["creditcard", "applepay"],
           apple_pay: { country: "SA", label: "fitni", validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate" },
-          on_completed: async (payment: any) => { if (payment.status === "paid") await handlePaymentSuccess(payment.id); },
+          on_completed: (payment: any) => {
+            if (payment.status === "paid") {
+              setPaymentId(payment.id);
+              setStep(2);
+            }
+          },
         });
       };
       if ((window as any).Moyasar) initForm();
@@ -182,10 +179,16 @@ const TrainerPublicPage = () => {
     };
     loadMoyasar();
     return () => { moyasarInitRef.current = false; };
-  }, [step]);
+  }, [step, selectedPackage]);
 
-  const handlePaymentSuccess = async (paymentId: string) => {
+  // Step 2: Submit registration after payment
+  const handleRegisterSubmit = async () => {
+    if (!clientForm.full_name.trim() || !clientForm.phone.trim()) return;
+    if (!clientForm.email.trim() || clientForm.password.length < 6) return;
+    if (clientForm.password !== clientForm.confirm_password) return;
+
     setSubmitting(true);
+    setFormError(null);
     try {
       const { data, error } = await supabase.functions.invoke("signup-client", {
         body: {
@@ -201,9 +204,13 @@ const TrainerPublicPage = () => {
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "حدث خطأ");
-      setStep(4);
-    } catch (err: any) { console.error("Signup error:", err); }
-    finally { setSubmitting(false); }
+      setStep(3);
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setFormError(err.message || "حدث خطأ، حاول مرة أخرى");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (profileLoading) {
@@ -230,44 +237,106 @@ const TrainerPublicPage = () => {
   const sectionsOrder = pc.sections_order || DEFAULT_ORDER;
   const hiddenSections = pc.hidden_sections || [];
 
-  // ═══ SIGNUP FLOW ═══
+  // ═══ SIGNUP FLOW (step > 0) ═══
   if (step > 0 && selectedPackage) {
+    const totalSteps = 3;
+    const currentStep = step;
+
     return (
       <div className="min-h-screen" dir="rtl" style={{ backgroundColor: t.bg, fontFamily }}>
         <header className="sticky top-0 z-50 backdrop-blur-md border-b px-4 py-3" style={{ backgroundColor: `${t.bg}e6`, borderColor: `${t.text}15` }}>
           <div className="max-w-lg mx-auto flex items-center justify-between">
-            <button onClick={() => { setStep(step > 1 ? step - 1 : 0); moyasarInitRef.current = false; }} style={{ color: t.muted }}>
+            <button onClick={() => {
+              if (step === 1) { setStep(0); }
+              // Can't go back from step 2 (already paid) or step 3
+            }} style={{ color: step === 1 ? t.muted : "transparent", pointerEvents: step === 1 ? "auto" : "none" }}>
               <ChevronLeft className="w-5 h-5 rotate-180" />
             </button>
-            <span className="text-sm" style={{ color: t.muted }}>الخطوة {step} من 4</span>
+            <span className="text-sm" style={{ color: t.muted }}>
+              {step === 1 ? "الدفع" : step === 2 ? "إنشاء الحساب" : "تم بنجاح!"}
+            </span>
             <div className="flex gap-1">
-              {[1,2,3,4].map(s => (
-                <div key={s} className="w-6 h-1 rounded-full" style={{ backgroundColor: s <= step ? brandColor : `${t.text}20` }} />
+              {[1, 2, 3].map(s => (
+                <div key={s} className="w-6 h-1 rounded-full" style={{ backgroundColor: s <= currentStep ? brandColor : `${t.text}20` }} />
               ))}
             </div>
           </div>
         </header>
 
         <main className="max-w-lg mx-auto p-4">
+          {/* STEP 1: Payment */}
           {step === 1 && (
             <div className="space-y-5 animate-fade-in">
               <div className="text-center mb-6">
-                <h2 className="text-xl font-bold" style={{ color: t.text }}>معلوماتك الشخصية</h2>
-                <p className="text-sm mt-1" style={{ color: t.muted }}>باقة {selectedPackage.name} — {selectedPackage.price} ر.س/شهر</p>
+                <h2 className="text-xl font-bold" style={{ color: t.text }}>إتمام الدفع 💳</h2>
+                <p className="text-sm mt-1" style={{ color: t.muted }}>باقة {selectedPackage.name} — {selectedPackage.price} ر.س</p>
               </div>
+              <Card className="p-4" style={{ backgroundColor: t.card, borderColor: `${t.text}15` }}>
+                <div className="flex items-center gap-2 mb-3 text-sm" style={{ color: t.muted }}>
+                  <CreditCard className="w-4 h-4" /><span>ادفع بالبطاقة الائتمانية أو Apple Pay</span>
+                </div>
+                <div ref={moyasarRef} className="moyasar-form" />
+              </Card>
+              <p className="text-xs text-center" style={{ color: t.muted }}>الدفع آمن ومشفر عبر Moyasar 🔒</p>
+            </div>
+          )}
+
+          {/* STEP 2: Registration form (after payment) */}
+          {step === 2 && (
+            <div className="space-y-5 animate-fade-in">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}>
+                  <CheckCircle className="w-7 h-7" style={{ color: brandColor }} />
+                </div>
+                <h2 className="text-xl font-bold" style={{ color: t.text }}>تم الدفع بنجاح! 🎉</h2>
+                <p className="text-sm mt-1" style={{ color: t.muted }}>أنشئ حسابك في fitni للوصول لبوابة التدريب</p>
+              </div>
+
               <div className="space-y-4">
-                <div><label className="text-sm font-medium" style={{ color: t.text }}>الاسم الكامل *</label><Input value={clientForm.full_name} onChange={e => setClientForm({...clientForm, full_name: e.target.value})} placeholder="اسمك الكامل" /></div>
-                <div><label className="text-sm font-medium" style={{ color: t.text }}>رقم الجوال *</label><Input value={clientForm.phone} onChange={e => setClientForm({...clientForm, phone: e.target.value})} placeholder="05XXXXXXXX" type="tel" dir="ltr" /></div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>الاسم الكامل *</label>
+                  <Input value={clientForm.full_name} onChange={e => setClientForm({ ...clientForm, full_name: e.target.value })} placeholder="اسمك الكامل" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>رقم الجوال *</label>
+                  <Input value={clientForm.phone} onChange={e => setClientForm({ ...clientForm, phone: e.target.value })} placeholder="05XXXXXXXX" type="tel" dir="ltr" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>البريد الإلكتروني *</label>
+                  <Input value={clientForm.email} onChange={e => setClientForm({ ...clientForm, email: e.target.value })} placeholder="email@example.com" type="email" dir="ltr" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>كلمة المرور *</label>
+                  <div className="relative">
+                    <Input value={clientForm.password} onChange={e => setClientForm({ ...clientForm, password: e.target.value })} placeholder="6 أحرف على الأقل" type={showPassword ? "text" : "password"} dir="ltr" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.muted }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>تأكيد كلمة المرور *</label>
+                  <div className="relative">
+                    <Input value={clientForm.confirm_password} onChange={e => setClientForm({ ...clientForm, confirm_password: e.target.value })} placeholder="أعد كتابة كلمة المرور" type={showConfirmPassword ? "text" : "password"} dir="ltr" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.muted }}>{showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>
+                  </div>
+                  {clientForm.confirm_password && clientForm.password !== clientForm.confirm_password && (
+                    <p className="text-xs text-destructive mt-1">كلمة المرور غير متطابقة</p>
+                  )}
+                </div>
+
+                <div className="border-t pt-4" style={{ borderColor: `${t.text}15` }}>
+                  <p className="text-sm font-medium mb-3" style={{ color: t.text }}>معلومات إضافية (اختياري)</p>
+                </div>
+
                 <div className="grid grid-cols-3 gap-3">
-                  <div><label className="text-sm font-medium" style={{ color: t.text }}>العمر</label><Input value={clientForm.age} onChange={e => setClientForm({...clientForm, age: e.target.value})} type="number" placeholder="25" /></div>
-                  <div><label className="text-sm font-medium" style={{ color: t.text }}>الوزن (كجم)</label><Input value={clientForm.weight} onChange={e => setClientForm({...clientForm, weight: e.target.value})} type="number" placeholder="75" /></div>
-                  <div><label className="text-sm font-medium" style={{ color: t.text }}>الطول (سم)</label><Input value={clientForm.height} onChange={e => setClientForm({...clientForm, height: e.target.value})} type="number" placeholder="175" /></div>
+                  <div><label className="text-sm font-medium" style={{ color: t.text }}>العمر</label><Input value={clientForm.age} onChange={e => setClientForm({ ...clientForm, age: e.target.value })} type="number" placeholder="25" /></div>
+                  <div><label className="text-sm font-medium" style={{ color: t.text }}>الوزن (كجم)</label><Input value={clientForm.weight} onChange={e => setClientForm({ ...clientForm, weight: e.target.value })} type="number" placeholder="75" /></div>
+                  <div><label className="text-sm font-medium" style={{ color: t.text }}>الطول (سم)</label><Input value={clientForm.height} onChange={e => setClientForm({ ...clientForm, height: e.target.value })} type="number" placeholder="175" /></div>
                 </div>
                 <div>
                   <label className="text-sm font-medium" style={{ color: t.text }}>الهدف</label>
                   <div className="flex flex-wrap gap-2 mt-1">
                     {["تخسيس", "بناء عضلات", "لياقة عامة", "تأهيل"].map(g => (
-                      <button key={g} onClick={() => setClientForm({...clientForm, goal: g})}
+                      <button key={g} onClick={() => setClientForm({ ...clientForm, goal: g })}
                         className="px-4 py-2 rounded-full text-sm border transition-colors"
                         style={{ backgroundColor: clientForm.goal === g ? brandColor : "transparent", color: clientForm.goal === g ? "#fff" : t.muted, borderColor: clientForm.goal === g ? brandColor : `${t.text}20` }}>
                         {g}
@@ -275,51 +344,31 @@ const TrainerPublicPage = () => {
                     ))}
                   </div>
                 </div>
-                <div><label className="text-sm font-medium" style={{ color: t.text }}>ملاحظات إضافية</label><Textarea value={clientForm.notes} onChange={e => setClientForm({...clientForm, notes: e.target.value})} placeholder="إصابات سابقة، أمراض مزمنة..." rows={3} maxLength={500} /></div>
+                <div>
+                  <label className="text-sm font-medium" style={{ color: t.text }}>ملاحظات إضافية</label>
+                  <Textarea value={clientForm.notes} onChange={e => setClientForm({ ...clientForm, notes: e.target.value })} placeholder="إصابات سابقة، أمراض مزمنة..." rows={3} maxLength={500} />
+                </div>
               </div>
-              <Button className="w-full" onClick={handleInfoNext} disabled={!clientForm.full_name.trim() || !clientForm.phone.trim()} style={{ backgroundColor: brandColor }}>التالي ←</Button>
+
+              {formError && (
+                <div className="p-3 rounded-lg text-sm text-center" style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                  {formError}
+                </div>
+              )}
+
+              <Button
+                className="w-full"
+                onClick={handleRegisterSubmit}
+                disabled={submitting || !clientForm.full_name.trim() || !clientForm.phone.trim() || !clientForm.email.trim() || clientForm.password.length < 6 || clientForm.password !== clientForm.confirm_password}
+                style={{ backgroundColor: brandColor }}
+              >
+                {submitting ? <><Loader2 className="w-4 h-4 animate-spin ml-2" />جاري إنشاء حسابك...</> : "إنشاء حسابي ←"}
+              </Button>
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-5 animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold" style={{ color: t.text }}>إنشاء حسابك</h2>
-                <p className="text-sm mt-1" style={{ color: t.muted }}>للوصول لبوابة التدريب الخاصة بك</p>
-              </div>
-              <div className="space-y-4">
-                <div><label className="text-sm font-medium" style={{ color: t.text }}>البريد الإلكتروني *</label><Input value={clientForm.email} onChange={e => setClientForm({...clientForm, email: e.target.value})} placeholder="email@example.com" type="email" dir="ltr" /></div>
-                <div>
-                  <label className="text-sm font-medium" style={{ color: t.text }}>كلمة المرور *</label>
-                  <div className="relative"><Input value={clientForm.password} onChange={e => setClientForm({...clientForm, password: e.target.value})} placeholder="6 أحرف على الأقل" type={showPassword ? "text" : "password"} dir="ltr" /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.muted }}>{showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium" style={{ color: t.text }}>تأكيد كلمة المرور *</label>
-                  <div className="relative"><Input value={clientForm.confirm_password} onChange={e => setClientForm({...clientForm, confirm_password: e.target.value})} placeholder="أعد كتابة كلمة المرور" type={showConfirmPassword ? "text" : "password"} dir="ltr" /><button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.muted }}>{showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button></div>
-                  {clientForm.confirm_password && clientForm.password !== clientForm.confirm_password && <p className="text-xs text-destructive mt-1">كلمة المرور غير متطابقة</p>}
-                </div>
-              </div>
-              <Button className="w-full" onClick={handleAccountNext} disabled={!clientForm.email.trim() || clientForm.password.length < 6 || clientForm.password !== clientForm.confirm_password} style={{ backgroundColor: brandColor }}>التالي — الدفع ←</Button>
-            </div>
-          )}
-
+          {/* STEP 3: Success */}
           {step === 3 && (
-            <div className="space-y-5 animate-fade-in">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold" style={{ color: t.text }}>إتمام الدفع</h2>
-                <p className="text-sm mt-1" style={{ color: t.muted }}>{selectedPackage.price} ر.س — {selectedPackage.name}</p>
-              </div>
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3 text-sm" style={{ color: t.muted }}><CreditCard className="w-4 h-4" /><span>ادفع بالبطاقة الائتمانية أو Apple Pay</span></div>
-                {submitting ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3"><Loader2 className="w-8 h-8 animate-spin" style={{ color: brandColor }} /><p className="text-sm" style={{ color: t.muted }}>جاري إنشاء حسابك...</p></div>
-                ) : <div ref={moyasarRef} className="moyasar-form" />}
-              </Card>
-              <p className="text-xs text-center" style={{ color: t.muted }}>الدفع آمن ومشفر عبر Moyasar 🔒</p>
-            </div>
-          )}
-
-          {step === 4 && (
             <div className="text-center space-y-6 py-12 animate-fade-in">
               <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: `${brandColor}15` }}>
                 <CheckCircle className="w-10 h-10" style={{ color: brandColor }} />
@@ -328,9 +377,9 @@ const TrainerPublicPage = () => {
                 <h2 className="text-2xl font-bold mb-2" style={{ color: t.text }}>تم الاشتراك بنجاح! 🎉</h2>
                 <p style={{ color: t.muted }}>مرحباً {clientForm.full_name} في رحلتك مع {profile.full_name}</p>
               </div>
-              <Card className="p-4 text-sm text-right space-y-2">
+              <Card className="p-4 text-sm text-right space-y-2" style={{ backgroundColor: t.card, borderColor: `${t.text}15` }}>
                 <p style={{ color: t.muted }}>تم إرسال بيانات دخولك على إيميلك</p>
-                <Separator />
+                <div className="border-t my-2" style={{ borderColor: `${t.text}15` }} />
                 <p><span style={{ color: t.muted }}>الباقة:</span> <span className="font-medium" style={{ color: t.text }}>{selectedPackage.name}</span></p>
                 <p><span style={{ color: t.muted }}>الإيميل:</span> <span className="font-medium" style={{ color: t.text }} dir="ltr">{clientForm.email}</span></p>
               </Card>

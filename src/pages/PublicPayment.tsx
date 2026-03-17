@@ -132,13 +132,23 @@ const PublicPayment = () => {
     setVerifying(true);
     setError(null);
     try {
+      const { data: sessionData, error: sessionError } = await supabase.rpc("create_package_checkout_session", {
+        p_package_id: selectedPkg!.id,
+        p_client_name: clientName,
+        p_client_phone: clientPhone,
+        p_client_email: clientEmail || null,
+      });
+
+      const checkoutSession = Array.isArray(sessionData) ? sessionData[0] : null;
+      if (sessionError || !checkoutSession?.token) {
+        throw new Error("فشل إنشاء جلسة الدفع الآمنة");
+      }
+
       const { data, error: fnError } = await supabase.functions.invoke("verify-package-payment", {
         body: {
           payment_id: paymentId,
           package_id: selectedPkg!.id,
-          client_name: clientName,
-          client_phone: clientPhone,
-          client_email: clientEmail,
+          checkout_token: checkoutSession.token,
         },
       });
       if (fnError || !data?.success) {

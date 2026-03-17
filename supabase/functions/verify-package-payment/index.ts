@@ -12,21 +12,59 @@ serve(async (req) => {
   }
 
   try {
-    const { payment_id, package_id, client_name, client_phone, client_email } = await req.json();
+    const { payment_id, package_id, checkout_token } = await req.json();
 
-    // trainer_id is NOT accepted from the request body — derived from package
-    if (!payment_id || !package_id || !client_name) {
+    if (!payment_id || !package_id || !checkout_token) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify payment with Moyasar
     const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
     if (!moyasarSecret) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: pkg, error: pkgError } = await supabase
+      .from("trainer_packages")
+      .select("*")
+      .eq("id", package_id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (pkgError || !pkg) {
+      return new Response(JSON.stringify({ error: "Package not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: session, error: sessionError } = await supabase
+      .from("package_checkout_sessions")
+      .select("*")
+      .eq("token", checkout_token)
+      .eq("package_id", package_id)
+      .is("used_at", null)
+      .maybeSingle();
+
+    if (sessionError || !session) {
+      return new Response(JSON.stringify({ error: "Invalid checkout session" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (new Date(session.expires_at).getTime() < Date.now()) {
+      return new Response(JSON.stringify({ error: "Checkout session expired" }), {
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -51,29 +89,6 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Get package details — trainer_id is derived from here, NOT from request
-    const { data: pkg, error: pkgError } = await supabase
-      .from("trainer_packages")
-      .select("*")
-      .eq("id", package_id)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (pkgError || !pkg) {
-      return new Response(JSON.stringify({ error: "Package not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Securely derive trainer_id from the package record
-    const trainer_id = pkg.trainer_id;
-
-    // Verify amount matches (Moyasar uses halalah = price * 100)
     if (payment.amount !== pkg.price * 100) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400,
@@ -81,7 +96,6 @@ serve(async (req) => {
       });
     }
 
-    // Prevent duplicate processing — check if this payment_id was already recorded
     const { data: existingPayment } = await supabase
       .from("client_payments")
       .select("id")
@@ -95,13 +109,17 @@ serve(async (req) => {
       });
     }
 
+    const trainer_id = pkg.trainer_id;
+    const client_name = session.client_name;
+    const client_phone = session.client_phone;
+    const client_email = session.client_email;
+
     const now = new Date();
     const endDate = new Date(now);
     if (pkg.billing_cycle === "quarterly") endDate.setMonth(endDate.getMonth() + 3);
     else if (pkg.billing_cycle === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
     else endDate.setMonth(endDate.getMonth() + 1);
 
-    // Create client automatically
     const { data: newClient, error: clientError } = await supabase
       .from("clients")
       .insert({
@@ -125,7 +143,6 @@ serve(async (req) => {
       });
     }
 
-    // Record payment
     await supabase.from("client_payments").insert({
       client_id: newClient.id,
       trainer_id,
@@ -137,7 +154,6 @@ serve(async (req) => {
       period_end: endDate.toISOString().split("T")[0],
     });
 
-    // Notify trainer
     await supabase.from("trainer_notifications").insert({
       trainer_id,
       client_id: newClient.id,
@@ -146,7 +162,11 @@ serve(async (req) => {
       body: `تم إضافة ${client_name} تلقائياً كعميل جديد`,
     });
 
-    // Send receipt email via Resend
+    await supabase
+      .from("package_checkout_sessions")
+      .update({ used_at: new Date().toISOString() })
+      .eq("id", session.id);
+
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && client_email) {
       try {
@@ -171,13 +191,14 @@ serve(async (req) => {
             `,
           }),
         });
-      } catch (e) { console.error("Email error:", e); }
+      } catch (e) {
+        console.error("Email error:", e);
+      }
     }
 
-    return new Response(
-      JSON.stringify({ success: true, client_id: newClient.id }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: true, client_id: newClient.id }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {

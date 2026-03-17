@@ -44,10 +44,11 @@ const Discover = () => {
       return { ...dp, score };
     }).sort((a: any, b: any) => b.score - a.score).slice(0, 5);
 
-    // Save matches (fire & forget)
-    for (const m of scored) {
-      await supabase.from("client_matches").insert({ intake_id: intakeId, trainer_id: m.trainer_id, match_score: m.score } as any);
-    }
+    // Save matches via secure database function
+    await supabase.rpc("create_client_matches", {
+      p_intake_id: intakeId,
+      p_matches: scored.map((m: any) => ({ trainer_id: m.trainer_id, score: m.score })),
+    });
 
     // Fetch public profiles
     const enriched = await Promise.all(scored.map(async (m: any) => {

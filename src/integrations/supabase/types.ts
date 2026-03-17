@@ -1634,19 +1634,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_public_profile: {
-        Args: { p_user_id: string }
-        Returns: {
-          avatar_url: string
-          bio: string
-          brand_color: string
-          full_name: string
-          logo_url: string
-          specialization: string
-          user_id: string
-          welcome_message: string
-        }[]
-      }
       insert_portal_body_scan:
         | {
             Args: {

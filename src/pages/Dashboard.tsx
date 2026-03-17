@@ -244,7 +244,7 @@ const Dashboard = () => {
                     <Link to={`/clients/${c.id}`} key={c.id}>
                       <div className="flex items-center gap-3 py-2.5 hover:bg-secondary/50 rounded-lg px-2 -mx-2 transition-all duration-200">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-3.5 h-3.5 text-primary" />
+                          <UserCheck className="w-3.5 h-3.5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-card-foreground truncate">{c.name}</p>

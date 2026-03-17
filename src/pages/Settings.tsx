@@ -1031,7 +1031,7 @@ const Settings = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/t/${usernameForm}`);
+                     navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`);
                       toast({ title: "تم نسخ الرابط ✅" });
                     }}
                   >

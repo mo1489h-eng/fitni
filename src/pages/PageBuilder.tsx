@@ -198,10 +198,10 @@ const PageBuilder = () => {
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/settings")} className="text-muted-foreground hover:text-foreground transition-colors">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-bold text-foreground">تخصيص صفحتك 🎨</h1>
+            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={() => navigate("/settings")}>
+              <ArrowLeft className="w-4 h-4" />
+              العودة للإعدادات
+            </Button>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
@@ -221,7 +221,7 @@ const PageBuilder = () => {
             {pageUrl && (
               <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(pageUrl, "_blank")}>
                 <Eye className="w-4 h-4" />
-                معاينة
+                معاينة الصفحة العامة
               </Button>
             )}
             <Button size="sm" className="gap-1" onClick={handleSave} disabled={saving}>

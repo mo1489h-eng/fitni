@@ -12,9 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { payment_id, package_id, trainer_id, client_name, client_phone, client_email } = await req.json();
+    const { payment_id, package_id, client_name, client_phone, client_email } = await req.json();
 
-    if (!payment_id || !package_id || !trainer_id || !client_name) {
+    // trainer_id is NOT accepted from the request body — derived from package
+    if (!payment_id || !package_id || !client_name) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,11 +55,12 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get package details
+    // Get package details — trainer_id is derived from here, NOT from request
     const { data: pkg, error: pkgError } = await supabase
       .from("trainer_packages")
       .select("*")
       .eq("id", package_id)
+      .eq("is_active", true)
       .maybeSingle();
 
     if (pkgError || !pkg) {
@@ -68,10 +70,27 @@ serve(async (req) => {
       });
     }
 
-    // Verify amount matches
+    // Securely derive trainer_id from the package record
+    const trainer_id = pkg.trainer_id;
+
+    // Verify amount matches (Moyasar uses halalah = price * 100)
     if (payment.amount !== pkg.price * 100) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Prevent duplicate processing — check if this payment_id was already recorded
+    const { data: existingPayment } = await supabase
+      .from("client_payments")
+      .select("id")
+      .eq("moyasar_payment_id", payment_id)
+      .maybeSingle();
+
+    if (existingPayment) {
+      return new Response(JSON.stringify({ error: "Payment already processed" }), {
+        status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

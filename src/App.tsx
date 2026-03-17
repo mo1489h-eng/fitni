@@ -70,6 +70,7 @@ const App = () => (
             <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
             <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
             <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
+            <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
 
             {/* Public payment pages */}
             <Route path="/pay/:trainerSlug" element={<PublicPayment />} />

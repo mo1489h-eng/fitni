@@ -1181,7 +1181,7 @@ const Settings = () => {
               if (user) {
                 await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
               }
-              setShowTour(true);
+              startTutorial();
             }}
           >
             <RotateCcw className="w-4 h-4" />

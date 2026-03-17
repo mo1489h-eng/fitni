@@ -46,7 +46,7 @@ const Settings = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
-  const [showTour, setShowTour] = useState(false);
+  const { startTutorial } = useTutorial();
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     iban: "",

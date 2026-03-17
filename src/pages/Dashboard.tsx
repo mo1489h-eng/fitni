@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Users, DollarSign, AlertTriangle, Clock, MessageCircle,
-  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Eye, Pencil,
+  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Pencil,
 } from "lucide-react";
 
 function getTimeGreeting(name: string) {
@@ -95,13 +95,14 @@ const Dashboard = () => {
               <Globe className="w-4 h-4 text-primary" />
               <h3 className="font-bold text-sm text-card-foreground">صفحتك الشخصية 🌐</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-3 truncate" dir="ltr">fitni.lovable.app/t/{profile.username}</p>
+            <p className="text-xs text-muted-foreground mb-1 truncate" dir="ltr">fitni.lovable.app/t/{profile.username}</p>
+            <p className="text-[10px] text-muted-foreground mb-3">شارك هذا الرابط في البايو أو أي مكان — أي شخص يضغطه يشوف صفحتك</p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${profile.username}`); }}>
+              <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${profile.username}`); import("sonner").then(m => m.toast.success("تم نسخ الرابط العام ✅")); }}>
                 <Copy className="w-3 h-3" /> نسخ الرابط
               </Button>
-              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => window.open(`/t/${profile.username}`, "_blank")}>
-                <Eye className="w-3 h-3" /> معاينة
+              <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { const url = `https://fitni.lovable.app/t/${profile.username}`; window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${url}`)}`, "_blank"); }}>
+                <MessageCircle className="w-3 h-3" /> واتساب
               </Button>
               <Button size="sm" className="gap-1 text-xs" onClick={() => navigate("/settings/page")}>
                 <Pencil className="w-3 h-3" /> تخصيص

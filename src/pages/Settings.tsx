@@ -858,12 +858,12 @@ const Settings = () => {
             </Button>
           </div>
           {usernameForm && (
-            <div className="space-y-1">
+             <div className="space-y-1">
               <p className="text-xs text-muted-foreground" dir="ltr">
-                {window.location.origin}/t/{usernameForm}
+                https://fitni.lovable.app/t/{usernameForm}
               </p>
               <p className="text-xs text-muted-foreground" dir="ltr">
-                {window.location.origin}/pay/{usernameForm}
+                https://fitni.lovable.app/pay/{usernameForm}
               </p>
             </div>
           )}
@@ -1031,7 +1031,7 @@ const Settings = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/t/${usernameForm}`);
+                     navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`);
                       toast({ title: "تم نسخ الرابط ✅" });
                     }}
                   >
@@ -1044,7 +1044,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                      const url = `${window.location.origin}/t/${usernameForm}`;
+                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${url}`)}`, "_blank");
                     }}
                   >
@@ -1055,7 +1055,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                      const url = `${window.location.origin}/t/${usernameForm}`;
+                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       navigator.clipboard.writeText(url);
                       toast({ title: "تم نسخ الرابط — الصقه في انستقرام ✅" });
                     }}

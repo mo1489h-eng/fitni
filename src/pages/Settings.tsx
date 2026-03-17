@@ -880,18 +880,23 @@ const Settings = () => {
             <Globe className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية 🌐</h2>
           </div>
-          {usernameForm && (
+          {usernameForm ? (
             <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
               <p className="text-xs text-muted-foreground truncate" dir="ltr">fitni.lovable.app/t/{usernameForm}</p>
               <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان 🔗</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام ✅" }); }}>
-                  <Copy className="w-3 h-3" /> نسخ الرابط
+                  <Copy className="w-3 h-3" /> نسخ رابط صفحتك
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: https://fitni.lovable.app/t/${usernameForm}`)}`, "_blank"); }}>
                   <MessageCircle className="w-3 h-3" /> واتساب
                 </Button>
               </div>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-warning/10 border border-warning/20 p-3 space-y-1">
+              <p className="text-sm font-medium text-warning">⚠️ لم تنشئ اسم مستخدم بعد</p>
+              <p className="text-xs text-muted-foreground">أنشئ اسم مستخدم في قسم "رابط الدفع العام" أعلاه حتى تحصل على رابط صفحتك العامة وتتمكن من مشاركته</p>
             </div>
           )}
           <div className="flex gap-2">

@@ -136,7 +136,6 @@ const PublicPayment = () => {
         body: {
           payment_id: paymentId,
           package_id: selectedPkg!.id,
-          trainer_id: trainer!.user_id,
           client_name: clientName,
           client_phone: clientPhone,
           client_email: clientEmail,

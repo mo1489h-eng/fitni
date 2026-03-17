@@ -815,9 +815,9 @@ const Settings = () => {
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">رابط الدفع العام</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">اختر اسم مستخدم فريد لرابط الدفع الخاص بك</p>
+             <h2 className="text-lg font-bold text-card-foreground">رابط الصفحة الشخصية العامة</h2>
+           </div>
+           <p className="text-sm text-muted-foreground">اختر اسم مستخدم فريد لرابط صفحتك الشخصية</p>
           <div className="flex gap-2 items-end">
             <div className="flex-1">
               <label className="text-sm font-medium text-foreground">اسم المستخدم</label>

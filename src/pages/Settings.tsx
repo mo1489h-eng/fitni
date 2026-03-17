@@ -875,6 +875,16 @@ const Settings = () => {
             <Globe className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية 🌐</h2>
           </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate("/settings/page")}>
+              <Globe className="w-4 h-4" /> تخصيص الصفحة ✏️
+            </Button>
+            {usernameForm && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/t/${usernameForm}`, "_blank")}>
+                معاينة 👁️
+              </Button>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">خصص صفحتك الشخصية التي يراها العملاء المحتملون</p>
 
           <div>

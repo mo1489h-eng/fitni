@@ -859,9 +859,14 @@ const Settings = () => {
           </div>
           {usernameForm && (
              <div className="space-y-1">
-              <p className="text-xs text-muted-foreground" dir="ltr">
-                https://fitni.lovable.app/t/{usernameForm}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground" dir="ltr">
+                  https://fitni.lovable.app/t/{usernameForm}
+                </p>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground" dir="ltr">
                 https://fitni.lovable.app/pay/{usernameForm}
               </p>

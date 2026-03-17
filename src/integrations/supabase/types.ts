@@ -881,6 +881,42 @@ export type Database = {
           },
         ]
       }
+      package_checkout_sessions: {
+        Row: {
+          client_email: string | null
+          client_name: string
+          client_phone: string
+          created_at: string
+          expires_at: string
+          id: string
+          package_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          client_email?: string | null
+          client_name: string
+          client_phone: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          package_id: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          package_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       payout_requests: {
         Row: {
           account_holder_name: string
@@ -1459,6 +1495,18 @@ export type Database = {
       create_client_matches: {
         Args: { p_intake_id: string; p_matches: Json }
         Returns: number
+      }
+      create_package_checkout_session: {
+        Args: {
+          p_client_email?: string
+          p_client_name: string
+          p_client_phone: string
+          p_package_id: string
+        }
+        Returns: {
+          expires_at: string
+          token: string
+        }[]
       }
       get_client_by_invite_token: {
         Args: { p_token: string }

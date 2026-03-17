@@ -158,7 +158,7 @@ const Clients = () => {
 
   return (
     <TrainerLayout>
-      <div className="space-y-4 animate-fade-in">
+      <div className="space-y-4 page-enter">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">العملاء</h1>
           <span className="text-sm text-muted-foreground">{clients.length} عميل</span>
@@ -237,7 +237,8 @@ const Clients = () => {
 
         <button
           onClick={handleAddClick}
-          className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
+          data-tour="add-client"
+          className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full btn-gradient text-primary-foreground flex items-center justify-center fab-premium"
         >
           <Plus className="w-6 h-6" />
         </button>

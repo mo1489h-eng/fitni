@@ -143,7 +143,6 @@ const Dashboard = () => {
                   <p className="text-2xl font-black text-card-foreground leading-none">
                     <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
                 </Card>
               ))}
             </div>

@@ -896,7 +896,7 @@ const Settings = () => {
           ) : (
             <div className="rounded-lg bg-warning/10 border border-warning/20 p-3 space-y-1">
               <p className="text-sm font-medium text-warning">⚠️ لم تنشئ اسم مستخدم بعد</p>
-              <p className="text-xs text-muted-foreground">أنشئ اسم مستخدم في قسم "رابط الدفع العام" أعلاه حتى تحصل على رابط صفحتك العامة وتتمكن من مشاركته</p>
+              <p className="text-xs text-muted-foreground">أنشئ اسم مستخدم في قسم "رابط الصفحة الشخصية العامة" أعلاه حتى تحصل على رابط صفحتك العامة وتتمكن من مشاركته</p>
             </div>
           )}
           <div className="flex gap-2">

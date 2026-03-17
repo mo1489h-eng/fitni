@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { listing_id } = await req.json();
+    const { listing_id, payment_id } = await req.json();
     if (!listing_id) {
       return new Response(JSON.stringify({ error: "listing_id required" }), {
         status: 400,
@@ -71,6 +71,72 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Idempotency check - prevent duplicate purchases
+    const { data: existingPurchase } = await supabase
+      .from("marketplace_purchases")
+      .select("id")
+      .eq("listing_id", listing_id)
+      .eq("buyer_id", userId)
+      .eq("status", "completed")
+      .maybeSingle();
+
+    if (existingPurchase) {
+      return new Response(JSON.stringify({ error: "Already purchased" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // For paid listings, verify payment with Moyasar
+    if (listing.price > 0) {
+      if (!payment_id) {
+        return new Response(JSON.stringify({ error: "payment_id required for paid listings" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
+      if (!moyasarSecret) {
+        return new Response(JSON.stringify({ error: "Payment configuration error" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Verify payment with Moyasar API
+      const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
+        headers: {
+          Authorization: `Basic ${btoa(moyasarSecret + ":")}`,
+        },
+      });
+
+      if (!moyasarRes.ok) {
+        return new Response(JSON.stringify({ error: "Payment verification failed" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const moyasarPayment = await moyasarRes.json();
+
+      // Verify payment status and amount (Moyasar amounts are in halalas = price * 100)
+      if (moyasarPayment.status !== "paid") {
+        return new Response(JSON.stringify({ error: "Payment not completed" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const expectedAmount = listing.price * 100;
+      if (moyasarPayment.amount < expectedAmount) {
+        return new Response(JSON.stringify({ error: "Payment amount mismatch" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Increment purchase count
     await supabase
       .from("marketplace_listings")
@@ -90,7 +156,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

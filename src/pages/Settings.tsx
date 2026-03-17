@@ -19,7 +19,7 @@ import {
    LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
    RotateCcw, Banknote, Share2, Copy, Link, Instagram, Twitter, Plus, X, Image, MessageCircle,
 } from "lucide-react";
-import OnboardingTour from "@/components/OnboardingTour";
+import { useTutorial } from "@/hooks/useTutorial";
 import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [

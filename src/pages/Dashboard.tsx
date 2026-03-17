@@ -136,8 +136,9 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-3" data-tour="stats">
               {stats.map((stat, i) => (
                 <Card key={stat.label} className="p-4 stat-card" style={{ animationDelay: `${i * 80}ms` }}>
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2.5 ${stat.bg}`}>
-                    <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
                   </div>
                   <p className="text-2xl font-black text-card-foreground leading-none">
                     <AnimatedCounter end={stat.value} suffix={stat.suffix} />

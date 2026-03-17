@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Users, DollarSign, AlertTriangle, Clock, MessageCircle,
+  UserCheck, DollarSign, AlertTriangle, Clock, MessageCircle,
   Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Pencil,
 } from "lucide-react";
 
@@ -78,9 +78,9 @@ const Dashboard = () => {
     `https://wa.me/966${phone.replace(/^0/, "")}`;
 
   const stats = [
-    { label: "العملاء", value: totalClients, icon: Users, color: "text-primary", bg: "bg-primary/10" },
-    { label: "الإيرادات", value: monthlyRevenue, icon: DollarSign, color: "text-accent-foreground", bg: "bg-accent", suffix: " ر.س" },
-    { label: "النشاط", value: activityRate, icon: Activity, color: "text-warning", bg: "bg-warning/10", suffix: "%" },
+    { label: "العملاء", value: totalClients, icon: UserCheck, color: "text-primary" },
+    { label: "الإيرادات", value: monthlyRevenue, icon: DollarSign, color: "text-foreground", suffix: " ر.س" },
+    { label: "النشاط", value: activityRate, icon: Activity, color: "text-primary", suffix: "%" },
   ];
 
   return (
@@ -136,13 +136,13 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-3" data-tour="stats">
               {stats.map((stat, i) => (
                 <Card key={stat.label} className="p-4 stat-card" style={{ animationDelay: `${i * 80}ms` }}>
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-2.5 ${stat.bg}`}>
-                    <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
                   </div>
                   <p className="text-2xl font-black text-card-foreground leading-none">
                     <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
                 </Card>
               ))}
             </div>
@@ -244,7 +244,7 @@ const Dashboard = () => {
                     <Link to={`/clients/${c.id}`} key={c.id}>
                       <div className="flex items-center gap-3 py-2.5 hover:bg-secondary/50 rounded-lg px-2 -mx-2 transition-all duration-200">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-3.5 h-3.5 text-primary" />
+                          <UserCheck className="w-3.5 h-3.5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-card-foreground truncate">{c.name}</p>

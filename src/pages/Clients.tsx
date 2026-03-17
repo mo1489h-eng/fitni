@@ -158,7 +158,7 @@ const Clients = () => {
 
   return (
     <TrainerLayout>
-      <div className="space-y-4 animate-fade-in">
+      <div className="space-y-4 page-enter">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">العملاء</h1>
           <span className="text-sm text-muted-foreground">{clients.length} عميل</span>

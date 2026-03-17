@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.verify-package-payment]
 verify_jwt = false
+
+[functions.signup-client]
+verify_jwt = false

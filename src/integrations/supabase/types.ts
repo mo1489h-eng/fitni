@@ -963,6 +963,7 @@ export type Database = {
           brand_color: string | null
           created_at: string
           full_name: string
+          gallery_images: string[] | null
           id: string
           last_payment_id: string | null
           logo_url: string | null
@@ -972,10 +973,12 @@ export type Database = {
           onboarding_completed: boolean | null
           payment_status: string | null
           phone: string | null
+          social_links: Json | null
           specialization: string | null
           subscribed_at: string | null
           subscription_end_date: string | null
           subscription_plan: string | null
+          title: string | null
           user_id: string
           username: string | null
           welcome_message: string | null
@@ -986,6 +989,7 @@ export type Database = {
           brand_color?: string | null
           created_at?: string
           full_name?: string
+          gallery_images?: string[] | null
           id?: string
           last_payment_id?: string | null
           logo_url?: string | null
@@ -995,10 +999,12 @@ export type Database = {
           onboarding_completed?: boolean | null
           payment_status?: string | null
           phone?: string | null
+          social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
+          title?: string | null
           user_id: string
           username?: string | null
           welcome_message?: string | null
@@ -1009,6 +1015,7 @@ export type Database = {
           brand_color?: string | null
           created_at?: string
           full_name?: string
+          gallery_images?: string[] | null
           id?: string
           last_payment_id?: string | null
           logo_url?: string | null
@@ -1018,10 +1025,12 @@ export type Database = {
           onboarding_completed?: boolean | null
           payment_status?: string | null
           phone?: string | null
+          social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
+          title?: string | null
           user_id?: string
           username?: string | null
           welcome_message?: string | null
@@ -1632,9 +1641,30 @@ export type Database = {
           bio: string
           brand_color: string
           full_name: string
+          gallery_images: string[]
           logo_url: string
+          social_links: Json
           specialization: string
+          title: string
           user_id: string
+          username: string
+          welcome_message: string
+        }[]
+      }
+      get_trainer_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          brand_color: string
+          full_name: string
+          gallery_images: string[]
+          logo_url: string
+          social_links: Json
+          specialization: string
+          title: string
+          user_id: string
+          username: string
           welcome_message: string
         }[]
       }

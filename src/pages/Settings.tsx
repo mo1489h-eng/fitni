@@ -858,9 +858,203 @@ const Settings = () => {
             </Button>
           </div>
           {usernameForm && (
-            <p className="text-xs text-muted-foreground" dir="ltr">
-              {window.location.origin}/pay/{usernameForm}
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground" dir="ltr">
+                {window.location.origin}/t/{usernameForm}
+              </p>
+              <p className="text-xs text-muted-foreground" dir="ltr">
+                {window.location.origin}/pay/{usernameForm}
+              </p>
+            </div>
+          )}
+        </Card>
+
+        {/* ━━━ PERSONAL PAGE ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية 🌐</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">خصص صفحتك الشخصية التي يراها العملاء المحتملون</p>
+
+          <div>
+            <label className="text-sm font-medium text-foreground">اللقب</label>
+            <Input
+              value={personalPageForm.title}
+              onChange={(e) => setPersonalPageForm({...personalPageForm, title: e.target.value})}
+              placeholder="مثال: مدرب لياقة معتمد"
+              maxLength={100}
+            />
+          </div>
+
+          <Separator />
+
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">روابط سوشيال ميديا</label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Instagram className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_instagram}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_instagram: e.target.value})}
+                  placeholder="اسم المستخدم في انستقرام"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Twitter className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_twitter}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_twitter: e.target.value})}
+                  placeholder="اسم المستخدم في تويتر"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Gallery */}
+          <div>
+            <label className="text-sm font-medium text-foreground mb-2 block">صور المعرض</label>
+            <p className="text-xs text-muted-foreground mb-3">صور تدريب، نتائج قبل/بعد (حتى 6 صور)</p>
+            <div className="grid grid-cols-3 gap-2">
+              {galleryImages.map((img, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-secondary group">
+                  <img src={img.startsWith("http") ? img : ""} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => setGalleryImages(galleryImages.filter((_, idx) => idx !== i))}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {galleryImages.length < 6 && (
+                <button
+                  onClick={() => galleryRef.current?.click()}
+                  disabled={uploadingGallery}
+                  className="aspect-square rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  {uploadingGallery ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                  <span className="text-xs">إضافة</span>
+                </button>
+              )}
+            </div>
+            <input
+              ref={galleryRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !user) return;
+                if (f.size > 2 * 1024 * 1024) {
+                  toast({ title: "حجم الصورة يجب أن يكون أقل من 2MB", variant: "destructive" });
+                  return;
+                }
+                setUploadingGallery(true);
+                try {
+                  const ext = f.name.split(".").pop();
+                  const path = `gallery/${user.id}/${Date.now()}.${ext}`;
+                  const { error: uploadError } = await supabase.storage.from("progress-photos").upload(path, f, { upsert: true });
+                  if (uploadError) throw uploadError;
+                  const { data: signedData } = await supabase.storage.from("progress-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
+                  if (signedData?.signedUrl) {
+                    setGalleryImages([...galleryImages, signedData.signedUrl]);
+                  }
+                } catch {
+                  toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
+                } finally {
+                  setUploadingGallery(false);
+                }
+              }}
+            />
+          </div>
+
+          <Button
+            className="w-full gap-2"
+            variant="outline"
+            disabled={savingPersonalPage}
+            onClick={async () => {
+              if (!user) return;
+              setSavingPersonalPage(true);
+              try {
+                const socialLinks: Record<string, string> = {};
+                if (personalPageForm.social_instagram) socialLinks.instagram = personalPageForm.social_instagram;
+                if (personalPageForm.social_twitter) socialLinks.twitter = personalPageForm.social_twitter;
+                if (personalPageForm.social_tiktok) socialLinks.tiktok = personalPageForm.social_tiktok;
+
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({
+                    title: personalPageForm.title,
+                    social_links: socialLinks,
+                    gallery_images: galleryImages,
+                  } as any)
+                  .eq("user_id", user.id);
+                if (error) throw error;
+                toast({ title: "تم حفظ صفحتك الشخصية ✅" });
+              } catch {
+                toast({ title: "حدث خطأ", variant: "destructive" });
+              } finally {
+                setSavingPersonalPage(false);
+              }
+            }}
+          >
+            {savingPersonalPage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ الصفحة الشخصية
+          </Button>
+
+          {/* Share Links */}
+          {usernameForm && (
+            <>
+              <Separator />
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك 🔗</label>
+                <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
+                  <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
+                    fitni.lovable.app/t/{usernameForm}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/t/${usernameForm}`);
+                      toast({ title: "تم نسخ الرابط ✅" });
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1"
+                    onClick={() => {
+                      const url = `${window.location.origin}/t/${usernameForm}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${url}`)}`, "_blank");
+                    }}
+                  >
+                    واتساب
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1"
+                    onClick={() => {
+                      const url = `${window.location.origin}/t/${usernameForm}`;
+                      navigator.clipboard.writeText(url);
+                      toast({ title: "تم نسخ الرابط — الصقه في انستقرام ✅" });
+                    }}
+                  >
+                    انستقرام
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </Card>
 

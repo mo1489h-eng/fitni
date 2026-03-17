@@ -78,9 +78,9 @@ const Dashboard = () => {
     `https://wa.me/966${phone.replace(/^0/, "")}`;
 
   const stats = [
-    { label: "العملاء", value: totalClients, icon: Users, color: "text-primary", bg: "bg-primary/10" },
-    { label: "الإيرادات", value: monthlyRevenue, icon: DollarSign, color: "text-accent-foreground", bg: "bg-accent", suffix: " ر.س" },
-    { label: "النشاط", value: activityRate, icon: Activity, color: "text-warning", bg: "bg-warning/10", suffix: "%" },
+    { label: "العملاء", value: totalClients, icon: UserCheck, color: "text-primary" },
+    { label: "الإيرادات", value: monthlyRevenue, icon: DollarSign, color: "text-foreground", suffix: " ر.س" },
+    { label: "النشاط", value: activityRate, icon: Activity, color: "text-primary", suffix: "%" },
   ];
 
   return (

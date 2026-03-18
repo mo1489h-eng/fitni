@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import PostCard from "@/components/PostCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, Megaphone } from "lucide-react";
 
 const PortalContent = () => {
   const { token } = usePortalToken();
@@ -28,7 +28,6 @@ const PortalContent = () => {
         .eq("trainer_id", client!.trainer_id!)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      // Filter: show posts for 'all' audience OR posts that include this client
       return (data || []).filter(
         (p: any) =>
           p.audience === "all" ||
@@ -41,7 +40,10 @@ const PortalContent = () => {
   return (
     <ClientPortalLayout>
       <div className="space-y-4" dir="rtl">
-        <h1 className="text-xl font-bold text-foreground">محتوى مدربك 📢</h1>
+        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Megaphone className="w-5 h-5 text-primary" />
+          محتوى مدربك
+        </h1>
 
         {isLoading ? (
           <div className="flex justify-center py-12">

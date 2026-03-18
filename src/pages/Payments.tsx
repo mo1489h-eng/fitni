@@ -81,7 +81,7 @@ const Payments = () => {
   return (
     <TrainerLayout>
       <div className="space-y-4 animate-fade-in" dir="rtl">
-        <h1 className="text-2xl font-bold text-foreground">إيراداتي 💰</h1>
+        <h1 className="text-2xl font-bold text-foreground inline-flex items-center gap-2"><DollarSign className="w-6 h-6 text-primary" />إيراداتي</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
@@ -129,7 +129,7 @@ const Payments = () => {
 
             {/* Revenue Chart */}
             <Card className="p-4">
-              <h3 className="font-bold text-card-foreground mb-3">📊 الإيرادات الشهرية</h3>
+              <h3 className="font-bold text-card-foreground mb-3 inline-flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" />الإيرادات الشهرية</h3>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData}>

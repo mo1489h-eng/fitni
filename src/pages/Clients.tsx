@@ -114,13 +114,13 @@ const Clients = () => {
             },
           });
           if (emailResult?.emailSent) {
-            toast({ title: "تم إرسال الدعوة بالإيميل 📧", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
+            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
           } else if (emailResult?.setupLink) {
-            toast({ title: "تم إضافة العميل ✅", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
+            toast({ title: "تمت إضافة العميل", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
           }
         } catch (e) {
           console.error("Email send error:", e);
-          toast({ title: "تم إضافة العميل ✅", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
+          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
         }
       }
 
@@ -130,7 +130,7 @@ const Clients = () => {
           await supabase.functions.invoke("copilot-generate", {
             body: { client_id: newClient.id, action: "generate_program" },
           });
-          toast({ title: "تم إنشاء برنامج AI تلقائياً 🤖✅", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
+          toast({ title: "تم إنشاء برنامج AI تلقائياً", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
         } catch (e) {
           console.error("Auto copilot error:", e);
         }
@@ -180,7 +180,7 @@ const Clients = () => {
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                   <Users className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground">ما أضفت عملاء بعد 👥</h3>
+                <h3 className="text-lg font-bold text-foreground">لم تضف عملاء بعد</h3>
                 <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
                 <Button className="gap-1" onClick={() => {
                   if (!canAddClient) {
@@ -202,9 +202,9 @@ const Clients = () => {
               const lastActive = (client as any).last_active_at ? new Date((client as any).last_active_at) : null;
               const minsAgo = lastActive ? Math.floor((Date.now() - lastActive.getTime()) / 60000) : null;
               let activityBadge = { text: "غير معروف", color: "bg-secondary text-muted-foreground" };
-              if (minsAgo !== null) {
-                if (minsAgo < 120) activityBadge = { text: "نشط الآن 🟢", color: "bg-emerald-500/10 text-emerald-500" };
-                else if (minsAgo < 1440) activityBadge = { text: "اليوم 🟡", color: "bg-yellow-500/10 text-yellow-500" };
+                if (minsAgo !== null) {
+                  if (minsAgo < 120) activityBadge = { text: "نشط الآن", color: "bg-emerald-500/10 text-emerald-500" };
+                  else if (minsAgo < 1440) activityBadge = { text: "اليوم", color: "bg-yellow-500/10 text-yellow-500" };
                 else activityBadge = { text: `منذ ${Math.floor(minsAgo / 1440)} أيام`, color: "bg-secondary text-muted-foreground" };
               }
               return (

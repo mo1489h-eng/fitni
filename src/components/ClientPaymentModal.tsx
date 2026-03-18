@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Loader2, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ClientPaymentModalProps {
@@ -34,7 +33,6 @@ const ClientPaymentModal = ({ open, onClose, clientId, clientName, amount, billi
     if (initializedRef.current) return;
     if (!formRef.current) return;
 
-    // Load CSS
     if (!document.getElementById("moyasar-css")) {
       const link = document.createElement("link");
       link.id = "moyasar-css";
@@ -93,7 +91,7 @@ const ClientPaymentModal = ({ open, onClose, clientId, clientName, amount, billi
       });
       if (fnError || !data?.success) throw new Error(data?.error || "فشل التحقق");
 
-      toast({ title: "تم الدفع بنجاح 🎉", description: `تم تسجيل دفعة ${clientName}` });
+      toast({ title: "تم الدفع بنجاح", description: `تم تسجيل دفعة ${clientName}` });
       onSuccess();
       onClose();
     } catch (err: any) {

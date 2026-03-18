@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
+import { SmilePlus, Smile, Meh, Frown, BatteryWarning } from "lucide-react";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const moods = [
-  { emoji: "😊", label: "ممتاز", value: "great" },
-  { emoji: "🙂", label: "جيد", value: "good" },
-  { emoji: "😐", label: "عادي", value: "okay" },
-  { emoji: "😞", label: "تعبان", value: "tired" },
-  { emoji: "😫", label: "مرهق", value: "exhausted" },
+  { icon: SmilePlus, label: "ممتاز", value: "great" },
+  { icon: Smile, label: "جيد", value: "good" },
+  { icon: Meh, label: "عادي", value: "okay" },
+  { icon: Frown, label: "تعبان", value: "tired" },
+  { icon: BatteryWarning, label: "مرهق", value: "exhausted" },
 ];
 
 const PortalMoodSelector = () => {
@@ -28,7 +29,7 @@ const PortalMoodSelector = () => {
         p_mood: mood,
       });
       if (error) throw error;
-      toast({ title: "تم تسجيل مزاجك ✅" });
+      toast({ title: "تم تسجيل حالتك" });
     } catch {
       toast({ title: "حدث خطأ", variant: "destructive" });
       setSelectedMood(null);
@@ -37,7 +38,6 @@ const PortalMoodSelector = () => {
     }
   };
 
-  // Update activity on mount
   useEffect(() => {
     if (token) {
       supabase.rpc("update_portal_activity", { p_token: token });
@@ -48,7 +48,7 @@ const PortalMoodSelector = () => {
     <div className="bg-card rounded-xl border border-border p-4">
       <p className="text-sm font-medium text-card-foreground mb-3">كيف حالك اليوم؟</p>
       <div className="flex items-center justify-between gap-1">
-        {moods.map(m => (
+        {moods.map((m) => (
           <button
             key={m.value}
             onClick={() => handleSelectMood(m.value)}
@@ -58,7 +58,7 @@ const PortalMoodSelector = () => {
                 : "hover:bg-secondary"
             }`}
           >
-            <span className="text-2xl">{m.emoji}</span>
+            <m.icon className="w-5 h-5 text-primary" />
             <span className="text-[10px] text-muted-foreground">{m.label}</span>
           </button>
         ))}

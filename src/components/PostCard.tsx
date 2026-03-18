@@ -1,15 +1,14 @@
 import { Card } from "@/components/ui/card";
-import { Eye, ExternalLink } from "lucide-react";
+import { Eye, ExternalLink, Lightbulb, Dumbbell, Apple, Flame, Megaphone, Camera, Music2, Link2, LucideIcon } from "lucide-react";
 
-const POST_BADGES: Record<string, { emoji: string; color: string }> = {
-  "نصيحة": { emoji: "💡", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  "تمرين": { emoji: "🏋️", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  "وجبة": { emoji: "🥗", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  "تحفيز": { emoji: "🔥", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  "إعلان": { emoji: "📢", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+const POST_BADGES: Record<string, { icon: LucideIcon; color: string }> = {
+  "نصيحة": { icon: Lightbulb, color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  "تمرين": { icon: Dumbbell, color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  "وجبة": { icon: Apple, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  "تحفيز": { icon: Flame, color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  "إعلان": { icon: Megaphone, color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
 };
 
-// Extract YouTube video ID from various URL formats
 const getYouTubeId = (url: string): string | null => {
   const match = url.match(
     /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([a-zA-Z0-9_-]{11})/
@@ -38,10 +37,10 @@ interface PostCardProps {
 const PostCard = ({ post, actions }: PostCardProps) => {
   const badge = POST_BADGES[post.post_type] || POST_BADGES["نصيحة"];
   const ytId = post.link_url ? getYouTubeId(post.link_url) : null;
+  const BadgeIcon = badge.icon;
 
   return (
     <Card className="overflow-hidden">
-      {/* Image */}
       {post.image_url && (
         <div className="w-full aspect-video bg-muted">
           <img
@@ -53,7 +52,6 @@ const PostCard = ({ post, actions }: PostCardProps) => {
         </div>
       )}
 
-      {/* YouTube Embed */}
       {ytId && (
         <div className="w-full aspect-video">
           <iframe
@@ -66,7 +64,6 @@ const PostCard = ({ post, actions }: PostCardProps) => {
         </div>
       )}
 
-      {/* Video */}
       {post.video_url && (
         <div className="w-full aspect-video bg-muted">
           <video
@@ -79,10 +76,10 @@ const PostCard = ({ post, actions }: PostCardProps) => {
       )}
 
       <div className="p-4 space-y-3">
-        {/* Header: badge + date + actions */}
         <div className="flex items-center justify-between">
-          <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${badge.color}`}>
-            {badge.emoji} {post.post_type}
+          <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${badge.color}`}>
+            <BadgeIcon className="w-3.5 h-3.5" />
+            {post.post_type}
           </span>
           <div className="flex items-center gap-2">
             {typeof post.views_count === "number" && post.views_count > 0 && (
@@ -103,10 +100,8 @@ const PostCard = ({ post, actions }: PostCardProps) => {
           </div>
         </div>
 
-        {/* Content */}
         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{post.content}</p>
 
-        {/* Link card (non-YouTube) */}
         {post.link_url && !ytId && (
           <a
             href={post.link_url}
@@ -118,12 +113,14 @@ const PostCard = ({ post, actions }: PostCardProps) => {
               <ExternalLink className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">
-                {isInstagramUrl(post.link_url)
-                  ? "📸 منشور انستقرام"
-                  : isTikTokUrl(post.link_url)
-                  ? "🎵 فيديو تيك توك"
-                  : "🔗 رابط خارجي"}
+              <p className="text-xs font-medium text-foreground truncate inline-flex items-center gap-1.5">
+                {isInstagramUrl(post.link_url) ? (
+                  <><Camera className="w-3.5 h-3.5" /> منشور انستقرام</>
+                ) : isTikTokUrl(post.link_url) ? (
+                  <><Music2 className="w-3.5 h-3.5" /> فيديو تيك توك</>
+                ) : (
+                  <><Link2 className="w-3.5 h-3.5" /> رابط خارجي</>
+                )}
               </p>
               <p className="text-[10px] text-muted-foreground truncate" dir="ltr">
                 {post.link_url}

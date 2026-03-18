@@ -71,7 +71,7 @@ const ClientRegister = () => {
 
       if (linkError) throw linkError;
 
-      toast({ title: "تم إنشاء حسابك بنجاح! 🎉" });
+      toast({ title: "تم إنشاء حسابك بنجاح" });
       
       // Check if email confirmation is required
       if (authData.session) {
@@ -83,7 +83,7 @@ const ClientRegister = () => {
           navigate("/client-login");
         }
       } else {
-        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل حسابك 📧" });
+        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل حسابك" });
         navigate("/client-login");
       }
     } catch (err: any) {
@@ -116,7 +116,7 @@ const ClientRegister = () => {
           <p className="text-white/50">هذا الرابط غير صالح أو تم استخدامه مسبقاً</p>
           <Link to="/client-login">
             <Button className="bg-[#16a34a] hover:bg-[#15803d] text-white">
-              دخول المتدرب ←
+              دخول المتدرب
             </Button>
           </Link>
         </div>
@@ -137,7 +137,7 @@ const ClientRegister = () => {
           </Link>
           <Link to="/client-login">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs">
-              عندي حساب ←
+              عندي حساب
             </Button>
           </Link>
         </div>
@@ -146,7 +146,7 @@ const ClientRegister = () => {
       <main className="flex-1 flex items-center justify-center px-4 pb-20">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black">أنشئ حسابك 💪</h1>
+            <h1 className="text-3xl font-black inline-flex items-center justify-center gap-2"><Dumbbell className="w-7 h-7 text-[#4ade80]" />أنشئ حسابك</h1>
             <p className="text-white/50">
               ابدأ رحلتك مع <span className="text-[#4ade80] font-bold">{clientData.trainer_name}</span>
             </p>

@@ -196,7 +196,7 @@ const PortalSubscription = () => {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
               <XCircle className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">انتهى اشتراكك 😔</h2>
+            <h2 className="text-xl font-bold text-foreground">انتهى اشتراكك</h2>
             <p className="text-muted-foreground text-sm">جدد الآن للوصول لبرامجك وجداولك</p>
             <Button onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }} className="w-full" size="lg">
               <RefreshCw className="w-4 h-4 ml-2" /> جدد اشتراكك

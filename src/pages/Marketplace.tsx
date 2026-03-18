@@ -108,7 +108,7 @@ const Marketplace = () => {
       }
 
       toast({
-        title: "تم الشراء بنجاح! 🎉",
+        title: "تم الشراء بنجاح",
         description: data.program_cloned ? "تم نسخ البرنامج إلى مكتبتك" : "يمكنك الآن استخدام البرنامج",
       });
 

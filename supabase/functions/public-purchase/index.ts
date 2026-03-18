@@ -5,19 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Require authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     const supabaseUser = createClient(
@@ -28,137 +30,194 @@ Deno.serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (claimsError || !claimsData?.claims?.sub) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
+    let payload: { listing_id?: string; payment_id?: string };
+    try {
+      payload = await req.json();
+    } catch {
+      return jsonResponse({ error: "Invalid request body" }, 400);
+    }
+
+    const listingId = typeof payload.listing_id === "string" ? payload.listing_id : "";
+    const paymentId = typeof payload.payment_id === "string" ? payload.payment_id : undefined;
+    if (!listingId) {
+      return jsonResponse({ error: "listing_id required" }, 400);
     }
 
     const userId = claimsData.claims.sub;
-
-    const { listing_id, payment_id } = await req.json();
-    if (!listing_id) {
-      return new Response(JSON.stringify({ error: "listing_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get listing details to validate amount
     const { data: listing, error: listingError } = await supabase
       .from("marketplace_listings")
-      .select("purchase_count, trainer_id, price, status")
-      .eq("id", listing_id)
+      .select("id, purchase_count, trainer_id, price, status, program_id, currency")
+      .eq("id", listingId)
       .single();
 
     if (listingError || !listing) {
-      return new Response(JSON.stringify({ error: "Listing not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Listing not found" }, 404);
     }
 
     if (listing.status !== "published") {
-      return new Response(JSON.stringify({ error: "Listing not available" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Listing not available" }, 400);
     }
 
-    // Idempotency check - prevent duplicate purchases
     const { data: existingPurchase } = await supabase
       .from("marketplace_purchases")
       .select("id")
-      .eq("listing_id", listing_id)
+      .eq("listing_id", listingId)
       .eq("buyer_id", userId)
       .eq("status", "completed")
       .maybeSingle();
 
     if (existingPurchase) {
-      return new Response(JSON.stringify({ error: "Already purchased" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Already purchased" }, 409);
     }
 
-    // For paid listings, verify payment with Moyasar
     if (listing.price > 0) {
-      if (!payment_id) {
-        return new Response(JSON.stringify({ error: "payment_id required for paid listings" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (!paymentId) {
+        return jsonResponse({ error: "payment_id required for paid listings" }, 400);
       }
 
       const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
       if (!moyasarSecret) {
-        return new Response(JSON.stringify({ error: "Payment configuration error" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Payment configuration error" }, 500);
       }
 
-      // Verify payment with Moyasar API
-      const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
+      const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${paymentId}`, {
         headers: {
           Authorization: `Basic ${btoa(moyasarSecret + ":")}`,
         },
       });
 
       if (!moyasarRes.ok) {
-        return new Response(JSON.stringify({ error: "Payment verification failed" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Payment verification failed" }, 402);
       }
 
       const moyasarPayment = await moyasarRes.json();
+      const expectedAmount = Number(listing.price) * 100;
 
-      // Verify payment status and amount (Moyasar amounts are in halalas = price * 100)
       if (moyasarPayment.status !== "paid") {
-        return new Response(JSON.stringify({ error: "Payment not completed" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Payment not completed" }, 402);
       }
 
-      const expectedAmount = listing.price * 100;
-      if (moyasarPayment.amount < expectedAmount) {
-        return new Response(JSON.stringify({ error: "Payment amount mismatch" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (Number(moyasarPayment.amount) !== expectedAmount) {
+        return jsonResponse({ error: "Payment amount mismatch" }, 402);
       }
     }
 
-    // Increment purchase count
-    await supabase
-      .from("marketplace_listings")
-      .update({ purchase_count: (listing.purchase_count || 0) + 1 })
-      .eq("id", listing_id);
-
-    // Record purchase with actual buyer_id and validated amount
-    await supabase.from("marketplace_purchases").insert({
-      listing_id,
+    const { error: purchaseError } = await supabase.from("marketplace_purchases").insert({
+      listing_id: listingId,
       buyer_id: userId,
       trainer_id: listing.trainer_id,
       amount: listing.price,
+      currency: listing.currency,
       status: "completed",
     });
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (purchaseError) {
+      if (purchaseError.code === "23505") {
+        return jsonResponse({ error: "Already purchased" }, 409);
+      }
+
+      console.error("Purchase insert error:", purchaseError);
+      return jsonResponse({ error: "Failed to record purchase" }, 500);
+    }
+
+    await supabase
+      .from("marketplace_listings")
+      .update({ purchase_count: (listing.purchase_count || 0) + 1 })
+      .eq("id", listingId);
+
+    let programCloned = false;
+
+    if (listing.program_id) {
+      const { data: sourceProgram } = await supabase
+        .from("programs")
+        .select("id, name, weeks, trainer_id")
+        .eq("id", listing.program_id)
+        .eq("trainer_id", listing.trainer_id)
+        .maybeSingle();
+
+      if (sourceProgram) {
+        const { data: sourceDays } = await supabase
+          .from("program_days")
+          .select("id, day_name, day_order")
+          .eq("program_id", sourceProgram.id)
+          .order("day_order", { ascending: true });
+
+        const sourceDayIds = (sourceDays || []).map((day) => day.id);
+        const { data: sourceExercises } = sourceDayIds.length
+          ? await supabase
+              .from("program_exercises")
+              .select("day_id, name, reps, sets, video_url, weight, exercise_order")
+              .in("day_id", sourceDayIds)
+              .order("exercise_order", { ascending: true })
+          : { data: [], error: null };
+
+        const { data: newProgram, error: newProgramError } = await supabase
+          .from("programs")
+          .insert({
+            name: `${sourceProgram.name} (من السوق)`,
+            trainer_id: userId,
+            weeks: sourceProgram.weeks,
+          })
+          .select("id")
+          .single();
+
+        if (!newProgramError && newProgram) {
+          const exercisesByDay = new Map<string, Array<Record<string, unknown>>>();
+
+          for (const exercise of sourceExercises || []) {
+            const dayExercises = exercisesByDay.get(exercise.day_id) || [];
+            dayExercises.push(exercise);
+            exercisesByDay.set(exercise.day_id, dayExercises);
+          }
+
+          for (const day of sourceDays || []) {
+            const { data: newDay, error: newDayError } = await supabase
+              .from("program_days")
+              .insert({
+                program_id: newProgram.id,
+                day_name: day.day_name,
+                day_order: day.day_order,
+              })
+              .select("id")
+              .single();
+
+            if (newDayError || !newDay) {
+              continue;
+            }
+
+            const dayExercises = exercisesByDay.get(day.id) || [];
+            if (dayExercises.length > 0) {
+              await supabase.from("program_exercises").insert(
+                dayExercises.map((exercise) => ({
+                  day_id: newDay.id,
+                  name: exercise.name as string,
+                  sets: exercise.sets as number,
+                  reps: exercise.reps as number,
+                  weight: exercise.weight as number,
+                  video_url: (exercise.video_url as string | null) ?? null,
+                  exercise_order: exercise.exercise_order as number,
+                }))
+              );
+            }
+          }
+
+          programCloned = true;
+        }
+      }
+    }
+
+    return jsonResponse({ success: true, program_cloned: programCloned });
   } catch (e) {
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("public-purchase error:", e);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

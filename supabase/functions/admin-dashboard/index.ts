@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET");
+const SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
 
 function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -16,38 +17,105 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function encodeBase64Url(value: string) {
+  return btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeBase64Url(value: string) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
+  return atob(normalized + padding);
+}
+
+async function createSignature(value: string, secret: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return encodeBase64Url(String.fromCharCode(...new Uint8Array(signature)));
+}
+
+async function createSessionToken(secret: string) {
+  const payload = encodeBase64Url(
+    JSON.stringify({
+      exp: Date.now() + SESSION_DURATION_MS,
+      nonce: crypto.randomUUID(),
+    })
+  );
+  const signature = await createSignature(payload, secret);
+  return `${payload}.${signature}`;
+}
+
+async function verifySessionToken(token: string, secret: string) {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) return false;
+
+  const expectedSignature = await createSignature(payload, secret);
+  if (!constantTimeCompare(signature, expectedSignature)) return false;
+
+  try {
+    const parsed = JSON.parse(decodeBase64Url(payload));
+    return typeof parsed?.exp === "number" && parsed.exp > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { password, action, month, payout_id } = await req.json();
+    const { password, session_token, action, month, payout_id } = await req.json();
 
-    if (!ADMIN_SECRET || !password || !constantTimeCompare(password, ADMIN_SECRET)) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!ADMIN_SECRET) {
+      return jsonResponse({ error: "unauthorized" }, 401);
     }
+
+    const tokenIsValid =
+      typeof session_token === "string" && session_token
+        ? await verifySessionToken(session_token, ADMIN_SECRET)
+        : false;
+    const passwordIsValid =
+      typeof password === "string" && password
+        ? constantTimeCompare(password, ADMIN_SECRET)
+        : false;
+
+    if (!tokenIsValid && !passwordIsValid) {
+      return jsonResponse({ error: "unauthorized" }, 401);
+    }
+
+    const nextSessionToken = tokenIsValid
+      ? session_token
+      : await createSessionToken(ADMIN_SECRET);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Mark payout as paid
     if (action === "mark_payout_paid" && payout_id) {
       await supabase
         .from("payout_requests")
         .update({ status: "paid", processed_at: new Date().toISOString() })
         .eq("id", payout_id);
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+
+      return jsonResponse({ success: true, session_token: nextSessionToken });
     }
 
-    // Fetch all data
     const [
       { data: profiles },
       { data: clients },
@@ -62,7 +130,6 @@ Deno.serve(async (req) => {
       supabase.from("trainer_payment_settings").select("*"),
     ]);
 
-    // Build trainer summary
     const trainerMap: Record<string, any> = {};
     for (const p of profiles || []) {
       trainerMap[p.user_id] = {
@@ -81,7 +148,6 @@ Deno.serve(async (req) => {
       };
     }
 
-    // Payment settings
     for (const ps of paymentSettings || []) {
       if (trainerMap[ps.trainer_id]) {
         trainerMap[ps.trainer_id].iban = ps.iban;
@@ -90,14 +156,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Client counts
     for (const c of clients || []) {
       if (c.trainer_id && trainerMap[c.trainer_id]) {
         trainerMap[c.trainer_id].client_count++;
       }
     }
 
-    // Payment sums
     const now = new Date();
     const filterMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -113,14 +177,13 @@ Deno.serve(async (req) => {
     }
 
     const trainers = Object.values(trainerMap);
-
-    // Monthly revenue for last 6 months
     const monthlyRevenue: Record<string, number> = {};
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       monthlyRevenue[key] = 0;
     }
+
     for (const pay of payments || []) {
       if (pay.status !== "paid") continue;
       const key = pay.created_at?.substring(0, 7);
@@ -129,11 +192,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Trainer growth (by month joined)
     const trainerGrowth: Record<string, number> = {};
     for (const key of Object.keys(monthlyRevenue)) {
       trainerGrowth[key] = 0;
     }
+
     for (const p of profiles || []) {
       const key = p.created_at?.substring(0, 7);
       if (key && key in trainerGrowth) {
@@ -141,7 +204,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Plan distribution
     const planDist: Record<string, number> = { free: 0, pro: 0 };
     for (const p of profiles || []) {
       const plan = p.subscription_plan || "free";
@@ -156,29 +218,24 @@ Deno.serve(async (req) => {
       .filter((p: any) => p.status === "paid" && p.created_at?.substring(0, 7) === filterMonth)
       .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
 
-    return new Response(
-      JSON.stringify({
-        trainers,
-        payouts,
-        stats: {
-          total_trainers: (profiles || []).length,
-          total_clients: (clients || []).length,
-          month_revenue: monthRevenue,
-          total_revenue: totalRevenue,
-        },
-        charts: {
-          monthly_revenue: monthlyRevenue,
-          trainer_growth: trainerGrowth,
-          plan_distribution: planDist,
-        },
-        filter_month: filterMonth,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return jsonResponse({
+      trainers,
+      payouts,
+      stats: {
+        total_trainers: (profiles || []).length,
+        total_clients: (clients || []).length,
+        month_revenue: monthRevenue,
+        total_revenue: totalRevenue,
+      },
+      charts: {
+        monthly_revenue: monthlyRevenue,
+        trainer_growth: trainerGrowth,
+        plan_distribution: planDist,
+      },
+      filter_month: filterMonth,
+      session_token: nextSessionToken,
     });
+  } catch (e) {
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

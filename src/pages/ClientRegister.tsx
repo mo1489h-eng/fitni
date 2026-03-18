@@ -71,7 +71,7 @@ const ClientRegister = () => {
 
       if (linkError) throw linkError;
 
-      toast({ title: "تم إنشاء حسابك بنجاح! 🎉" });
+      toast({ title: "تم إنشاء حسابك بنجاح" });
       
       // Check if email confirmation is required
       if (authData.session) {
@@ -83,7 +83,7 @@ const ClientRegister = () => {
           navigate("/client-login");
         }
       } else {
-        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل حسابك 📧" });
+        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل حسابك" });
         navigate("/client-login");
       }
     } catch (err: any) {

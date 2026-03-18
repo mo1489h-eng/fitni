@@ -104,7 +104,7 @@ const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
       await refreshProfile();
 
       toast({
-        title: "تم الدفع بنجاح 🎉",
+        title: "تم الدفع بنجاح",
         description: `تم تفعيل باقة ${planName}`,
       });
 

@@ -11,25 +11,27 @@ import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const SESSION_KEY = "fitni_admin_session";
-const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
 function getSession(): string | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const { password, expires } = JSON.parse(raw);
-    if (Date.now() > expires) {
+
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.token !== "string" || !parsed.token) {
       sessionStorage.removeItem(SESSION_KEY);
       return null;
     }
-    return password;
+
+    return parsed.token;
   } catch {
+    sessionStorage.removeItem(SESSION_KEY);
     return null;
   }
 }
 
-function setSession(password: string) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ password, expires: Date.now() + SESSION_DURATION }));
+function setSession(token: string) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token }));
 }
 
 export default function AdminDashboard() {
@@ -39,42 +41,54 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
   const [data, setData] = useState<any>(null);
   const [month, setMonth] = useState("");
-  const [savedPassword, setSavedPassword] = useState("");
+  const [sessionToken, setSessionToken] = useState("");
 
   useEffect(() => {
-    const s = getSession();
-    if (s) {
-      setSavedPassword(s);
+    const token = getSession();
+    if (token) {
+      setSessionToken(token);
       setAuthed(true);
     }
   }, []);
 
-  const fetchData = useCallback(async (pwd: string, filterMonth?: string) => {
+  const clearSession = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setAuthed(false);
+    setSessionToken("");
+  }, []);
+
+  const fetchData = useCallback(async (token: string, filterMonth?: string) => {
     setLoading(true);
     try {
       const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
-        body: { password: pwd, month: filterMonth || undefined },
+        body: { session_token: token, month: filterMonth || undefined },
       });
+
       if (fnError || result?.error) {
         if (result?.error === "unauthorized") {
-          setAuthed(false);
-          sessionStorage.removeItem(SESSION_KEY);
-          setError("كلمة مرور خاطئة");
+          clearSession();
+          setError("انتهت الجلسة أو بيانات الدخول غير صحيحة");
         } else {
           toast.error("حدث خطأ في جلب البيانات");
         }
         return;
       }
+
+      if (result?.session_token) {
+        setSession(result.session_token);
+        setSessionToken(result.session_token);
+      }
+
       setData(result);
       setMonth(result.filter_month);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clearSession]);
 
   useEffect(() => {
-    if (authed && savedPassword) fetchData(savedPassword);
-  }, [authed, savedPassword, fetchData]);
+    if (authed && sessionToken) fetchData(sessionToken);
+  }, [authed, sessionToken, fetchData]);
 
   const handleLogin = async () => {
     setError("");
@@ -83,16 +97,19 @@ export default function AdminDashboard() {
       body: { password },
     });
     setLoading(false);
+
     if (result?.error === "unauthorized") {
       setError("كلمة مرور خاطئة");
       return;
     }
-    if (result?.error) {
+
+    if (result?.error || !result?.session_token) {
       setError("حدث خطأ");
       return;
     }
-    setSession(password);
-    setSavedPassword(password);
+
+    setSession(result.session_token);
+    setSessionToken(result.session_token);
     setAuthed(true);
     setData(result);
     setMonth(result.filter_month);
@@ -100,15 +117,27 @@ export default function AdminDashboard() {
 
   const handleMonthChange = (m: string) => {
     setMonth(m);
-    fetchData(savedPassword, m);
+    fetchData(sessionToken, m);
   };
 
   const handleMarkPaid = async (payoutId: string) => {
-    await supabase.functions.invoke("admin-dashboard", {
-      body: { password: savedPassword, action: "mark_payout_paid", payout_id: payoutId },
+    const { data: result } = await supabase.functions.invoke("admin-dashboard", {
+      body: { session_token: sessionToken, action: "mark_payout_paid", payout_id: payoutId },
     });
+
+    if (result?.error === "unauthorized") {
+      clearSession();
+      setError("انتهت الجلسة أو بيانات الدخول غير صحيحة");
+      return;
+    }
+
+    if (result?.session_token) {
+      setSession(result.session_token);
+      setSessionToken(result.session_token);
+    }
+
     toast.success("تم التحويل ✅");
-    fetchData(savedPassword, month);
+    fetchData(result?.session_token || sessionToken, month);
   };
 
   const handleLogout = () => {
@@ -116,7 +145,7 @@ export default function AdminDashboard() {
     setAuthed(false);
     setData(null);
     setPassword("");
-    setSavedPassword("");
+    setSessionToken("");
   };
 
   if (!authed) {

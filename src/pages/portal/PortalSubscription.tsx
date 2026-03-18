@@ -244,8 +244,13 @@ const PortalSubscription = () => {
         {showRenewal ? (
           <Card className="p-5 border-primary/30">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-card-foreground">تجديد الاشتراك 🔄</h3>
-              <Button variant="ghost" size="sm" onClick={() => { setShowRenewal(false); moyasarInitRef.current = false; }}>✕</Button>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-card-foreground">تجديد الاشتراك</h3>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => { setShowRenewal(false); moyasarInitRef.current = false; }}>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* Package selection */}

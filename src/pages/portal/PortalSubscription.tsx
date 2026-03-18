@@ -9,7 +9,7 @@ import { usePortalToken } from "@/hooks/usePortalToken";
 import { useToast } from "@/hooks/use-toast";
 import {
   CreditCard, CalendarClock, CheckCircle, History, Loader2,
-  AlertTriangle, XCircle, MessageCircle, Dumbbell, Apple, UserCheck, RefreshCw
+  AlertTriangle, XCircle, MessageCircle, Dumbbell, Apple, UserCheck, RefreshCw, ShieldCheck, X
 } from "lucide-react";
 
 const MOYASAR_PK = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";

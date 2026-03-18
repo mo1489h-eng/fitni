@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ArrowLeft, Timer, Play, ChevronLeft, ChevronRight, Dumbbell, Trophy, Flame, Calendar as CalendarIcon } from "lucide-react";
+import { Check, ArrowLeft, Timer, Play, ChevronLeft, ChevronRight, Dumbbell, Trophy, Flame, Calendar as CalendarIcon, Sparkles, Moon, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 

@@ -116,7 +116,7 @@ const ClientRegister = () => {
           <p className="text-white/50">هذا الرابط غير صالح أو تم استخدامه مسبقاً</p>
           <Link to="/client-login">
             <Button className="bg-[#16a34a] hover:bg-[#15803d] text-white">
-              دخول المتدرب ←
+              دخول المتدرب
             </Button>
           </Link>
         </div>

@@ -386,21 +386,28 @@ const ClientProfile = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-border overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 text-center py-2.5 text-sm font-medium transition-colors relative whitespace-nowrap px-2 ${
-                activeTab === tab.key ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.key && (
-                <span className="absolute bottom-0 inset-x-2 h-0.5 bg-primary rounded-full" />
-              )}
-            </button>
-          ))}
+        <div role="tablist" aria-label="أقسام ملف العميل" className="flex border-b border-border overflow-x-auto">
+          {tabs.map((tab) => {
+            const isSelected = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                id={`client-tab-${tab.key}`}
+                aria-selected={isSelected}
+                aria-controls={`client-panel-${tab.key}`}
+                data-tab={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative flex-1 whitespace-nowrap px-2 py-2.5 text-center text-sm font-medium transition-colors ${
+                  isSelected ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {tab.label}
+                {isSelected && <span className="absolute bottom-0 inset-x-2 h-0.5 rounded-full bg-primary" />}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content */}

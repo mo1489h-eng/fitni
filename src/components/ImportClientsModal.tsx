@@ -75,7 +75,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(resetState, 300);
+    window.setTimeout(resetState, 300);
   };
 
   const parseCsv = (text: string): RawRow[] => {

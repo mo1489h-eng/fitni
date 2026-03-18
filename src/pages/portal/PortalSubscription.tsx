@@ -9,7 +9,7 @@ import { usePortalToken } from "@/hooks/usePortalToken";
 import { useToast } from "@/hooks/use-toast";
 import {
   CreditCard, CalendarClock, CheckCircle, History, Loader2,
-  AlertTriangle, XCircle, MessageCircle, Dumbbell, Apple, UserCheck, RefreshCw
+  AlertTriangle, XCircle, MessageCircle, Dumbbell, Apple, UserCheck, RefreshCw, ShieldCheck, X
 } from "lucide-react";
 
 const MOYASAR_PK = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";
@@ -161,7 +161,7 @@ const PortalSubscription = () => {
         },
       });
       if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
-      toast({ title: "✅ تم تجديد اشتراكك!", description: `ساري حتى: ${new Date(data.period_end).toLocaleDateString("ar-SA")}` });
+      toast({ title: "تم تجديد اشتراكك", description: `ساري حتى: ${new Date(data.period_end).toLocaleDateString("ar-SA")}` });
       setShowRenewal(false);
       refetchClient();
     } catch (e: any) {
@@ -196,7 +196,7 @@ const PortalSubscription = () => {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
               <XCircle className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">انتهى اشتراكك 😔</h2>
+            <h2 className="text-xl font-bold text-foreground">انتهى اشتراكك</h2>
             <p className="text-muted-foreground text-sm">جدد الآن للوصول لبرامجك وجداولك</p>
             <Button onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }} className="w-full" size="lg">
               <RefreshCw className="w-4 h-4 ml-2" /> جدد اشتراكك
@@ -209,15 +209,18 @@ const PortalSubscription = () => {
       )}
 
       <div className="space-y-4 animate-fade-in" dir="rtl">
-        <h1 className="text-xl font-bold text-foreground">اشتراكي 💳</h1>
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-primary" />
+          <h1 className="text-xl font-bold text-foreground">اشتراكي</h1>
+        </div>
 
         {/* Expiry warnings */}
         {isExpiringSoon && !isExpiringTomorrow && (
           <div className="rounded-xl p-3 bg-yellow-500/10 border border-yellow-500/30 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-yellow-400">⚠️ اشتراكك ينتهي خلال {daysLeft} أيام</p>
-              <p className="text-xs text-muted-foreground">جدد الآن واستمر في رحلتك 💪</p>
+              <p className="text-sm font-medium text-yellow-400">اشتراكك ينتهي خلال {daysLeft} أيام</p>
+              <p className="text-xs text-muted-foreground">جدد الآن واستمر في رحلتك</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>
               جدد الآن
@@ -229,7 +232,7 @@ const PortalSubscription = () => {
           <div className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/30 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-orange-400">⚠️ اشتراكك ينتهي غداً!</p>
+              <p className="text-sm font-bold text-orange-400">اشتراكك ينتهي غداً</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>
               جدد الآن
@@ -241,8 +244,13 @@ const PortalSubscription = () => {
         {showRenewal ? (
           <Card className="p-5 border-primary/30">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-card-foreground">تجديد الاشتراك 🔄</h3>
-              <Button variant="ghost" size="sm" onClick={() => { setShowRenewal(false); moyasarInitRef.current = false; }}>✕</Button>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-card-foreground">تجديد الاشتراك</h3>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => { setShowRenewal(false); moyasarInitRef.current = false; }}>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* Package selection */}
@@ -289,7 +297,10 @@ const PortalSubscription = () => {
                 <div className="mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">{payError}</div>
               )}
             </div>
-            <p className="text-xs text-muted-foreground text-center mt-2">الدفع آمن ومشفر عبر Moyasar 🔒</p>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground text-center mt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              <p>الدفع آمن ومشفر عبر Moyasar</p>
+            </div>
           </Card>
         ) : (
           <>
@@ -370,7 +381,7 @@ const PortalSubscription = () => {
                 size="lg"
               >
                 <RefreshCw className="w-4 h-4 ml-2" />
-                {isActive ? "تجديد مبكر 🔄" : "جدد اشتراكك"}
+                {isActive ? "تجديد مبكر" : "جدد اشتراكك"}
               </Button>
             </Card>
 
@@ -389,7 +400,7 @@ const PortalSubscription = () => {
                       </div>
                       <div className="text-left">
                         <span className={`text-xs px-2 py-1 rounded-full ${p.status === "paid" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
-                          {p.status === "paid" ? "مدفوع ✅" : "معلق"}
+                          {p.status === "paid" ? "مدفوع" : "معلق"}
                         </span>
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {new Date(p.period_start).toLocaleDateString("ar-SA")} — {new Date(p.period_end).toLocaleDateString("ar-SA")}

@@ -83,7 +83,10 @@ const Subscription = () => {
           <Button variant="ghost" size="sm" className="p-1" onClick={() => navigate("/settings")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">باقتي 💎</h1>
+          <div className="flex items-center gap-2">
+            <Gem className="w-5 h-5 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">باقتي</h1>
+          </div>
         </div>
 
         <Card className="p-5 space-y-4">

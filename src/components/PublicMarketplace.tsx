@@ -42,20 +42,16 @@ const PublicMarketplace = () => {
   const handleDownload = async (listing: any) => {
     setPurchasing(true);
     try {
-      // Record purchase via edge function (requires auth)
       await supabase.functions.invoke("public-purchase", {
         body: { listing_id: listing.id },
       });
     } catch (e) {
-      // Continue even if tracking fails (e.g. unauthenticated)
       console.error("Purchase tracking error:", e);
     }
 
     setPurchasing(false);
     setSelectedListing(null);
-    
-    // Show success & refresh
-    alert("تم الشراء بنجاح! 🎉 سيتم تحميل البرنامج.");
+    alert("تم الشراء بنجاح وسيتم تحميل البرنامج.");
     fetchListings();
   };
 
@@ -89,7 +85,6 @@ const PublicMarketplace = () => {
             <Loader2 className="w-6 h-6 animate-spin text-[#4ade80]" />
           </div>
         ) : listings.length === 0 ? (
-          /* Empty state - always visible */
           <div className="text-center py-16 space-y-6">
             <div className="w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto">
               <Package className="w-10 h-10 text-[#4ade80]/40" />
@@ -101,7 +96,7 @@ const PublicMarketplace = () => {
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3">
-              {["تضخيم 💪", "تنشيف 🔥", "لياقة عامة 🏃", "تأهيل إصابات 🩹"].map((tag) => (
+              {["تضخيم", "تنشيف", "لياقة عامة", "تأهيل إصابات"].map((tag) => (
                 <span key={tag} className="text-sm px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06] text-white/40">
                   {tag}
                 </span>
@@ -110,7 +105,6 @@ const PublicMarketplace = () => {
           </div>
         ) : (
           <>
-            {/* Search */}
             <div className="max-w-md mx-auto mb-8">
               <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -123,7 +117,6 @@ const PublicMarketplace = () => {
               </div>
             </div>
 
-            {/* Listings Grid */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {filtered.map((l) => {
                 const trainer = trainerProfiles[l.trainer_id];
@@ -185,7 +178,6 @@ const PublicMarketplace = () => {
           </>
         )}
 
-        {/* Detail Dialog */}
         <Dialog open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
           <DialogContent className="max-w-lg bg-[#111] border-white/10 text-white">
             <DialogHeader>
@@ -244,7 +236,6 @@ const PublicMarketplace = () => {
                   </div>
                 )}
 
-                {/* Purchase CTA - no login required */}
                 <div className="p-4 rounded-xl bg-gradient-to-r from-[#16a34a]/10 to-[#4ade80]/5 border border-[#16a34a]/20 flex items-center justify-between">
                   <div>
                     <p className="text-2xl font-black text-[#4ade80]">

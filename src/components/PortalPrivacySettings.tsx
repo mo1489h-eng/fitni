@@ -45,10 +45,10 @@ const PortalPrivacySettings = () => {
     });
 
     if (error) {
-      setSettings(settings); // revert
+      setSettings(settings);
       toast({ title: "حدث خطأ", variant: "destructive" });
     } else {
-      toast({ title: "تم تحديث الإعدادات ✅" });
+      toast({ title: "تم تحديث الإعدادات" });
     }
   };
 

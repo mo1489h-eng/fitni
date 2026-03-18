@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ArrowLeft, Timer, Play, ChevronLeft, ChevronRight, Dumbbell, Trophy, Flame, Calendar as CalendarIcon } from "lucide-react";
+import { Check, ArrowLeft, Timer, Play, ChevronLeft, ChevronRight, Dumbbell, Trophy, Flame, Calendar as CalendarIcon, Sparkles, Moon, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -180,13 +180,12 @@ const PortalWorkout = () => {
     return (
       <ClientPortalLayout>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-fade-in space-y-6" dir="rtl">
-          <div className="relative">
-            <div className="text-7xl mb-2">🎉</div>
-            <div className="absolute -top-4 -right-6 text-2xl animate-bounce" style={{ animationDelay: "0.1s" }}>🌟</div>
-            <div className="absolute -top-2 -left-8 text-xl animate-bounce" style={{ animationDelay: "0.3s" }}>✨</div>
-            <div className="absolute top-8 -right-10 text-lg animate-bounce" style={{ animationDelay: "0.5s" }}>💪</div>
+          <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 border border-primary/20">
+            <Trophy className="w-10 h-10 text-primary" />
+            <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-primary animate-bounce" style={{ animationDelay: "0.1s" }} />
+            <Dumbbell className="absolute -bottom-2 -left-2 w-5 h-5 text-primary animate-bounce" style={{ animationDelay: "0.3s" }} />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">أحسنت! أكملت التمرين 💪</h1>
+          <h1 className="text-2xl font-bold text-foreground">أحسنت! أكملت التمرين</h1>
           <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
             <div className="bg-card rounded-xl p-3 border border-border">
               <Dumbbell className="w-5 h-5 text-primary mx-auto mb-1" />
@@ -261,7 +260,10 @@ const PortalWorkout = () => {
           </div>
 
           <Card className="p-5 text-center">
-            <h1 className="text-2xl font-bold text-card-foreground mt-1 mb-2">{ex.name} 🎯</h1>
+            <h1 className="text-2xl font-bold text-card-foreground mt-1 mb-2 flex items-center justify-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              {ex.name}
+            </h1>
             <p className="text-muted-foreground">
               المطلوب: {ex.sets} سيت × {ex.reps} تكرار{ex.weight > 0 && ` × ${ex.weight} كجم`}
             </p>
@@ -281,7 +283,7 @@ const PortalWorkout = () => {
             </div>
             <Button className="w-full py-6 text-base gap-2" onClick={handleCompleteSet}>
               <Check className="w-5 h-5" />
-              {isLastSet && isLastExercise ? "إنهاء التمرين 🎉" : "✅ أكمل السيت"}
+              {isLastSet && isLastExercise ? "إنهاء التمرين" : "أكمل السيت"}
             </Button>
           </Card>
 
@@ -348,7 +350,10 @@ const PortalWorkout = () => {
         {/* Today's Workout Hero */}
         {todayDay && todayDay.exercises.length > 0 ? (
           <Card className="p-5 bg-primary text-primary-foreground border-0">
-            <p className="text-sm opacity-80 mb-1">تمرين اليوم 💪</p>
+            <div className="flex items-center gap-2 mb-1 opacity-80">
+              <Dumbbell className="w-4 h-4" />
+              <p className="text-sm">تمرين اليوم</p>
+            </div>
             <h2 className="text-xl font-bold mb-1">{todayDay.day_name}</h2>
             <p className="text-sm opacity-80 mb-4">
               {todayDay.exercises.length} تمارين • ~{todayDay.exercises.reduce((s, e) => s + e.sets * 2, 0)} دقيقة
@@ -364,7 +369,7 @@ const PortalWorkout = () => {
           </Card>
         ) : (
           <Card className="p-5 bg-muted/50 text-center">
-            <p className="text-lg mb-1">😴</p>
+            <Moon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
             <h2 className="text-lg font-bold text-foreground">يوم راحة</h2>
             <p className="text-sm text-muted-foreground">استرح اليوم واستعد لتمرين الغد</p>
           </Card>
@@ -393,7 +398,9 @@ const PortalWorkout = () => {
                   }`}
                 >
                   <p className="text-xs font-medium mb-1">{dayName.slice(0, 3)}</p>
-                  <p className="text-base mb-0.5">{hasWorkout ? "💪" : "😴"}</p>
+                  <div className="flex justify-center mb-0.5">
+                    {hasWorkout ? <Dumbbell className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {hasWorkout ? matchDay!.day_name.replace(dayName, "").trim() || "تمرين" : "راحة"}
                   </p>

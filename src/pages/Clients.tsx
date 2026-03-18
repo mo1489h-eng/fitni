@@ -166,7 +166,13 @@ const Clients = () => {
 
         <div className="relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="بحث عن عميل..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-10" />
+          <Input
+            data-tour="search"
+            placeholder="بحث عن عميل..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pr-10"
+          />
         </div>
 
         {isLoading ? (

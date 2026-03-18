@@ -398,7 +398,9 @@ const PortalWorkout = () => {
                   }`}
                 >
                   <p className="text-xs font-medium mb-1">{dayName.slice(0, 3)}</p>
-                  <p className="text-base mb-0.5">{hasWorkout ? "💪" : "😴"}</p>
+                  <div className="flex justify-center mb-0.5">
+                    {hasWorkout ? <Dumbbell className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {hasWorkout ? matchDay!.day_name.replace(dayName, "").trim() || "تمرين" : "راحة"}
                   </p>

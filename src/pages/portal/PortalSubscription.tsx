@@ -400,7 +400,7 @@ const PortalSubscription = () => {
                       </div>
                       <div className="text-left">
                         <span className={`text-xs px-2 py-1 rounded-full ${p.status === "paid" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
-                          {p.status === "paid" ? "مدفوع ✅" : "معلق"}
+                          {p.status === "paid" ? "مدفوع" : "معلق"}
                         </span>
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {new Date(p.period_start).toLocaleDateString("ar-SA")} — {new Date(p.period_end).toLocaleDateString("ar-SA")}

@@ -987,7 +987,7 @@ const ProgramBuilder = () => {
           <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
             <Flame className="w-4 h-4 text-primary" />قوالب جاهزة
           </h3>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+          <div data-tour="program-templates" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
             {templates.map(t => (
               <button key={t.name} onClick={() => applyTemplate(t)}
                 className="flex-shrink-0 w-44 rounded-xl border border-border p-3 text-right hover:border-primary/50 hover:bg-primary/5 transition-all group">

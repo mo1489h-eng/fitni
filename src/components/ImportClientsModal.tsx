@@ -324,7 +324,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
                     {field.label}
                     {field.required && <span className="text-destructive mr-0.5">*</span>}
                   </span>
-                  <Select value={mapping[field.key] || ""} onValueChange={(v) => setMapping((m) => ({ ...m, [field.key]: v }))}>
+                  <Select value={mapping[field.key] || undefined} onValueChange={(v) => setMapping((m) => ({ ...m, [field.key]: v }))}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="اختر العمود" />
                     </SelectTrigger>

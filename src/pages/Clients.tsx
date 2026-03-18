@@ -242,9 +242,12 @@ const Clients = () => {
         )}
 
         <button
+          type="button"
           onClick={handleAddClick}
           data-tour="add-client"
-          className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full btn-gradient text-primary-foreground flex items-center justify-center fab-premium"
+          aria-label="إضافة عميل جديد"
+          title="إضافة عميل جديد"
+          className="fixed bottom-20 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full btn-gradient text-primary-foreground fab-premium"
         >
           <Plus className="w-6 h-6" />
         </button>

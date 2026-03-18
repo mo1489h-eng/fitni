@@ -411,7 +411,12 @@ const ClientProfile = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="animate-fade-in">
+        <div
+          role="tabpanel"
+          id={`client-panel-${activeTab}`}
+          aria-labelledby={`client-tab-${activeTab}`}
+          className="animate-fade-in"
+        >
           {/* ===== OVERVIEW TAB ===== */}
           {activeTab === "overview" && (
             <div className="space-y-4">

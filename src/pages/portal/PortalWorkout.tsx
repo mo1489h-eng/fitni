@@ -180,13 +180,12 @@ const PortalWorkout = () => {
     return (
       <ClientPortalLayout>
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-fade-in space-y-6" dir="rtl">
-          <div className="relative">
-            <div className="text-7xl mb-2">🎉</div>
-            <div className="absolute -top-4 -right-6 text-2xl animate-bounce" style={{ animationDelay: "0.1s" }}>🌟</div>
-            <div className="absolute -top-2 -left-8 text-xl animate-bounce" style={{ animationDelay: "0.3s" }}>✨</div>
-            <div className="absolute top-8 -right-10 text-lg animate-bounce" style={{ animationDelay: "0.5s" }}>💪</div>
+          <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 border border-primary/20">
+            <Trophy className="w-10 h-10 text-primary" />
+            <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-primary animate-bounce" style={{ animationDelay: "0.1s" }} />
+            <Dumbbell className="absolute -bottom-2 -left-2 w-5 h-5 text-primary animate-bounce" style={{ animationDelay: "0.3s" }} />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">أحسنت! أكملت التمرين 💪</h1>
+          <h1 className="text-2xl font-bold text-foreground">أحسنت! أكملت التمرين</h1>
           <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
             <div className="bg-card rounded-xl p-3 border border-border">
               <Dumbbell className="w-5 h-5 text-primary mx-auto mb-1" />

@@ -283,7 +283,7 @@ const PortalWorkout = () => {
             </div>
             <Button className="w-full py-6 text-base gap-2" onClick={handleCompleteSet}>
               <Check className="w-5 h-5" />
-              {isLastSet && isLastExercise ? "إنهاء التمرين 🎉" : "✅ أكمل السيت"}
+              {isLastSet && isLastExercise ? "إنهاء التمرين" : "أكمل السيت"}
             </Button>
           </Card>
 

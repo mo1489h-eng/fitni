@@ -209,7 +209,10 @@ const PortalSubscription = () => {
       )}
 
       <div className="space-y-4 animate-fade-in" dir="rtl">
-        <h1 className="text-xl font-bold text-foreground">اشتراكي 💳</h1>
+        <div className="flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-primary" />
+          <h1 className="text-xl font-bold text-foreground">اشتراكي</h1>
+        </div>
 
         {/* Expiry warnings */}
         {isExpiringSoon && !isExpiringTomorrow && (

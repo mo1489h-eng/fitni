@@ -4,7 +4,7 @@ import { useTutorial } from "@/hooks/useTutorial";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket, X } from "lucide-react";
 
 const TutorialOverlay = () => {
   const { isActive, currentStep, totalSteps, step, next, prev, skip, startTutorial } = useTutorial();

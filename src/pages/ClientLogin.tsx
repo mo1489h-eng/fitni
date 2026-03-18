@@ -41,7 +41,7 @@ const ClientLogin = () => {
       if (profileError) throw profileError;
 
       if (profile && profile.length > 0 && profile[0].portal_token) {
-        toast({ title: "أهلاً بك! 💪" });
+        toast({ title: "أهلاً بك" });
         navigate(`/client-portal/${profile[0].portal_token}`);
       } else {
         toast({ title: "لم يتم العثور على بيانات المتدرب", description: "تواصل مع مدربك", variant: "destructive" });

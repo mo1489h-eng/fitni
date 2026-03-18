@@ -4,7 +4,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Check, Star, X } from "lucide-react";
+import { Check, Gift, Star, X } from "lucide-react";
 import MoyasarPayment from "@/components/MoyasarPayment";
 
 const plans = [

@@ -260,7 +260,10 @@ const PortalWorkout = () => {
           </div>
 
           <Card className="p-5 text-center">
-            <h1 className="text-2xl font-bold text-card-foreground mt-1 mb-2">{ex.name} 🎯</h1>
+            <h1 className="text-2xl font-bold text-card-foreground mt-1 mb-2 flex items-center justify-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              {ex.name}
+            </h1>
             <p className="text-muted-foreground">
               المطلوب: {ex.sets} سيت × {ex.reps} تكرار{ex.weight > 0 && ` × ${ex.weight} كجم`}
             </p>

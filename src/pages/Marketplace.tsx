@@ -154,7 +154,7 @@ const Marketplace = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">سوق البرامج 🏪</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2"><ShoppingCart className="w-6 h-6 text-primary" />سوق البرامج</h1>
             <p className="text-sm text-muted-foreground">اشترِ برامج جاهزة أو انشر برامجك للبيع</p>
           </div>
           <Dialog open={showPublish} onOpenChange={(open) => hasMarketplaceAccess ? setShowPublish(open) : setShowUpgrade(true)}>

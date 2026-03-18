@@ -129,7 +129,7 @@ const Payments = () => {
 
             {/* Revenue Chart */}
             <Card className="p-4">
-              <h3 className="font-bold text-card-foreground mb-3">📊 الإيرادات الشهرية</h3>
+              <h3 className="font-bold text-card-foreground mb-3 inline-flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" />الإيرادات الشهرية</h3>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyData}>

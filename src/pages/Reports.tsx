@@ -104,7 +104,7 @@ const Reports = () => {
   const getWhatsAppMessage = (client: typeof clients[0]) => {
     const r = getClientReport(client);
     const weightStr = r.latestWeight > 0 ? `${r.latestWeight}kg` : "—";
-    return `أهلاً ${client.name} 👋\n\nتقريرك الأسبوعي:\n\n✅ التمارين: ${r.weeklyDone}/${r.weeklyTarget}\n⚖️ الوزن: ${weightStr}\n\n💪 استمر!`;
+    return `أهلاً ${client.name}\n\nتقريرك الأسبوعي:\n\nالتمارين: ${r.weeklyDone}/${r.weeklyTarget}\nالوزن: ${weightStr}\n\nاستمر!`;
   };
 
   const handleSendAll = () => {

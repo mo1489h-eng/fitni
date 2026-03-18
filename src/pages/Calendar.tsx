@@ -221,7 +221,7 @@ const CalendarPage = () => {
     if (!phone) { toast({ title: "لا يوجد رقم هاتف لهذا العميل", variant: "destructive" }); return; }
     const formatted = phone.replace(/^0/, "966");
     const name = clientNameMap[s.client_id] || "";
-    const msg = `مرحبا ${name}! 📅\nتذكير بجلسة ${s.session_type} بتاريخ ${s.session_date} الساعة ${s.start_time.slice(0, 5)}\nمدة الجلسة: ${s.duration_minutes} دقيقة`;
+    const msg = `مرحبا ${name}\nتذكير بجلسة ${s.session_type} بتاريخ ${s.session_date} الساعة ${s.start_time.slice(0, 5)}\nمدة الجلسة: ${s.duration_minutes} دقيقة`;
     window.open(`https://wa.me/${formatted}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 

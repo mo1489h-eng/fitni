@@ -202,9 +202,9 @@ const Clients = () => {
               const lastActive = (client as any).last_active_at ? new Date((client as any).last_active_at) : null;
               const minsAgo = lastActive ? Math.floor((Date.now() - lastActive.getTime()) / 60000) : null;
               let activityBadge = { text: "غير معروف", color: "bg-secondary text-muted-foreground" };
-              if (minsAgo !== null) {
-                if (minsAgo < 120) activityBadge = { text: "نشط الآن 🟢", color: "bg-emerald-500/10 text-emerald-500" };
-                else if (minsAgo < 1440) activityBadge = { text: "اليوم 🟡", color: "bg-yellow-500/10 text-yellow-500" };
+                if (minsAgo !== null) {
+                  if (minsAgo < 120) activityBadge = { text: "نشط الآن", color: "bg-emerald-500/10 text-emerald-500" };
+                  else if (minsAgo < 1440) activityBadge = { text: "اليوم", color: "bg-yellow-500/10 text-yellow-500" };
                 else activityBadge = { text: `منذ ${Math.floor(minsAgo / 1440)} أيام`, color: "bg-secondary text-muted-foreground" };
               }
               return (

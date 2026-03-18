@@ -201,7 +201,7 @@ const Marketplace = () => {
           <Card className="p-4 border-warning/30 bg-warning/5">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="w-4 h-4 text-warning" />
-              <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية ⭐</h3>
+              <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">فعّل الاحترافي لنشر برامجك وبيعها في سوق البرامج.</p>
             <Button size="sm" onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>

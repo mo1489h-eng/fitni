@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Hexagon, UserCheck, Zap, Leaf, DollarSign, Package, Trophy,
-  UtensilsCrossed, FileText, Settings, Dumbbell, Rocket, CalendarDays,
+  UtensilsCrossed, Settings, Dumbbell, Rocket,
   Store, Globe, PlusCircle, BarChart3, Bell, Search,
 } from "lucide-react";
 
@@ -17,7 +17,6 @@ export interface TutorialStep {
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
-  // ━━━ WELCOME ━━━
   {
     id: "welcome",
     title: "أهلاً بك في fitni",
@@ -25,7 +24,130 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     icon: Dumbbell,
     route: "/dashboard",
   },
-...
+  {
+    id: "dashboard-stats",
+    title: "لوحة الإحصائيات",
+    description: "هنا تشوف عدد عملاءك، إيراداتك، ومعدل النشاط في نظرة واحدة",
+    icon: Hexagon,
+    route: "/dashboard",
+    spotlightSelector: "[data-tour='stats']",
+  },
+  {
+    id: "dashboard-alerts",
+    title: "التنبيهات الذكية",
+    description: "النظام ينبهك تلقائياً عن العملاء غير النشطين والاشتراكات القريبة من الانتهاء",
+    icon: Bell,
+    route: "/dashboard",
+  },
+  {
+    id: "clients-page",
+    title: "إدارة العملاء",
+    description: "أضف عملاءك، تابع تقدمهم، وتواصل معهم بضغطة واحدة",
+    icon: UserCheck,
+    route: "/clients",
+  },
+  {
+    id: "clients-add",
+    title: "إضافة عميل جديد",
+    description: "اضغط هنا لإضافة عميل جديد — أدخل اسمه ورقمه وهدفه وخلاص",
+    icon: PlusCircle,
+    route: "/clients",
+    spotlightSelector: "[data-tour='add-client']",
+  },
+  {
+    id: "clients-search",
+    title: "البحث والفلترة",
+    description: "ابحث عن أي عميل بالاسم أو فلتر حسب الحالة",
+    icon: Search,
+    route: "/clients",
+    spotlightSelector: "[data-tour='search']",
+  },
+  {
+    id: "programs-page",
+    title: "البرامج التدريبية",
+    description: "ابنِ برامج تدريبية احترافية — أيام، تمارين، تكرارات، وفيديوهات",
+    icon: Zap,
+    route: "/programs",
+  },
+  {
+    id: "programs-templates",
+    title: "قوالب جاهزة",
+    description: "ابدأ بقالب جاهز أو ابنِ برنامجك من الصفر وخصصه لكل عميل",
+    icon: Zap,
+    route: "/programs",
+    spotlightSelector: "[data-tour='program-templates']",
+  },
+  {
+    id: "nutrition-page",
+    title: "خطط التغذية",
+    description: "صمّم جداول غذائية مخصصة لكل عميل مع حساب السعرات والماكروز",
+    icon: Leaf,
+    route: "/nutrition",
+  },
+  {
+    id: "nutrition-create",
+    title: "إنشاء خطة تغذية",
+    description: "اضغط هنا لإنشاء خطة جديدة — أضف وجبات ومكونات لكل يوم",
+    icon: Leaf,
+    route: "/nutrition",
+    spotlightSelector: "[data-tour='create-plan']",
+  },
+  {
+    id: "payments-page",
+    title: "المدفوعات والإيرادات",
+    description: "تابع كل المدفوعات — من دفع، من تأخر، وإجمالي إيراداتك",
+    icon: DollarSign,
+    route: "/payments",
+  },
+  {
+    id: "packages-page",
+    title: "باقاتي",
+    description: "أنشئ باقات بأسعار مختلفة وشاركها مع عملاءك المحتملين عبر رابط مباشر",
+    icon: Package,
+    route: "/packages",
+  },
+  {
+    id: "challenges-page",
+    title: "التحديات",
+    description: "أنشئ تحديات لعملاءك — خسارة وزن، خطوات، وأكثر — مع ترتيب ومتابعة",
+    icon: Trophy,
+    route: "/challenges",
+  },
+  {
+    id: "gulf-foods",
+    title: "الأطعمة الخليجية",
+    description: "قاعدة بيانات شاملة للأطعمة الخليجية مع السعرات والقيم الغذائية",
+    icon: UtensilsCrossed,
+    route: "/gulf-foods",
+  },
+  {
+    id: "marketplace",
+    title: "سوق البرامج",
+    description: "بيع برامجك أو اشترِ برامج من مدربين آخرين",
+    icon: Store,
+    route: "/marketplace",
+  },
+  {
+    id: "reports-page",
+    title: "التقارير",
+    description: "تقارير مفصلة عن أداء عملاءك وإيراداتك وإحصائياتك",
+    icon: BarChart3,
+    route: "/reports",
+  },
+  {
+    id: "settings-page",
+    title: "الإعدادات",
+    description: "خصص ملفك، اسم المستخدم، صفحتك الشخصية، وبيانات الدفع",
+    icon: Settings,
+    route: "/settings",
+  },
+  {
+    id: "settings-public-page",
+    title: "صفحتك الشخصية العامة",
+    description: "أنشئ صفحة احترافية وشارك رابطها في السوشيال — أي شخص يضغطه يشوف خدماتك وباقاتك",
+    icon: Globe,
+    route: "/settings",
+  },
   {
     id: "done",
     title: "أنت جاهز للبدء",

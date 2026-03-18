@@ -1652,6 +1652,10 @@ export type Database = {
           welcome_message: string
         }[]
       }
+      has_active_plan: {
+        Args: { _plans: string[]; _user_id: string }
+        Returns: boolean
+      }
       insert_portal_body_scan:
         | {
             Args: {
@@ -1703,6 +1707,7 @@ export type Database = {
         Args: { p_photo_type: string; p_photo_url: string; p_token: string }
         Returns: string
       }
+      is_pro_trainer: { Args: { _user_id: string }; Returns: boolean }
       link_client_account: {
         Args: { p_auth_user_id: string; p_invite_token: string }
         Returns: string

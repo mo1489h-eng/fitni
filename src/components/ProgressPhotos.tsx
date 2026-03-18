@@ -127,7 +127,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
       }
 
       queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId, portalToken] });
-      toast({ title: "تم رفع الصورة بنجاح 📸" });
+      toast({ title: "تم رفع الصورة بنجاح" });
     } catch (err: any) {
       toast({ title: "خطأ في رفع الصورة", description: err.message, variant: "destructive" });
     } finally {

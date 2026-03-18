@@ -64,15 +64,15 @@ export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
 };
 
 export const PRO_UPGRADE_PROMPT = {
-  title: "هذه الميزة للباقة الاحترافية ⭐",
-  description: "احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية",
-  ctaText: "ترقية للاحترافي - 69 ريال/شهر ←",
+  title: "هذه الميزة للباقة الاحترافية",
+  description: "احصل على عملاء غير محدودين وAI كوبايلت والتحديات الجماعية",
+  ctaText: "ترقية للاحترافي - 69 ريال/شهر",
   secondaryText: "لاحقاً",
 };
 
 export const BASIC_LIMIT_PROMPT = {
   title: "وصلت الحد الأقصى للباقة الأساسية",
   description: "ترقّ للاحترافي لإضافة عملاء غير محدودين",
-  ctaText: "ترقية الآن ←",
+  ctaText: "ترقية الآن",
   secondaryText: "لاحقاً",
 };

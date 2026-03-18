@@ -6,7 +6,7 @@ import PortalMoodSelector from "@/components/PortalMoodSelector";
 import PortalPrivacySettings from "@/components/PortalPrivacySettings";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Flame, Play, Loader2 } from "lucide-react";
+import { AlertCircle, Flame, Hand, Play, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const weekDays = ["سبت", "أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة"];
@@ -21,7 +21,7 @@ const PortalHome = () => {
   const navigate = useNavigate();
   const { token } = usePortalToken();
 
-  const { data: client, isLoading, error } = useQuery({
+  const { data: client, isLoading } = useQuery({
     queryKey: ["portal-client", token],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -48,7 +48,7 @@ const PortalHome = () => {
     return (
       <ClientPortalLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-          <p className="text-4xl">❌</p>
+          <AlertCircle className="w-10 h-10 text-destructive" />
           <h1 className="text-xl font-bold text-foreground">رابط غير صحيح</h1>
           <p className="text-sm text-muted-foreground">هذا الرابط غير صالح أو منتهي الصلاحية. تواصل مع مدربك للحصول على الرابط الصحيح.</p>
         </div>
@@ -60,13 +60,16 @@ const PortalHome = () => {
     <ClientPortalLayout>
       <div className="space-y-5 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">مرحباً {client.name.split(" ")[0]} 👋</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Hand className="w-5 h-5 text-primary" />
+            مرحباً {client.name.split(" ")[0]}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">{todayDate}</p>
         </div>
 
         <div className="flex items-center gap-2 bg-accent rounded-xl px-4 py-3">
           <Flame className="w-5 h-5 text-primary" />
-          <span className="font-bold text-accent-foreground">🔥 5 أيام متتالية</span>
+          <span className="font-bold text-accent-foreground">5 أيام متتالية</span>
         </div>
 
         <Card className="p-5 border-primary/20">
@@ -87,7 +90,7 @@ const PortalHome = () => {
 
           <Button className="w-full text-base py-6 gap-2" onClick={() => navigate(`/portal/workout`)}>
             <Play className="w-5 h-5" />
-            ابدأ التمرين 💪
+            ابدأ التمرين
           </Button>
         </Card>
 
@@ -101,7 +104,7 @@ const PortalHome = () => {
                 <div key={day} className="flex flex-col items-center gap-1.5">
                   <span className="text-[10px] text-muted-foreground">{day}</span>
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isDone ? "bg-primary text-primary-foreground" : isToday ? "border-2 border-primary text-primary animate-pulse" : "bg-secondary text-muted-foreground"}`}>
-                    {isDone ? "✓" : i + 1}
+                    {isDone ? <Check className="w-4 h-4" /> : i + 1}
                   </div>
                 </div>
               );
@@ -113,7 +116,7 @@ const PortalHome = () => {
           {[
             { label: "هذا الأسبوع", value: "4/6", sub: "تمارين" },
             { label: "الوزن الحالي", value: "85", sub: "كجم" },
-            { label: "أفضل streak", value: "12", sub: "يوم" },
+            { label: "أفضل سلسلة", value: "12", sub: "يوم" },
           ].map((s) => (
             <Card key={s.label} className="p-3 text-center">
               <p className="text-lg font-bold text-card-foreground">{s.value}</p>
@@ -123,10 +126,7 @@ const PortalHome = () => {
           ))}
         </div>
 
-        {/* Mood Selector */}
         <PortalMoodSelector />
-
-        {/* Privacy Settings */}
         <PortalPrivacySettings />
       </div>
     </ClientPortalLayout>

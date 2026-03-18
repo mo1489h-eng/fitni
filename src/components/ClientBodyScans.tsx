@@ -91,7 +91,7 @@ const ClientBodyScans = ({ clientId }: Props) => {
       qc.invalidateQueries({ queryKey: ["body-scans", clientId] });
       setShowForm(false);
       setHeight(""); setWeight(""); setAge(""); setWaist(""); setNeck(""); setHip(""); setNotes("");
-      toast({ title: "تم حفظ الفحص ✅" });
+      toast({ title: "تم حفظ الفحص" });
     },
   });
 

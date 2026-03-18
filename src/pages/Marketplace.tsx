@@ -84,7 +84,7 @@ const Marketplace = () => {
       status: "published"
     } as any);
     if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "تم النشر ✅" });
+    toast({ title: "تم النشر" });
     setShowPublish(false);
     setPubForm({ program_id: "", title: "", description: "", price: 0, difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: "" });
     fetchListings();

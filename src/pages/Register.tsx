@@ -87,7 +87,7 @@ const Register = () => {
       await supabase.from("clients").insert(demoClients);
     }
 
-    toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح 🎉" });
+    toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
     navigate("/dashboard");
     setLoading(false);
   };

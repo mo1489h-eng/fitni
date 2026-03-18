@@ -155,7 +155,7 @@ const PublicPayment = () => {
         throw new Error(data?.error || "فشل التحقق من الدفع");
       }
       setSuccess(true);
-      toast({ title: "تم الدفع بنجاح 🎉" });
+      toast({ title: "تم الدفع بنجاح" });
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
     } finally {

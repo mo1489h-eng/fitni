@@ -7,6 +7,7 @@ interface Profile {
   created_at: string;
   subscription_plan: string | null;
   subscribed_at: string | null;
+  subscription_end_date: string | null;
   logo_url: string | null;
   phone: string;
   specialization: string;

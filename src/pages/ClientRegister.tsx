@@ -137,7 +137,7 @@ const ClientRegister = () => {
           </Link>
           <Link to="/client-login">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs">
-              عندي حساب ←
+              عندي حساب
             </Button>
           </Link>
         </div>

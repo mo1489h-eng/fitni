@@ -4,7 +4,7 @@ import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
 import ClientOverview from "@/components/ClientOverview";
 import ImportClientsModal from "@/components/ImportClientsModal";
-
+import UpgradeModal from "@/components/UpgradeModal";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import PremiumSkeleton from "@/components/PremiumSkeleton";
 import { Card } from "@/components/ui/card";
@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import {
   UserCheck, DollarSign, AlertTriangle, Clock, MessageCircle,
-  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Pencil,
+  Activity, CreditCard, Upload, Plus, ChevronLeft, Globe, Copy, Pencil, Bot, Sparkles,
 } from "lucide-react";
 
 function getTimeGreeting(name: string) {
@@ -26,9 +27,11 @@ function getTimeGreeting(name: string) {
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  const { isPro, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ["clients"],
@@ -48,6 +51,19 @@ const Dashboard = () => {
       return data;
     },
     enabled: !!user,
+  });
+
+  const { data: pendingCopilotCount = 0 } = useQuery({
+    queryKey: ["dashboard-copilot-pending-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("copilot_recommendations")
+        .select("*", { head: true, count: "exact" })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user && isPro,
   });
 
   const totalClients = clients.length;
@@ -83,12 +99,26 @@ const Dashboard = () => {
     { label: "النشاط", value: activityRate, icon: Activity, color: "text-primary", suffix: "%" },
   ];
 
+  const handleCopilotClick = () => {
+    if (!isPro) {
+      setShowUpgrade(true);
+      return;
+    }
+
+    const targetClientId = recentClients[0]?.id;
+    if (targetClientId) {
+      navigate(`/clients/${targetClientId}`);
+      return;
+    }
+
+    navigate("/clients");
+  };
+
   return (
     <TrainerLayout>
       <div className="space-y-5 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
 
-        {/* ━━━ PERSONAL PAGE CARD ━━━ */}
         {profile?.username && (
           <Card className="p-4 border-primary/20">
             <div className="flex items-center gap-2 mb-2">
@@ -111,12 +141,15 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Greeting & Quick Actions */}
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">
             {getTimeGreeting(profile?.full_name || "")}
           </h1>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap justify-end">
+            <Button variant="outline" size="sm" className="gap-1 text-xs h-9" onClick={handleCopilotClick}>
+              <Bot className="w-3.5 h-3.5" />
+              AI كوبايلت 🤖
+            </Button>
             <Button variant="outline" size="sm" className="gap-1 text-xs h-9" onClick={() => setShowImport(true)}>
               <Upload className="w-3.5 h-3.5" />
               استيراد
@@ -132,7 +165,6 @@ const Dashboard = () => {
           <PremiumSkeleton rows={4} />
         ) : (
           <>
-            {/* ━━━ 3 KEY METRICS ━━━ */}
             <div className="grid grid-cols-3 gap-3" data-tour="stats">
               {stats.map((stat, i) => (
                 <Card key={stat.label} className="p-4 stat-card" style={{ animationDelay: `${i * 80}ms` }}>
@@ -147,7 +179,33 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* ━━━ ALERTS ━━━ */}
+            <Card className="p-4 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                    </div>
+                    <h3 className="font-bold text-sm text-card-foreground">AI كوبايلت 🤖</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {isPro
+                      ? "ولّد برامج مخصصة وراجع توصيات أسبوعية لعملائك."
+                      : "فعّل الاحترافي لفتح توليد البرامج بالذكاء الاصطناعي والتوصيات الأسبوعية."}
+                  </p>
+                </div>
+                <Button size="sm" onClick={handleCopilotClick}>
+                  {isPro ? "ابدأ الآن" : "ترقية"}
+                </Button>
+              </div>
+              {isPro && pendingCopilotCount > 0 && (
+                <div className="mt-3 rounded-lg bg-secondary p-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-secondary-foreground">{pendingCopilotCount} توصيات تنتظر مراجعتك</p>
+                  <Button variant="outline" size="sm" onClick={handleCopilotClick}>مراجعة</Button>
+                </div>
+              )}
+            </Card>
+
             {inactiveClients.length === 0 && expiringClients.length === 0 && (
               <div className="rounded-xl px-4 py-2.5 bg-success/10 text-success text-sm font-medium text-center">
                 ✅ كل شيء على ما يرام
@@ -204,7 +262,6 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {/* ━━━ REVENUE CARD ━━━ */}
             <Card className="p-4 cursor-pointer group" onClick={() => navigate("/payments")}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-sm text-card-foreground flex items-center gap-2">
@@ -235,7 +292,6 @@ const Dashboard = () => {
               </div>
             </Card>
 
-            {/* ━━━ RECENT ACTIVITY ━━━ */}
             {recentClients.length > 0 && (
               <Card className="p-4">
                 <h3 className="font-bold text-sm text-card-foreground mb-3">آخر النشاطات</h3>
@@ -264,7 +320,6 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* FAB - Primary CTA */}
         <button
           onClick={() => navigate("/clients")}
           className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full btn-gradient text-primary-foreground shadow-lg flex items-center justify-center fab-premium"
@@ -273,7 +328,18 @@ const Dashboard = () => {
         </button>
       </div>
       <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
-      
+      <UpgradeModal
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        title={getProFeatureBlockReason().title}
+        description={getProFeatureBlockReason().description}
+        ctaText="ترقية للاحترافي - 69 ريال/شهر ←"
+        secondaryText="لاحقاً"
+        onUpgrade={() => {
+          setShowUpgrade(false);
+          setShowPlans(true);
+        }}
+      />
     </TrainerLayout>
   );
 };

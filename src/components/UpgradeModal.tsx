@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 
@@ -8,9 +8,19 @@ interface UpgradeModalProps {
   title: string;
   description: string;
   onUpgrade: () => void;
+  ctaText?: string;
+  secondaryText?: string;
 }
 
-const UpgradeModal = ({ open, onOpenChange, title, description, onUpgrade }: UpgradeModalProps) => {
+const UpgradeModal = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  onUpgrade,
+  ctaText = "ترقية الآن",
+  secondaryText = "لاحقاً",
+}: UpgradeModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm text-center" aria-describedby={undefined}>
@@ -23,9 +33,14 @@ const UpgradeModal = ({ open, onOpenChange, title, description, onUpgrade }: Upg
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{description}</p>
-        <Button className="w-full" onClick={onUpgrade}>
-          ترقية الآن
-        </Button>
+        <DialogFooter className="flex-col gap-2 sm:flex-col">
+          <Button className="w-full" onClick={onUpgrade}>
+            {ctaText}
+          </Button>
+          <Button className="w-full" variant="ghost" onClick={() => onOpenChange(false)}>
+            {secondaryText}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

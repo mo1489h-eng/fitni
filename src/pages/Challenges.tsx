@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import TrainerLayout from "@/components/TrainerLayout";
+import UpgradeModal from "@/components/UpgradeModal";
+import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +13,20 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trophy, Plus, Calendar, Medal } from "lucide-react";
+import { Trophy, Plus, Calendar, Medal, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Challenges = () => {
   const { user } = useAuth();
+  const { hasChallengesAccess, getProFeatureBlockReason } = usePlanLimits();
   const [challenges, setChallenges] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showAddP, setShowAddP] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     title: "", description: "", challenge_type: "weight_loss",
@@ -28,7 +34,7 @@ const Challenges = () => {
     prize_description: "", kpi_unit: "كجم", max_participants: 50
   });
 
-  useEffect(() => { if (user) { fetchChallenges(); fetchClients(); } }, [user]);
+  useEffect(() => { if (user && hasChallengesAccess) { fetchChallenges(); fetchClients(); } }, [user, hasChallengesAccess]);
 
   const fetchChallenges = async () => {
     const { data } = await supabase.from("challenges").select("*").eq("trainer_id", user!.id).order("created_at", { ascending: false });
@@ -78,6 +84,34 @@ const Challenges = () => {
   const statusBadge = (s: string) => s === "active" ? "default" : s === "upcoming" ? "secondary" : "outline";
   const statusText = (s: string) => s === "active" ? "نشط" : s === "upcoming" ? "قادم" : "منتهي";
   const typeText = (t: string) => ({ weight_loss: "خسارة وزن", consistency: "الانتظام", steps: "خطوات", workout: "تمارين" }[t] || t);
+
+  if (!hasChallengesAccess) {
+    return (
+      <TrainerLayout>
+        <div className="space-y-4 py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8 text-warning" />
+          </div>
+          <h1 className="text-2xl font-bold">التحديات الجماعية</h1>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">هذه الميزة للباقة الاحترافية ⭐</p>
+          <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
+          <UpgradeModal
+            open={showUpgrade}
+            onOpenChange={setShowUpgrade}
+            title={getProFeatureBlockReason().title}
+            description={getProFeatureBlockReason().description}
+            ctaText="ترقية للاحترافي - 69 ريال/شهر ←"
+            secondaryText="لاحقاً"
+            onUpgrade={() => {
+              setShowUpgrade(false);
+              setShowPlans(true);
+            }}
+          />
+          <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        </div>
+      </TrainerLayout>
+    );
+  }
 
   return (
     <TrainerLayout>
@@ -152,7 +186,7 @@ const Challenges = () => {
                     {participants.map((p, i) => (
                       <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
-                          <span className={`font-bold text-lg ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : i === 2 ? "text-amber-600" : "text-muted-foreground"}`}>#{i + 1}</span>
+                          <span className={`font-bold text-lg ${i === 0 ? "text-warning" : i === 1 ? "text-muted-foreground" : i === 2 ? "text-primary" : "text-muted-foreground"}`}>#{i + 1}</span>
                           <span className="font-medium">{(p as any).clients?.name || "—"}</span>
                         </div>
                         <div className="flex items-center gap-2">

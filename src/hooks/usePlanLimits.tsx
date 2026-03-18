@@ -7,7 +7,7 @@ export type PlanType = "free" | "basic" | "pro" | null;
 const FREE_TRIAL_DAYS = 183; // 6 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
-  free: { maxClients: Infinity },
+  free: { maxClients: 10 },
   basic: { maxClients: 10 },
   pro: { maxClients: Infinity },
 };
@@ -38,10 +38,18 @@ export function usePlanLimits() {
   const isTrialExpired = plan === "free" && trialDaysLeft <= 0;
   const isOnTrial = plan === "free" && trialDaysLeft > 0;
 
-  const maxClients = PLAN_LIMITS[plan]?.maxClients ?? 3;
+  const maxClients = PLAN_LIMITS[plan]?.maxClients ?? 10;
   const canAddClient = clientCount < maxClients && !isTrialExpired;
 
-  const hasReportsAccess = plan === "pro";
+  const isFree = plan === "free";
+  const isBasic = plan === "basic";
+  const isPro = plan === "pro";
+
+  const hasReportsAccess = isPro;
+  const hasCopilotAccess = isPro;
+  const hasChallengesAccess = isPro;
+  const hasMarketplaceAccess = isPro;
+  const hasDiscoveryAccess = isPro;
 
   const getAddClientBlockReason = (): {
     blocked: boolean;
@@ -51,21 +59,25 @@ export function usePlanLimits() {
     if (isTrialExpired) {
       return {
         blocked: true,
-        title: "انتهت الفترة التجريبية",
-        description: "اشترك للاستمرار في إضافة عملاء وإدارة برامجك",
+        title: "انتهت الفترة المجانية",
+        description: "اشترك للاستمرار في إضافة العملاء وإدارة برامجك.",
       };
     }
-    if (clientCount >= maxClients) {
-      if (plan === "basic") {
-        return {
-          blocked: true,
-          title: "وصلت للحد الأقصى للباقة الأساسية",
-          description: "قم بالترقية للباقة الاحترافية لإضافة عملاء أكثر",
-        };
-      }
+    if (clientCount >= maxClients && (isBasic || isFree)) {
+      return {
+        blocked: true,
+        title: "وصلت الحد الأقصى للباقة الأساسية",
+        description: "ترقّ للاحترافي لإضافة عملاء غير محدودين",
+      };
     }
     return null;
   };
+
+  const getProFeatureBlockReason = () => ({
+    blocked: !isPro,
+    title: "هذه الميزة للباقة الاحترافية ⭐",
+    description: "احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية",
+  });
 
   return {
     plan,
@@ -73,10 +85,18 @@ export function usePlanLimits() {
     maxClients,
     canAddClient,
     hasReportsAccess,
+    hasCopilotAccess,
+    hasChallengesAccess,
+    hasMarketplaceAccess,
+    hasDiscoveryAccess,
     isTrialExpired,
     isOnTrial,
     trialDaysLeft,
     trialEndDate,
+    isFree,
+    isBasic,
+    isPro,
     getAddClientBlockReason,
+    getProFeatureBlockReason,
   };
 }

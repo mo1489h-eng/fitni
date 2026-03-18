@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import TrainerLayout from "@/components/TrainerLayout";
+import UpgradeModal from "@/components/UpgradeModal";
+import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Search, Plus, ShoppingCart, Star, Clock, Users, Filter, TrendingUp, CheckCircle2, Loader2 } from "lucide-react";
+import { Search, Plus, ShoppingCart, Star, Clock, Users, Filter, TrendingUp, CheckCircle2, Loader2, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Marketplace = () => {
   const { user } = useAuth();
+  const { hasMarketplaceAccess, getProFeatureBlockReason } = usePlanLimits();
   const [listings, setListings] = useState<any[]>([]);
   const [programs, setPrograms] = useState<any[]>([]);
   const [trainerProfiles, setTrainerProfiles] = useState<Record<string, any>>({});
@@ -27,6 +31,8 @@ const Marketplace = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<any>(null);
@@ -35,14 +41,13 @@ const Marketplace = () => {
     difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: ""
   });
 
-  useEffect(() => { fetchListings(); fetchPrograms(); }, []);
+  useEffect(() => { fetchListings(); fetchPrograms(); }, [user]);
 
   const fetchListings = async () => {
     const { data } = await supabase.from("marketplace_listings").select("*").order("created_at", { ascending: false });
     setListings(data || []);
     setLoading(false);
 
-    // Fetch trainer profiles for listings
     if (data && data.length > 0) {
       const trainerIds = [...new Set(data.map(l => l.trainer_id))];
       const profiles: Record<string, any> = {};
@@ -55,12 +60,16 @@ const Marketplace = () => {
   };
 
   const fetchPrograms = async () => {
-    if (!user) return;
+    if (!user || !hasMarketplaceAccess) return;
     const { data } = await supabase.from("programs").select("id, name, weeks").eq("trainer_id", user.id);
     setPrograms(data || []);
   };
 
   const handlePublish = async () => {
+    if (!hasMarketplaceAccess) {
+      setShowUpgrade(true);
+      return;
+    }
     if (!user || !pubForm.title) return;
     const { error } = await supabase.from("marketplace_listings").insert({
       trainer_id: user.id,
@@ -148,7 +157,7 @@ const Marketplace = () => {
             <h1 className="text-2xl font-bold">سوق البرامج 🏪</h1>
             <p className="text-sm text-muted-foreground">اشترِ برامج جاهزة أو انشر برامجك للبيع</p>
           </div>
-          <Dialog open={showPublish} onOpenChange={setShowPublish}>
+          <Dialog open={showPublish} onOpenChange={(open) => hasMarketplaceAccess ? setShowPublish(open) : setShowUpgrade(true)}>
             <DialogTrigger asChild><Button><Plus className="w-4 h-4 ml-2" />نشر برنامج</Button></DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>نشر برنامج في السوق</DialogTitle></DialogHeader>
@@ -188,7 +197,17 @@ const Marketplace = () => {
           </Dialog>
         </div>
 
-        {/* Search & Sort */}
+        {!hasMarketplaceAccess && (
+          <Card className="p-4 border-warning/30 bg-warning/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="w-4 h-4 text-warning" />
+              <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية ⭐</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">فعّل الاحترافي لنشر برامجك وبيعها في سوق البرامج.</p>
+            <Button size="sm" onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
+          </Card>
+        )}
+
         <div className="flex gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -209,7 +228,6 @@ const Marketplace = () => {
           </Button>
         </div>
 
-        {/* Advanced Filters */}
         {showFilters && (
           <Card className="p-4 animate-fade-in">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -289,7 +307,7 @@ const Marketplace = () => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 flex-wrap">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{l.duration_weeks} أسبوع</span>
                       <span>•</span>
-                      <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />{Number(l.rating_avg || 0).toFixed(1)}</span>
+                      <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-warning text-warning" />{Number(l.rating_avg || 0).toFixed(1)}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1"><Users className="w-3 h-3" />{l.purchase_count || 0} مبيعة</span>
                     </div>
@@ -310,7 +328,6 @@ const Marketplace = () => {
           </div>
         }
 
-        {/* Listing Detail Dialog */}
         <Dialog open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             {selectedListing && (() => {
@@ -325,7 +342,7 @@ const Marketplace = () => {
                     <div className="flex items-center gap-3">
                       <Badge>{l.difficulty}</Badge>
                       <span className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{l.duration_weeks} أسبوع</span>
-                      <span className="text-sm text-muted-foreground flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />{Number(l.rating_avg || 0).toFixed(1)} ({l.rating_count || 0})</span>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1"><Star className="w-3.5 h-3.5 fill-warning text-warning" />{Number(l.rating_avg || 0).toFixed(1)} ({l.rating_count || 0})</span>
                     </div>
 
                     {trainer && (
@@ -387,6 +404,19 @@ const Marketplace = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <UpgradeModal
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        title={getProFeatureBlockReason().title}
+        description={getProFeatureBlockReason().description}
+        ctaText="ترقية للاحترافي - 69 ريال/شهر ←"
+        secondaryText="لاحقاً"
+        onUpgrade={() => {
+          setShowUpgrade(false);
+          setShowPlans(true);
+        }}
+      />
+      <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
     </TrainerLayout>
   );
 };

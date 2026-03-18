@@ -10,30 +10,16 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import TrialBanner from "@/components/TrialBanner";
+import { TRAINER_PLAN_DETAILS } from "@/lib/plan-config";
 import {
-  CreditCard, Crown, Users, CheckCircle, AlertTriangle,
-  Calendar, Loader2, Shield, Star, ArrowLeft,
+  Crown, Users, CheckCircle, AlertTriangle,
+  Calendar, Loader2, Shield, Star, ArrowLeft, Gem,
 } from "lucide-react";
 
-const PLAN_INFO: Record<string, { name: string; price: number; icon: any; features: string[] }> = {
-  free: {
-    name: "مجاني (فترة تجريبية)",
-    price: 0,
-    icon: Shield,
-    features: ["جميع المميزات", "6 شهور مجاناً"],
-  },
-  basic: {
-    name: "أساسي",
-    price: 49,
-    icon: CheckCircle,
-    features: ["حتى 10 عملاء", "برامج تدريب غير محدودة", "متابعة التقدم", "استقبال مدفوعات"],
-  },
-  pro: {
-    name: "احترافي",
-    price: 69,
-    icon: Crown,
-    features: ["عملاء غير محدودين", "كل مميزات الأساسي", "شعارك الخاص", "تقارير متقدمة", "أولوية في الدعم"],
-  },
+const PLAN_ICONS = {
+  free: Shield,
+  basic: CheckCircle,
+  pro: Crown,
 };
 
 const Subscription = () => {
@@ -46,23 +32,26 @@ const Subscription = () => {
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
-  const currentPlan = plan || "free";
-  const info = PLAN_INFO[currentPlan] || PLAN_INFO.free;
-  const PlanIcon = info.icon;
+  const currentPlan = (plan || "free") as "free" | "basic" | "pro";
+  const info = TRAINER_PLAN_DETAILS[currentPlan];
+  const PlanIcon = PLAN_ICONS[currentPlan];
 
   const isSubscribed = currentPlan !== "free";
+  const expiryDate = profile?.subscription_end_date
+    ? new Date(profile.subscription_end_date)
+    : trialEndDate;
 
   const statusColor = isTrialExpired
     ? "bg-destructive/10 text-destructive"
     : isSubscribed
-    ? "bg-success/10 text-success"
-    : "bg-primary/10 text-primary";
+      ? "bg-success/10 text-success"
+      : "bg-primary/10 text-primary";
 
   const statusLabel = isTrialExpired
     ? "منتهي"
     : isSubscribed
-    ? "نشط"
-    : "فترة تجريبية";
+      ? "نشط"
+      : "مجاني";
 
   const handleCancel = async () => {
     if (!user) return;
@@ -79,7 +68,7 @@ const Subscription = () => {
       if (error) throw error;
       await refreshProfile();
       setShowCancel(false);
-      toast({ title: "تم إلغاء الاشتراك", description: "ستستمر في الوصول حتى نهاية الفترة المدفوعة" });
+      toast({ title: "تم إلغاء الاشتراك", description: "ستستمر في الوصول حتى نهاية الفترة الحالية" });
     } catch {
       toast({ title: "حدث خطأ", variant: "destructive" });
     } finally {
@@ -90,15 +79,13 @@ const Subscription = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 animate-fade-in pb-8">
-        {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="p-1" onClick={() => navigate("/settings")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">إدارة الاشتراك</h1>
+          <h1 className="text-2xl font-bold text-foreground">باقتي 💎</h1>
         </div>
 
-        {/* Current Plan Card */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -107,9 +94,9 @@ const Subscription = () => {
               </div>
               <div>
                 <h2 className="text-lg font-bold text-card-foreground">{info.name}</h2>
-                {info.price > 0 && (
-                  <p className="text-sm text-muted-foreground">{info.price} ر.س/شهر</p>
-                )}
+                <p className="text-sm text-muted-foreground">
+                  {info.price === 0 ? "0 ر.س" : `${info.price} ر.س/شهر`}
+                </p>
               </div>
             </div>
             <span className={`text-xs px-3 py-1.5 rounded-full font-semibold ${statusColor}`}>
@@ -119,21 +106,19 @@ const Subscription = () => {
 
           <Separator />
 
-          {/* Plan Features */}
           <div>
-            <p className="text-sm font-medium text-card-foreground mb-2">مميزات باقتك</p>
+            <p className="text-sm font-medium text-card-foreground mb-2">المميزات المشمولة</p>
             <ul className="space-y-2">
-              {info.features.map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
+              {info.includedFeatures.map((feature) => (
+                <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" />
-                  {f}
+                  {feature}
                 </li>
               ))}
             </ul>
           </div>
         </Card>
 
-        {/* Usage Stats */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
@@ -157,12 +142,29 @@ const Subscription = () => {
           )}
         </Card>
 
-        {/* Dates Card */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-bold text-card-foreground">التواريخ</h2>
           </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">تاريخ الانتهاء</p>
+            <p className="text-sm font-medium text-card-foreground">
+              {expiryDate.toLocaleDateString("ar-SA", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          </div>
+
+          {isOnTrial && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">الأيام المتبقية</p>
+              <span className="text-sm font-bold text-primary">{trialDaysLeft} يوم</span>
+            </div>
+          )}
 
           {profile?.subscribed_at && (
             <div className="flex items-center justify-between">
@@ -176,45 +178,12 @@ const Subscription = () => {
               </p>
             </div>
           )}
-
-          {isOnTrial && (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">نهاية الفترة التجريبية</p>
-                <p className="text-sm font-medium text-card-foreground">
-                  {trialEndDate.toLocaleDateString("ar-SA", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">الأيام المتبقية</p>
-                <span className="text-sm font-bold text-primary">{trialDaysLeft} يوم</span>
-              </div>
-            </>
-          )}
-
-          {profile?.created_at && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">تاريخ إنشاء الحساب</p>
-              <p className="text-sm font-medium text-card-foreground">
-                {new Date(profile.created_at).toLocaleDateString("ar-SA", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-          )}
         </Card>
 
-        {/* Actions */}
         <div className="space-y-3">
           <Button className="w-full gap-2" onClick={() => setShowPlans(true)}>
-            <Star className="w-4 h-4" />
-            {isSubscribed ? "تغيير الباقة" : "اشترك الآن"}
+            <Gem className="w-4 h-4" />
+            ترقية الباقة ←
           </Button>
 
           {isSubscribed && (
@@ -229,7 +198,6 @@ const Subscription = () => {
           )}
         </div>
 
-        {/* Cancel Confirmation Dialog */}
         <Dialog open={showCancel} onOpenChange={setShowCancel}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
@@ -244,7 +212,7 @@ const Subscription = () => {
                 <ul className="space-y-1 mr-4">
                   <li>• ستفقد الوصول للمميزات المدفوعة</li>
                   <li>• سيتم تحويلك للباقة المجانية</li>
-                  <li>• بيانات عملائك لن تُحذف</li>
+                  <li>• بياناتك لن تُحذف</li>
                 </ul>
               </div>
               <div className="flex gap-3">

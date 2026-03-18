@@ -82,47 +82,41 @@ const Marketplace = () => {
   };
 
   const handlePurchase = async (listing: any) => {
-    if (!user) { toast({ title: "يجب تسجيل الدخول أولاً", variant: "destructive" }); return; }
-    setPurchasing(listing.id);
-    const { error } = await supabase.from("marketplace_purchases").insert({
-      buyer_id: user.id, listing_id: listing.id, trainer_id: listing.trainer_id,
-      amount: listing.price, currency: listing.currency
-    } as any);
-    if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); setPurchasing(null); return; }
-    await supabase.from("marketplace_listings").update({ purchase_count: (listing.purchase_count || 0) + 1 } as any).eq("id", listing.id);
-    
-    // If listing has a program_id, copy it to the buyer
-    if (listing.program_id) {
-      try {
-        const { data: srcProgram } = await supabase.from("programs").select("*, program_days(*, program_exercises(*))").eq("id", listing.program_id).maybeSingle();
-        if (srcProgram) {
-          const { data: newProg } = await supabase.from("programs").insert({
-            name: `${srcProgram.name} (من السوق)`,
-            trainer_id: user.id,
-            weeks: srcProgram.weeks,
-          }).select().single();
-          if (newProg) {
-            for (const day of (srcProgram as any).program_days || []) {
-              const { data: newDay } = await supabase.from("program_days").insert({
-                program_id: newProg.id, day_name: day.day_name, day_order: day.day_order,
-              }).select().single();
-              if (newDay) {
-                for (const ex of day.program_exercises || []) {
-                  await supabase.from("program_exercises").insert({
-                    day_id: newDay.id, name: ex.name, sets: ex.sets, reps: ex.reps, weight: ex.weight, exercise_order: ex.exercise_order,
-                  });
-                }
-              }
-            }
-          }
-        }
-      } catch (e) { console.error("Copy program error:", e); }
+    if (!user) {
+      toast({ title: "يجب تسجيل الدخول أولاً", variant: "destructive" });
+      return;
     }
 
-    setPurchasing(null);
-    toast({ title: "تم الشراء بنجاح! 🎉", description: listing.program_id ? "تم نسخ البرنامج إلى مكتبتك" : "يمكنك الآن استخدام البرنامج" });
-    setSelectedListing(null);
-    fetchListings();
+    setPurchasing(listing.id);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("public-purchase", {
+        body: { listing_id: listing.id },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "تعذر إتمام الشراء");
+      }
+
+      toast({
+        title: "تم الشراء بنجاح! 🎉",
+        description: data.program_cloned ? "تم نسخ البرنامج إلى مكتبتك" : "يمكنك الآن استخدام البرنامج",
+      });
+
+      setSelectedListing(null);
+      fetchListings();
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description:
+          listing.price > 0 && error?.message?.includes("payment_id")
+            ? "البرامج المدفوعة تحتاج إلى تأكيد دفع آمن قبل إتمام الشراء."
+            : error?.message || "تعذر إتمام الشراء",
+        variant: "destructive",
+      });
+    } finally {
+      setPurchasing(null);
+    }
   };
 
   const filtered = listings.filter(l => {

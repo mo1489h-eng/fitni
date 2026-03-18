@@ -87,7 +87,7 @@ const Register = () => {
       await supabase.from("clients").insert(demoClients);
     }
 
-    toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح 🎉" });
+    toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
     navigate("/dashboard");
     setLoading(false);
   };
@@ -112,7 +112,7 @@ const Register = () => {
         </div>
 
         <h2 className="text-2xl font-bold text-foreground text-center mb-2">إنشاء حساب جديد</h2>
-        <p className="text-muted-foreground text-center text-sm mb-8">ابدأ مجاناً لمدة 6 شهور 🎉</p>
+        <p className="text-muted-foreground text-center text-sm mb-8">ابدأ مجاناً لمدة 6 شهور</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, Trash2, Loader2 } from "lucide-react";
+import { Camera, Images, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProgressPhotosProps {
@@ -127,7 +127,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
       }
 
       queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId, portalToken] });
-      toast({ title: "تم رفع الصورة بنجاح 📸" });
+      toast({ title: "تم رفع الصورة بنجاح" });
     } catch (err: any) {
       toast({ title: "خطأ في رفع الصورة", description: err.message, variant: "destructive" });
     } finally {
@@ -161,7 +161,10 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
 
   return (
     <Card className="p-4">
-      <h3 className="font-bold text-card-foreground mb-3">صور التقدم 📸</h3>
+      <h3 className="font-bold text-card-foreground mb-3 flex items-center gap-2">
+        <Images className="w-4 h-4 text-primary" />
+        صور التقدم
+      </h3>
 
       {/* Upload buttons */}
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -185,7 +188,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
             onClick={() => beforeRef.current?.click()}
           >
             {uploading === "before" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            📷 صورة قبل
+            صورة قبل
           </Button>
         </div>
         <div>
@@ -208,7 +211,7 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
             onClick={() => afterRef.current?.click()}
           >
             {uploading === "after" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
-            📷 صورة بعد
+            صورة بعد
           </Button>
         </div>
       </div>

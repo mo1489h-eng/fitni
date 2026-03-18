@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, ArrowRight } from "lucide-react";
+import { Loader2, CreditCard, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -104,7 +104,7 @@ const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
       await refreshProfile();
 
       toast({
-        title: "تم الدفع بنجاح 🎉",
+        title: "تم الدفع بنجاح",
         description: `تم تفعيل باقة ${planName}`,
       });
 
@@ -161,8 +161,9 @@ const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        الدفع آمن ومشفر عبر Moyasar 🔒
+      <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5" />
+        الدفع آمن ومشفر عبر Moyasar
       </p>
     </div>
   );

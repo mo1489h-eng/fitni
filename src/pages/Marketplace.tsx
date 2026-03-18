@@ -84,7 +84,7 @@ const Marketplace = () => {
       status: "published"
     } as any);
     if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "تم النشر ✅" });
+    toast({ title: "تم النشر" });
     setShowPublish(false);
     setPubForm({ program_id: "", title: "", description: "", price: 0, difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: "" });
     fetchListings();
@@ -108,7 +108,7 @@ const Marketplace = () => {
       }
 
       toast({
-        title: "تم الشراء بنجاح! 🎉",
+        title: "تم الشراء بنجاح",
         description: data.program_cloned ? "تم نسخ البرنامج إلى مكتبتك" : "يمكنك الآن استخدام البرنامج",
       });
 
@@ -154,7 +154,7 @@ const Marketplace = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">سوق البرامج 🏪</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2"><ShoppingCart className="w-6 h-6 text-primary" />سوق البرامج</h1>
             <p className="text-sm text-muted-foreground">اشترِ برامج جاهزة أو انشر برامجك للبيع</p>
           </div>
           <Dialog open={showPublish} onOpenChange={(open) => hasMarketplaceAccess ? setShowPublish(open) : setShowUpgrade(true)}>
@@ -201,7 +201,7 @@ const Marketplace = () => {
           <Card className="p-4 border-warning/30 bg-warning/5">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="w-4 h-4 text-warning" />
-              <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية ⭐</h3>
+              <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">فعّل الاحترافي لنشر برامجك وبيعها في سوق البرامج.</p>
             <Button size="sm" onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>

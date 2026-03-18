@@ -80,7 +80,7 @@ const TrainerPayoutSection = () => {
       qc.invalidateQueries({ queryKey: ["payout-requests"] });
       setShowRequest(false);
       setAmount("");
-      toast({ title: "تم إرسال طلب التحويل ✅", description: "سيتم التحويل خلال 3-5 أيام عمل" });
+      toast({ title: "تم إرسال طلب التحويل", description: "سيتم التحويل خلال 3-5 أيام عمل" });
     },
     onError: (err: any) => toast({ title: err.message, variant: "destructive" }),
   });

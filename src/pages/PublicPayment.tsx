@@ -155,7 +155,7 @@ const PublicPayment = () => {
         throw new Error(data?.error || "فشل التحقق من الدفع");
       }
       setSuccess(true);
-      toast({ title: "تم الدفع بنجاح 🎉" });
+      toast({ title: "تم الدفع بنجاح" });
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
     } finally {
@@ -195,7 +195,7 @@ const PublicPayment = () => {
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
             <CheckCircle className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-xl font-bold text-foreground">تم الدفع بنجاح! 🎉</h2>
+          <h2 className="text-xl font-bold text-foreground">تم الدفع بنجاح</h2>
           <p className="text-muted-foreground text-sm">
             تم تسجيلك مع المدرب {trainer.full_name}. سيتم التواصل معك قريباً.
           </p>

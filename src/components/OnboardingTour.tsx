@@ -18,7 +18,7 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "أهلاً بك في fitni! 🎉",
+    title: "أهلاً بك في fitni",
     description: "جولة سريعة تريك كل شيء",
     icon: Dumbbell,
     route: "/dashboard",
@@ -65,7 +65,7 @@ const steps: Step[] = [
     route: "/payments",
   },
   {
-    title: "أنت جاهز تبدأ! 🚀",
+    title: "أنت جاهز للبدء",
     description: "ابدأ بإضافة أول عميل الحين",
     icon: Rocket,
     route: "/dashboard",

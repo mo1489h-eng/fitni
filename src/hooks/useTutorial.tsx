@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Hexagon, UserCheck, Zap, Leaf, DollarSign, Package, Trophy,
-  UtensilsCrossed, FileText, Settings, Dumbbell, Rocket, CalendarDays,
+  UtensilsCrossed, Settings, Dumbbell, Rocket,
   Store, Globe, PlusCircle, BarChart3, Bell, Search,
 } from "lucide-react";
 
@@ -17,19 +17,16 @@ export interface TutorialStep {
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
-  // ━━━ WELCOME ━━━
   {
     id: "welcome",
-    title: "أهلاً بك في fitni! 🎉",
+    title: "أهلاً بك في fitni",
     description: "جولة سريعة تعرّفك على كل شيء — خلّنا نبدأ",
     icon: Dumbbell,
     route: "/dashboard",
   },
-
-  // ━━━ DASHBOARD ━━━
   {
     id: "dashboard-stats",
-    title: "لوحة الإحصائيات 📊",
+    title: "لوحة الإحصائيات",
     description: "هنا تشوف عدد عملاءك، إيراداتك، ومعدل النشاط في نظرة واحدة",
     icon: Hexagon,
     route: "/dashboard",
@@ -37,23 +34,21 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "dashboard-alerts",
-    title: "التنبيهات الذكية ⚡",
+    title: "التنبيهات الذكية",
     description: "النظام ينبهك تلقائياً عن العملاء غير النشطين والاشتراكات القريبة من الانتهاء",
     icon: Bell,
     route: "/dashboard",
   },
-
-  // ━━━ CLIENTS ━━━
   {
     id: "clients-page",
-    title: "إدارة العملاء 👥",
+    title: "إدارة العملاء",
     description: "أضف عملاءك، تابع تقدمهم، وتواصل معهم بضغطة واحدة",
     icon: UserCheck,
     route: "/clients",
   },
   {
     id: "clients-add",
-    title: "إضافة عميل جديد ➕",
+    title: "إضافة عميل جديد",
     description: "اضغط هنا لإضافة عميل جديد — أدخل اسمه ورقمه وهدفه وخلاص",
     icon: PlusCircle,
     route: "/clients",
@@ -61,34 +56,30 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: "clients-search",
-    title: "البحث والفلترة 🔍",
+    title: "البحث والفلترة",
     description: "ابحث عن أي عميل بالاسم أو فلتر حسب الحالة",
     icon: Search,
     route: "/clients",
     spotlightSelector: "[data-tour='search']",
   },
-
-  // ━━━ PROGRAMS ━━━
   {
     id: "programs-page",
-    title: "البرامج التدريبية ⚡",
+    title: "البرامج التدريبية",
     description: "ابنِ برامج تدريبية احترافية — أيام، تمارين، تكرارات، وفيديوهات",
     icon: Zap,
     route: "/programs",
   },
   {
     id: "programs-templates",
-    title: "قوالب جاهزة 📋",
+    title: "قوالب جاهزة",
     description: "ابدأ بقالب جاهز أو ابنِ برنامجك من الصفر وخصصه لكل عميل",
     icon: Zap,
     route: "/programs",
     spotlightSelector: "[data-tour='program-templates']",
   },
-
-  // ━━━ NUTRITION ━━━
   {
     id: "nutrition-page",
-    title: "خطط التغذية 🥗",
+    title: "خطط التغذية",
     description: "صمّم جداول غذائية مخصصة لكل عميل مع حساب السعرات والماكروز",
     icon: Leaf,
     route: "/nutrition",
@@ -101,81 +92,65 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     route: "/nutrition",
     spotlightSelector: "[data-tour='create-plan']",
   },
-
-  // ━━━ PAYMENTS ━━━
   {
     id: "payments-page",
-    title: "المدفوعات والإيرادات 💰",
+    title: "المدفوعات والإيرادات",
     description: "تابع كل المدفوعات — من دفع، من تأخر، وإجمالي إيراداتك",
     icon: DollarSign,
     route: "/payments",
   },
-
-  // ━━━ PACKAGES ━━━
   {
     id: "packages-page",
-    title: "باقاتي 📦",
+    title: "باقاتي",
     description: "أنشئ باقات بأسعار مختلفة وشاركها مع عملاءك المحتملين عبر رابط مباشر",
     icon: Package,
     route: "/packages",
   },
-
-  // ━━━ CHALLENGES ━━━
   {
     id: "challenges-page",
-    title: "التحديات 🏆",
+    title: "التحديات",
     description: "أنشئ تحديات لعملاءك — خسارة وزن، خطوات، وأكثر — مع ترتيب ومتابعة",
     icon: Trophy,
     route: "/challenges",
   },
-
-  // ━━━ GULF FOODS ━━━
   {
     id: "gulf-foods",
-    title: "الأطعمة الخليجية 🍽️",
+    title: "الأطعمة الخليجية",
     description: "قاعدة بيانات شاملة للأطعمة الخليجية مع السعرات والقيم الغذائية",
     icon: UtensilsCrossed,
     route: "/gulf-foods",
   },
-
-  // ━━━ MARKETPLACE ━━━
   {
     id: "marketplace",
-    title: "سوق البرامج 🏪",
+    title: "سوق البرامج",
     description: "بيع برامجك أو اشترِ برامج من مدربين آخرين",
     icon: Store,
     route: "/marketplace",
   },
-
-  // ━━━ REPORTS ━━━
   {
     id: "reports-page",
-    title: "التقارير 📈",
+    title: "التقارير",
     description: "تقارير مفصلة عن أداء عملاءك وإيراداتك وإحصائياتك",
     icon: BarChart3,
     route: "/reports",
   },
-
-  // ━━━ SETTINGS ━━━
   {
     id: "settings-page",
-    title: "الإعدادات ⚙️",
+    title: "الإعدادات",
     description: "خصص ملفك، اسم المستخدم، صفحتك الشخصية، وبيانات الدفع",
     icon: Settings,
     route: "/settings",
   },
   {
     id: "settings-public-page",
-    title: "صفحتك الشخصية العامة 🌐",
+    title: "صفحتك الشخصية العامة",
     description: "أنشئ صفحة احترافية وشارك رابطها في السوشيال — أي شخص يضغطه يشوف خدماتك وباقاتك",
     icon: Globe,
     route: "/settings",
   },
-
-  // ━━━ DONE ━━━
   {
     id: "done",
-    title: "أنت جاهز تبدأ! 🚀",
+    title: "أنت جاهز للبدء",
     description: "ابدأ الحين بإضافة أول عميل — بالتوفيق!",
     icon: Rocket,
     route: "/dashboard",

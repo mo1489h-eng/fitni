@@ -91,7 +91,7 @@ const ClientBodyScans = ({ clientId }: Props) => {
       qc.invalidateQueries({ queryKey: ["body-scans", clientId] });
       setShowForm(false);
       setHeight(""); setWeight(""); setAge(""); setWaist(""); setNeck(""); setHip(""); setNotes("");
-      toast({ title: "تم حفظ الفحص ✅" });
+      toast({ title: "تم حفظ الفحص" });
     },
   });
 
@@ -273,7 +273,7 @@ const ClientBodyScans = ({ clientId }: Props) => {
                     <p className="text-sm font-bold text-secondary-foreground">
                       {Number(s.weight)} كجم • BMI: {Number(s.bmi)} • دهون: {Number(s.body_fat)}%
                     </p>
-                    {s.notes && <p className="text-xs text-muted-foreground mt-0.5">📝 {s.notes}</p>}
+                    {s.notes && <p className="text-xs text-muted-foreground mt-0.5">{s.notes}</p>}
                   </div>
                   <span className={`text-xs font-medium ${info.color}`}>{info.label}</span>
                 </div>

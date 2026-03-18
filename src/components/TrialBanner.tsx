@@ -4,7 +4,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Check, Star, X } from "lucide-react";
+import { Check, Gift, Star, X } from "lucide-react";
 import MoyasarPayment from "@/components/MoyasarPayment";
 
 const plans = [
@@ -74,8 +74,9 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
       </div>
     ) : isOnTrial ? (
       <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-success/10 text-success">
-        <span className="font-medium">
-          🎉 مجاني لأول 6 أشهر — بدون بطاقة ائتمان — ينتهي في {trialEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+        <span className="font-medium flex items-center gap-2">
+          <Gift className="w-4 h-4" />
+          مجاني لأول 6 أشهر — بدون بطاقة ائتمان — ينتهي في {trialEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
         </span>
         <Button size="sm" variant="ghost" className="text-success hover:text-success h-7 w-7 p-0" onClick={() => setDismissed(true)}>
           <X className="w-4 h-4" />

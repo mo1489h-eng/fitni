@@ -41,7 +41,7 @@ const ClientLogin = () => {
       if (profileError) throw profileError;
 
       if (profile && profile.length > 0 && profile[0].portal_token) {
-        toast({ title: "أهلاً بك! 💪" });
+        toast({ title: "أهلاً بك" });
         navigate(`/client-portal/${profile[0].portal_token}`);
       } else {
         toast({ title: "لم يتم العثور على بيانات المتدرب", description: "تواصل مع مدربك", variant: "destructive" });
@@ -69,7 +69,7 @@ const ClientLogin = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      toast({ title: "تم إرسال رابط إعادة التعيين 📧", description: "تحقق من بريدك الإلكتروني" });
+      toast({ title: "تم إرسال رابط إعادة التعيين", description: "تحقق من بريدك الإلكتروني" });
     } catch (err: any) {
       toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -99,7 +99,10 @@ const ClientLogin = () => {
       <main className="flex-1 flex items-center justify-center px-4 pb-20">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black">أهلاً بك 💪</h1>
+            <div className="flex items-center justify-center gap-2">
+              <Dumbbell className="w-7 h-7 text-[#16a34a]" />
+              <h1 className="text-3xl font-black">أهلاً بك</h1>
+            </div>
             <p className="text-white/50">سجّل دخولك لمتابعة تمارينك وتقدمك</p>
           </div>
 

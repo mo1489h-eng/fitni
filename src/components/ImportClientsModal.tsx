@@ -75,7 +75,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
 
   const handleClose = () => {
     onOpenChange(false);
-    setTimeout(resetState, 300);
+    window.setTimeout(resetState, 300);
   };
 
   const parseCsv = (text: string): RawRow[] => {
@@ -238,8 +238,8 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
+      <DialogContent data-tour="import-clients-modal" className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-primary" />
@@ -324,7 +324,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
                     {field.label}
                     {field.required && <span className="text-destructive mr-0.5">*</span>}
                   </span>
-                  <Select value={mapping[field.key] || ""} onValueChange={(v) => setMapping((m) => ({ ...m, [field.key]: v }))}>
+                  <Select value={mapping[field.key] || undefined} onValueChange={(v) => setMapping((m) => ({ ...m, [field.key]: v }))}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="اختر العمود" />
                     </SelectTrigger>

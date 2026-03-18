@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTutorial } from "@/hooks/useTutorial";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Rocket, X } from "lucide-react";
 
@@ -15,17 +14,38 @@ const TutorialOverlay = () => {
   const [isNavigating, setIsNavigating] = useState(false);
   const checkedRef = useRef(false);
 
-  // Auto-start tutorial for new users
+  const findSpotlight = useCallback(() => {
+    if (!step?.spotlightSelector) {
+      setSpotlightRect(null);
+      return;
+    }
+
+    const el = document.querySelector(step.spotlightSelector);
+    if (!el) {
+      setSpotlightRect(null);
+      return;
+    }
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const initialRect = el.getBoundingClientRect();
+    setSpotlightRect(initialRect);
+
+    window.setTimeout(() => {
+      const updatedRect = el.getBoundingClientRect();
+      setSpotlightRect(updatedRect);
+    }, 350);
+  }, [step]);
+
   useEffect(() => {
     if (!user || !profile || checkedRef.current) return;
     checkedRef.current = true;
 
     if (!(profile as any).onboarding_completed && location.pathname === "/dashboard") {
-      setTimeout(() => startTutorial(), 1000);
+      const timer = window.setTimeout(() => startTutorial(), 1000);
+      return () => window.clearTimeout(timer);
     }
   }, [user, profile, location.pathname, startTutorial]);
 
-  // Navigate when step changes
   useEffect(() => {
     if (!isActive || !step) return;
 
@@ -33,55 +53,48 @@ const TutorialOverlay = () => {
       setIsNavigating(true);
       setSpotlightRect(null);
       navigate(step.route);
-    } else {
-      // Same page — find spotlight after short delay
-      const timer = setTimeout(() => {
-        findSpotlight();
-        setIsNavigating(false);
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, isActive]);
-
-  // After navigation, wait 800ms for page to render then spotlight
-  useEffect(() => {
-    if (!isActive || !step || !isNavigating) return;
-    if (location.pathname === step.route) {
-      const timer = setTimeout(() => {
-        findSpotlight();
-        setIsNavigating(false);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [location.pathname, isActive, step, isNavigating]);
-
-  const findSpotlight = useCallback(() => {
-    if (!step?.spotlightSelector) {
-      setSpotlightRect(null);
       return;
     }
-    const el = document.querySelector(step.spotlightSelector);
-    if (el) {
-      const rect = el.getBoundingClientRect();
-      setSpotlightRect(rect);
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Recalc after scroll
-      setTimeout(() => {
-        const r = el.getBoundingClientRect();
-        setSpotlightRect(r);
-      }, 350);
-    } else {
-      setSpotlightRect(null);
-    }
-  }, [step]);
 
-  // Recalculate on resize
+    const timer = window.setTimeout(() => {
+      findSpotlight();
+      setIsNavigating(false);
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [currentStep, isActive, step, location.pathname, navigate, findSpotlight]);
+
+  useEffect(() => {
+    if (!isActive || !step || !isNavigating || location.pathname !== step.route) return;
+
+    const timer = window.setTimeout(() => {
+      findSpotlight();
+      setIsNavigating(false);
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [location.pathname, isActive, step, isNavigating, findSpotlight]);
+
   useEffect(() => {
     if (!isActive) return;
-    const handle = () => findSpotlight();
-    window.addEventListener("resize", handle);
-    return () => window.removeEventListener("resize", handle);
-  }, [isActive, findSpotlight]);
+
+    const recalculate = () => findSpotlight();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        skip();
+      }
+    };
+
+    window.addEventListener("resize", recalculate);
+    window.addEventListener("scroll", recalculate, true);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("resize", recalculate);
+      window.removeEventListener("scroll", recalculate, true);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActive, findSpotlight, skip]);
 
   if (!isActive || !step) return null;
 
@@ -89,9 +102,8 @@ const TutorialOverlay = () => {
   const isLast = currentStep === totalSteps - 1;
   const StepIcon = step.icon;
   const progress = ((currentStep + 1) / totalSteps) * 100;
-
-  // Spotlight clip path
   const pad = 10;
+
   const clipPath = spotlightRect
     ? `polygon(
         0% 0%, 0% 100%,
@@ -105,7 +117,6 @@ const TutorialOverlay = () => {
       )`
     : undefined;
 
-  // Tooltip position
   const tooltipStyle: React.CSSProperties = spotlightRect
     ? {
         position: "fixed",
@@ -126,14 +137,12 @@ const TutorialOverlay = () => {
 
   return (
     <div className="fixed inset-0 z-[200]" style={{ pointerEvents: "auto" }}>
-      {/* Overlay */}
       <div
         className="absolute inset-0 transition-all duration-500"
-        style={{ backgroundColor: "rgba(0,0,0,0.78)", clipPath }}
+        style={{ backgroundColor: "hsl(var(--foreground) / 0.78)", clipPath }}
         onClick={skip}
       />
 
-      {/* Spotlight border glow */}
       {spotlightRect && (
         <div
           className="absolute rounded-lg pointer-events-none transition-all duration-500"
@@ -142,55 +151,47 @@ const TutorialOverlay = () => {
             left: spotlightRect.left - pad,
             width: spotlightRect.width + pad * 2,
             height: spotlightRect.height + pad * 2,
-            border: "2px solid hsl(142 76% 36%)",
-            boxShadow: "0 0 24px hsl(142 76% 36% / 0.35)",
+            border: "2px solid hsl(var(--primary))",
+            boxShadow: "0 0 24px hsl(var(--primary) / 0.35)",
             zIndex: 205,
           }}
         />
       )}
 
-      {/* Tooltip */}
       <div
-        className="w-[320px] max-w-[calc(100vw-32px)] rounded-lg border border-border"
-        style={{ ...tooltipStyle, backgroundColor: "#111111" }}
+        className="w-[320px] max-w-[calc(100vw-32px)] rounded-lg border border-border bg-background shadow-2xl"
+        style={tooltipStyle}
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="p-5">
-          {/* Progress bar */}
-          <div className="w-full h-1 bg-muted rounded-full mb-4 overflow-hidden">
+          <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-primary rounded-full transition-all duration-500"
+              className="h-full rounded-full bg-primary transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          {/* Step counter + skip */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               الخطوة {currentStep + 1} من {totalSteps}
             </p>
             <button
+              type="button"
               onClick={skip}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               <X className="w-3 h-3" />
               تخطي
             </button>
           </div>
 
-          {/* Icon */}
-          <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
             <StepIcon className="w-5 h-5 text-primary" />
           </div>
 
-          {/* Content */}
-          <h2 className="text-base font-bold text-foreground text-center mb-1.5">
-            {step.title}
-          </h2>
-          <p className="text-muted-foreground text-center text-sm leading-relaxed mb-5">
-            {step.description}
-          </p>
+          <h2 className="mb-1.5 text-center text-base font-bold text-foreground">{step.title}</h2>
+          <p className="mb-5 text-center text-sm leading-relaxed text-muted-foreground">{step.description}</p>
 
-          {/* Actions */}
           <div className="flex gap-2">
             {!isFirst && (
               <Button variant="outline" size="icon" className="shrink-0" onClick={prev}>

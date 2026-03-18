@@ -256,7 +256,7 @@ const CalendarPage = () => {
           </h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={goToday}>اليوم</Button>
-            <Button size="sm" onClick={() => openAdd()}>
+            <Button data-tour="add-session" size="sm" onClick={() => openAdd()}>
               <Plus className="w-4 h-4 ml-1" />
               إضافة جلسة
             </Button>

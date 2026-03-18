@@ -251,7 +251,7 @@ const Nutrition = () => {
             <h1 className="text-2xl font-bold text-foreground">الخطط الغذائية</h1>
             <p className="text-muted-foreground text-sm">أنشئ وخصص خطط غذائية لعملائك</p>
           </div>
-          <Button onClick={openNewPlan} className="gap-2">
+          <Button data-tour="create-plan" onClick={openNewPlan} className="gap-2">
             <Plus className="w-4 h-4" />
             خطة جديدة
           </Button>

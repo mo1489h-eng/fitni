@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
 import { Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "expiring" {
@@ -166,7 +166,13 @@ const Clients = () => {
 
         <div className="relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="بحث عن عميل..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-10" />
+          <Input
+            data-tour="search"
+            placeholder="بحث عن عميل..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pr-10"
+          />
         </div>
 
         {isLoading ? (
@@ -236,9 +242,12 @@ const Clients = () => {
         )}
 
         <button
+          type="button"
           onClick={handleAddClick}
           data-tour="add-client"
-          className="fixed bottom-20 left-4 z-50 w-14 h-14 rounded-full btn-gradient text-primary-foreground flex items-center justify-center fab-premium"
+          aria-label="إضافة عميل جديد"
+          title="إضافة عميل جديد"
+          className="fixed bottom-20 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full btn-gradient text-primary-foreground fab-premium"
         >
           <Plus className="w-6 h-6" />
         </button>

@@ -381,7 +381,7 @@ const PortalSubscription = () => {
                 size="lg"
               >
                 <RefreshCw className="w-4 h-4 ml-2" />
-                {isActive ? "تجديد مبكر 🔄" : "جدد اشتراكك"}
+                {isActive ? "تجديد مبكر" : "جدد اشتراكك"}
               </Button>
             </Card>
 

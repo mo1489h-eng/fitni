@@ -161,8 +161,9 @@ const MoyasarPayment = ({ plan, onSuccess, onBack }: MoyasarPaymentProps) => {
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        الدفع آمن ومشفر عبر Moyasar 🔒
+      <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5" />
+        الدفع آمن ومشفر عبر Moyasar
       </p>
     </div>
   );

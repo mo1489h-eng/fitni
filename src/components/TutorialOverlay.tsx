@@ -209,7 +209,8 @@ const TutorialOverlay = () => {
               </>
             ) : isLast ? (
               <Button className="flex-1 gap-1.5 text-sm" onClick={next}>
-                🚀 ابدأ الآن
+                <Rocket className="w-4 h-4" />
+                ابدأ الآن
               </Button>
             ) : (
               <Button className="flex-1 gap-1.5 text-sm" onClick={next}>

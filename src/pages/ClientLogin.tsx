@@ -99,7 +99,10 @@ const ClientLogin = () => {
       <main className="flex-1 flex items-center justify-center px-4 pb-20">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black">أهلاً بك 💪</h1>
+            <div className="flex items-center justify-center gap-2">
+              <Dumbbell className="w-7 h-7 text-[#16a34a]" />
+              <h1 className="text-3xl font-black">أهلاً بك</h1>
+            </div>
             <p className="text-white/50">سجّل دخولك لمتابعة تمارينك وتقدمك</p>
           </div>
 

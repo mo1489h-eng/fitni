@@ -12,29 +12,30 @@ const plans = [
     key: "basic" as const,
     name: "أساسي",
     price: 49,
-    amountHalalas: 4900,
     icon: Check,
     popular: false,
     features: [
       "حتى 10 عملاء",
-      "برامج تدريب غير محدودة",
-      "متابعة التقدم",
-      "استقبال مدفوعات",
+      "إدارة العملاء",
+      "البرامج التدريبية والتغذية",
+      "التقويم وبوابة العميل",
+      "التقارير الأسبوعية",
+      "المدفوعات والتحليلات الأساسية",
     ],
   },
   {
     key: "pro" as const,
     name: "احترافي",
     price: 69,
-    amountHalalas: 6900,
     icon: Star,
     popular: true,
     features: [
       "عملاء غير محدودين",
       "كل مميزات الأساسي",
-      "شعارك الخاص",
-      "تقارير متقدمة",
-      "أولوية في الدعم",
+      "AI كوبايلت",
+      "التحديات الجماعية",
+      "سوق البرامج",
+      "Nearby Discovery + دعم أولوية",
     ],
   },
 ];
@@ -66,7 +67,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
   const banner = !isSubscribed && !dismissed ? (
     isTrialExpired ? (
       <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-destructive/10 text-destructive">
-        <span className="font-medium">انتهت الفترة التجريبية — اشترك للاستمرار</span>
+        <span className="font-medium">انتهت الفترة المجانية — اشترك للاستمرار</span>
         <Button size="sm" variant="destructive" onClick={() => setShowPlans(true)}>
           اشترك الآن
         </Button>
@@ -74,13 +75,11 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
     ) : isOnTrial ? (
       <div className="rounded-xl px-4 py-3 flex items-center justify-between text-sm bg-success/10 text-success">
         <span className="font-medium">
-          🎉 أنت تستمتع بالوصول الكامل مجاناً لمدة 6 شهور — ينتهي في {trialEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+          🎉 مجاني لأول 6 أشهر — بدون بطاقة ائتمان — ينتهي في {trialEndDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
         </span>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" className="text-success hover:text-success h-7 w-7 p-0" onClick={() => setDismissed(true)}>
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+        <Button size="sm" variant="ghost" className="text-success hover:text-success h-7 w-7 p-0" onClick={() => setDismissed(true)}>
+          <X className="w-4 h-4" />
+        </Button>
       </div>
     ) : null
   ) : null;
@@ -109,10 +108,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
           ) : (
             <>
               <p className="text-center text-sm text-muted-foreground mb-1">
-                الأسعار تبدأ بعد انتهاء الفترة التجريبية
-              </p>
-              <p className="text-center text-xs text-success font-medium mb-4">
-                ابدأ الآن مجاناً - لا حاجة لبطاقة ائتمان
+                مجاني لأول 6 أشهر • بدون بطاقة ائتمان • ابدأ خلال دقيقتين
               </p>
 
               <div className="space-y-4">
@@ -130,7 +126,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
                         </span>
                       )}
                       {isCurrent && (
-                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs bg-success text-white px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs bg-success text-primary-foreground px-3 py-1 rounded-full font-medium flex items-center gap-1">
                           <Check className="w-3 h-3" />
                           باقتك الحالية
                         </span>
@@ -166,7 +162,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
                           variant={plan.popular ? "default" : "outline"}
                           onClick={() => setSelectedPlan(plan.key)}
                         >
-                          {isSubscribed ? "ترقية" : "اشترك الآن"}
+                          {plan.key === "pro" ? "ترقية للاحترافي - 69 ريال/شهر ←" : isSubscribed ? "تغيير إلى الأساسي" : "اشترك في الأساسي"}
                         </Button>
                       )}
                     </Card>

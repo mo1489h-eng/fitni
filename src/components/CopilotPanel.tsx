@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import UpgradeModal from "@/components/UpgradeModal";
+import TrialBanner from "@/components/TrialBanner";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import {
   Bot, Loader2, Sparkles, Check, X, Dumbbell, Apple,
   ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Zap,
-  Pencil, Plus, Trash2, Save,
+  Pencil, Plus, Trash2,
 } from "lucide-react";
 
 interface CopilotPanelProps {
@@ -16,10 +19,21 @@ interface CopilotPanelProps {
   clientName: string;
 }
 
+const progressMessages = [
+  "يحلل بيانات العميل...",
+  "يختار أفضل التمارين...",
+  "يحسب الأوزان المناسبة...",
+  "يضيف التقدم الأسبوعي...",
+];
+
 const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hasCopilotAccess, getProFeatureBlockReason } = usePlanLimits();
   const [expandedRec, setExpandedRec] = useState<string | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showPlans, setShowPlans] = useState(false);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   const { data: recommendations = [], isLoading: loadingRecs } = useQuery({
     queryKey: ["copilot-recommendations", clientId],
@@ -32,6 +46,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
       if (error) throw error;
       return data as any[];
     },
+    enabled: hasCopilotAccess,
   });
 
   const generateProgram = useMutation({
@@ -96,6 +111,19 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
   const isGenerating = generateProgram.isPending || weeklyEval.isPending;
   const pendingRecs = recommendations.filter((r: any) => r.status === "pending");
 
+  useEffect(() => {
+    if (!isGenerating) {
+      setMessageIndex(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % progressMessages.length);
+    }, 1800);
+
+    return () => window.clearInterval(interval);
+  }, [isGenerating]);
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "program": return <Dumbbell className="w-4 h-4" />;
@@ -113,9 +141,38 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     }
   };
 
+  if (!hasCopilotAccess) {
+    return (
+      <>
+        <Card className="p-5 border-primary/20 bg-gradient-to-br from-primary/5 to-background text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+            <Bot className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية ⭐</h3>
+            <p className="text-sm text-muted-foreground mt-1">احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية</p>
+          </div>
+          <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
+        </Card>
+        <UpgradeModal
+          open={showUpgrade}
+          onOpenChange={setShowUpgrade}
+          title={getProFeatureBlockReason().title}
+          description={getProFeatureBlockReason().description}
+          ctaText="ترقية للاحترافي - 69 ريال/شهر ←"
+          secondaryText="لاحقاً"
+          onUpgrade={() => {
+            setShowUpgrade(false);
+            setShowPlans(true);
+          }}
+        />
+        <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+      </>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {/* AI Actions */}
       <Card className="p-4 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -123,14 +180,14 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
           </div>
           <div>
             <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي 🤖</h3>
-            <p className="text-xs text-muted-foreground">إنشاء برامج وتقييمات مخصصة لـ {clientName}</p>
+            <p className="text-xs text-muted-foreground">أخبر الكوبايلت عن عميلك ثم راجع البرنامج قبل الحفظ</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => generateProgram.mutate()} disabled={isGenerating} className="gap-1.5">
             {generateProgram.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            إنشاء برنامج AI
+            توليد برنامج بالذكاء الاصطناعي ✨
           </Button>
           <Button variant="outline" onClick={() => weeklyEval.mutate()} disabled={isGenerating} className="gap-1.5">
             {weeklyEval.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
@@ -139,14 +196,18 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         </div>
 
         {isGenerating && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            جاري التحليل بناءً على بيانات العميل... قد يستغرق بضع ثوانٍ
+          <div className="mt-4 rounded-xl border border-primary/20 bg-background/60 p-4 text-center space-y-2">
+            <div className="flex justify-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+            </div>
+            <p className="text-sm font-medium text-card-foreground">الكوبايلت يصمم برنامجك... ✨</p>
+            <p className="text-xs text-muted-foreground">{progressMessages[messageIndex]}</p>
           </div>
         )}
       </Card>
 
-      {/* Pending Recommendations */}
       {pendingRecs.length > 0 && (
         <Card className="p-4 border-warning/30 bg-warning/5">
           <div className="flex items-center gap-2 mb-3">
@@ -155,7 +216,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
               توصيات بانتظار الموافقة ({pendingRecs.length})
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">يمكنك تعديل البرنامج قبل اعتماده ✏️</p>
+          <p className="text-xs text-muted-foreground mb-3">[✅ قبول البرنامج كاملاً] [✏️ تعديل قبل الحفظ] [🔄 توليد برنامج جديد]</p>
           <div className="space-y-3">
             {pendingRecs.map((rec: any) => (
               <EditableRecommendationCard
@@ -173,7 +234,6 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         </Card>
       )}
 
-      {/* History */}
       {recommendations.filter((r: any) => r.status !== "pending").length > 0 && (
         <Card className="p-4">
           <h3 className="font-bold text-card-foreground text-sm mb-3">السجل</h3>
@@ -203,14 +263,12 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="text-center py-8 text-muted-foreground">
           <Bot className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">لم يتم استخدام المساعد الذكي بعد</p>
-          <p className="text-xs mt-1">اضغط "إنشاء برنامج AI" لإنشاء برنامج مخصص بناءً على بيانات العميل</p>
+          <p className="text-xs mt-1">اضغط "توليد برنامج بالذكاء الاصطناعي ✨" لإنشاء برنامج مخصص لهذا العميل</p>
         </div>
       )}
     </div>
   );
 };
-
-// ──── Editable Recommendation Card ────
 
 function EditableRecommendationCard({
   rec,
@@ -238,8 +296,6 @@ function EditableRecommendationCard({
   };
 
   const currentPayload = editing ? editPayload : rec.payload || {};
-
-  // ── Exercise Editing Helpers ──
 
   const updateExercise = (dayIdx: number, exIdx: number, field: string, value: any) => {
     const updated = { ...editPayload };
@@ -271,8 +327,6 @@ function EditableRecommendationCard({
     updated.program.days[dayIdx].day_name = name;
     setEditPayload(updated);
   };
-
-  // ── Meal Editing Helpers ──
 
   const updateMeal = (mealIdx: number, field: string, value: any) => {
     const updated = { ...editPayload };
@@ -317,10 +371,9 @@ function EditableRecommendationCard({
 
       {expanded && (
         <div className="mt-3 space-y-3 animate-fade-in">
-          {/* Edit toggle button */}
           {rec.type === "program" && !editing && (
             <Button variant="outline" size="sm" className="gap-1 w-full" onClick={startEditing}>
-              <Pencil className="w-3 h-3" /> تعديل البرنامج قبل الاعتماد
+              <Pencil className="w-3 h-3" /> تعديل قبل الحفظ
             </Button>
           )}
           {editing && (
@@ -329,7 +382,6 @@ function EditableRecommendationCard({
             </div>
           )}
 
-          {/* Program Preview / Edit */}
           {rec.type === "program" && currentPayload.program && (
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-card-foreground flex items-center gap-1">
@@ -350,34 +402,11 @@ function EditableRecommendationCard({
                   {day.exercises?.map((ex: any, exIdx: number) =>
                     editing ? (
                       <div key={exIdx} className="flex items-center gap-1.5 bg-card rounded p-1.5">
-                        <Input
-                          value={ex.name}
-                          onChange={(e) => updateExercise(dayIdx, exIdx, "name", e.target.value)}
-                          className="h-6 text-[11px] flex-1"
-                          placeholder="اسم التمرين"
-                        />
-                        <Input
-                          type="number"
-                          value={ex.sets}
-                          onChange={(e) => updateExercise(dayIdx, exIdx, "sets", parseInt(e.target.value) || 0)}
-                          className="h-6 text-[11px] w-12 text-center"
-                          placeholder="مج"
-                        />
+                        <Input value={ex.name} onChange={(e) => updateExercise(dayIdx, exIdx, "name", e.target.value)} className="h-6 text-[11px] flex-1" placeholder="اسم التمرين" />
+                        <Input type="number" value={ex.sets} onChange={(e) => updateExercise(dayIdx, exIdx, "sets", parseInt(e.target.value) || 0)} className="h-6 text-[11px] w-12 text-center" placeholder="مج" />
                         <span className="text-[10px] text-muted-foreground">×</span>
-                        <Input
-                          type="number"
-                          value={ex.reps}
-                          onChange={(e) => updateExercise(dayIdx, exIdx, "reps", parseInt(e.target.value) || 0)}
-                          className="h-6 text-[11px] w-12 text-center"
-                          placeholder="تكرار"
-                        />
-                        <Input
-                          type="number"
-                          value={ex.weight}
-                          onChange={(e) => updateExercise(dayIdx, exIdx, "weight", parseFloat(e.target.value) || 0)}
-                          className="h-6 text-[11px] w-14 text-center"
-                          placeholder="كجم"
-                        />
+                        <Input type="number" value={ex.reps} onChange={(e) => updateExercise(dayIdx, exIdx, "reps", parseInt(e.target.value) || 0)} className="h-6 text-[11px] w-12 text-center" placeholder="تكرار" />
+                        <Input type="number" value={ex.weight} onChange={(e) => updateExercise(dayIdx, exIdx, "weight", parseFloat(e.target.value) || 0)} className="h-6 text-[11px] w-14 text-center" placeholder="كجم" />
                         <button onClick={() => removeExercise(dayIdx, exIdx)} className="text-destructive hover:text-destructive/80 p-0.5">
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -390,17 +419,13 @@ function EditableRecommendationCard({
                   )}
 
                   {editing && (
-                    <button
-                      onClick={() => addExercise(dayIdx)}
-                      className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 mt-1"
-                    >
+                    <button onClick={() => addExercise(dayIdx)} className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 mt-1">
                       <Plus className="w-3 h-3" /> إضافة تمرين
                     </button>
                   )}
                 </div>
               ))}
 
-              {/* Meal Plan */}
               {currentPayload.meal_plan && (
                 <>
                   <h4 className="text-xs font-bold text-card-foreground flex items-center gap-1 mt-2">
@@ -410,32 +435,10 @@ function EditableRecommendationCard({
                     {currentPayload.meal_plan.meals?.map((meal: any, mealIdx: number) =>
                       editing ? (
                         <div key={mealIdx} className="flex items-center gap-1.5 bg-card rounded p-1.5">
-                          <Input
-                            value={meal.meal_name}
-                            onChange={(e) => updateMeal(mealIdx, "meal_name", e.target.value)}
-                            className="h-6 text-[11px] w-16"
-                            placeholder="وجبة"
-                          />
-                          <Input
-                            value={meal.food_name}
-                            onChange={(e) => updateMeal(mealIdx, "food_name", e.target.value)}
-                            className="h-6 text-[11px] flex-1"
-                            placeholder="اسم الطعام"
-                          />
-                          <Input
-                            type="number"
-                            value={meal.calories}
-                            onChange={(e) => updateMeal(mealIdx, "calories", parseInt(e.target.value) || 0)}
-                            className="h-6 text-[11px] w-14 text-center"
-                            placeholder="سعرات"
-                          />
-                          <Input
-                            type="number"
-                            value={meal.protein}
-                            onChange={(e) => updateMeal(mealIdx, "protein", parseInt(e.target.value) || 0)}
-                            className="h-6 text-[11px] w-12 text-center"
-                            placeholder="بروتين"
-                          />
+                          <Input value={meal.meal_name} onChange={(e) => updateMeal(mealIdx, "meal_name", e.target.value)} className="h-6 text-[11px] w-16" placeholder="وجبة" />
+                          <Input value={meal.food_name} onChange={(e) => updateMeal(mealIdx, "food_name", e.target.value)} className="h-6 text-[11px] flex-1" placeholder="اسم الطعام" />
+                          <Input type="number" value={meal.calories} onChange={(e) => updateMeal(mealIdx, "calories", parseInt(e.target.value) || 0)} className="h-6 text-[11px] w-14 text-center" placeholder="سعرات" />
+                          <Input type="number" value={meal.protein} onChange={(e) => updateMeal(mealIdx, "protein", parseInt(e.target.value) || 0)} className="h-6 text-[11px] w-12 text-center" placeholder="بروتين" />
                           <button onClick={() => removeMeal(mealIdx)} className="text-destructive hover:text-destructive/80 p-0.5">
                             <Trash2 className="w-3 h-3" />
                           </button>
@@ -457,7 +460,6 @@ function EditableRecommendationCard({
             </div>
           )}
 
-          {/* Evaluation Preview */}
           {rec.type === "evaluation" && currentPayload.recommendations && (
             <div className="space-y-2">
               {currentPayload.recommendations.map((r: any, i: number) => (
@@ -473,19 +475,13 @@ function EditableRecommendationCard({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-2 pt-1">
-            <Button
-              size="sm"
-              className="flex-1 gap-1"
-              onClick={() => onAccept(editing ? editPayload : undefined)}
-              disabled={isApplying}
-            >
+            <Button size="sm" className="flex-1 gap-1" onClick={() => onAccept(editing ? editPayload : undefined)} disabled={isApplying}>
               {isApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-              {editing ? "اعتماد بعد التعديل" : rec.type === "program" ? "اعتماد وتطبيق" : "موافقة"}
+              {editing ? "✅ قبول بعد التعديل" : rec.type === "program" ? "✅ قبول البرنامج كاملاً" : "✅ موافق"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
-              <X className="w-3 h-3" /> رفض
+              <X className="w-3 h-3" /> ❌ تجاهل
             </Button>
           </div>
         </div>

@@ -1,42 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, DollarSign, Trophy, Star, Utensils, CalendarDays, BarChart3, Menu, X, Check } from "lucide-react";
+import { Dumbbell, Users, TrendingUp, CreditCard, ArrowLeft, DollarSign, Trophy, Utensils, CalendarDays, BarChart3, Menu, X, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import PublicMarketplace from "@/components/PublicMarketplace";
 import { useEffect, useRef, useState, useCallback } from "react";
-
-/* ─── Animated counter on scroll ─── */
-const CountUp = ({ end, suffix = "" }: { end: number; suffix?: string }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [val, setVal] = useState(0);
-  const started = useRef(false);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const duration = 1400;
-          const tick = (now: number) => {
-            const p = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - p, 3);
-            setVal(Math.round(end * eased));
-            if (p < 1) requestAnimationFrame(tick);
-          };
-          requestAnimationFrame(tick);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [end]);
-
-  return <span ref={ref}>{val}{suffix}</span>;
-};
 
 /* ─── Scroll reveal hook ─── */
 const useReveal = () => {
@@ -97,7 +65,6 @@ const Landing = () => {
             {[
               { label: "المميزات", href: "#features" },
               { label: "الأسعار", href: "#pricing" },
-              { label: "آراء المدربين", href: "#testimonials" },
             ].map(l => (
               <a key={l.href} href={l.href} className="relative group" style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", transition: "color 0.2s" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
@@ -210,20 +177,21 @@ const Landing = () => {
             <p style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", marginTop: 12 }}>بدون بطاقة ائتمان • 6 شهور مجاناً للمدربين</p>
           </RevealSection>
 
-          {/* Stats */}
+          {/* Quick benefits */}
           <RevealSection delay={0.5}>
-            <div className="flex items-center justify-center gap-8 md:gap-16 pt-8">
+            <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 sm:gap-4 pt-8">
               {[
-                { num: 500, suffix: "+", label: "مدرب نشط" },
-                { num: 98, suffix: "%", label: "رضا العملاء" },
-                { num: 4.9, suffix: "", label: "التقييم" },
-              ].map((s, i) => (
-                <div key={i} className="text-center relative">
-                  {i > 0 && <div className="absolute top-1/2 -translate-y-1/2 -right-4 md:-right-8 w-px h-10" style={{ background: "rgba(255,255,255,0.08)" }} />}
-                  <div className="tabular-nums" style={{ fontSize: 28, fontWeight: 800, color: "#22c55e", fontFamily: "'Inter', sans-serif" }}>
-                    {s.num === 4.9 ? "4.9" : <CountUp end={s.num} suffix={s.suffix} />}
-                  </div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 4, fontWeight: 500 }}>{s.label}</div>
+                "مجاني لأول 6 أشهر",
+                "بدون بطاقة ائتمان",
+                "ابدأ خلال دقيقتين",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center justify-center gap-2 rounded-2xl px-5 py-4"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: "#22c55e" }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.78)" }}>{item}</span>
                 </div>
               ))}
             </div>
@@ -328,61 +296,6 @@ const Landing = () => {
                   <h3 style={{ fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{f.titleAr}</h3>
                   <p style={{ fontSize: 11, color: "rgba(34,197,94,0.6)", letterSpacing: 1, fontWeight: 500, fontFamily: "'Inter', sans-serif", marginBottom: 10 }} dir="ltr">{f.titleEn}</p>
                   <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, fontFamily: "'Inter', sans-serif" }} dir="ltr">{f.descEn}</p>
-                </div>
-              </RevealSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(22,163,74,0.3), transparent)" }} />
-
-      {/* ━━━ TESTIMONIALS ━━━ */}
-      <section className="px-4 relative" style={{ padding: "80px 16px" }} id="testimonials">
-        <div className="max-w-5xl mx-auto relative z-10">
-          <RevealSection>
-            <div className="text-center mb-14">
-              <div style={{ fontSize: 11, letterSpacing: 4, color: "#16a34a", textTransform: "uppercase", marginBottom: 12, fontFamily: "'Inter', sans-serif" }} dir="ltr">TESTIMONIALS</div>
-              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900 }}>
-                ماذا يقول{" "}
-                <span style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>المدربون</span>؟
-              </h2>
-            </div>
-          </RevealSection>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              { name: "أحمد الشمري", role: "مدرب لياقة بدنية", text: "fitni غيّرت طريقة شغلي تماماً. قبل كنت أضيع وقت كثير بالواتساب والجداول، الحين كل شيء منظم ومرتب.", stars: 5 },
-              { name: "سارة القحطاني", role: "مدربة يوغا وتغذية", text: "أفضل استثمار سويته لمشروعي كمدربة. عملائي يحبون البوابة الخاصة فيهم ويتابعون برامجهم بسهولة.", stars: 5 },
-              { name: "فهد العتيبي", role: "مدرب كمال أجسام", text: "من أول أسبوع وفّرت ساعتين يومياً. إدارة المدفوعات والتذكيرات التلقائية ريحتني بشكل كبير.", stars: 5 },
-            ].map((t, i) => (
-              <RevealSection key={t.name} delay={0.15 * i}>
-                <div
-                  className="rounded-2xl p-6 transition-all duration-[250ms]"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = "rgba(22,163,74,0.3)";
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.stars }).map((_, j) => (
-                      <Star key={j} className="w-4 h-4" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
-                    ))}
-                  </div>
-                  <p style={{ fontSize: 14, lineHeight: 1.8, color: "rgba(255,255,255,0.7)", fontStyle: "italic", marginBottom: 20 }}>"{t.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(22,163,74,0.3), rgba(22,163,74,0.1))", border: "1px solid rgba(22,163,74,0.3)" }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#22c55e" }}>{t.name.split(" ").map(w => w[0]).join("")}</span>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{t.name}</p>
-                      <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{t.role}</p>
-                    </div>
-                  </div>
                 </div>
               </RevealSection>
             ))}

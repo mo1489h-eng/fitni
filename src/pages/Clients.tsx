@@ -180,7 +180,7 @@ const Clients = () => {
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                   <Users className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground">ما أضفت عملاء بعد 👥</h3>
+                <h3 className="text-lg font-bold text-foreground">لم تضف عملاء بعد</h3>
                 <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
                 <Button className="gap-1" onClick={() => {
                   if (!canAddClient) {

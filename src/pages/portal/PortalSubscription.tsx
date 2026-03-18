@@ -297,7 +297,10 @@ const PortalSubscription = () => {
                 <div className="mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">{payError}</div>
               )}
             </div>
-            <p className="text-xs text-muted-foreground text-center mt-2">الدفع آمن ومشفر عبر Moyasar 🔒</p>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground text-center mt-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              <p>الدفع آمن ومشفر عبر Moyasar</p>
+            </div>
           </Card>
         ) : (
           <>

@@ -114,13 +114,13 @@ const Clients = () => {
             },
           });
           if (emailResult?.emailSent) {
-            toast({ title: "تم إرسال الدعوة بالإيميل 📧", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
+            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
           } else if (emailResult?.setupLink) {
-            toast({ title: "تم إضافة العميل ✅", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
+            toast({ title: "تمت إضافة العميل", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
           }
         } catch (e) {
           console.error("Email send error:", e);
-          toast({ title: "تم إضافة العميل ✅", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
+          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
         }
       }
 

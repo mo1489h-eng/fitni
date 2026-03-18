@@ -151,7 +151,7 @@ const CalendarPage = () => {
       queryClient.invalidateQueries({ queryKey: ["trainer-sessions"] });
       resetForm();
       setShowAddModal(false);
-      toast({ title: "تمت إضافة الجلسة ✅" });
+      toast({ title: "تمت إضافة الجلسة" });
     },
     onError: (e: Error) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
   });
@@ -174,7 +174,7 @@ const CalendarPage = () => {
       resetForm();
       setEditSession(null);
       setViewSession(null);
-      toast({ title: "تم تحديث الجلسة ✅" });
+      toast({ title: "تم تحديث الجلسة" });
     },
     onError: (e: Error) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
   });

@@ -81,7 +81,7 @@ const Payments = () => {
   return (
     <TrainerLayout>
       <div className="space-y-4 animate-fade-in" dir="rtl">
-        <h1 className="text-2xl font-bold text-foreground">إيراداتي 💰</h1>
+        <h1 className="text-2xl font-bold text-foreground inline-flex items-center gap-2"><DollarSign className="w-6 h-6 text-primary" />إيراداتي</h1>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>

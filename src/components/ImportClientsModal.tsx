@@ -238,8 +238,8 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
+      <DialogContent data-tour="import-clients-modal" className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-primary" />

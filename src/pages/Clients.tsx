@@ -130,7 +130,7 @@ const Clients = () => {
           await supabase.functions.invoke("copilot-generate", {
             body: { client_id: newClient.id, action: "generate_program" },
           });
-          toast({ title: "تم إنشاء برنامج AI تلقائياً 🤖✅", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
+          toast({ title: "تم إنشاء برنامج AI تلقائياً", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
         } catch (e) {
           console.error("Auto copilot error:", e);
         }

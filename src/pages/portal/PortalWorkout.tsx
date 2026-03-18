@@ -350,7 +350,10 @@ const PortalWorkout = () => {
         {/* Today's Workout Hero */}
         {todayDay && todayDay.exercises.length > 0 ? (
           <Card className="p-5 bg-primary text-primary-foreground border-0">
-            <p className="text-sm opacity-80 mb-1">تمرين اليوم 💪</p>
+            <div className="flex items-center gap-2 mb-1 opacity-80">
+              <Dumbbell className="w-4 h-4" />
+              <p className="text-sm">تمرين اليوم</p>
+            </div>
             <h2 className="text-xl font-bold mb-1">{todayDay.day_name}</h2>
             <p className="text-sm opacity-80 mb-4">
               {todayDay.exercises.length} تمارين • ~{todayDay.exercises.reduce((s, e) => s + e.sets * 2, 0)} دقيقة
@@ -366,7 +369,7 @@ const PortalWorkout = () => {
           </Card>
         ) : (
           <Card className="p-5 bg-muted/50 text-center">
-            <p className="text-lg mb-1">😴</p>
+            <Moon className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
             <h2 className="text-lg font-bold text-foreground">يوم راحة</h2>
             <p className="text-sm text-muted-foreground">استرح اليوم واستعد لتمرين الغد</p>
           </Card>

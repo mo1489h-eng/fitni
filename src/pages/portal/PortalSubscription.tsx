@@ -161,7 +161,7 @@ const PortalSubscription = () => {
         },
       });
       if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
-      toast({ title: "✅ تم تجديد اشتراكك!", description: `ساري حتى: ${new Date(data.period_end).toLocaleDateString("ar-SA")}` });
+      toast({ title: "تم تجديد اشتراكك", description: `ساري حتى: ${new Date(data.period_end).toLocaleDateString("ar-SA")}` });
       setShowRenewal(false);
       refetchClient();
     } catch (e: any) {

@@ -69,7 +69,7 @@ const ClientLogin = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      toast({ title: "تم إرسال رابط إعادة التعيين 📧", description: "تحقق من بريدك الإلكتروني" });
+      toast({ title: "تم إرسال رابط إعادة التعيين", description: "تحقق من بريدك الإلكتروني" });
     } catch (err: any) {
       toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
     } finally {

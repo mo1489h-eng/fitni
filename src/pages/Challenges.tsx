@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trophy, Plus, Calendar, Medal, Lock } from "lucide-react";
+import { Trophy, Plus, Calendar, Medal, Lock, Banknote, Gift } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Challenges = () => {
@@ -60,7 +60,7 @@ const Challenges = () => {
       kpi_unit: form.kpi_unit, max_participants: form.max_participants
     } as any);
     if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "تم إنشاء التحدي! 🏆" });
+    toast({ title: "تم إنشاء التحدي" });
     setShowCreate(false);
     setForm({ title: "", description: "", challenge_type: "weight_loss", start_date: "", end_date: "", entry_fee: 0, prize_description: "", kpi_unit: "كجم", max_participants: 50 });
     fetchChallenges();
@@ -70,7 +70,7 @@ const Challenges = () => {
     if (!selected) return;
     const { error } = await supabase.from("challenge_participants").insert({ challenge_id: selected.id, client_id: clientId } as any);
     if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "تمت الإضافة ✅" });
+    toast({ title: "تمت الإضافة" });
     fetchParticipants(selected.id); setShowAddP(false);
   };
 
@@ -78,7 +78,7 @@ const Challenges = () => {
     await supabase.from("challenge_entries").insert({ participant_id: participantId, value } as any);
     await supabase.from("challenge_participants").update({ current_value: value } as any).eq("id", participantId);
     if (selected) fetchParticipants(selected.id);
-    toast({ title: "تم التحديث ✅" });
+    toast({ title: "تم التحديث" });
   };
 
   const statusBadge = (s: string) => s === "active" ? "default" : s === "upcoming" ? "secondary" : "outline";
@@ -93,7 +93,7 @@ const Challenges = () => {
             <Lock className="w-8 h-8 text-warning" />
           </div>
           <h1 className="text-2xl font-bold">التحديات الجماعية</h1>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">هذه الميزة للباقة الاحترافية ⭐</p>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">هذه الميزة للباقة الاحترافية</p>
           <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
           <UpgradeModal
             open={showUpgrade}
@@ -117,7 +117,10 @@ const Challenges = () => {
     <TrainerLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">التحديات 🏆</h1>
+          <div className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold">التحديات</h1>
+          </div>
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
             <DialogTrigger asChild><Button><Plus className="w-4 h-4 ml-2" />تحدي جديد</Button></DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -161,9 +164,9 @@ const Challenges = () => {
                   <Badge variant={statusBadge(selected.status) as any}>{statusText(selected.status)}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{selected.description}</p>
-                <div className="flex gap-3 text-sm text-muted-foreground">
-                  <span>📅 {selected.start_date} → {selected.end_date}</span>
-                  {selected.entry_fee > 0 && <span>💰 {selected.entry_fee} ر.س</span>}
+                <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
+                  <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{selected.start_date} → {selected.end_date}</span>
+                  {selected.entry_fee > 0 && <span className="flex items-center gap-1"><Banknote className="w-3 h-3" />{selected.entry_fee} ر.س</span>}
                 </div>
               </CardHeader>
               <CardContent>
@@ -214,12 +217,12 @@ const Challenges = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1"><Trophy className="w-3 h-3" />{typeText(c.challenge_type)}</span>
                     <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{c.start_date} → {c.end_date}</span>
                   </div>
-                  {c.prize_description && <p className="text-sm mt-2">🎁 {c.prize_description}</p>}
-                  {c.entry_fee > 0 && <p className="text-sm text-primary mt-1">رسوم: {c.entry_fee} ر.س</p>}
+                  {c.prize_description && <p className="text-sm mt-2 flex items-center gap-1.5"><Gift className="w-3.5 h-3.5 text-primary" />{c.prize_description}</p>}
+                  {c.entry_fee > 0 && <p className="text-sm text-primary mt-1 flex items-center gap-1.5"><Banknote className="w-3.5 h-3.5" />رسوم: {c.entry_fee} ر.س</p>}
                 </CardContent>
               </Card>
             ))}

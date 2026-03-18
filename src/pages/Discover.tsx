@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dumbbell, MapPin, ArrowRight } from "lucide-react";
+import { Dumbbell, MapPin, ArrowRight, Search, Target, Banknote, Gift } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Discover = () => {
@@ -26,15 +26,12 @@ const Discover = () => {
     setLoading(true);
     const intakeId = crypto.randomUUID();
 
-    // Save intake
     const { error: intakeErr } = await supabase.from("client_intakes").insert({ ...form, id: intakeId } as any);
     if (intakeErr) { toast({ title: "خطأ", variant: "destructive" }); setLoading(false); return; }
 
-    // Find trainers
     const { data: discoveryProfiles } = await supabase.from("trainer_discovery_profiles").select("*");
     if (!discoveryProfiles?.length) { setMatches([]); setStep("results"); setLoading(false); return; }
 
-    // Score matching
     const scored = discoveryProfiles.filter((dp: any) => dp.is_discoverable).map((dp: any) => {
       let score = 50;
       if (dp.city === form.city) score += 30;
@@ -44,13 +41,11 @@ const Discover = () => {
       return { ...dp, score };
     }).sort((a: any, b: any) => b.score - a.score).slice(0, 5);
 
-    // Save matches via secure database function
     await supabase.rpc("create_client_matches", {
       p_intake_id: intakeId,
       p_matches: scored.map((m: any) => ({ trainer_id: m.trainer_id, score: m.score })),
     });
 
-    // Fetch public profiles
     const enriched = await Promise.all(scored.map(async (m: any) => {
       const { data } = await supabase.rpc("get_public_profile", { p_user_id: m.trainer_id });
       return { ...m, profile: data?.[0] || null };
@@ -75,7 +70,10 @@ const Discover = () => {
         {step === "intake" ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">ابحث عن مدرب يناسبك 💪</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Search className="w-5 h-5 text-primary" />
+                ابحث عن مدرب يناسبك
+              </CardTitle>
               <p className="text-sm text-muted-foreground">أجب على بعض الأسئلة وسنوصلك بأفضل المدربين</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -124,15 +122,19 @@ const Discover = () => {
                 <div><Label>الميزانية إلى (ر.س/شهر)</Label><Input type="number" value={form.budget_max} onChange={e => setForm(f => ({ ...f, budget_max: +e.target.value }))} /></div>
               </div>
               <div><Label>ملاحظات</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} placeholder="إصابات، تجارب سابقة..." /></div>
-              <Button onClick={handleSubmit} className="w-full" size="lg" disabled={loading}>
-                {loading ? "جاري البحث..." : "اعثر على مدربي 🔍"}
+              <Button onClick={handleSubmit} className="w-full gap-2" size="lg" disabled={loading}>
+                <Search className="w-4 h-4" />
+                {loading ? "جاري البحث..." : "اعثر على مدربي"}
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">المدربون المناسبون لك 🎯</h2>
+              <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+                <Target className="w-6 h-6 text-primary" />
+                المدربون المناسبون لك
+              </h2>
               <p className="text-muted-foreground">{matches.length > 0 ? `وجدنا ${matches.length} مدربين مناسبين` : "لا يوجد مدربون متاحون حالياً. جرب تعديل المعايير."}</p>
             </div>
             {matches.map((m, i) => (
@@ -147,10 +149,10 @@ const Discover = () => {
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-bold text-lg">{m.profile?.full_name || "مدرب"}</h3>
                         {i === 0 && <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">أفضل تطابق</Badge>}
-                        {m.featured && <Badge className="bg-primary/10 text-primary border-primary/30">مميز ⭐</Badge>}
+                        {m.featured && <Badge className="bg-primary/10 text-primary border-primary/30">مميز</Badge>}
                       </div>
                       {m.profile?.specialization && <p className="text-sm text-primary font-medium">{m.profile.specialization}</p>}
                       {m.profile?.bio && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{m.profile.bio}</p>}
@@ -165,7 +167,7 @@ const Discover = () => {
 
                       <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground flex-wrap">
                         {m.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.city}</span>}
-                        <span>💰 {m.price_range_min}–{m.price_range_max} ر.س/شهر</span>
+                        <span className="flex items-center gap-1"><Banknote className="w-3 h-3" />{m.price_range_min}–{m.price_range_max} ر.س/شهر</span>
                         {m.training_modes?.map((mode: string) => (
                           <Badge key={mode} variant="secondary" className="text-xs">
                             {mode === "online" ? "أونلاين" : mode === "in_person" ? "حضوري" : "مدمج"}
@@ -173,11 +175,11 @@ const Discover = () => {
                         ))}
                         <Badge variant="outline" className="text-xs">{Math.round(m.score)}% تطابق</Badge>
                       </div>
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex gap-2 mt-3 flex-wrap">
                         {m.profile?.user_id && (
                           <Button size="sm" asChild><a href={`/trainer/${m.profile.user_id}`}>عرض الملف <ArrowRight className="w-3 h-3 mr-1" /></a></Button>
                         )}
-                        {m.trial_sessions && <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/30">🎁 جلسة تجريبية</Badge>}
+                        {m.trial_sessions && <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/30 flex items-center gap-1"><Gift className="w-3 h-3" />جلسة تجريبية</Badge>}
                       </div>
                     </div>
                   </div>

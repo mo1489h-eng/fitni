@@ -339,7 +339,7 @@ const TrainerContent = () => {
                   onClick={() => imageInputRef.current?.click()}
                 >
                   <ImageIcon className="w-4 h-4" />
-                  📷 إضافة صورة
+                  إضافة صورة
                 </Button>
               )}
               <input

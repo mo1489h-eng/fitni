@@ -883,7 +883,7 @@ const Settings = () => {
           {usernameForm ? (
             <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
               <p className="text-xs text-muted-foreground truncate" dir="ltr">fitni.lovable.app/t/{usernameForm}</p>
-              <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان 🔗</p>
+              <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام ✅" }); }}>
                   <Copy className="w-3 h-3" /> نسخ رابط صفحتك

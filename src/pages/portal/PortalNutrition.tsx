@@ -2,61 +2,50 @@ import { useState, useMemo } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UtensilsCrossed, Check, Plus, Minus, Droplets } from "lucide-react";
+import {
+  Loader2, UtensilsCrossed, Check, Plus, Minus, Droplet, Flame,
+  Beef, Wheat, Droplets, CheckCircle, FileText
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MealItem {
-  id: string;
-  meal_name: string;
-  food_name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  quantity: string | null;
-  item_order: number;
+  id: string; meal_name: string; food_name: string; calories: number;
+  protein: number; carbs: number; fats: number; quantity: string | null; item_order: number;
 }
-
 interface MealPlan {
-  id: string;
-  name: string;
-  notes: string | null;
-  items: MealItem[];
+  id: string; name: string; notes: string | null; items: MealItem[];
 }
 
-const MEAL_ICONS: Record<string, string> = {
-  "فطور": "🌅", "وجبة خفيفة صباحية": "🍎", "غداء": "🍽️",
-  "وجبة خفيفة مسائية": "🥜", "عشاء": "🌙", "وجبة قبل التمرين": "⚡",
-  "وجبة بعد التمرين": "💪", "سناكس": "🍿",
+const MEAL_ICONS: Record<string, typeof Flame> = {
+  "فطور": Flame, "غداء": UtensilsCrossed, "عشاء": UtensilsCrossed,
+  "وجبة خفيفة صباحية": Beef, "وجبة خفيفة مسائية": Beef,
+  "وجبة قبل التمرين": Flame, "وجبة بعد التمرين": Beef, "سناكس": Wheat,
 };
 
-// Circular ring component
-const MacroRing = ({ value, target, color, label, icon, size = 72 }: {
-  value: number; target: number; color: string; label: string; icon: string; size?: number;
+const MacroRing = ({ value, target, color, label, icon: Icon, size = 72 }: {
+  value: number; target: number; color: string; label: string; icon: typeof Flame; size?: number;
 }) => {
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = target > 0 ? Math.min(value / target, 1) : 0;
   const dashOffset = circumference * (1 - progress);
-
   return (
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: size, height: size }}>
         <svg className="w-full h-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="5" />
+          <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="hsl(0 0% 10%)" strokeWidth="5" />
           <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke={color} strokeWidth="5"
             strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
             className="transition-all duration-700 ease-out" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm">{icon}</span>
+          <Icon className="w-4 h-4" style={{ color }} strokeWidth={1.5} />
         </div>
       </div>
-      <p className="text-xs font-bold text-foreground mt-1">{value}</p>
-      <p className="text-[10px] text-muted-foreground">/ {target} {label}</p>
+      <p className="text-xs font-bold text-white mt-1">{value}</p>
+      <p className="text-[10px] text-[hsl(0_0%_35%)]">/ {target} {label}</p>
     </div>
   );
 };
@@ -93,27 +82,19 @@ const PortalNutrition = () => {
   const toggleMeal = useMutation({
     mutationFn: async (mealItemId: string) => {
       const { error } = await supabase.rpc("toggle_portal_meal_log" as any, {
-        p_token: token!,
-        p_meal_item_id: mealItemId,
+        p_token: token!, p_meal_item_id: mealItemId,
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["portal-meal-logs", token] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["portal-meal-logs", token] }),
   });
 
   const logged = loggedMeals || [];
 
-  const addWater = () => {
-    const next = Math.min(waterGlasses + 1, 12);
-    setWaterGlasses(next);
-    sessionStorage.setItem("water_today", String(next));
-  };
-  const removeWater = () => {
-    const next = Math.max(waterGlasses - 1, 0);
-    setWaterGlasses(next);
-    sessionStorage.setItem("water_today", String(next));
+  const setWater = (n: number) => {
+    const v = Math.max(0, Math.min(n, 12));
+    setWaterGlasses(v);
+    sessionStorage.setItem("water_today", String(v));
   };
 
   const groupByMeal = (items: MealItem[]) => {
@@ -127,23 +108,17 @@ const PortalNutrition = () => {
 
   const totalMacros = (items: MealItem[]) =>
     items.reduce((acc, i) => ({
-      calories: acc.calories + (i.calories || 0),
-      protein: acc.protein + (i.protein || 0),
-      carbs: acc.carbs + (i.carbs || 0),
-      fats: acc.fats + (i.fats || 0),
+      calories: acc.calories + (i.calories || 0), protein: acc.protein + (i.protein || 0),
+      carbs: acc.carbs + (i.carbs || 0), fats: acc.fats + (i.fats || 0),
     }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
 
-  // Calculate logged macros
   const loggedMacros = useMemo(() => {
     if (!plans?.length) return { calories: 0, protein: 0, carbs: 0, fats: 0 };
     const allItems = plans.flatMap(p => p.items || []);
-    return allItems
-      .filter(i => logged.includes(i.id))
+    return allItems.filter(i => logged.includes(i.id))
       .reduce((acc, i) => ({
-        calories: acc.calories + (i.calories || 0),
-        protein: acc.protein + (i.protein || 0),
-        carbs: acc.carbs + (i.carbs || 0),
-        fats: acc.fats + (i.fats || 0),
+        calories: acc.calories + (i.calories || 0), protein: acc.protein + (i.protein || 0),
+        carbs: acc.carbs + (i.carbs || 0), fats: acc.fats + (i.fats || 0),
       }), { calories: 0, protein: 0, carbs: 0, fats: 0 });
   }, [plans, logged]);
 
@@ -155,65 +130,68 @@ const PortalNutrition = () => {
     }, { calories: 0, protein: 0, carbs: 0, fats: 0 });
   }, [plans]);
 
-  // Check streak
   const allMealsLogged = plans?.length ? plans.every(p => p.items.every(i => logged.includes(i.id))) : false;
 
   if (isLoading) {
     return (
       <ClientPortalLayout>
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-        </div>
+        <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
       </ClientPortalLayout>
     );
   }
 
   return (
     <ClientPortalLayout>
-      <div className="space-y-4 animate-fade-in" dir="rtl">
-        <h1 className="text-xl font-bold text-foreground">جدولي الغذائي 🥗</h1>
+      <div className="space-y-4 animate-fade-in">
+        <h1 className="text-xl font-bold text-white flex items-center gap-2">
+          <UtensilsCrossed className="w-5 h-5 text-primary" strokeWidth={1.5} />
+          تغذيتي
+        </h1>
 
         {!plans || plans.length === 0 ? (
-          <Card className="p-10 text-center">
-            <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">لا توجد خطة غذائية بعد</h3>
-            <p className="text-sm text-muted-foreground">مدربك لم يضف لك خطة غذائية حتى الآن</p>
-          </Card>
+          <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-10 text-center">
+            <UtensilsCrossed className="w-12 h-12 mx-auto text-[hsl(0_0%_20%)] mb-3" strokeWidth={1.5} />
+            <h3 className="text-lg font-semibold text-white mb-1">لا توجد خطة غذائية بعد</h3>
+            <p className="text-sm text-[hsl(0_0%_40%)]">مدربك لم يضف لك خطة غذائية حتى الآن</p>
+          </div>
         ) : (
           <>
-            {/* Circular Macro Rings */}
-            <Card className="p-4">
+            {/* Macro Rings */}
+            <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
               <div className="grid grid-cols-4 gap-2 justify-items-center">
-                <MacroRing value={loggedMacros.calories} target={targetMacros.calories} color="hsl(var(--primary))" label="سعرة" icon="🔥" />
-                <MacroRing value={loggedMacros.protein} target={targetMacros.protein} color="hsl(220, 70%, 55%)" label="بروتين" icon="💪" />
-                <MacroRing value={loggedMacros.carbs} target={targetMacros.carbs} color="hsl(35, 90%, 55%)" label="كارب" icon="🍚" />
-                <MacroRing value={loggedMacros.fats} target={targetMacros.fats} color="hsl(340, 70%, 55%)" label="دهون" icon="🥑" />
+                <MacroRing value={loggedMacros.calories} target={targetMacros.calories} color="hsl(142 76% 36%)" label="سعرة" icon={Flame} />
+                <MacroRing value={loggedMacros.protein} target={targetMacros.protein} color="hsl(220 70% 55%)" label="بروتين" icon={Beef} />
+                <MacroRing value={loggedMacros.carbs} target={targetMacros.carbs} color="hsl(35 90% 55%)" label="كارب" icon={Wheat} />
+                <MacroRing value={loggedMacros.fats} target={targetMacros.fats} color="hsl(340 70% 55%)" label="دهون" icon={Droplets} />
               </div>
-            </Card>
+            </div>
 
             {/* Water Tracking */}
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-2">
+            <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Droplets className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-bold text-foreground">💧 شرب الماء</span>
+                  <Droplet className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+                  <span className="text-sm font-bold text-white">شرب الماء</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{waterGlasses} / 8 أكواب</span>
+                <span className="text-xs text-[hsl(0_0%_40%)]">{waterGlasses} / 8 أكواب</span>
               </div>
               <div className="flex items-center gap-3">
-                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={removeWater}>
-                  <Minus className="w-3 h-3" />
-                </Button>
+                <button onClick={() => setWater(waterGlasses - 1)}
+                  className="w-8 h-8 rounded-full border border-[hsl(0_0%_15%)] flex items-center justify-center text-[hsl(0_0%_40%)] hover:text-white hover:border-[hsl(0_0%_25%)] transition-colors">
+                  <Minus className="w-3 h-3" strokeWidth={1.5} />
+                </button>
                 <div className="flex-1 flex gap-1">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className={`flex-1 h-3 rounded-full transition-colors ${i < waterGlasses ? "bg-blue-500" : "bg-muted"}`} />
+                    <button key={i} onClick={() => setWater(i + 1)}
+                      className={`flex-1 h-3 rounded-full transition-colors ${i < waterGlasses ? "bg-blue-500" : "bg-[hsl(0_0%_12%)]"}`} />
                   ))}
                 </div>
-                <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={addWater}>
-                  <Plus className="w-3 h-3" />
-                </Button>
+                <button onClick={() => setWater(waterGlasses + 1)}
+                  className="w-8 h-8 rounded-full border border-[hsl(0_0%_15%)] flex items-center justify-center text-[hsl(0_0%_40%)] hover:text-white hover:border-[hsl(0_0%_25%)] transition-colors">
+                  <Plus className="w-3 h-3" strokeWidth={1.5} />
+                </button>
               </div>
-            </Card>
+            </div>
 
             {/* Meals */}
             {plans.map(plan => {
@@ -223,36 +201,37 @@ const PortalNutrition = () => {
                   {Object.entries(grouped).map(([mealName, mealItems]) => {
                     const mealTotals = totalMacros(mealItems);
                     const allLogged = mealItems.every(i => logged.includes(i.id));
+                    const MealIcon = MEAL_ICONS[mealName] || UtensilsCrossed;
                     return (
-                      <Card key={mealName} className={`overflow-hidden transition-all ${allLogged ? "opacity-60" : ""}`}>
-                        <div className="bg-muted/50 px-4 py-2.5 flex items-center justify-between border-b border-border">
+                      <div key={mealName} className={`bg-[hsl(0_0%_6%)] rounded-xl border overflow-hidden transition-all ${
+                        allLogged ? "border-primary/20 opacity-60" : "border-[hsl(0_0%_10%)]"
+                      }`}>
+                        <div className="px-4 py-3 flex items-center justify-between border-b border-[hsl(0_0%_8%)]">
                           <div className="flex items-center gap-2">
-                            <span className="text-base">{MEAL_ICONS[mealName] || "🍴"}</span>
-                            <h3 className="font-semibold text-sm text-foreground">{mealName}</h3>
+                            <MealIcon className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                            <h3 className="font-semibold text-sm text-white">{mealName}</h3>
                           </div>
-                          <span className="text-xs text-muted-foreground">{mealTotals.calories} سعرة</span>
+                          <span className="text-xs text-[hsl(0_0%_40%)]">{mealTotals.calories} سعرة</span>
                         </div>
                         <div className="p-3 space-y-2">
                           {mealItems.map(item => {
                             const isLogged = logged.includes(item.id);
                             return (
-                              <div key={item.id} className={`flex items-center justify-between py-1.5 border-b border-border/40 last:border-0 ${isLogged ? "opacity-50" : ""}`}>
+                              <div key={item.id} className={`flex items-center justify-between py-1.5 border-b border-[hsl(0_0%_8%)] last:border-0 ${isLogged ? "opacity-50" : ""}`}>
                                 <div className="flex items-center gap-2 flex-1">
-                                  <button
-                                    onClick={() => toggleMeal.mutate(item.id)}
+                                  <button onClick={() => toggleMeal.mutate(item.id)}
                                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                      isLogged ? "bg-primary border-primary" : "border-muted-foreground/30 hover:border-primary"
-                                    }`}
-                                  >
-                                    {isLogged && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                                      isLogged ? "bg-primary border-primary" : "border-[hsl(0_0%_20%)] hover:border-primary"
+                                    }`}>
+                                    {isLogged && <Check className="w-3.5 h-3.5 text-white" strokeWidth={2} />}
                                   </button>
                                   <div>
-                                    <p className={`text-sm font-medium ${isLogged ? "line-through text-muted-foreground" : "text-foreground"}`}>{item.food_name}</p>
-                                    {item.quantity && <p className="text-xs text-muted-foreground">{item.quantity}</p>}
+                                    <p className={`text-sm font-medium ${isLogged ? "line-through text-[hsl(0_0%_35%)]" : "text-white"}`}>{item.food_name}</p>
+                                    {item.quantity && <p className="text-xs text-[hsl(0_0%_35%)]">{item.quantity}</p>}
                                   </div>
                                 </div>
-                                <div className="flex gap-1.5 text-[10px] text-muted-foreground">
-                                  <span className="bg-muted px-1.5 py-0.5 rounded">{item.calories}</span>
+                                <div className="flex gap-1 text-[10px]">
+                                  <span className="bg-[hsl(0_0%_10%)] text-[hsl(0_0%_50%)] px-1.5 py-0.5 rounded">{item.calories}</span>
                                   <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded">P:{item.protein}</span>
                                 </div>
                               </div>
@@ -260,29 +239,30 @@ const PortalNutrition = () => {
                           })}
                         </div>
                         {allLogged && (
-                          <div className="px-4 py-2 bg-primary/5 text-center">
-                            <span className="text-xs text-primary font-medium">✅ تم تسجيل الوجبة</span>
+                          <div className="px-4 py-2 bg-primary/5 flex items-center justify-center gap-1.5">
+                            <CheckCircle className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />
+                            <span className="text-xs text-primary font-medium">تم تسجيل الوجبة</span>
                           </div>
                         )}
-                      </Card>
+                      </div>
                     );
                   })}
                   {plan.notes && (
-                    <Card className="p-3 bg-accent/50">
-                      <p className="text-xs text-muted-foreground">📝 ملاحظات المدرب: {plan.notes}</p>
-                    </Card>
+                    <div className="bg-[hsl(0_0%_5%)] rounded-xl border border-[hsl(0_0%_8%)] p-3 flex items-start gap-2">
+                      <FileText className="w-4 h-4 text-[hsl(0_0%_30%)] mt-0.5 shrink-0" strokeWidth={1.5} />
+                      <p className="text-xs text-[hsl(0_0%_40%)]">ملاحظات المدرب: {plan.notes}</p>
+                    </div>
                   )}
                 </div>
               );
             })}
 
-            {/* Completion Banner */}
             {allMealsLogged && (
-              <Card className="p-4 bg-primary/10 border-primary/20 text-center animate-fade-in">
-                <p className="text-lg mb-1">✅</p>
-                <p className="text-sm font-bold text-foreground">أكملت خطتك الغذائية اليوم!</p>
-                <p className="text-xs text-muted-foreground mt-1">🔥 استمر على هذا النهج</p>
-              </Card>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-center animate-fade-in">
+                <CheckCircle className="w-6 h-6 text-primary mx-auto mb-1" strokeWidth={1.5} />
+                <p className="text-sm font-bold text-white">أكملت خطتك الغذائية اليوم</p>
+                <p className="text-xs text-[hsl(0_0%_40%)] mt-1">استمر على هذا النهج</p>
+              </div>
             )}
           </>
         )}

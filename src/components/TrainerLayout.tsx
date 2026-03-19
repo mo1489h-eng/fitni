@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
+  Search,
   Settings2,
   Sparkles,
   TrendingUp,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 import TrainerNotifications from "@/components/TrainerNotifications";
+import GlobalSearch from "@/components/GlobalSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +40,8 @@ const mobileNavItems = [
   { label: "التقويم", href: "/calendar", icon: CalendarDays },
   { label: "الإعدادات", href: "/settings", icon: Settings2 },
 ];
+
+const [searchOpen, setSearchOpen] = useState(false);
 
 const TrainerLayout = ({
   children,
@@ -80,6 +84,7 @@ const TrainerLayout = ({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <GlobalSearch />
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <aside className="hidden w-[290px] shrink-0 border-l border-border bg-sidebar md:flex md:flex-col">
           <div className="border-b border-border px-6 py-6">
@@ -153,6 +158,15 @@ const TrainerLayout = ({
                 <div className="text-2xl font-semibold tracking-tight text-foreground">{title || greeting}</div>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="hidden md:flex h-11 items-center gap-2 rounded-full border border-border bg-card/70 px-4 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:text-foreground"
+                >
+                  <Search className="h-4 w-4" strokeWidth={1.5} />
+                  <span>بحث...</span>
+                  <kbd className="hidden lg:inline text-[10px] border border-border rounded px-1.5 py-0.5 text-muted-foreground/60">⌘K</kbd>
+                </button>
                 <TrainerNotifications />
                 <button
                   type="button"

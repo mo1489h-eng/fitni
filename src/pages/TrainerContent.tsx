@@ -224,7 +224,7 @@ const TrainerContent = () => {
             className="gap-1"
             onClick={() => {
               navigator.clipboard.writeText(publicUrl);
-              toast({ title: "تم نسخ الرابط 📋" });
+              toast({ title: "تم نسخ الرابط" });
             }}
           >
             <Copy className="w-3 h-3" /> نسخ

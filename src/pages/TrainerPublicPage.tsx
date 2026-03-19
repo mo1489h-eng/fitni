@@ -486,7 +486,7 @@ const TrainerPublicPage = () => {
         if (!galleryUrls.length) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>المعرض 📸</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>المعرض</h2>
             <div className={`grid gap-2 ${pc.gallery_layout === "masonry" ? "grid-cols-3" : "grid-cols-2"}`}>
               {galleryUrls.map((url, i) => (
                 <div key={i} className={`rounded-xl overflow-hidden ${pc.gallery_layout === "masonry" && i === 0 ? "row-span-2" : ""}`}

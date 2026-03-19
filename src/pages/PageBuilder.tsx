@@ -123,7 +123,7 @@ const PageBuilder = () => {
         .update({ page_config: config as any, gallery_images: galleryImages } as any)
         .eq("user_id", user.id);
       if (error) throw error;
-      toast({ title: "تم حفظ تخصيص الصفحة ✅" });
+      toast({ title: "تم حفظ تخصيص الصفحة" });
     } catch {
       toast({ title: "حدث خطأ", variant: "destructive" });
     } finally {

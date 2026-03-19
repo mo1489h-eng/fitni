@@ -1056,7 +1056,7 @@ const Settings = () => {
                     size="sm"
                     onClick={() => {
                      navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`);
-                      toast({ title: "تم نسخ الرابط ✅" });
+                      toast({ title: "تم نسخ الرابط" });
                     }}
                   >
                     <Copy className="w-4 h-4" />

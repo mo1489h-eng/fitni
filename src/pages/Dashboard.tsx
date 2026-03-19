@@ -165,6 +165,7 @@ const EmptyPanel = ({
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  usePageTitle("لوحة التحكم");
   const { isPro, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);

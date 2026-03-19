@@ -1029,7 +1029,7 @@ const Settings = () => {
                   } as any)
                   .eq("user_id", user.id);
                 if (error) throw error;
-                toast({ title: "تم حفظ صفحتك الشخصية ✅" });
+                toast({ title: "تم حفظ صفحتك الشخصية" });
               } catch {
                 toast({ title: "حدث خطأ", variant: "destructive" });
               } finally {

@@ -677,7 +677,7 @@ const ProgramBuilder = () => {
                       selected ? "bg-primary/10 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:border-primary/30"
                     }`}>
                     {day.slice(0, 3)}
-                    {selected && <p className="text-[9px] mt-0.5">💪</p>}
+                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-primary mx-auto mt-1" />}
                   </button>
                 );
               })}

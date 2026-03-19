@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Loader2, Calculator, Save, History, Edit, Camera, PenLine, Plus,
+  Loader2, Calculator, Save, History, Edit, Camera, PenLine, Plus, Dumbbell,
   TrendingDown, TrendingUp, ScanLine, Activity, Heart, Droplets, Scale
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

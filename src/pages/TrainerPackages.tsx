@@ -168,7 +168,7 @@ const TrainerPackages = () => {
                 variant="outline"
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/pay/${profile?.username || user.id}`);
-                  toast({ title: "تم نسخ الرابط 📋" });
+                  toast({ title: "تم نسخ الرابط" });
                 }}
               >
                 <Copy className="w-4 h-4" />

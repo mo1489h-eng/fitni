@@ -91,7 +91,7 @@ const TrainerPackages = () => {
       setShowForm(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: editingId ? "تم تحديث الباقة ✅" : "تم إنشاء الباقة ✅" });
+      toast({ title: editingId ? "تم تحديث الباقة" : "تم إنشاء الباقة" });
     },
     onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
   });

@@ -295,7 +295,7 @@ const PageBuilder = () => {
 
           {/* HERO SETTINGS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">الهيرو 🎯</h3>
+            <h3 className="font-bold text-sm text-card-foreground">الهيرو</h3>
             <p className="text-xs text-muted-foreground">نمط خلفية الهيرو</p>
             <div className="flex gap-2 flex-wrap">
               {[

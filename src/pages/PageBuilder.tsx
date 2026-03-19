@@ -72,14 +72,14 @@ const FONTS = [
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-  hero: "الهيرو 🎯",
-  stats: "الإحصائيات 📊",
-  specialties: "التخصصات 🏷️",
-  about: "عن المدرب 📝",
-  gallery: "المعرض 📸",
-  packages: "الباقات 💪",
-  testimonials: "آراء العملاء ⭐",
-  cta: "دعوة للعمل 🚀",
+  hero: "الهيرو",
+  stats: "الإحصائيات",
+  specialties: "التخصصات",
+  about: "عن المدرب",
+  gallery: "المعرض",
+  packages: "الباقات",
+  testimonials: "آراء العملاء",
+  cta: "دعوة للعمل",
 };
 
 const PageBuilder = () => {

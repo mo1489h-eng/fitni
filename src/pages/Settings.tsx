@@ -878,7 +878,7 @@ const Settings = () => {
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية 🌐</h2>
+            <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية</h2>
           </div>
           {usernameForm ? (
             <div className="rounded-lg bg-secondary/50 p-3 space-y-2">

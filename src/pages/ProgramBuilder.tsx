@@ -755,7 +755,7 @@ const ProgramBuilder = () => {
                 }`}>
                 <p className="text-xs font-bold">{day.dayName}</p>
                 {day.isRest ? (
-                  <p className="text-[10px] mt-0.5">😴 راحة</p>
+                  <p className="text-[10px] mt-0.5">راحة</p>
                 ) : (
                   <p className="text-[10px] mt-0.5">{day.exercises.length} تمارين</p>
                 )}

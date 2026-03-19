@@ -443,7 +443,7 @@ const PageBuilder = () => {
 
           {/* PACKAGES DISPLAY */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">عرض الباقات 💪</h3>
+            <h3 className="font-bold text-sm text-card-foreground">عرض الباقات</h3>
             <div className="flex gap-2">
               {[
                 { value: "cards", label: "بطاقات" },

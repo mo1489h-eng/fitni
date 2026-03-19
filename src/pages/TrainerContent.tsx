@@ -379,7 +379,7 @@ const TrainerContent = () => {
                   onClick={() => videoInputRef.current?.click()}
                 >
                   <Video className="w-4 h-4" />
-                  🎬 إضافة فيديو
+                  إضافة فيديو
                 </Button>
               )}
               <input

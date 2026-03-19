@@ -502,7 +502,7 @@ const TrainerPublicPage = () => {
         if (!packages.length) return null;
         return (
           <section key={section} ref={packagesRef} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>اختر باقتك 💪</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>اختر باقتك</h2>
             <div className="space-y-4">
               {packages.map((pkg) => {
                 const isFeatured = pc.featured_package_id === pkg.id;

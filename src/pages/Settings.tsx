@@ -845,7 +845,7 @@ const Settings = () => {
                     } else throw error;
                   } else {
                     await refreshProfile();
-                    toast({ title: "تم حفظ اسم المستخدم ✅" });
+                    toast({ title: "تم حفظ اسم المستخدم" });
                   }
                 } catch {
                   toast({ title: "حدث خطأ", variant: "destructive" });

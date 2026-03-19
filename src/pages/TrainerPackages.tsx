@@ -145,7 +145,7 @@ const TrainerPackages = () => {
     <TrainerLayout>
       <div className="space-y-4 animate-fade-in" dir="rtl">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">باقاتي 📦</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Package className="w-6 h-6 text-primary" strokeWidth={1.5} />باقاتي</h1>
           <Button className="gap-1" onClick={() => { setForm(defaultForm); setEditingId(null); setShowForm(true); }}>
             <Plus className="w-4 h-4" /> باقة جديدة
           </Button>

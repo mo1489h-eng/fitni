@@ -133,7 +133,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
           <div className="flex flex-col gap-2 mt-5 max-w-xs mx-auto">
             <Button className="gap-2" onClick={() => setShowAddModal(true)}>
               <PenLine className="w-4 h-4" />
-              أضف فحص نيابةً عن العميل ✏️
+              أضف فحص نيابةً عن العميل
             </Button>
             {whatsappScanLink && (
               <a href={whatsappScanLink} target="_blank" rel="noopener noreferrer">

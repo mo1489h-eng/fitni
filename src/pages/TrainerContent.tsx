@@ -396,7 +396,7 @@ const TrainerContent = () => {
                 <Input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="🔗 رابط YouTube / Instagram / TikTok"
+                  placeholder="رابط YouTube / Instagram / TikTok"
                   dir="ltr"
                   className="text-sm"
                 />

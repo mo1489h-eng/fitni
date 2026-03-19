@@ -517,8 +517,8 @@ const TrainerPublicPage = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-lg" style={{ color: t.text }}>{pkg.name}</h3>
-                          {isFeatured && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: `${brandColor}20`, color: brandColor }}>الأكثر شعبية ⭐</span>}
-                          {isLimited && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-destructive/20 text-destructive">عرض محدود 🔥</span>}
+                          {isFeatured && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: `${brandColor}20`, color: brandColor }}>الأكثر شعبية</span>}
+                          {isLimited && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-destructive/20 text-destructive">عرض محدود</span>}
                         </div>
                         {pkg.description && <p className="text-sm mt-1" style={{ color: t.muted }}>{pkg.description}</p>}
                       </div>

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import TrainerNotifications from "@/components/TrainerNotifications";
+import GlobalSearch from "@/components/GlobalSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";

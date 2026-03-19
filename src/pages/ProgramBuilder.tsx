@@ -480,7 +480,7 @@ const ProgramBuilder = () => {
     setSelectedDays(t.days.map(d => d.dayName));
     setActiveDay(0);
     setView("step2");
-    toast({ title: `تم تحميل قالب "${t.name}" ✅` });
+    toast({ title: `تم تحميل قالب "${t.name}"` });
   };
 
   const getGoalBadge = (goal: string) => GOALS.find(g => g.value === goal);

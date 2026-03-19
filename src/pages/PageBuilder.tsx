@@ -533,7 +533,7 @@ const PageBuilder = () => {
                 <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
                   {pageUrl.replace("https://", "")}
                 </p>
-                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }}>
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>

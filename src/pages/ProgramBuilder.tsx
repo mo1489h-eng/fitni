@@ -61,11 +61,11 @@ const MUSCLE_COLORS: Record<string, string> = {
 
 const weekDays = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 const GOALS = [
-  { value: "تخسيس", icon: "🔥", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  { value: "بناء عضلات", icon: "💪", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  { value: "لياقة عامة", icon: "🏃", color: "bg-primary/10 text-primary border-primary/20" },
-  { value: "تأهيل", icon: "🩺", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
-  { value: "قوة", icon: "⚡", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  { value: "تخسيس", icon: "", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  { value: "بناء عضلات", icon: "", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  { value: "لياقة عامة", icon: "", color: "bg-primary/10 text-primary border-primary/20" },
+  { value: "تأهيل", icon: "", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  { value: "قوة", icon: "", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
 ];
 const LEVELS = [
   { value: "مبتدئ", color: "bg-primary/10 text-primary border-primary/20" },
@@ -333,7 +333,7 @@ const ProgramBuilder = () => {
       setView("list");
       resetForm();
       setAssignProgramId(program.id);
-      toast({ title: "تم إنشاء البرنامج بنجاح 🎉" });
+      toast({ title: "تم إنشاء البرنامج بنجاح" });
     },
     onError: (err: Error) => toast({ title: "خطأ", description: err.message, variant: "destructive" }),
   });
@@ -465,7 +465,7 @@ const ProgramBuilder = () => {
       label: src.label,
     }));
     setCopyDayDialog(false);
-    toast({ title: "تم نسخ اليوم ✅" });
+    toast({ title: "تم نسخ اليوم" });
   };
 
   const applyTemplate = (t: typeof templates[0]) => {
@@ -480,7 +480,7 @@ const ProgramBuilder = () => {
     setSelectedDays(t.days.map(d => d.dayName));
     setActiveDay(0);
     setView("step2");
-    toast({ title: `تم تحميل قالب "${t.name}" ✅` });
+    toast({ title: `تم تحميل قالب "${t.name}"` });
   };
 
   const getGoalBadge = (goal: string) => GOALS.find(g => g.value === goal);
@@ -617,7 +617,7 @@ const ProgramBuilder = () => {
 
           {/* Goal */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">🎯 الهدف</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">الهدف</label>
             <div className="flex flex-wrap gap-2">
               {GOALS.map(g => (
                 <button key={g.value} onClick={() => setProgramGoal(g.value)}
@@ -632,7 +632,7 @@ const ProgramBuilder = () => {
 
           {/* Level */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">📊 المستوى</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المستوى</label>
             <div className="flex gap-2">
               {LEVELS.map(l => (
                 <button key={l.value} onClick={() => setProgramLevel(l.value)}
@@ -647,7 +647,7 @@ const ProgramBuilder = () => {
 
           {/* Duration */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">⏱️ المدة</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المدة</label>
             <div className="flex gap-2 flex-wrap">
               {DURATIONS.map(d => (
                 <button key={d} onClick={() => setWeeks(d)}
@@ -663,7 +663,7 @@ const ProgramBuilder = () => {
           </div>
 
           {/* Description */}
-          <Textarea placeholder="📝 وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
+          <Textarea placeholder="وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
 
           {/* Days Selection */}
           <div>
@@ -677,7 +677,7 @@ const ProgramBuilder = () => {
                       selected ? "bg-primary/10 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:border-primary/30"
                     }`}>
                     {day.slice(0, 3)}
-                    {selected && <p className="text-[9px] mt-0.5">💪</p>}
+                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-primary mx-auto mt-1" />}
                   </button>
                 );
               })}
@@ -755,7 +755,7 @@ const ProgramBuilder = () => {
                 }`}>
                 <p className="text-xs font-bold">{day.dayName}</p>
                 {day.isRest ? (
-                  <p className="text-[10px] mt-0.5">😴 راحة</p>
+                  <p className="text-[10px] mt-0.5">راحة</p>
                 ) : (
                   <p className="text-[10px] mt-0.5">{day.exercises.length} تمارين</p>
                 )}
@@ -787,7 +787,7 @@ const ProgramBuilder = () => {
                     className={`px-3 py-1.5 rounded-full text-[10px] font-medium border transition-all ${
                       currentDay.isRest ? "bg-primary/10 text-primary border-primary/20" : "border-border text-muted-foreground hover:text-foreground"
                     }`}>
-                    {currentDay.isRest ? "تفعيل 💪" : "يوم راحة 😴"}
+                    {currentDay.isRest ? "تفعيل" : "يوم راحة"}
                   </button>
                 </div>
                 {!currentDay.isRest && (
@@ -881,14 +881,14 @@ const ProgramBuilder = () => {
           {/* Sticky Bottom Bar - above bottom nav */}
           <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
             <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => {
-              toast({ title: "تم حفظ المسودة 📝" });
+              toast({ title: "تم حفظ المسودة" });
             }}>
               <Save className="w-3.5 h-3.5" />حفظ مسودة
             </Button>
             <Button className="flex-[2] gap-1 text-sm"
               disabled={createMutation.isPending || localDays.filter(d => !d.isRest).length === 0}
               onClick={() => createMutation.mutate()}>
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <>نشر البرنامج ✅</>}
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "نشر البرنامج"}
             </Button>
           </div>
 
@@ -1016,7 +1016,7 @@ const ProgramBuilder = () => {
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                 <ClipboardList className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">ما بنيت برامج بعد 📋</h3>
+              <h3 className="text-lg font-bold text-foreground">لم تبنِ برامج بعد</h3>
               <p className="text-sm text-muted-foreground">استخدم قالب جاهز أو ابنِ من الصفر</p>
               <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" />برنامج جديد</Button>
             </div>
@@ -1150,7 +1150,7 @@ const ExerciseCard = ({
 
           {/* Video URL */}
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">📹 رابط الفيديو (اختياري)</label>
+            <label className="text-[10px] text-muted-foreground block mb-1">رابط الفيديو (اختياري)</label>
             <Input type="url" dir="ltr" placeholder="https://..."
               value={ex.video_url} onChange={e => onUpdate("video_url", e.target.value)}
               className="h-8 text-xs" />
@@ -1158,7 +1158,7 @@ const ExerciseCard = ({
 
           {/* Notes */}
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">📝 ملاحظة للمتدرب</label>
+            <label className="text-[10px] text-muted-foreground block mb-1">ملاحظة للمتدرب</label>
             <Input placeholder="مثال: ركز على السلبي..."
               value={ex.notes} onChange={e => onUpdate("notes", e.target.value)}
               className="h-8 text-xs" />

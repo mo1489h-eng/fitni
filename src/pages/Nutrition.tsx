@@ -146,7 +146,7 @@ const Nutrition = () => {
       ...t, item_order: items.length + idx,
     }));
     setItems([...items.filter(i => i.food_name.trim()), ...newItems]);
-    toast({ title: `تم إضافة قالب "${template.name}" ✅` });
+    toast({ title: `تم إضافة قالب "${template.name}"` });
   };
 
   const addItem = (mealName = "فطور") => setItems([...items, emptyItem(items.length, mealName)]);
@@ -186,7 +186,7 @@ const Nutrition = () => {
           item_order: idx,
         })));
       }
-      toast({ title: editingPlan ? "تم تحديث الخطة" : "تم إنشاء الخطة بنجاح ✅" });
+      toast({ title: editingPlan ? "تم تحديث الخطة" : "تم إنشاء الخطة بنجاح" });
       setShowDialog(false);
       fetchPlans();
     } catch (err: any) {
@@ -220,7 +220,7 @@ const Nutrition = () => {
           })));
         }
       }
-      toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل ✅` });
+      toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل` });
       setShowCopyDialog(false);
       fetchPlans();
     } catch (err: any) {
@@ -310,7 +310,7 @@ const Nutrition = () => {
                           ))}
                         </div>
                       ))}
-                      {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">📝 {plan.notes}</p>}
+                      {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">{plan.notes}</p>}
                     </div>
                   )}
                 </Card>

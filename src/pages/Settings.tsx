@@ -206,7 +206,7 @@ const Settings = () => {
           .insert(payload);
         if (error) throw error;
       }
-      toast({ title: "تم حفظ ملف الاكتشاف ✅" });
+      toast({ title: "تم حفظ ملف الاكتشاف" });
     } catch {
       toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
     } finally {
@@ -234,7 +234,7 @@ const Settings = () => {
         .eq("user_id", user.id);
       if (error) throw error;
       await refreshProfile();
-      toast({ title: "تم حفظ التغييرات ✅" });
+      toast({ title: "تم حفظ التغييرات" });
     } catch {
       toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
     } finally {
@@ -274,7 +274,7 @@ const Settings = () => {
       if (updateError) throw updateError;
 
       await refreshProfile();
-      toast({ title: "تم رفع الصورة بنجاح ✅" });
+      toast({ title: "تم رفع الصورة بنجاح" });
     } catch {
       toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {
@@ -303,7 +303,7 @@ const Settings = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setNewPassword("");
-      toast({ title: "تم تغيير كلمة المرور بنجاح ✅" });
+      toast({ title: "تم تغيير كلمة المرور بنجاح" });
     } catch {
       toast({ title: "حدث خطأ في تغيير كلمة المرور", variant: "destructive" });
     } finally {
@@ -331,7 +331,7 @@ const Settings = () => {
   return (
     <TrainerLayout>
       <div className="space-y-6 animate-fade-in pb-8">
-        <h1 className="text-2xl font-bold text-foreground">الإعدادات ⚙️</h1>
+        <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
 
         {/* ━━━ 1. PROFILE ━━━ */}
         <Card className="p-5 space-y-5">
@@ -594,7 +594,7 @@ const Settings = () => {
                 <Textarea
                   value={form.welcome_message}
                   onChange={(e) => setForm({ ...form, welcome_message: e.target.value })}
-                  placeholder="مثال: أهلاً بك في برنامجك التدريبي! 💪"
+                  placeholder="مثال: أهلا بك في برنامجك التدريبي!"
                   rows={2}
                   maxLength={200}
                 />
@@ -749,7 +749,7 @@ const Settings = () => {
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Banknote className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">إعدادات الدفع 💰</h2>
+            <h2 className="text-lg font-bold text-card-foreground">إعدادات الدفع</h2>
           </div>
           <p className="text-sm text-muted-foreground">أضف بيانات حسابك البنكي لاستقبال المدفوعات من العملاء</p>
 
@@ -798,7 +798,7 @@ const Settings = () => {
                 } else {
                   await supabase.from("trainer_payment_settings").insert(payload);
                 }
-                toast({ title: "تم حفظ بيانات الدفع ✅" });
+                toast({ title: "تم حفظ بيانات الدفع" });
               } catch {
                 toast({ title: "حدث خطأ", variant: "destructive" });
               } finally {
@@ -845,7 +845,7 @@ const Settings = () => {
                     } else throw error;
                   } else {
                     await refreshProfile();
-                    toast({ title: "تم حفظ اسم المستخدم ✅" });
+                    toast({ title: "تم حفظ اسم المستخدم" });
                   }
                 } catch {
                   toast({ title: "حدث خطأ", variant: "destructive" });
@@ -863,7 +863,7 @@ const Settings = () => {
                 <p className="text-xs text-muted-foreground" dir="ltr">
                   https://fitni.lovable.app/t/{usernameForm}
                 </p>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط" }); }}>
                   <Copy className="w-3 h-3" />
                 </Button>
               </div>
@@ -878,14 +878,14 @@ const Settings = () => {
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية 🌐</h2>
+            <h2 className="text-lg font-bold text-card-foreground">صفحتي الشخصية</h2>
           </div>
           {usernameForm ? (
             <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
               <p className="text-xs text-muted-foreground truncate" dir="ltr">fitni.lovable.app/t/{usernameForm}</p>
-              <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان 🔗</p>
+              <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان</p>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام ✅" }); }}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام" }); }}>
                   <Copy className="w-3 h-3" /> نسخ رابط صفحتك
                 </Button>
                 <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: https://fitni.lovable.app/t/${usernameForm}`)}`, "_blank"); }}>
@@ -895,17 +895,17 @@ const Settings = () => {
             </div>
           ) : (
             <div className="rounded-lg bg-warning/10 border border-warning/20 p-3 space-y-1">
-              <p className="text-sm font-medium text-warning">⚠️ لم تنشئ اسم مستخدم بعد</p>
+              <p className="text-sm font-medium text-warning">لم تنشئ اسم مستخدم بعد</p>
               <p className="text-xs text-muted-foreground">أنشئ اسم مستخدم في قسم "رابط الصفحة الشخصية العامة" أعلاه حتى تحصل على رابط صفحتك العامة وتتمكن من مشاركته</p>
             </div>
           )}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate("/settings/page")}>
-              <Globe className="w-4 h-4" /> تخصيص الصفحة ✏️
+              <Globe className="w-4 h-4" /> تخصيص الصفحة
             </Button>
             {usernameForm && (
               <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/t/${usernameForm}`, "_blank")}>
-                معاينة 👁️
+                معاينة
               </Button>
             )}
           </div>
@@ -1029,7 +1029,7 @@ const Settings = () => {
                   } as any)
                   .eq("user_id", user.id);
                 if (error) throw error;
-                toast({ title: "تم حفظ صفحتك الشخصية ✅" });
+                toast({ title: "تم حفظ صفحتك الشخصية" });
               } catch {
                 toast({ title: "حدث خطأ", variant: "destructive" });
               } finally {
@@ -1046,7 +1046,7 @@ const Settings = () => {
             <>
               <Separator />
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك 🔗</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك</label>
                 <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
                   <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
                     fitni.lovable.app/t/{usernameForm}
@@ -1056,7 +1056,7 @@ const Settings = () => {
                     size="sm"
                     onClick={() => {
                      navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`);
-                      toast({ title: "تم نسخ الرابط ✅" });
+                      toast({ title: "تم نسخ الرابط" });
                     }}
                   >
                     <Copy className="w-4 h-4" />
@@ -1081,7 +1081,7 @@ const Settings = () => {
                     onClick={() => {
                        const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       navigator.clipboard.writeText(url);
-                      toast({ title: "تم نسخ الرابط — الصقه في انستقرام ✅" });
+                      toast({ title: "تم نسخ الرابط — الصقه في انستقرام" });
                     }}
                   >
                     انستقرام

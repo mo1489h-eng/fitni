@@ -156,7 +156,7 @@ const TrainerPackages = () => {
           <Card className="p-4 bg-primary/5 border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <LinkIcon className="w-4 h-4 text-primary" />
-              <p className="text-sm font-bold text-foreground">رابط الدفع الخاص بك 🔗</p>
+              <p className="text-sm font-bold text-foreground">رابط الدفع الخاص بك</p>
             </div>
             <p className="text-xs text-muted-foreground mb-2">شارك هذا الرابط في إنستقرام، واتساب، سناب شات</p>
             <div className="flex items-center gap-2">

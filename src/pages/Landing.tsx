@@ -211,10 +211,7 @@ const MiniStat = ({ label, value }: { label: string; value: string }) => (
 const DashboardMockup = ({ parallax = 0 }: { parallax?: number }) => (
   <div className="relative mx-auto max-w-5xl">
     <div className="absolute inset-x-10 bottom-0 h-28 rounded-full bg-primary/20 blur-3xl" />
-    <DeviceShell
-      className="relative landing-float"
-      style={undefined as never}
-    >
+    <DeviceShell className="relative landing-float">
       <div
         className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.12),transparent_30%)]"
         style={{ transform: `translate3d(0, ${parallax}px, 0)` }}

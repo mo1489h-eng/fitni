@@ -617,7 +617,7 @@ const ProgramBuilder = () => {
 
           {/* Goal */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">🎯 الهدف</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">الهدف</label>
             <div className="flex flex-wrap gap-2">
               {GOALS.map(g => (
                 <button key={g.value} onClick={() => setProgramGoal(g.value)}

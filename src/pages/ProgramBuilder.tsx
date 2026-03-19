@@ -1150,7 +1150,7 @@ const ExerciseCard = ({
 
           {/* Video URL */}
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">📹 رابط الفيديو (اختياري)</label>
+            <label className="text-[10px] text-muted-foreground block mb-1">رابط الفيديو (اختياري)</label>
             <Input type="url" dir="ltr" placeholder="https://..."
               value={ex.video_url} onChange={e => onUpdate("video_url", e.target.value)}
               className="h-8 text-xs" />

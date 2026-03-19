@@ -333,7 +333,7 @@ const ProgramBuilder = () => {
       setView("list");
       resetForm();
       setAssignProgramId(program.id);
-      toast({ title: "تم إنشاء البرنامج بنجاح 🎉" });
+      toast({ title: "تم إنشاء البرنامج بنجاح" });
     },
     onError: (err: Error) => toast({ title: "خطأ", description: err.message, variant: "destructive" }),
   });

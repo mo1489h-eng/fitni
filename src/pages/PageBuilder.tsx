@@ -516,7 +516,7 @@ const PageBuilder = () => {
 
           {/* CTA */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">دعوة للعمل 🚀</h3>
+            <h3 className="font-bold text-sm text-card-foreground">دعوة للعمل</h3>
             <Input
               value={config.cta_subtitle}
               onChange={e => setConfig({ ...config, cta_subtitle: e.target.value })}

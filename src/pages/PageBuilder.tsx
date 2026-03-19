@@ -464,7 +464,7 @@ const PageBuilder = () => {
 
           {/* TESTIMONIALS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">آراء العملاء ⭐</h3>
+            <h3 className="font-bold text-sm text-card-foreground">آراء العملاء</h3>
             {config.testimonials.map((t, i) => (
               <div key={i} className="bg-secondary rounded-lg p-3 space-y-1">
                 <div className="flex items-center justify-between">

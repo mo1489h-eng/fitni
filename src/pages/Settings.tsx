@@ -331,7 +331,7 @@ const Settings = () => {
   return (
     <TrainerLayout>
       <div className="space-y-6 animate-fade-in pb-8">
-        <h1 className="text-2xl font-bold text-foreground">الإعدادات ⚙️</h1>
+        <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
 
         {/* ━━━ 1. PROFILE ━━━ */}
         <Card className="p-5 space-y-5">

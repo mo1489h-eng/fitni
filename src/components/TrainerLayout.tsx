@@ -55,6 +55,7 @@ const TrainerLayout = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const trainerName = profile?.full_name?.trim() || "المدرب";
   const firstName = trainerName.split(" ")[0];

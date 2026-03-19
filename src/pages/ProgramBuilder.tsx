@@ -663,7 +663,7 @@ const ProgramBuilder = () => {
           </div>
 
           {/* Description */}
-          <Textarea placeholder="📝 وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
+          <Textarea placeholder="وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
 
           {/* Days Selection */}
           <div>

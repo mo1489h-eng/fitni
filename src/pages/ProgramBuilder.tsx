@@ -888,7 +888,7 @@ const ProgramBuilder = () => {
             <Button className="flex-[2] gap-1 text-sm"
               disabled={createMutation.isPending || localDays.filter(d => !d.isRest).length === 0}
               onClick={() => createMutation.mutate()}>
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <>نشر البرنامج ✅</>}
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "نشر البرنامج"}
             </Button>
           </div>
 

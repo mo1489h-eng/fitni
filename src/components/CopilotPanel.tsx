@@ -179,7 +179,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
             <Bot className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي 🤖</h3>
+            <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي</h3>
             <p className="text-xs text-muted-foreground">أخبر الكوبايلت عن عميلك ثم راجع البرنامج قبل الحفظ</p>
           </div>
         </div>

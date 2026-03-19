@@ -901,7 +901,7 @@ const Settings = () => {
           )}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-1" onClick={() => navigate("/settings/page")}>
-              <Globe className="w-4 h-4" /> تخصيص الصفحة ✏️
+              <Globe className="w-4 h-4" /> تخصيص الصفحة
             </Button>
             {usernameForm && (
               <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/t/${usernameForm}`, "_blank")}>

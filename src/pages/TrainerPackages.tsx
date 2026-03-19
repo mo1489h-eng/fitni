@@ -131,7 +131,7 @@ const TrainerPackages = () => {
   const copyLink = (pkgId: string) => {
     navigator.clipboard.writeText(getPayLink(pkgId));
     setCopiedLink(pkgId);
-    toast({ title: "تم نسخ الرابط 📋" });
+    toast({ title: "تم نسخ الرابط" });
     setTimeout(() => setCopiedLink(null), 2000);
   };
 

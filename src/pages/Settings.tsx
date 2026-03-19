@@ -1046,7 +1046,7 @@ const Settings = () => {
             <>
               <Separator />
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك 🔗</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك</label>
                 <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
                   <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
                     fitni.lovable.app/t/{usernameForm}

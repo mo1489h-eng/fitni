@@ -49,6 +49,7 @@ interface Session {
 }
 
 const CalendarPage = () => {
+  usePageTitle("التقويم");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

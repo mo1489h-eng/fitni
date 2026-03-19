@@ -41,6 +41,8 @@ const mobileNavItems = [
   { label: "الإعدادات", href: "/settings", icon: Settings2 },
 ];
 
+const [searchOpen, setSearchOpen] = useState(false);
+
 const TrainerLayout = ({
   children,
   title,

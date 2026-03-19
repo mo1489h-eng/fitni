@@ -1,184 +1,195 @@
+import { useState } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
-import { TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2 } from "lucide-react";
+import {
+  TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2,
+  Plus, Scale, Activity, Heart, ScanLine
+} from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";
-
-const weightData = [
-  { week: "أسبوع 1", weight: 95 },
-  { week: "أسبوع 2", weight: 93 },
-  { week: "أسبوع 3", weight: 91 },
-  { week: "أسبوع 4", weight: 90 },
-  { week: "أسبوع 5", weight: 88 },
-  { week: "أسبوع 6", weight: 87 },
-  { week: "أسبوع 7", weight: 86 },
-  { week: "أسبوع 8", weight: 85 },
-];
-
-const strengthData = [
-  { name: "بنش بريس", start: 60, current: 80, unit: "كجم" },
-  { name: "سكوات", start: 60, current: 100, unit: "كجم" },
-  { name: "ديدلفت", start: 70, current: 110, unit: "كجم" },
-  { name: "شولدر بريس", start: 20, current: 35, unit: "كجم" },
-];
-
-// Generate attendance calendar (current month)
-const generateCalendar = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-  // Demo: workout days
-  const workoutDays = new Set([1, 2, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 19, 20, 22, 23, 24, 26, 27]);
-  return { daysInMonth, firstDay, workoutDays, month, year };
-};
+import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {
   const { token } = usePortalToken();
-  const { daysInMonth, firstDay, workoutDays, month, year } = generateCalendar();
-  const monthName = new Date(year, month).toLocaleDateString("ar-SA", { month: "long", year: "numeric" });
-  const dayNames = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+  const { toast } = useToast();
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [newWeight, setNewWeight] = useState("");
 
-  // Fetch client by token to get client_id
   const { data: client } = useQuery({
     queryKey: ["portal-client", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .rpc("get_client_by_portal_token", { p_token: token! });
+      const { data, error } = await supabase.rpc("get_client_by_portal_token", { p_token: token! });
       if (error) throw error;
-      return (data && data.length > 0) ? data[0] : null;
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!token,
   });
 
+  const { data: scans } = useQuery({
+    queryKey: ["portal-body-scans", token],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_portal_body_scans" as any, { p_token: token! });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!token,
+  });
+
+  const chartData = (scans || []).slice().reverse().map((s: any) => ({
+    date: new Date(s.scan_date).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }),
+    weight: Number(s.weight),
+  }));
+
+  const latestScan = scans?.[0];
+
   return (
     <ClientPortalLayout>
-      <div className="space-y-5 animate-fade-in">
-        <h1 className="text-2xl font-bold text-foreground">تقدمي</h1>
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" strokeWidth={1.5} />
+            تقدمي
+          </h1>
+          <Button size="sm" variant="outline" className="gap-1 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30"
+            onClick={() => setShowWeightModal(true)}>
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} /> تسجيل الوزن
+          </Button>
+        </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Dumbbell, value: "48", label: "إجمالي التمارين", color: "text-primary" },
-            { icon: Trophy, value: "110", label: "أفضل وزن (كجم)", color: "text-warning" },
-            { icon: Flame, value: "12", label: "أطول streak", color: "text-destructive" },
-          ].map((s) => (
-            <Card key={s.label} className="p-3 text-center">
-              <s.icon className={`w-5 h-5 mx-auto mb-1 ${s.color}`} />
-              <p className="text-xl font-bold text-card-foreground">{s.value}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">{s.label}</p>
-            </Card>
+            { icon: Dumbbell, value: "48", label: "إجمالي التمارين" },
+            { icon: Trophy, value: "110", label: "أفضل وزن (كجم)" },
+            { icon: Flame, value: "12", label: "أطول سلسلة" },
+          ].map((s, i) => (
+            <div key={i} className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-3 text-center">
+              <s.icon className="w-4 h-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
+              <p className="text-lg font-bold text-white">{s.value}</p>
+              <p className="text-[10px] text-[hsl(0_0%_35%)] leading-tight">{s.label}</p>
+            </div>
           ))}
         </div>
 
-        {/* Progress Photos */}
-        {client && (
-          <ProgressPhotos clientId={client.id} uploadedBy="client" trainerId={client.trainer_id || undefined} portalToken={token} />
+        {/* Weight Chart */}
+        {chartData.length > 1 && (
+          <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              <h3 className="font-bold text-white text-sm">تقدم الوزن</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 10%)" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(0 0% 40%)" }} />
+                <YAxis tick={{ fontSize: 11, fill: "hsl(0 0% 40%)" }} domain={["auto", "auto"]} />
+                <Tooltip contentStyle={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 15%)", borderRadius: 8, color: "white" }} />
+                <Line type="monotone" dataKey="weight" stroke="hsl(142 76% 36%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(142 76% 36%)" }} name="الوزن (كجم)" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         )}
 
-        {/* Weight Chart */}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-card-foreground">تقدم الوزن</h3>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={weightData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-              <Tooltip />
-              <Line type="monotone" dataKey="weight" stroke="hsl(142, 76%, 36%)" strokeWidth={2} dot={{ r: 4 }} name="الوزن (كجم)" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
-        {/* Strength Progress */}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Dumbbell className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-card-foreground">تقدم القوة</h3>
-          </div>
-          <div className="space-y-3">
-            {strengthData.map((ex) => {
-              const pct = Math.round(((ex.current - ex.start) / ex.start) * 100);
-              const barPct = Math.min((ex.current / (ex.start * 2)) * 100, 100);
-              return (
-                <div key={ex.name}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="font-medium text-card-foreground">{ex.name}</span>
-                    <span className="text-primary font-bold">
-                      {ex.current} {ex.unit}
-                      <span className="text-xs text-success mr-1">(+{pct}%)</span>
-                    </span>
-                  </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${barPct}%` }} />
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">بداية: {ex.start} {ex.unit}</p>
+        {/* Body Scan Summary */}
+        {latestScan && (
+          <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ScanLine className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              <h3 className="font-bold text-white text-sm">بيانات الجسم</h3>
+              <span className="text-[10px] text-[hsl(0_0%_35%)] mr-auto">
+                {new Date(latestScan.scan_date).toLocaleDateString("ar-SA")}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: "نسبة الدهون", value: `${Number(latestScan.body_fat)}%`, icon: Activity },
+                { label: "الكتلة العضلية", value: `${Number(latestScan.muscle_mass)} كجم`, icon: Dumbbell },
+                { label: "معدل الأيض", value: `${Number(latestScan.tdee)}`, icon: Heart },
+              ].map((s, i) => (
+                <div key={i} className="bg-[hsl(0_0%_4%)] rounded-lg p-2.5 text-center">
+                  <s.icon className="w-4 h-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
+                  <p className="text-sm font-bold text-white">{s.value}</p>
+                  <p className="text-[10px] text-[hsl(0_0%_35%)]">{s.label}</p>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </Card>
+        )}
+
+        {/* Progress Photos */}
+        {client && (
+          <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+            <ProgressPhotos clientId={client.id} uploadedBy="client" trainerId={client.trainer_id || undefined} portalToken={token} />
+          </div>
+        )}
 
         {/* Attendance Calendar */}
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-card-foreground">سجل الحضور</h3>
-            <span className="text-xs text-muted-foreground mr-auto">{monthName}</span>
+        <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-primary" strokeWidth={1.5} />
+            <h3 className="font-bold text-white text-sm">سجل الحضور</h3>
           </div>
-
-          {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
-            {dayNames.map((d) => (
-              <div key={d} className="text-[10px] text-muted-foreground text-center">{d}</div>
+            {["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"].map(d => (
+              <div key={d} className="text-[10px] text-[hsl(0_0%_30%)] text-center">{d}</div>
             ))}
           </div>
-
-          {/* Calendar grid */}
           <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for offset */}
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const isWorkout = workoutDays.has(day);
-              const isToday = day === new Date().getDate();
+            {(() => {
+              const now = new Date();
+              const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+              const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+              const workoutDays = new Set([1, 2, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 19, 20, 22, 23, 24, 26, 27]);
               return (
-                <div
-                  key={day}
-                  className={`aspect-square rounded-full flex items-center justify-center text-xs font-medium ${
-                    isWorkout
-                      ? "bg-primary text-primary-foreground"
-                      : isToday
-                      ? "border-2 border-primary text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {day}
-                </div>
+                <>
+                  {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const isWorkout = workoutDays.has(day);
+                    const isToday = day === now.getDate();
+                    return (
+                      <div key={day} className={`aspect-square rounded-full flex items-center justify-center text-xs font-medium ${
+                        isWorkout ? "bg-primary text-white" : isToday ? "border border-primary text-primary" : "text-[hsl(0_0%_30%)]"
+                      }`}>{day}</div>
+                    );
+                  })}
+                </>
               );
-            })}
+            })()}
           </div>
+        </div>
 
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-primary" />
-              <span>يوم تمرين</span>
+        {/* Weight Modal */}
+        <Dialog open={showWeightModal} onOpenChange={setShowWeightModal}>
+          <DialogContent className="max-w-sm bg-[hsl(0_0%_6%)] border-[hsl(0_0%_12%)]">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <Scale className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                تسجيل الوزن
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="text-xs text-[hsl(0_0%_45%)] mb-1.5 block">الوزن (كجم)</label>
+                <Input type="number" dir="ltr" value={newWeight} onChange={e => setNewWeight(e.target.value)}
+                  className="text-center text-2xl font-bold h-16 bg-[hsl(0_0%_4%)] border-[hsl(0_0%_12%)] text-white"
+                  placeholder="85.0" />
+              </div>
+              <Button className="w-full h-12" onClick={() => {
+                toast({ title: "تم تسجيل الوزن" });
+                setShowWeightModal(false);
+                setNewWeight("");
+              }}>
+                حفظ
+              </Button>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full border-2 border-primary" />
-              <span>اليوم</span>
-            </div>
-          </div>
-        </Card>
+          </DialogContent>
+        </Dialog>
       </div>
     </ClientPortalLayout>
   );

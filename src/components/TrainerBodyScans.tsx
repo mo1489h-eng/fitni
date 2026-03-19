@@ -117,7 +117,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
 
   const portalScanUrl = portalToken ? `${window.location.origin}/client-portal/${portalToken}` : null;
   const whatsappScanLink = clientPhone && portalScanUrl
-    ? `https://wa.me/966${clientPhone.replace(/^0/, "")}?text=${encodeURIComponent(`أهلاً ${clientName || ""}! 📊\nسوِّ فحص جسم جديد من هنا:\n${portalScanUrl}`)}`
+    ? `https://wa.me/966${clientPhone.replace(/^0/, "")}?text=${encodeURIComponent(`أهلاً ${clientName || ""}!\nسوِّ فحص جسم جديد من هنا:\n${portalScanUrl}`)}`
     : null;
 
   if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;

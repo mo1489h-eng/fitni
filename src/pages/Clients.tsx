@@ -10,9 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
-import { Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users } from "lucide-react";
+import {
+  Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users,
+  UserPlus, MoreVertical, Phone, CalendarDays, MessageCircle, Eye, ClipboardList, Filter,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+
+type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
 function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "expiring" {
   const end = new Date(subscriptionEndDate);
@@ -23,20 +28,26 @@ function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "
   return "active";
 }
 
-const statusColors = {
-  active: "border-r-4 border-r-success",
-  overdue: "border-r-4 border-r-destructive",
-  expiring: "border-r-4 border-r-warning",
+const statusAccentColors = {
+  active: "border-r-[3px] border-r-emerald-500",
+  overdue: "border-r-[3px] border-r-red-500",
+  expiring: "border-r-[3px] border-r-amber-500",
 };
-const statusLabels = { active: "نشط", overdue: "متأخر", expiring: "ينتهي قريباً" };
+const statusLabels = { active: "نشط", overdue: "منتهي", expiring: "ينتهي قريبا" };
 const statusBadgeColors = {
-  active: "bg-success/10 text-success",
-  overdue: "bg-destructive/10 text-destructive",
-  expiring: "bg-warning/10 text-warning",
+  active: "bg-emerald-500/10 text-emerald-400",
+  overdue: "bg-red-500/10 text-red-400",
+  expiring: "bg-amber-500/10 text-amber-400",
 };
+
+const AVATAR_COLORS = [
+  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-orange-600",
+  "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
+];
 
 const Clients = () => {
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterStatus>("all");
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
@@ -82,60 +93,33 @@ const Clients = () => {
       const startDate = form.startDate ? new Date(form.startDate) : new Date();
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30);
-
       const { data: newClient, error } = await supabase.from("clients").insert({
-        trainer_id: user!.id,
-        name: form.name,
-        phone: form.phone,
-        goal: form.goal,
-        email: form.email || null,
-        subscription_price: Number(form.price) || 0,
-        subscription_end_date: endDate.toISOString().split("T")[0],
+        trainer_id: user!.id, name: form.name, phone: form.phone, goal: form.goal, email: form.email || null,
+        subscription_price: Number(form.price) || 0, subscription_end_date: endDate.toISOString().split("T")[0],
         last_workout_date: new Date().toISOString().split("T")[0],
-        age: form.age ? parseInt(form.age) : null,
-        weight: form.weight ? parseFloat(form.weight) : null,
-        height: form.height ? parseFloat(form.height) : null,
-        experience: form.experience || "مبتدئ",
-        days_per_week: parseInt(form.daysPerWeek) || 4,
-        injuries: form.injuries || null,
-        preferred_equipment: form.equipment || null,
+        age: form.age ? parseInt(form.age) : null, weight: form.weight ? parseFloat(form.weight) : null,
+        height: form.height ? parseFloat(form.height) : null, experience: form.experience || "مبتدئ",
+        days_per_week: parseInt(form.daysPerWeek) || 4, injuries: form.injuries || null, preferred_equipment: form.equipment || null,
       } as any).select("id, invite_token").single();
       if (error) throw error;
-
-      // Send invitation email if email provided
       if (form.email && newClient?.invite_token) {
         try {
           const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
-            body: {
-              clientName: form.name,
-              clientEmail: form.email,
-              trainerName: profile?.full_name || "مدربك",
-              inviteToken: newClient.invite_token,
-            },
+            body: { clientName: form.name, clientEmail: form.email, trainerName: profile?.full_name || "مدربك", inviteToken: newClient.invite_token },
           });
-          if (emailResult?.emailSent) {
-            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
-          } else if (emailResult?.setupLink) {
-            toast({ title: "تمت إضافة العميل", description: "شارك رابط التسجيل يدوياً من ملف العميل" });
-          }
+          if (emailResult?.emailSent) toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
+          else if (emailResult?.setupLink) toast({ title: "تمت إضافة العميل", description: "شارك رابط التسجيل يدويا من ملف العميل" });
         } catch (e) {
           console.error("Email send error:", e);
-          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً" });
+          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدويا" });
         }
       }
-
-      // Auto-trigger copilot generation if we have enough data
       if (newClient?.id && form.goal && (form.weight || form.height)) {
         try {
-          await supabase.functions.invoke("copilot-generate", {
-            body: { client_id: newClient.id, action: "generate_program" },
-          });
-          toast({ title: "تم إنشاء برنامج AI تلقائياً", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
-        } catch (e) {
-          console.error("Auto copilot error:", e);
-        }
+          await supabase.functions.invoke("copilot-generate", { body: { client_id: newClient.id, action: "generate_program" } });
+          toast({ title: "تم إنشاء برنامج AI تلقائيا", description: "افتح ملف العميل لمراجعة البرنامج المقترح" });
+        } catch (e) { console.error("Auto copilot error:", e); }
       }
-
       return newClient;
     },
     onSuccess: () => {
@@ -143,57 +127,89 @@ const Clients = () => {
       setOpen(false);
       setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
       setShowAdvanced(false);
-      if (!form.email) {
-        toast({ title: "تم إضافة العميل بنجاح" });
-      }
+      if (!form.email) toast({ title: "تمت إضافة العميل بنجاح" });
     },
-    onError: () => {
-      toast({ title: "حدث خطأ", variant: "destructive" });
-    },
+    onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
   });
 
-  const filtered = (clients ?? []).filter(
-    (c) => (c.name ?? "").includes(search) || (c.goal ?? "").includes(search)
-  );
+  const activeCount = clients.filter(c => getPaymentStatus(c.subscription_end_date) !== "overdue").length;
+
+  const filtered = (clients ?? []).filter((c) => {
+    const matchesSearch = (c.name ?? "").includes(search) || (c.goal ?? "").includes(search);
+    if (!matchesSearch) return false;
+    if (filter === "all") return true;
+    if (filter === "active") return getPaymentStatus(c.subscription_end_date) === "active";
+    if (filter === "overdue") return getPaymentStatus(c.subscription_end_date) === "overdue";
+    if (filter === "no_program") return !c.program_id;
+    return true;
+  });
+
+  const filterChips: { key: FilterStatus; label: string }[] = [
+    { key: "all", label: "الكل" },
+    { key: "active", label: "نشط" },
+    { key: "overdue", label: "منتهي" },
+    { key: "no_program", label: "بدون برنامج" },
+  ];
 
   return (
     <TrainerLayout>
-      <div className="space-y-4 page-enter">
+      <div className="space-y-5 page-enter">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">العملاء</h1>
-          <span className="text-sm text-muted-foreground">{clients.length} عميل</span>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">العملاء</h1>
+            <p className="text-sm text-muted-foreground">{activeCount} عميل نشط</p>
+          </div>
+          <Button onClick={handleAddClick} className="gap-1.5" size="sm">
+            <UserPlus className="w-4 h-4" strokeWidth={1.5} />
+            إضافة عميل
+          </Button>
         </div>
 
+        {/* Search */}
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
           <Input
             data-tour="search"
-            placeholder="بحث عن عميل..."
+            placeholder="ابحث عن عميل..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pr-10"
+            className="pr-10 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)] focus-visible:border-primary/60"
           />
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex gap-2">
+          {filterChips.map(chip => (
+            <button
+              key={chip.key}
+              onClick={() => setFilter(chip.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${
+                filter === chip.key
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "border-[hsl(0_0%_10%)] text-muted-foreground hover:border-primary/20 hover:text-foreground"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 space-y-4">
-            {search ? (
+            {search || filter !== "all" ? (
               <p className="text-muted-foreground">لا توجد نتائج</p>
             ) : (
               <>
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                  <Users className="w-8 h-8 text-primary" />
+                <div className="w-16 h-16 rounded-2xl bg-[hsl(0_0%_6%)] border border-[hsl(0_0%_10%)] flex items-center justify-center mx-auto">
+                  <UserPlus className="w-8 h-8 text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">لم تضف عملاء بعد</h3>
                 <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
                 <Button className="gap-1" onClick={() => {
-                  if (!canAddClient) {
-                    const reason = getAddClientBlockReason();
-                    if (reason) setBlockReason(reason);
-                    return;
-                  }
+                  if (!canAddClient) { const reason = getAddClientBlockReason(); if (reason) setBlockReason(reason); return; }
                   setOpen(true);
                 }}>
                   <Plus className="w-4 h-4" /> إضافة عميل
@@ -202,45 +218,97 @@ const Clients = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-3 pb-20">
-            {filtered.map((client) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-20">
+            {filtered.map((client, idx) => {
               const status = getPaymentStatus(client.subscription_end_date);
+              const initials = client.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2);
+              const avatarColor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
               const lastActive = (client as any).last_active_at ? new Date((client as any).last_active_at) : null;
               const minsAgo = lastActive ? Math.floor((Date.now() - lastActive.getTime()) / 60000) : null;
-              let activityBadge = { text: "غير معروف", color: "bg-secondary text-muted-foreground" };
-                if (minsAgo !== null) {
-                  if (minsAgo < 120) activityBadge = { text: "نشط الآن", color: "bg-emerald-500/10 text-emerald-500" };
-                  else if (minsAgo < 1440) activityBadge = { text: "اليوم", color: "bg-yellow-500/10 text-yellow-500" };
-                else activityBadge = { text: `منذ ${Math.floor(minsAgo / 1440)} أيام`, color: "bg-secondary text-muted-foreground" };
+              let activityText = "";
+              if (minsAgo !== null) {
+                if (minsAgo < 120) activityText = "نشط الآن";
+                else if (minsAgo < 1440) activityText = "اليوم";
+                else activityText = `منذ ${Math.floor(minsAgo / 1440)} أيام`;
               }
+              const totalWeeks = 12;
+              const progressPct = Math.min((client.week_number / totalWeeks) * 100, 100);
+
               return (
-                <Link to={`/clients/${client.id}`} key={client.id}>
-                  <Card className={`p-4 hover:shadow-md transition-shadow ${statusColors[status]}`}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-bold text-card-foreground">{client.name}</h3>
-                        <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
-                          <Target className="w-3 h-3" />
+                <Card
+                  key={client.id}
+                  className={`p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)] rounded-xl ${statusAccentColors[status]} hover:border-primary/40 transition-all duration-200 hover:-translate-y-0.5 group`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Avatar */}
+                    <div className={`w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-sm font-bold text-white">{initials}</span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <Link to={`/clients/${client.id}`} className="font-bold text-foreground hover:text-primary transition-colors truncate">
+                          {client.name}
+                        </Link>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusBadgeColors[status]}`}>
+                          {statusLabels[status]}
+                        </span>
+                      </div>
+
+                      {/* Goal badge */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                           {client.goal}
+                        </span>
+                        {activityText && (
+                          <span className="text-[10px] text-muted-foreground">{activityText}</span>
+                        )}
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+                          <span>أسبوع {client.week_number} من {totalWeeks}</span>
+                          <span>{Math.round(progressPct)}%</span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-xs text-muted-foreground">الأسبوع {client.week_number}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${activityBadge.color}`}>
-                            {activityBadge.text}
-                          </span>
+                        <div className="w-full h-1 rounded-full bg-[hsl(0_0%_10%)]">
+                          <div className="h-1 rounded-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
                         </div>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusBadgeColors[status]}`}>
-                        {statusLabels[status]}
-                      </span>
+
+                      {/* Bottom actions */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                          {client.phone && (
+                            <span className="flex items-center gap-0.5">
+                              <Phone className="w-3 h-3" strokeWidth={1.5} />
+                              <span dir="ltr">{client.phone}</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {client.phone && (
+                            <a href={`https://wa.me/966${client.phone.replace(/^0/, "")}`} target="_blank" rel="noopener noreferrer"
+                              className="p-1.5 rounded-md hover:bg-[hsl(0_0%_10%)] text-muted-foreground hover:text-primary transition-colors">
+                              <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            </a>
+                          )}
+                          <Link to={`/clients/${client.id}`}
+                            className="p-1.5 rounded-md hover:bg-[hsl(0_0%_10%)] text-muted-foreground hover:text-primary transition-colors">
+                            <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </Link>
+                        </div>
+                      </div>
                     </div>
-                  </Card>
-                </Link>
+                  </div>
+                </Card>
               );
             })}
           </div>
         )}
 
+        {/* FAB */}
         <button
           type="button"
           onClick={handleAddClick}
@@ -257,14 +325,12 @@ const Clients = () => {
           onOpenChange={setShowUpgrade}
           title={blockReason?.title || ""}
           description={blockReason?.description || ""}
-          onUpgrade={() => {
-            setShowUpgrade(false);
-            setShowPlans(true);
-          }}
+          onUpgrade={() => { setShowUpgrade(false); setShowPlans(true); }}
         />
 
+        {/* Add Client Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent className="bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">
             <DialogHeader>
               <DialogTitle>إضافة عميل جديد</DialogTitle>
             </DialogHeader>
@@ -295,7 +361,6 @@ const Clients = () => {
                 <Input value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} type="date" dir="ltr" />
               </div>
 
-              {/* Advanced Fields Toggle */}
               <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="flex items-center gap-1 text-sm text-primary font-medium w-full justify-center py-1">
                 {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 بيانات متقدمة (لتوليد برنامج AI تلقائي)
@@ -347,7 +412,7 @@ const Clients = () => {
                     <label className="text-xs font-medium text-foreground">الأدوات المتوفرة (اختياري)</label>
                     <Input value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} placeholder="مثال: دمبلز، بار، أجهزة نادي" />
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-center">✨ تعبئة هذه البيانات تمكّن المساعد الذكي من إنشاء برنامج تدريب وتغذية مخصص تلقائياً</p>
+                  <p className="text-[10px] text-muted-foreground text-center">تعبئة هذه البيانات تمكن المساعد الذكي من إنشاء برنامج تدريب وتغذية مخصص تلقائيا</p>
                 </div>
               )}
 
@@ -358,16 +423,12 @@ const Clients = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Plans dialog reusing TrialBanner */}
-        {showPlans && (
-          <TrialBannerPlans open={showPlans} onOpenChange={setShowPlans} />
-        )}
+        {showPlans && <TrialBannerPlans open={showPlans} onOpenChange={setShowPlans} />}
       </div>
     </TrainerLayout>
   );
 };
 
-// Minimal wrapper to show plans dialog
 import TrialBanner from "@/components/TrialBanner";
 const TrialBannerPlans = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => (
   <TrialBanner showPlans={open} onShowPlansChange={onOpenChange} />

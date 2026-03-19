@@ -288,7 +288,7 @@ const TrainerPublicPage = () => {
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}>
                   <CheckCircle className="w-7 h-7" style={{ color: brandColor }} />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: t.text }}>تم الدفع بنجاح! 🎉</h2>
+                <h2 className="text-xl font-bold" style={{ color: t.text }}>تم الدفع بنجاح</h2>
                 <p className="text-sm mt-1" style={{ color: t.muted }}>أنشئ حسابك في fitni للوصول لبوابة التدريب</p>
               </div>
 

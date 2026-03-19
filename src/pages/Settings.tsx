@@ -274,7 +274,7 @@ const Settings = () => {
       if (updateError) throw updateError;
 
       await refreshProfile();
-      toast({ title: "تم رفع الصورة بنجاح ✅" });
+      toast({ title: "تم رفع الصورة بنجاح" });
     } catch {
       toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {

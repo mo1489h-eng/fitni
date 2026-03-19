@@ -157,6 +157,15 @@ const TrainerLayout = ({
                 <div className="text-2xl font-semibold tracking-tight text-foreground">{title || greeting}</div>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="hidden md:flex h-11 items-center gap-2 rounded-full border border-border bg-card/70 px-4 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:text-foreground"
+                >
+                  <Search className="h-4 w-4" strokeWidth={1.5} />
+                  <span>بحث...</span>
+                  <kbd className="hidden lg:inline text-[10px] border border-border rounded px-1.5 py-0.5 text-muted-foreground/60">⌘K</kbd>
+                </button>
                 <TrainerNotifications />
                 <button
                   type="button"

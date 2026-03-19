@@ -1,4 +1,5 @@
 import { useState } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import { useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 const Reports = () => {
+  usePageTitle("التقارير");
   const { user, profile } = useAuth();
   const { hasReportsAccess, plan } = usePlanLimits();
   const [sendingIndex, setSendingIndex] = useState<number | null>(null);

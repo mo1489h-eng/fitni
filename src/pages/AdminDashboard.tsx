@@ -339,7 +339,7 @@ export default function AdminDashboard() {
                     <TableCell>
                       {p.status !== "paid" && (
                         <Button size="sm" variant="outline" onClick={() => handleMarkPaid(p.id)}>
-                          تم التحويل ✓
+                          تم التحويل
                         </Button>
                       )}
                       {p.status === "paid" && p.processed_at && (

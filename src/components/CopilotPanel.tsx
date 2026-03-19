@@ -179,7 +179,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
             <Bot className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي 🤖</h3>
+            <h3 className="font-bold text-card-foreground">مساعد المدرب الذكي</h3>
             <p className="text-xs text-muted-foreground">أخبر الكوبايلت عن عميلك ثم راجع البرنامج قبل الحفظ</p>
           </div>
         </div>
@@ -187,7 +187,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => generateProgram.mutate()} disabled={isGenerating} className="gap-1.5">
             {generateProgram.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            توليد برنامج بالذكاء الاصطناعي ✨
+            توليد برنامج بالذكاء الاصطناعي
           </Button>
           <Button variant="outline" onClick={() => weeklyEval.mutate()} disabled={isGenerating} className="gap-1.5">
             {weeklyEval.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
@@ -202,7 +202,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
                 <Bot className="w-5 h-5 text-primary" />
               </div>
             </div>
-            <p className="text-sm font-medium text-card-foreground">الكوبايلت يصمم برنامجك... ✨</p>
+            <p className="text-sm font-medium text-card-foreground">الكوبايلت يصمم برنامجك...</p>
             <p className="text-xs text-muted-foreground">{progressMessages[messageIndex]}</p>
           </div>
         )}
@@ -263,7 +263,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="text-center py-8 text-muted-foreground">
           <Bot className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">لم يتم استخدام المساعد الذكي بعد</p>
-          <p className="text-xs mt-1">اضغط "توليد برنامج بالذكاء الاصطناعي ✨" لإنشاء برنامج مخصص لهذا العميل</p>
+          <p className="text-xs mt-1">اضغط "توليد برنامج بالذكاء الاصطناعي" لإنشاء برنامج مخصص لهذا العميل</p>
         </div>
       )}
     </div>
@@ -481,7 +481,7 @@ function EditableRecommendationCard({
               {editing ? "قبول بعد التعديل" : rec.type === "program" ? "قبول البرنامج كاملاً" : "موافق"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
-              <X className="w-3 h-3" /> ❌ تجاهل
+              <X className="w-3 h-3" /> تجاهل
             </Button>
           </div>
         </div>

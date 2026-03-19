@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import { useNavigate } from "react-router-dom";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
@@ -32,6 +33,7 @@ const SPECIALIZATIONS = [
 ];
 
 const Settings = () => {
+  usePageTitle("الإعدادات");
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { plan } = usePlanLimits();
   const isPro = plan === "pro";

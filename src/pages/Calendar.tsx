@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ interface Session {
 }
 
 const CalendarPage = () => {
+  usePageTitle("التقويم");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

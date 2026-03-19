@@ -1,4 +1,5 @@
 import { useState } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
@@ -46,6 +47,7 @@ const AVATAR_COLORS = [
 ];
 
 const Clients = () => {
+  usePageTitle("العملاء");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [open, setOpen] = useState(false);

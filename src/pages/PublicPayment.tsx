@@ -334,7 +334,7 @@ const PublicPayment = () => {
               )}
             </Card>
 
-            <p className="text-xs text-muted-foreground text-center">الدفع آمن ومشفر عبر Moyasar 🔒</p>
+            <p className="text-xs text-muted-foreground text-center">الدفع آمن ومشفر عبر Moyasar</p>
           </div>
         )}
       </div>

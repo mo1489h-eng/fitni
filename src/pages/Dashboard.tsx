@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -164,6 +165,7 @@ const EmptyPanel = ({
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  usePageTitle("لوحة التحكم");
   const { isPro, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);

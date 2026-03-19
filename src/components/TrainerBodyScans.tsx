@@ -133,13 +133,13 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
           <div className="flex flex-col gap-2 mt-5 max-w-xs mx-auto">
             <Button className="gap-2" onClick={() => setShowAddModal(true)}>
               <PenLine className="w-4 h-4" />
-              أضف فحص نيابةً عن العميل ✏️
+              أضف فحص نيابةً عن العميل
             </Button>
             {whatsappScanLink && (
               <a href={whatsappScanLink} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="gap-2 w-full">
                   <Send className="w-4 h-4" />
-                  أرسل رابط الفحص للعميل 📤
+                  أرسل رابط الفحص للعميل
                 </Button>
               </a>
             )}
@@ -242,13 +242,13 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" className="gap-2" onClick={() => setShowAddModal(true)}>
           <PenLine className="w-4 h-4" />
-          أضف فحص نيابةً ✏️
+          أضف فحص نيابةً
         </Button>
         {whatsappScanLink && (
           <a href={whatsappScanLink} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" className="gap-2 w-full">
               <Send className="w-4 h-4" />
-              أرسل رابط للعميل 📤
+              أرسل رابط للعميل
             </Button>
           </a>
         )}
@@ -308,7 +308,7 @@ function AddScanModal({ open, onOpenChange, height, setHeight, weight, setWeight
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة فحص نيابةً عن العميل ✏️</DialogTitle>
+          <DialogTitle>إضافة فحص نيابةً عن العميل</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div>

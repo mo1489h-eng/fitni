@@ -47,6 +47,7 @@ const AVATAR_COLORS = [
 ];
 
 const Clients = () => {
+  usePageTitle("العملاء");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [open, setOpen] = useState(false);

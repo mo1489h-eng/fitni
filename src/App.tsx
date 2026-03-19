@@ -92,6 +92,7 @@ const App = () => (
             <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
             <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
             <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
+            <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
 
             <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
             <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />

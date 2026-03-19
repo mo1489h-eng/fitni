@@ -274,7 +274,7 @@ const PageBuilder = () => {
 
           {/* SECTIONS ORDER */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">ترتيب الأقسام 📋</h3>
+            <h3 className="font-bold text-sm text-card-foreground">ترتيب الأقسام</h3>
             <div className="space-y-1.5">
               {config.sections_order.map((section, i) => (
                 <div key={section} className="flex items-center gap-2 bg-secondary rounded-lg p-2.5">

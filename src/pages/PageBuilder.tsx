@@ -656,7 +656,7 @@ const PreviewContent = ({ config, profile, galleryImages }: { config: PageConfig
         if (!config.about_text) return null;
         return (
           <div key={section} className="px-6 py-4">
-            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>عن المدرب 📝</h3>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>عن المدرب</h3>
             <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: t.muted }}>{config.about_text}</p>
           </div>
         );

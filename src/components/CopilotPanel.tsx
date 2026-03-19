@@ -263,7 +263,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="text-center py-8 text-muted-foreground">
           <Bot className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="text-sm">لم يتم استخدام المساعد الذكي بعد</p>
-          <p className="text-xs mt-1">اضغط "توليد برنامج بالذكاء الاصطناعي ✨" لإنشاء برنامج مخصص لهذا العميل</p>
+          <p className="text-xs mt-1">اضغط "توليد برنامج بالذكاء الاصطناعي" لإنشاء برنامج مخصص لهذا العميل</p>
         </div>
       )}
     </div>

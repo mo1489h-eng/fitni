@@ -234,7 +234,7 @@ const Settings = () => {
         .eq("user_id", user.id);
       if (error) throw error;
       await refreshProfile();
-      toast({ title: "تم حفظ التغييرات ✅" });
+      toast({ title: "تم حفظ التغييرات" });
     } catch {
       toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
     } finally {

@@ -548,7 +548,7 @@ const TrainerPublicPage = () => {
         if (!pc.testimonials?.length) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>آراء العملاء ⭐</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>آراء العملاء</h2>
             <div className="space-y-3">
               {pc.testimonials.map((tm, i) => (
                 <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: t.card, border: `1px solid ${t.text}10` }}>

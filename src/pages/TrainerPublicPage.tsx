@@ -568,7 +568,7 @@ const TrainerPublicPage = () => {
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-12">
             <div className="rounded-2xl p-8 text-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}25 100%)`, border: `1px solid ${brandColor}30` }}>
-              <h2 className="text-xl font-bold mb-2" style={{ color: t.text }}>ابدأ رحلتك الآن 🚀</h2>
+              <h2 className="text-xl font-bold mb-2" style={{ color: t.text }}>ابدأ رحلتك الآن</h2>
               {pc.cta_subtitle && <p className="text-sm mb-4" style={{ color: t.muted }}>{pc.cta_subtitle}</p>}
               {packages.length > 0 && (
                 <button className="px-8 py-3 rounded-lg font-bold text-white text-lg transition-transform hover:scale-105 active:scale-95" style={{ backgroundColor: brandColor }} onClick={scrollToPackages}>

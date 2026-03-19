@@ -182,7 +182,7 @@ const PortalBodyScan = () => {
             });
             setEditResult(null);
             setIsEditing(true);
-            toast({ title: "تم قراءة البيانات ✅", description: "راجع البيانات وعدّل إذا احتجت" });
+            toast({ title: "تم قراءة البيانات", description: "راجع البيانات وعدّل إذا احتجت" });
           }
           setMode("manual");
         } catch (err: any) {

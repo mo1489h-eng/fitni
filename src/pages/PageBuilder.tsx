@@ -395,7 +395,7 @@ const PageBuilder = () => {
 
           {/* GALLERY */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">المعرض 📸</h3>
+            <h3 className="font-bold text-sm text-card-foreground">المعرض</h3>
             <p className="text-xs text-muted-foreground">حتى 12 صورة</p>
             <div className="flex gap-2 flex-wrap">
               {["grid", "masonry"].map(l => (

@@ -288,7 +288,7 @@ const TrainerPublicPage = () => {
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}>
                   <CheckCircle className="w-7 h-7" style={{ color: brandColor }} />
                 </div>
-                <h2 className="text-xl font-bold" style={{ color: t.text }}>تم الدفع بنجاح! 🎉</h2>
+                <h2 className="text-xl font-bold" style={{ color: t.text }}>تم الدفع بنجاح</h2>
                 <p className="text-sm mt-1" style={{ color: t.muted }}>أنشئ حسابك في fitni للوصول لبوابة التدريب</p>
               </div>
 
@@ -374,7 +374,7 @@ const TrainerPublicPage = () => {
                 <CheckCircle className="w-10 h-10" style={{ color: brandColor }} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: t.text }}>تم الاشتراك بنجاح! 🎉</h2>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: t.text }}>تم الاشتراك بنجاح</h2>
                 <p style={{ color: t.muted }}>مرحباً {clientForm.full_name} في رحلتك مع {profile.full_name}</p>
               </div>
               <Card className="p-4 text-sm text-right space-y-2" style={{ backgroundColor: t.card, borderColor: `${t.text}15` }}>
@@ -477,7 +477,7 @@ const TrainerPublicPage = () => {
         if (!pc.about_text) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>عن المدرب 📝</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>عن المدرب</h2>
             <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: t.muted }}>{pc.about_text}</p>
           </section>
         );
@@ -486,7 +486,7 @@ const TrainerPublicPage = () => {
         if (!galleryUrls.length) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>المعرض 📸</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>المعرض</h2>
             <div className={`grid gap-2 ${pc.gallery_layout === "masonry" ? "grid-cols-3" : "grid-cols-2"}`}>
               {galleryUrls.map((url, i) => (
                 <div key={i} className={`rounded-xl overflow-hidden ${pc.gallery_layout === "masonry" && i === 0 ? "row-span-2" : ""}`}
@@ -502,7 +502,7 @@ const TrainerPublicPage = () => {
         if (!packages.length) return null;
         return (
           <section key={section} ref={packagesRef} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>اختر باقتك 💪</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>اختر باقتك</h2>
             <div className="space-y-4">
               {packages.map((pkg) => {
                 const isFeatured = pc.featured_package_id === pkg.id;
@@ -517,8 +517,8 @@ const TrainerPublicPage = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-lg" style={{ color: t.text }}>{pkg.name}</h3>
-                          {isFeatured && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: `${brandColor}20`, color: brandColor }}>الأكثر شعبية ⭐</span>}
-                          {isLimited && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-destructive/20 text-destructive">عرض محدود 🔥</span>}
+                          {isFeatured && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: `${brandColor}20`, color: brandColor }}>الأكثر شعبية</span>}
+                          {isLimited && <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-destructive/20 text-destructive">عرض محدود</span>}
                         </div>
                         {pkg.description && <p className="text-sm mt-1" style={{ color: t.muted }}>{pkg.description}</p>}
                       </div>
@@ -548,7 +548,7 @@ const TrainerPublicPage = () => {
         if (!pc.testimonials?.length) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>آراء العملاء ⭐</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>آراء العملاء</h2>
             <div className="space-y-3">
               {pc.testimonials.map((tm, i) => (
                 <div key={i} className="rounded-2xl p-4" style={{ backgroundColor: t.card, border: `1px solid ${t.text}10` }}>
@@ -568,7 +568,7 @@ const TrainerPublicPage = () => {
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-12">
             <div className="rounded-2xl p-8 text-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}25 100%)`, border: `1px solid ${brandColor}30` }}>
-              <h2 className="text-xl font-bold mb-2" style={{ color: t.text }}>ابدأ رحلتك الآن 🚀</h2>
+              <h2 className="text-xl font-bold mb-2" style={{ color: t.text }}>ابدأ رحلتك الآن</h2>
               {pc.cta_subtitle && <p className="text-sm mb-4" style={{ color: t.muted }}>{pc.cta_subtitle}</p>}
               {packages.length > 0 && (
                 <button className="px-8 py-3 rounded-lg font-bold text-white text-lg transition-transform hover:scale-105 active:scale-95" style={{ backgroundColor: brandColor }} onClick={scrollToPackages}>

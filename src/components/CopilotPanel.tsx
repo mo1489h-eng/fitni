@@ -60,7 +60,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["copilot-recommendations", clientId] });
-      toast({ title: "تم إنشاء البرنامج بنجاح 🤖✅" });
+      toast({ title: "تم إنشاء البرنامج بنجاح" });
     },
     onError: (err: any) => {
       toast({ title: "خطأ في الإنشاء", description: err.message, variant: "destructive" });
@@ -78,7 +78,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["copilot-recommendations", clientId] });
-      toast({ title: "تم تقييم الأسبوع 📊" });
+      toast({ title: "تم تقييم الأسبوع" });
     },
     onError: (err: any) => {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -100,7 +100,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
       queryClient.invalidateQueries({ queryKey: ["assigned-program"] });
       queryClient.invalidateQueries({ queryKey: ["programs"] });
       toast({
-        title: vars.decision === "accepted" ? "تم تطبيق التوصية ✅" : "تم رفض التوصية",
+        title: vars.decision === "accepted" ? "تم تطبيق التوصية" : "تم رفض التوصية",
       });
     },
     onError: (err: any) => {
@@ -135,7 +135,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending": return <span className="text-xs px-2 py-0.5 rounded-full bg-warning/10 text-warning">معلق</span>;
-      case "accepted": return <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">مقبول ✅</span>;
+      case "accepted": return <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">مقبول</span>;
       case "rejected": return <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">مرفوض</span>;
       default: return null;
     }
@@ -149,7 +149,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
             <Bot className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية ⭐</h3>
+            <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية</h3>
             <p className="text-sm text-muted-foreground mt-1">احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية</p>
           </div>
           <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
@@ -216,7 +216,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
               توصيات بانتظار الموافقة ({pendingRecs.length})
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">[✅ قبول البرنامج كاملاً] [✏️ تعديل قبل الحفظ] [🔄 توليد برنامج جديد]</p>
+          <p className="text-xs text-muted-foreground mb-3">قبول البرنامج كاملاً | تعديل قبل الحفظ | توليد برنامج جديد</p>
           <div className="space-y-3">
             {pendingRecs.map((rec: any) => (
               <EditableRecommendationCard
@@ -478,7 +478,7 @@ function EditableRecommendationCard({
           <div className="flex gap-2 pt-1">
             <Button size="sm" className="flex-1 gap-1" onClick={() => onAccept(editing ? editPayload : undefined)} disabled={isApplying}>
               {isApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-              {editing ? "✅ قبول بعد التعديل" : rec.type === "program" ? "✅ قبول البرنامج كاملاً" : "✅ موافق"}
+              {editing ? "قبول بعد التعديل" : rec.type === "program" ? "قبول البرنامج كاملاً" : "موافق"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
               <X className="w-3 h-3" /> ❌ تجاهل

@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       setSessionToken(result.session_token);
     }
 
-    toast.success("تم التحويل ✅");
+    toast.success("تم التحويل");
     fetchData(result?.session_token || sessionToken, month);
   };
 
@@ -331,7 +331,7 @@ export default function AdminDashboard() {
                     <TableCell className="text-xs">{new Date(p.requested_at).toLocaleDateString("ar-SA")}</TableCell>
                     <TableCell>
                       {p.status === "paid" ? (
-                        <Badge className="bg-primary/20 text-primary">مدفوع ✅</Badge>
+                        <Badge className="bg-primary/20 text-primary">مدفوع</Badge>
                       ) : (
                         <Badge variant="secondary">معلق</Badge>
                       )}

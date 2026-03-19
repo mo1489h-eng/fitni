@@ -42,7 +42,7 @@ function calculateScan(
   const bmi = weight / (heightM * heightM);
   let bmiCategory = "", bmiColor = "";
   if (bmi < 18.5) { bmiCategory = "نقص في الوزن"; bmiColor = "text-blue-500"; }
-  else if (bmi < 25) { bmiCategory = "وزن طبيعي ✅"; bmiColor = "text-green-500"; }
+  else if (bmi < 25) { bmiCategory = "وزن طبيعي"; bmiColor = "text-green-500"; }
   else if (bmi < 30) { bmiCategory = "زيادة في الوزن"; bmiColor = "text-yellow-500"; }
   else { bmiCategory = "سمنة"; bmiColor = "text-red-500"; }
 
@@ -122,7 +122,7 @@ const PortalBodyScan = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portal-body-scans", token] });
-      toast({ title: "تم حفظ النتائج ✅" });
+      toast({ title: "تم حفظ النتائج" });
       resetForm();
     },
   });
@@ -169,7 +169,7 @@ const PortalBodyScan = () => {
 
             setResult({
               bmi: bmiVal,
-              bmiCategory: bmiVal < 18.5 ? "نقص في الوزن" : bmiVal < 25 ? "وزن طبيعي ✅" : bmiVal < 30 ? "زيادة في الوزن" : "سمنة",
+              bmiCategory: bmiVal < 18.5 ? "نقص في الوزن" : bmiVal < 25 ? "وزن طبيعي" : bmiVal < 30 ? "زيادة في الوزن" : "سمنة",
               bmiColor: bmiVal < 18.5 ? "text-blue-500" : bmiVal < 25 ? "text-green-500" : bmiVal < 30 ? "text-yellow-500" : "text-red-500",
               bodyFat: bodyFatVal,
               muscleMass: muscleMassVal,
@@ -182,7 +182,7 @@ const PortalBodyScan = () => {
             });
             setEditResult(null);
             setIsEditing(true);
-            toast({ title: "تم قراءة البيانات ✅", description: "راجع البيانات وعدّل إذا احتجت" });
+            toast({ title: "تم قراءة البيانات", description: "راجع البيانات وعدّل إذا احتجت" });
           }
           setMode("manual");
         } catch (err: any) {

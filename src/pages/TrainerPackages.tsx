@@ -91,7 +91,7 @@ const TrainerPackages = () => {
       setShowForm(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: editingId ? "تم تحديث الباقة ✅" : "تم إنشاء الباقة ✅" });
+      toast({ title: editingId ? "تم تحديث الباقة" : "تم إنشاء الباقة" });
     },
     onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
   });
@@ -131,7 +131,7 @@ const TrainerPackages = () => {
   const copyLink = (pkgId: string) => {
     navigator.clipboard.writeText(getPayLink(pkgId));
     setCopiedLink(pkgId);
-    toast({ title: "تم نسخ الرابط 📋" });
+    toast({ title: "تم نسخ الرابط" });
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
@@ -145,7 +145,7 @@ const TrainerPackages = () => {
     <TrainerLayout>
       <div className="space-y-4 animate-fade-in" dir="rtl">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">باقاتي 📦</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Package className="w-6 h-6 text-primary" strokeWidth={1.5} />باقاتي</h1>
           <Button className="gap-1" onClick={() => { setForm(defaultForm); setEditingId(null); setShowForm(true); }}>
             <Plus className="w-4 h-4" /> باقة جديدة
           </Button>
@@ -156,7 +156,7 @@ const TrainerPackages = () => {
           <Card className="p-4 bg-primary/5 border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <LinkIcon className="w-4 h-4 text-primary" />
-              <p className="text-sm font-bold text-foreground">رابط الدفع الخاص بك 🔗</p>
+              <p className="text-sm font-bold text-foreground">رابط الدفع الخاص بك</p>
             </div>
             <p className="text-xs text-muted-foreground mb-2">شارك هذا الرابط في إنستقرام، واتساب، سناب شات</p>
             <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ const TrainerPackages = () => {
                 variant="outline"
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/pay/${profile?.username || user.id}`);
-                  toast({ title: "تم نسخ الرابط 📋" });
+                  toast({ title: "تم نسخ الرابط" });
                 }}
               >
                 <Copy className="w-4 h-4" />
@@ -182,7 +182,7 @@ const TrainerPackages = () => {
         ) : packages.filter(p => p.is_active).length === 0 ? (
           <div className="text-center py-20 space-y-3">
             <Package className="w-12 h-12 mx-auto text-muted-foreground opacity-40" />
-            <p className="text-muted-foreground">ما أنشأت باقات بعد 📦</p>
+            <p className="text-muted-foreground">ما أنشأت باقات بعد</p>
             <p className="text-sm text-muted-foreground">أنشئ باقتك الأولى وشاركها مع عملاءك</p>
             <Button onClick={() => { setForm(defaultForm); setShowForm(true); }}>
               <Plus className="w-4 h-4 ml-1" /> إنشاء باقة
@@ -374,7 +374,7 @@ const TrainerPackages = () => {
                 disabled={saveMutation.isPending || !form.name.trim() || form.price <= 0}
               >
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {editingId ? "حفظ التغييرات" : "نشر الباقة ✅"}
+                {editingId ? "حفظ التغييرات" : "نشر الباقة"}
               </Button>
             </div>
           </DialogContent>

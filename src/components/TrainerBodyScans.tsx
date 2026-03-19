@@ -95,7 +95,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
       qc.invalidateQueries({ queryKey: ["body-scans", clientId] });
       setShowAddModal(false);
       setHeight(""); setWeight(""); setAge(""); setWaist(""); setNeck(""); setHip(""); setNotes("");
-      toast({ title: "تم حفظ الفحص ✅" });
+      toast({ title: "تم حفظ الفحص" });
     },
   });
 
@@ -117,7 +117,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
 
   const portalScanUrl = portalToken ? `${window.location.origin}/client-portal/${portalToken}` : null;
   const whatsappScanLink = clientPhone && portalScanUrl
-    ? `https://wa.me/966${clientPhone.replace(/^0/, "")}?text=${encodeURIComponent(`أهلاً ${clientName || ""}! 📊\nسوِّ فحص جسم جديد من هنا:\n${portalScanUrl}`)}`
+    ? `https://wa.me/966${clientPhone.replace(/^0/, "")}?text=${encodeURIComponent(`أهلاً ${clientName || ""}!\nسوِّ فحص جسم جديد من هنا:\n${portalScanUrl}`)}`
     : null;
 
   if (isLoading) return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -267,7 +267,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
                   <p className="text-sm font-bold text-secondary-foreground">
                     {Number(s.weight)} كجم • BMI: {Number(s.bmi)} • دهون: {Number(s.body_fat)}%
                   </p>
-                  {s.notes && <p className="text-xs text-muted-foreground mt-0.5">📝 {s.notes}</p>}
+                  {s.notes && <p className="text-xs text-muted-foreground mt-0.5">{s.notes}</p>}
                 </div>
                 <span className={`text-xs font-medium ${info.color}`}>{info.label}</span>
               </div>

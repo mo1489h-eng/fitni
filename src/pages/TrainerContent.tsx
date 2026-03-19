@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 
 const POST_TYPES = [
-  { value: "نصيحة", label: "💡 نصيحة" },
-  { value: "تمرين", label: "🏋️ تمرين" },
-  { value: "وجبة", label: "🥗 وجبة" },
-  { value: "تحفيز", label: "🔥 تحفيز" },
-  { value: "إعلان", label: "📢 إعلان" },
+  { value: "نصيحة", label: "نصيحة" },
+  { value: "تمرين", label: "تمرين" },
+  { value: "وجبة", label: "وجبة" },
+  { value: "تحفيز", label: "تحفيز" },
+  { value: "إعلان", label: "إعلان" },
 ];
 
 const TrainerContent = () => {
@@ -177,7 +177,7 @@ const TrainerContent = () => {
       queryClient.invalidateQueries({ queryKey: ["trainer-posts"] });
       setShowDialog(false);
       resetForm();
-      toast({ title: editingPost ? "تم تحديث المنشور ✅" : "تم النشر بنجاح ✅" });
+      toast({ title: editingPost ? "تم تحديث المنشور" : "تم النشر بنجاح" });
     } catch (err: any) {
       toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -224,7 +224,7 @@ const TrainerContent = () => {
             className="gap-1"
             onClick={() => {
               navigator.clipboard.writeText(publicUrl);
-              toast({ title: "تم نسخ الرابط 📋" });
+              toast({ title: "تم نسخ الرابط" });
             }}
           >
             <Copy className="w-3 h-3" /> نسخ
@@ -339,7 +339,7 @@ const TrainerContent = () => {
                   onClick={() => imageInputRef.current?.click()}
                 >
                   <ImageIcon className="w-4 h-4" />
-                  📷 إضافة صورة
+                  إضافة صورة
                 </Button>
               )}
               <input
@@ -379,7 +379,7 @@ const TrainerContent = () => {
                   onClick={() => videoInputRef.current?.click()}
                 >
                   <Video className="w-4 h-4" />
-                  🎬 إضافة فيديو
+                  إضافة فيديو
                 </Button>
               )}
               <input
@@ -396,7 +396,7 @@ const TrainerContent = () => {
                 <Input
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="🔗 رابط YouTube / Instagram / TikTok"
+                  placeholder="رابط YouTube / Instagram / TikTok"
                   dir="ltr"
                   className="text-sm"
                 />
@@ -476,7 +476,7 @@ const TrainerContent = () => {
                   جاري النشر...
                 </>
               ) : (
-                editingPost ? "تحديث المنشور" : "نشر الآن ✅"
+                editingPost ? "تحديث المنشور" : "نشر الآن"
               )}
             </Button>
           </div>

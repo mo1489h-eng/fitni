@@ -54,8 +54,8 @@ const DEFAULT_CONFIG: PageConfig = {
 };
 
 const ALL_SPECIALTIES = [
-  "تخسيس 🔥", "بناء عضلات 💪", "لياقة عامة 🏃", "تأهيل 🏥",
-  "رياضات قتالية 🥊", "يوغا 🧘", "كمال أجسام", "كروسفت", "رياضة نسائية",
+  "تخسيس", "بناء عضلات", "لياقة عامة", "تأهيل",
+  "رياضات قتالية", "يوغا", "كمال أجسام", "كروسفت", "رياضة نسائية",
 ];
 
 const THEMES = [
@@ -72,14 +72,14 @@ const FONTS = [
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-  hero: "الهيرو 🎯",
-  stats: "الإحصائيات 📊",
-  specialties: "التخصصات 🏷️",
-  about: "عن المدرب 📝",
-  gallery: "المعرض 📸",
-  packages: "الباقات 💪",
-  testimonials: "آراء العملاء ⭐",
-  cta: "دعوة للعمل 🚀",
+  hero: "الهيرو",
+  stats: "الإحصائيات",
+  specialties: "التخصصات",
+  about: "عن المدرب",
+  gallery: "المعرض",
+  packages: "الباقات",
+  testimonials: "آراء العملاء",
+  cta: "دعوة للعمل",
 };
 
 const PageBuilder = () => {
@@ -123,7 +123,7 @@ const PageBuilder = () => {
         .update({ page_config: config as any, gallery_images: galleryImages } as any)
         .eq("user_id", user.id);
       if (error) throw error;
-      toast({ title: "تم حفظ تخصيص الصفحة ✅" });
+      toast({ title: "تم حفظ تخصيص الصفحة" });
     } catch {
       toast({ title: "حدث خطأ", variant: "destructive" });
     } finally {
@@ -274,7 +274,7 @@ const PageBuilder = () => {
 
           {/* SECTIONS ORDER */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">ترتيب الأقسام 📋</h3>
+            <h3 className="font-bold text-sm text-card-foreground">ترتيب الأقسام</h3>
             <div className="space-y-1.5">
               {config.sections_order.map((section, i) => (
                 <div key={section} className="flex items-center gap-2 bg-secondary rounded-lg p-2.5">
@@ -295,7 +295,7 @@ const PageBuilder = () => {
 
           {/* HERO SETTINGS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">الهيرو 🎯</h3>
+            <h3 className="font-bold text-sm text-card-foreground">الهيرو</h3>
             <p className="text-xs text-muted-foreground">نمط خلفية الهيرو</p>
             <div className="flex gap-2 flex-wrap">
               {[
@@ -329,7 +329,7 @@ const PageBuilder = () => {
 
           {/* STATS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">الإحصائيات 📊</h3>
+            <h3 className="font-bold text-sm text-card-foreground">الإحصائيات</h3>
             {config.stats.map((stat, i) => (
               <div key={i} className="flex items-center gap-2 bg-secondary rounded-lg p-2.5">
                 <span className="text-sm flex-1 text-card-foreground">{stat.value} — {stat.label}</span>
@@ -359,7 +359,7 @@ const PageBuilder = () => {
 
           {/* SPECIALTIES */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">التخصصات 🏷️</h3>
+            <h3 className="font-bold text-sm text-card-foreground">التخصصات</h3>
             <div className="flex flex-wrap gap-2">
               {ALL_SPECIALTIES.map(s => (
                 <button
@@ -382,7 +382,7 @@ const PageBuilder = () => {
 
           {/* ABOUT */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">عن المدرب 📝</h3>
+            <h3 className="font-bold text-sm text-card-foreground">عن المدرب</h3>
             <Textarea
               value={config.about_text}
               onChange={e => setConfig({ ...config, about_text: e.target.value })}
@@ -395,7 +395,7 @@ const PageBuilder = () => {
 
           {/* GALLERY */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">المعرض 📸</h3>
+            <h3 className="font-bold text-sm text-card-foreground">المعرض</h3>
             <p className="text-xs text-muted-foreground">حتى 12 صورة</p>
             <div className="flex gap-2 flex-wrap">
               {["grid", "masonry"].map(l => (
@@ -443,7 +443,7 @@ const PageBuilder = () => {
 
           {/* PACKAGES DISPLAY */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">عرض الباقات 💪</h3>
+            <h3 className="font-bold text-sm text-card-foreground">عرض الباقات</h3>
             <div className="flex gap-2">
               {[
                 { value: "cards", label: "بطاقات" },
@@ -464,7 +464,7 @@ const PageBuilder = () => {
 
           {/* TESTIMONIALS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">آراء العملاء ⭐</h3>
+            <h3 className="font-bold text-sm text-card-foreground">آراء العملاء</h3>
             {config.testimonials.map((t, i) => (
               <div key={i} className="bg-secondary rounded-lg p-3 space-y-1">
                 <div className="flex items-center justify-between">
@@ -516,7 +516,7 @@ const PageBuilder = () => {
 
           {/* CTA */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">دعوة للعمل 🚀</h3>
+            <h3 className="font-bold text-sm text-card-foreground">دعوة للعمل</h3>
             <Input
               value={config.cta_subtitle}
               onChange={e => setConfig({ ...config, cta_subtitle: e.target.value })}
@@ -528,12 +528,12 @@ const PageBuilder = () => {
           {/* SHARE */}
           {pageUrl && (
             <Card className="p-4 space-y-3">
-              <h3 className="font-bold text-sm text-card-foreground">شارك صفحتك 🔗</h3>
+              <h3 className="font-bold text-sm text-card-foreground">شارك صفحتك</h3>
               <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
                 <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
                   {pageUrl.replace("https://", "")}
                 </p>
-                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }}>
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
@@ -541,7 +541,7 @@ const PageBuilder = () => {
                 <Button variant="outline" size="sm" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${pageUrl}`)}`, "_blank")}>
                   واتساب
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }}>
                   انستقرام
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`, "_blank")}>
@@ -656,7 +656,7 @@ const PreviewContent = ({ config, profile, galleryImages }: { config: PageConfig
         if (!config.about_text) return null;
         return (
           <div key={section} className="px-6 py-4">
-            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>عن المدرب 📝</h3>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>عن المدرب</h3>
             <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: t.muted }}>{config.about_text}</p>
           </div>
         );
@@ -665,7 +665,7 @@ const PreviewContent = ({ config, profile, galleryImages }: { config: PageConfig
         if (!galleryImages.length) return null;
         return (
           <div key={section} className="px-6 py-4">
-            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>المعرض 📸</h3>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>المعرض</h3>
             <div className={`grid gap-1.5 ${config.gallery_layout === "masonry" ? "grid-cols-3" : "grid-cols-2"}`}>
               {galleryImages.slice(0, 6).map((img, i) => (
                 <div key={i} className={`rounded-lg overflow-hidden bg-gray-800 ${config.gallery_layout === "masonry" && i === 0 ? "row-span-2" : ""}`}

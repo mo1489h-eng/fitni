@@ -787,7 +787,7 @@ const ProgramBuilder = () => {
                     className={`px-3 py-1.5 rounded-full text-[10px] font-medium border transition-all ${
                       currentDay.isRest ? "bg-primary/10 text-primary border-primary/20" : "border-border text-muted-foreground hover:text-foreground"
                     }`}>
-                    {currentDay.isRest ? "تفعيل 💪" : "يوم راحة 😴"}
+                    {currentDay.isRest ? "تفعيل" : "يوم راحة"}
                   </button>
                 </div>
                 {!currentDay.isRest && (

@@ -374,7 +374,7 @@ const TrainerPublicPage = () => {
                 <CheckCircle className="w-10 h-10" style={{ color: brandColor }} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: t.text }}>تم الاشتراك بنجاح! 🎉</h2>
+                <h2 className="text-2xl font-bold mb-2" style={{ color: t.text }}>تم الاشتراك بنجاح</h2>
                 <p style={{ color: t.muted }}>مرحباً {clientForm.full_name} في رحلتك مع {profile.full_name}</p>
               </div>
               <Card className="p-4 text-sm text-right space-y-2" style={{ backgroundColor: t.card, borderColor: `${t.text}15` }}>

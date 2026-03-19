@@ -220,7 +220,7 @@ const Nutrition = () => {
           })));
         }
       }
-      toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل ✅` });
+      toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل` });
       setShowCopyDialog(false);
       fetchPlans();
     } catch (err: any) {

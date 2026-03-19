@@ -528,7 +528,7 @@ const PageBuilder = () => {
           {/* SHARE */}
           {pageUrl && (
             <Card className="p-4 space-y-3">
-              <h3 className="font-bold text-sm text-card-foreground">شارك صفحتك 🔗</h3>
+              <h3 className="font-bold text-sm text-card-foreground">شارك صفحتك</h3>
               <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
                 <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
                   {pageUrl.replace("https://", "")}

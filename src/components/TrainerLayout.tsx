@@ -41,7 +41,7 @@ const mobileNavItems = [
   { label: "الإعدادات", href: "/settings", icon: Settings2 },
 ];
 
-const [searchOpen, setSearchOpen] = useState(false);
+
 
 const TrainerLayout = ({
   children,
@@ -55,6 +55,7 @@ const TrainerLayout = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const trainerName = profile?.full_name?.trim() || "المدرب";
   const firstName = trainerName.split(" ")[0];

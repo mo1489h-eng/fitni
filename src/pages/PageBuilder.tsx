@@ -541,7 +541,7 @@ const PageBuilder = () => {
                 <Button variant="outline" size="sm" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${pageUrl}`)}`, "_blank")}>
                   واتساب
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }}>
                   انستقرام
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`, "_blank")}>

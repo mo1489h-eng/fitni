@@ -169,7 +169,7 @@ const PortalBodyScan = () => {
 
             setResult({
               bmi: bmiVal,
-              bmiCategory: bmiVal < 18.5 ? "نقص في الوزن" : bmiVal < 25 ? "وزن طبيعي ✅" : bmiVal < 30 ? "زيادة في الوزن" : "سمنة",
+              bmiCategory: bmiVal < 18.5 ? "نقص في الوزن" : bmiVal < 25 ? "وزن طبيعي" : bmiVal < 30 ? "زيادة في الوزن" : "سمنة",
               bmiColor: bmiVal < 18.5 ? "text-blue-500" : bmiVal < 25 ? "text-green-500" : bmiVal < 30 ? "text-yellow-500" : "text-red-500",
               bodyFat: bodyFatVal,
               muscleMass: muscleMassVal,

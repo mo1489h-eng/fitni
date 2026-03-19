@@ -359,7 +359,7 @@ const PageBuilder = () => {
 
           {/* SPECIALTIES */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">التخصصات 🏷️</h3>
+            <h3 className="font-bold text-sm text-card-foreground">التخصصات</h3>
             <div className="flex flex-wrap gap-2">
               {ALL_SPECIALTIES.map(s => (
                 <button

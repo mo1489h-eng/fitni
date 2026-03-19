@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";

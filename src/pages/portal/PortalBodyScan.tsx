@@ -42,7 +42,7 @@ function calculateScan(
   const bmi = weight / (heightM * heightM);
   let bmiCategory = "", bmiColor = "";
   if (bmi < 18.5) { bmiCategory = "نقص في الوزن"; bmiColor = "text-blue-500"; }
-  else if (bmi < 25) { bmiCategory = "وزن طبيعي ✅"; bmiColor = "text-green-500"; }
+  else if (bmi < 25) { bmiCategory = "وزن طبيعي"; bmiColor = "text-green-500"; }
   else if (bmi < 30) { bmiCategory = "زيادة في الوزن"; bmiColor = "text-yellow-500"; }
   else { bmiCategory = "سمنة"; bmiColor = "text-red-500"; }
 

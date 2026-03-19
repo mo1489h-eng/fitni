@@ -476,7 +476,7 @@ const TrainerContent = () => {
                   جاري النشر...
                 </>
               ) : (
-                editingPost ? "تحديث المنشور" : "نشر الآن ✅"
+                editingPost ? "تحديث المنشور" : "نشر الآن"
               )}
             </Button>
           </div>

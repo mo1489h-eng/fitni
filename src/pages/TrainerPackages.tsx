@@ -374,7 +374,7 @@ const TrainerPackages = () => {
                 disabled={saveMutation.isPending || !form.name.trim() || form.price <= 0}
               >
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {editingId ? "حفظ التغييرات" : "نشر الباقة ✅"}
+                {editingId ? "حفظ التغييرات" : "نشر الباقة"}
               </Button>
             </div>
           </DialogContent>

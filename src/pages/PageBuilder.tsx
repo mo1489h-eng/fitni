@@ -329,7 +329,7 @@ const PageBuilder = () => {
 
           {/* STATS */}
           <Card className="p-4 space-y-3">
-            <h3 className="font-bold text-sm text-card-foreground">الإحصائيات 📊</h3>
+            <h3 className="font-bold text-sm text-card-foreground">الإحصائيات</h3>
             {config.stats.map((stat, i) => (
               <div key={i} className="flex items-center gap-2 bg-secondary rounded-lg p-2.5">
                 <span className="text-sm flex-1 text-card-foreground">{stat.value} — {stat.label}</span>

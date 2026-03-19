@@ -647,7 +647,7 @@ const ProgramBuilder = () => {
 
           {/* Duration */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">⏱️ المدة</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المدة</label>
             <div className="flex gap-2 flex-wrap">
               {DURATIONS.map(d => (
                 <button key={d} onClick={() => setWeeks(d)}

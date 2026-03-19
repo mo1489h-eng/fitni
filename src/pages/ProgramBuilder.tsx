@@ -881,7 +881,7 @@ const ProgramBuilder = () => {
           {/* Sticky Bottom Bar - above bottom nav */}
           <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
             <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => {
-              toast({ title: "تم حفظ المسودة 📝" });
+              toast({ title: "تم حفظ المسودة" });
             }}>
               <Save className="w-3.5 h-3.5" />حفظ مسودة
             </Button>

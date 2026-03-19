@@ -14,6 +14,7 @@ import ClientPaymentModal from "@/components/ClientPaymentModal";
 import TrainerPayoutSection from "@/components/TrainerPayoutSection";
 
 const Payments = () => {
+  usePageTitle("المدفوعات");
   const { user } = useAuth();
   const [showPayModal, setShowPayModal] = useState<any>(null);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);

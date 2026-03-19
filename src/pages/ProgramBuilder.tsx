@@ -217,6 +217,7 @@ const templates = [
 ];
 
 const ProgramBuilder = () => {
+  usePageTitle("البرامج");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();

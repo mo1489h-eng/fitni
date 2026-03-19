@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 const Reports = () => {
+  usePageTitle("التقارير");
   const { user, profile } = useAuth();
   const { hasReportsAccess, plan } = usePlanLimits();
   const [sendingIndex, setSendingIndex] = useState<number | null>(null);

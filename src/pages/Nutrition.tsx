@@ -80,6 +80,7 @@ const MEAL_TEMPLATES = [
 ];
 
 const Nutrition = () => {
+  usePageTitle("التغذية");
   const { user } = useAuth();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [clients, setClients] = useState<Client[]>([]);

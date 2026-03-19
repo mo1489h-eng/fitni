@@ -1,27 +1,19 @@
-import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[hsl(0_0%_2%)]" dir="rtl">
-      <div className="text-center space-y-4">
-        <FileQuestion className="w-16 h-16 text-muted-foreground/30 mx-auto" strokeWidth={1.5} />
-        <h1 className="text-5xl font-black text-foreground tabular-nums">404</h1>
-        <p className="text-lg text-muted-foreground">الصفحة غير موجودة</p>
-        <Button asChild>
-          <Link to="/">العودة للرئيسية</Link>
-        </Button>
-      </div>
+const NotFound = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background" dir="rtl">
+    <div className="text-center space-y-5 animate-fade-in">
+      <FileQuestion className="w-16 h-16 text-muted-foreground/20 mx-auto" strokeWidth={1.5} />
+      <h1 className="text-7xl font-black text-muted-foreground/30 tabular-nums">404</h1>
+      <p className="text-lg font-semibold text-foreground">الصفحة غير موجودة</p>
+      <p className="text-sm text-muted-foreground">يبدو أن هذه الصفحة لا وجود لها</p>
+      <Button asChild size="lg">
+        <Link to="/">العودة للرئيسية</Link>
+      </Button>
     </div>
-  );
-};
+  </div>
+);
 
 export default NotFound;

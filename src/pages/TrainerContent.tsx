@@ -177,7 +177,7 @@ const TrainerContent = () => {
       queryClient.invalidateQueries({ queryKey: ["trainer-posts"] });
       setShowDialog(false);
       resetForm();
-      toast({ title: editingPost ? "تم تحديث المنشور ✅" : "تم النشر بنجاح ✅" });
+      toast({ title: editingPost ? "تم تحديث المنشور" : "تم النشر بنجاح" });
     } catch (err: any) {
       toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
     } finally {

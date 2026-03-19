@@ -122,7 +122,7 @@ const PortalBodyScan = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portal-body-scans", token] });
-      toast({ title: "تم حفظ النتائج ✅" });
+      toast({ title: "تم حفظ النتائج" });
       resetForm();
     },
   });

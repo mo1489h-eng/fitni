@@ -100,7 +100,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
       queryClient.invalidateQueries({ queryKey: ["assigned-program"] });
       queryClient.invalidateQueries({ queryKey: ["programs"] });
       toast({
-        title: vars.decision === "accepted" ? "تم تطبيق التوصية ✅" : "تم رفض التوصية",
+        title: vars.decision === "accepted" ? "تم تطبيق التوصية" : "تم رفض التوصية",
       });
     },
     onError: (err: any) => {

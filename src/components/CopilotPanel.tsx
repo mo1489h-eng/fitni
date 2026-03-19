@@ -135,7 +135,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending": return <span className="text-xs px-2 py-0.5 rounded-full bg-warning/10 text-warning">معلق</span>;
-      case "accepted": return <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">مقبول ✅</span>;
+      case "accepted": return <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">مقبول</span>;
       case "rejected": return <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">مرفوض</span>;
       default: return null;
     }

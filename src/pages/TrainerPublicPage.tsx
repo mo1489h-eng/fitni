@@ -477,7 +477,7 @@ const TrainerPublicPage = () => {
         if (!pc.about_text) return null;
         return (
           <section key={section} className="max-w-lg mx-auto px-4 py-8">
-            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>عن المدرب 📝</h2>
+            <h2 className="text-lg font-bold mb-4" style={{ color: t.text }}>عن المدرب</h2>
             <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: t.muted }}>{pc.about_text}</p>
           </section>
         );

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
+  Search,
   Settings2,
   Sparkles,
   TrendingUp,

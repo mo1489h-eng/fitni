@@ -202,7 +202,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
                 <Bot className="w-5 h-5 text-primary" />
               </div>
             </div>
-            <p className="text-sm font-medium text-card-foreground">الكوبايلت يصمم برنامجك... ✨</p>
+            <p className="text-sm font-medium text-card-foreground">الكوبايلت يصمم برنامجك...</p>
             <p className="text-xs text-muted-foreground">{progressMessages[messageIndex]}</p>
           </div>
         )}

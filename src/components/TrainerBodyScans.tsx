@@ -139,7 +139,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
               <a href={whatsappScanLink} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="gap-2 w-full">
                   <Send className="w-4 h-4" />
-                  أرسل رابط الفحص للعميل 📤
+                  أرسل رابط الفحص للعميل
                 </Button>
               </a>
             )}

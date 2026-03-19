@@ -632,7 +632,7 @@ const ProgramBuilder = () => {
 
           {/* Level */}
           <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">📊 المستوى</label>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المستوى</label>
             <div className="flex gap-2">
               {LEVELS.map(l => (
                 <button key={l.value} onClick={() => setProgramLevel(l.value)}

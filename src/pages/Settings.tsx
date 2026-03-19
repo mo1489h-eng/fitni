@@ -798,7 +798,7 @@ const Settings = () => {
                 } else {
                   await supabase.from("trainer_payment_settings").insert(payload);
                 }
-                toast({ title: "تم حفظ بيانات الدفع ✅" });
+                toast({ title: "تم حفظ بيانات الدفع" });
               } catch {
                 toast({ title: "حدث خطأ", variant: "destructive" });
               } finally {

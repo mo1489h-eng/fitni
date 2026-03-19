@@ -310,7 +310,7 @@ const Nutrition = () => {
                           ))}
                         </div>
                       ))}
-                      {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">📝 {plan.notes}</p>}
+                      {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">{plan.notes}</p>}
                     </div>
                   )}
                 </Card>

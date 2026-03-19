@@ -1081,7 +1081,7 @@ const Settings = () => {
                     onClick={() => {
                        const url = `https://fitni.lovable.app/t/${usernameForm}`;
                       navigator.clipboard.writeText(url);
-                      toast({ title: "تم نسخ الرابط — الصقه في انستقرام ✅" });
+                      toast({ title: "تم نسخ الرابط — الصقه في انستقرام" });
                     }}
                   >
                     انستقرام

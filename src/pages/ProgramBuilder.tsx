@@ -1158,7 +1158,7 @@ const ExerciseCard = ({
 
           {/* Notes */}
           <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">📝 ملاحظة للمتدرب</label>
+            <label className="text-[10px] text-muted-foreground block mb-1">ملاحظة للمتدرب</label>
             <Input placeholder="مثال: ركز على السلبي..."
               value={ex.notes} onChange={e => onUpdate("notes", e.target.value)}
               className="h-8 text-xs" />

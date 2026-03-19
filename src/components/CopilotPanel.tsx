@@ -60,7 +60,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["copilot-recommendations", clientId] });
-      toast({ title: "تم إنشاء البرنامج بنجاح 🤖✅" });
+      toast({ title: "تم إنشاء البرنامج بنجاح" });
     },
     onError: (err: any) => {
       toast({ title: "خطأ في الإنشاء", description: err.message, variant: "destructive" });

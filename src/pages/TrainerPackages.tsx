@@ -182,7 +182,7 @@ const TrainerPackages = () => {
         ) : packages.filter(p => p.is_active).length === 0 ? (
           <div className="text-center py-20 space-y-3">
             <Package className="w-12 h-12 mx-auto text-muted-foreground opacity-40" />
-            <p className="text-muted-foreground">ما أنشأت باقات بعد 📦</p>
+            <p className="text-muted-foreground">ما أنشأت باقات بعد</p>
             <p className="text-sm text-muted-foreground">أنشئ باقتك الأولى وشاركها مع عملاءك</p>
             <Button onClick={() => { setForm(defaultForm); setShowForm(true); }}>
               <Plus className="w-4 h-4 ml-1" /> إنشاء باقة

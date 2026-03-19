@@ -17,11 +17,11 @@ import {
 } from "lucide-react";
 
 const POST_TYPES = [
-  { value: "نصيحة", label: "💡 نصيحة" },
-  { value: "تمرين", label: "🏋️ تمرين" },
-  { value: "وجبة", label: "🥗 وجبة" },
-  { value: "تحفيز", label: "🔥 تحفيز" },
-  { value: "إعلان", label: "📢 إعلان" },
+  { value: "نصيحة", label: "نصيحة" },
+  { value: "تمرين", label: "تمرين" },
+  { value: "وجبة", label: "وجبة" },
+  { value: "تحفيز", label: "تحفيز" },
+  { value: "إعلان", label: "إعلان" },
 ];
 
 const TrainerContent = () => {

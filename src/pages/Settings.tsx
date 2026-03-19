@@ -594,7 +594,7 @@ const Settings = () => {
                 <Textarea
                   value={form.welcome_message}
                   onChange={(e) => setForm({ ...form, welcome_message: e.target.value })}
-                  placeholder="مثال: أهلاً بك في برنامجك التدريبي! 💪"
+                  placeholder="مثال: أهلا بك في برنامجك التدريبي!"
                   rows={2}
                   maxLength={200}
                 />

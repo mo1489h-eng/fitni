@@ -146,7 +146,7 @@ const Nutrition = () => {
       ...t, item_order: items.length + idx,
     }));
     setItems([...items.filter(i => i.food_name.trim()), ...newItems]);
-    toast({ title: `تم إضافة قالب "${template.name}" ✅` });
+    toast({ title: `تم إضافة قالب "${template.name}"` });
   };
 
   const addItem = (mealName = "فطور") => setItems([...items, emptyItem(items.length, mealName)]);

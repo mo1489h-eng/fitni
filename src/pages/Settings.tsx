@@ -863,7 +863,7 @@ const Settings = () => {
                 <p className="text-xs text-muted-foreground" dir="ltr">
                   https://fitni.lovable.app/t/{usernameForm}
                 </p>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط ✅" }); }}>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط" }); }}>
                   <Copy className="w-3 h-3" />
                 </Button>
               </div>

@@ -303,7 +303,7 @@ const Settings = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setNewPassword("");
-      toast({ title: "تم تغيير كلمة المرور بنجاح ✅" });
+      toast({ title: "تم تغيير كلمة المرور بنجاح" });
     } catch {
       toast({ title: "حدث خطأ في تغيير كلمة المرور", variant: "destructive" });
     } finally {

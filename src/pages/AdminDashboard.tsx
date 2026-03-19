@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       setSessionToken(result.session_token);
     }
 
-    toast.success("تم التحويل ✅");
+    toast.success("تم التحويل");
     fetchData(result?.session_token || sessionToken, month);
   };
 

@@ -95,7 +95,7 @@ const TrainerBodyScans = ({ clientId, clientPhone, clientName, portalToken }: Pr
       qc.invalidateQueries({ queryKey: ["body-scans", clientId] });
       setShowAddModal(false);
       setHeight(""); setWeight(""); setAge(""); setWaist(""); setNeck(""); setHip(""); setNotes("");
-      toast({ title: "تم حفظ الفحص ✅" });
+      toast({ title: "تم حفظ الفحص" });
     },
   });
 

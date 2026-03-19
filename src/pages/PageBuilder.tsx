@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ChevronUp, ChevronDown, Save, Loader2, Plus, X, Trash2, Star,
-  Eye, GripVertical, Monitor, Smartphone, Copy,
+  Eye, GripVertical, Monitor, Smartphone, Copy, MessageCircle,
   QrCode, ArrowLeft, Palette, Type, Layout, Share2,
   Package, CheckCircle, Sparkles, CloudOff,
 } from "lucide-react";

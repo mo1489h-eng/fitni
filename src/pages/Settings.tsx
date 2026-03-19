@@ -905,7 +905,7 @@ const Settings = () => {
             </Button>
             {usernameForm && (
               <Button variant="outline" size="sm" className="gap-1" onClick={() => window.open(`/t/${usernameForm}`, "_blank")}>
-                معاينة 👁️
+                معاينة
               </Button>
             )}
           </div>

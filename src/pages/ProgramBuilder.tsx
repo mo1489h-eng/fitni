@@ -465,7 +465,7 @@ const ProgramBuilder = () => {
       label: src.label,
     }));
     setCopyDayDialog(false);
-    toast({ title: "تم نسخ اليوم ✅" });
+    toast({ title: "تم نسخ اليوم" });
   };
 
   const applyTemplate = (t: typeof templates[0]) => {

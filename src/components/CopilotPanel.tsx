@@ -187,7 +187,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => generateProgram.mutate()} disabled={isGenerating} className="gap-1.5">
             {generateProgram.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            توليد برنامج بالذكاء الاصطناعي ✨
+            توليد برنامج بالذكاء الاصطناعي
           </Button>
           <Button variant="outline" onClick={() => weeklyEval.mutate()} disabled={isGenerating} className="gap-1.5">
             {weeklyEval.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}

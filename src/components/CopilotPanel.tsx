@@ -78,7 +78,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["copilot-recommendations", clientId] });
-      toast({ title: "تم تقييم الأسبوع 📊" });
+      toast({ title: "تم تقييم الأسبوع" });
     },
     onError: (err: any) => {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });

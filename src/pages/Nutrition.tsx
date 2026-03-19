@@ -186,7 +186,7 @@ const Nutrition = () => {
           item_order: idx,
         })));
       }
-      toast({ title: editingPlan ? "تم تحديث الخطة" : "تم إنشاء الخطة بنجاح ✅" });
+      toast({ title: editingPlan ? "تم تحديث الخطة" : "تم إنشاء الخطة بنجاح" });
       setShowDialog(false);
       fetchPlans();
     } catch (err: any) {

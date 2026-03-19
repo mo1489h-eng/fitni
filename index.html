@@ -3,22 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="fitni" />
     <title>fitni - منصة المدرب الشخصي</title>
-    <meta name="description" content="منصة إدارة العملاء والتدريب الشخصي للمدربين">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <meta name="description" content="منصة fitni للمدربين الشخصيين — أدر عملاءك باحترافية" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
     <meta property="og:title" content="fitni - منصة المدرب الشخصي" />
     <meta name="twitter:title" content="fitni - منصة المدرب الشخصي" />
-    <meta property="og:description" content="المنصة الأولى للمدربين الشخصيين في السعودية — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية." />
-    <meta name="twitter:description" content="المنصة الأولى للمدربين الشخصيين في السعودية — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية." />
+    <meta property="og:description" content="منصة fitni للمدربين الشخصيين — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية." />
+    <meta name="twitter:description" content="منصة fitni للمدربين الشخصيين — أدر عملاءك، تابع تقدمهم، ونظّم مدفوعاتك باحترافية." />
     <meta property="og:image" content="https://fitni.app/og-image.png" />
     <meta name="twitter:image" content="https://fitni.app/og-image.png" />
     <meta property="og:url" content="https://fitni.app" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta property="og:type" content="website" />
-</head>
+    <style>
+      /* Prevent white flash */
+      html, body, #root { background: #050505; }
+    </style>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

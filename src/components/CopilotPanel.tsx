@@ -481,7 +481,7 @@ function EditableRecommendationCard({
               {editing ? "قبول بعد التعديل" : rec.type === "program" ? "قبول البرنامج كاملاً" : "موافق"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
-              <X className="w-3 h-3" /> ❌ تجاهل
+              <X className="w-3 h-3" /> تجاهل
             </Button>
           </div>
         </div>

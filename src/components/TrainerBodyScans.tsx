@@ -308,7 +308,7 @@ function AddScanModal({ open, onOpenChange, height, setHeight, weight, setWeight
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle>إضافة فحص نيابةً عن العميل ✏️</DialogTitle>
+          <DialogTitle>إضافة فحص نيابةً عن العميل</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div>

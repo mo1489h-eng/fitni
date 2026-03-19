@@ -206,7 +206,7 @@ const Settings = () => {
           .insert(payload);
         if (error) throw error;
       }
-      toast({ title: "تم حفظ ملف الاكتشاف ✅" });
+      toast({ title: "تم حفظ ملف الاكتشاف" });
     } catch {
       toast({ title: "حدث خطأ في الحفظ", variant: "destructive" });
     } finally {

@@ -216,7 +216,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
               توصيات بانتظار الموافقة ({pendingRecs.length})
             </h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-3">[✅ قبول البرنامج كاملاً] [✏️ تعديل قبل الحفظ] [🔄 توليد برنامج جديد]</p>
+          <p className="text-xs text-muted-foreground mb-3">قبول البرنامج كاملاً | تعديل قبل الحفظ | توليد برنامج جديد</p>
           <div className="space-y-3">
             {pendingRecs.map((rec: any) => (
               <EditableRecommendationCard

@@ -1016,7 +1016,7 @@ const ProgramBuilder = () => {
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                 <ClipboardList className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">ما بنيت برامج بعد 📋</h3>
+              <h3 className="text-lg font-bold text-foreground">لم تبنِ برامج بعد</h3>
               <p className="text-sm text-muted-foreground">استخدم قالب جاهز أو ابنِ من الصفر</p>
               <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" />برنامج جديد</Button>
             </div>

@@ -478,7 +478,7 @@ function EditableRecommendationCard({
           <div className="flex gap-2 pt-1">
             <Button size="sm" className="flex-1 gap-1" onClick={() => onAccept(editing ? editPayload : undefined)} disabled={isApplying}>
               {isApplying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-              {editing ? "✅ قبول بعد التعديل" : rec.type === "program" ? "✅ قبول البرنامج كاملاً" : "✅ موافق"}
+              {editing ? "قبول بعد التعديل" : rec.type === "program" ? "قبول البرنامج كاملاً" : "موافق"}
             </Button>
             <Button size="sm" variant="outline" className="gap-1" onClick={onReject} disabled={isApplying}>
               <X className="w-3 h-3" /> ❌ تجاهل

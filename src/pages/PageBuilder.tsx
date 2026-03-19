@@ -665,7 +665,7 @@ const PreviewContent = ({ config, profile, galleryImages }: { config: PageConfig
         if (!galleryImages.length) return null;
         return (
           <div key={section} className="px-6 py-4">
-            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>المعرض 📸</h3>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>المعرض</h3>
             <div className={`grid gap-1.5 ${config.gallery_layout === "masonry" ? "grid-cols-3" : "grid-cols-2"}`}>
               {galleryImages.slice(0, 6).map((img, i) => (
                 <div key={i} className={`rounded-lg overflow-hidden bg-gray-800 ${config.gallery_layout === "masonry" && i === 0 ? "row-span-2" : ""}`}

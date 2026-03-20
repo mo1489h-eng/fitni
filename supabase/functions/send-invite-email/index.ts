@@ -90,21 +90,21 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "fitni <onboarding@resend.dev>",
+            from: "fitni <noreply@fitni.app>",
             to: [clientEmail],
             subject: `مرحباً ${clientName} 👋 - دعوة من ${trainerName}`,
             html: `
               <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #ffffff; border-radius: 16px;">
                 <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #22c55e; font-size: 28px; margin: 0;">fitni</h1>
+                  <h1 style="color: #16a34a; font-size: 28px; margin: 0;">fitni</h1>
                 </div>
                 <h2 style="font-size: 22px; margin-bottom: 8px;">مرحباً ${clientName} 👋</h2>
                 <p style="color: #a0a0a0; font-size: 16px; line-height: 1.8;">
-                  مدربك <strong style="color: #22c55e;">${trainerName}</strong> أضافك على منصة fitni
+                  مدربك <strong style="color: #16a34a;">${trainerName}</strong> أضافك على منصة fitni
                 </p>
                 <p style="color: #a0a0a0; font-size: 16px;">أنشئ حسابك المجاني الآن:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${setupLink}" style="display: inline-block; background: #22c55e; color: #000; font-weight: bold; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-size: 18px;">
+                  <a href="${setupLink}" style="display: inline-block; background: #16a34a; color: #000; font-weight: bold; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-size: 18px;">
                     أنشئ حسابي 💪
                   </a>
                 </div>

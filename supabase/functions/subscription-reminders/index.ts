@@ -48,11 +48,11 @@ serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "fitni <onboarding@resend.dev>",
+          from: "fitni <noreply@fitni.app>",
           to: [to],
           subject,
           html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
-            <h1 style="color:#22c55e;text-align:center;">fitni</h1>
+            <h1 style="color:#16a34a;text-align:center;">fitni</h1>
             ${body}
             <p style="color:#666;font-size:12px;text-align:center;margin-top:20px;">فريق fitni</p>
           </div>`,

@@ -175,21 +175,21 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "fitni <onboarding@resend.dev>",
+            from: "fitni <noreply@fitni.app>",
             to: [client_email],
             subject: `مرحباً ${client_name}! 💪 — اشتراكك جاهز`,
             html: `
               <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #fff; border-radius: 16px;">
-                <h1 style="color: #22c55e; text-align: center;">fitni</h1>
+                <h1 style="color: #16a34a; text-align: center;">fitni</h1>
                 <h2 style="text-align: center;">مرحباً ${client_name}! 💪</h2>
                 <p style="text-align: center; color: #999;">اشتراكك مع ${trainerProfile?.full_name || "مدربك"} تم بنجاح</p>
                 <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                  <p><strong style="color: #22c55e;">الباقة:</strong> ${pkg.name}</p>
-                  <p><strong style="color: #22c55e;">الإيميل:</strong> ${client_email}</p>
-                  <p><strong style="color: #22c55e;">صالح حتى:</strong> ${endDate.toLocaleDateString("ar-SA")}</p>
+                   <p><strong style="color: #16a34a;">الباقة:</strong> ${pkg.name}</p>
+                   <p><strong style="color: #16a34a;">الإيميل:</strong> ${client_email}</p>
+                   <p><strong style="color: #16a34a;">صالح حتى:</strong> ${endDate.toLocaleDateString("ar-SA")}</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://fitni.lovable.app/client-login" style="background: #22c55e; color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">ادخل لبوابتك الآن</a>
+                  <a href="https://fitni.lovable.app/client-login" style="background: #16a34a; color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">ادخل لبوابتك الآن</a>
                 </div>
                 <p style="color: #666; font-size: 12px; text-align: center;">شكراً لثقتك — فريق fitni</p>
               </div>

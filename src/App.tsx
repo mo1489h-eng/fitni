@@ -53,8 +53,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <TutorialProvider>
-            <TutorialOverlay />
             <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />

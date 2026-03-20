@@ -84,7 +84,7 @@ const ConfirmEmail = () => {
 
           {/* Spam Note */}
           <div className="rounded-xl border border-border bg-muted/30 p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-[hsl(38,92%,50%)] flex-shrink-0" strokeWidth={1.5} />
+            <AlertTriangle className="w-5 h-5 text-accent-foreground flex-shrink-0" strokeWidth={1.5} />
             <p className="text-xs text-muted-foreground text-right">
               تفقد مجلد الرسائل غير المرغوب فيها (Spam) إذا لم تجد الرسالة
             </p>

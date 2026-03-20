@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 
 interface AnimatedCounterProps {
   end: number;
@@ -8,38 +8,35 @@ interface AnimatedCounterProps {
   className?: string;
 }
 
-const AnimatedCounter = ({ end, duration = 1200, prefix = "", suffix = "", className = "" }: AnimatedCounterProps) => {
-  const [current, setCurrent] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
+const AnimatedCounter = forwardRef<HTMLSpanElement, AnimatedCounterProps>(
+  ({ end, duration = 1200, prefix = "", suffix = "", className = "" }, forwardedRef) => {
+    const [current, setCurrent] = useState(0);
+    const internalRef = useRef<HTMLSpanElement>(null);
+    const started = useRef(false);
 
-  useEffect(() => {
-    if (started.current && current === end) return;
-    started.current = true;
-    
-    if (end === 0) { setCurrent(0); return; }
+    useEffect(() => {
+      if (started.current && current === end) return;
+      started.current = true;
+      if (end === 0) { setCurrent(0); return; }
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCurrent(Math.round(end * eased));
+        if (progress < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, [end, duration]);
 
-    const startTime = performance.now();
-    const startVal = 0;
+    return (
+      <span ref={forwardedRef || internalRef} className={`tabular-nums ${className}`}>
+        {prefix}{current.toLocaleString()}{suffix}
+      </span>
+    );
+  }
+);
 
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const val = Math.round(startVal + (end - startVal) * eased);
-      setCurrent(val);
-      if (progress < 1) requestAnimationFrame(tick);
-    };
-
-    requestAnimationFrame(tick);
-  }, [end, duration]);
-
-  return (
-    <span ref={ref} className={`tabular-nums ${className}`}>
-      {prefix}{current.toLocaleString()}{suffix}
-    </span>
-  );
-};
+AnimatedCounter.displayName = "AnimatedCounter";
 
 export default AnimatedCounter;

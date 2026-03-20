@@ -77,6 +77,7 @@ const App = () => (
             <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
             <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
             <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
+            <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
 
             {/* Public payment pages */}
             <Route path="/pay/:trainerSlug" element={<PublicPayment />} />

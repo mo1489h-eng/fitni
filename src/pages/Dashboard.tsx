@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 
 import ImportClientsModal from "@/components/ImportClientsModal";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 import PremiumSkeleton from "@/components/PremiumSkeleton";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
@@ -341,6 +342,7 @@ const Dashboard = () => {
     <TrainerLayout onQuickAdd={() => setShowImport(true)}>
       <div className="space-y-6 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        <OnboardingChecklist />
 
         {profile?.username ? (
           <Card className="border-border bg-card">

@@ -20,7 +20,6 @@ import {
    LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
    RotateCcw, Banknote, Share2, Copy, Link, Instagram, Twitter, Plus, X, Image, MessageCircle,
 } from "lucide-react";
-import { useTutorial } from "@/hooks/useTutorial";
 import { Badge } from "@/components/ui/badge";
 
 const SPECIALIZATIONS = [
@@ -48,7 +47,7 @@ const Settings = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [savingDiscovery, setSavingDiscovery] = useState(false);
-  const { startTutorial } = useTutorial();
+  
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     iban: "",
@@ -1175,19 +1174,21 @@ const Settings = () => {
 
           <Separator />
 
-          {/* Replay Tour */}
+          {/* Reset Onboarding */}
           <Button
             variant="outline"
             className="w-full gap-2 text-primary hover:text-primary"
             onClick={async () => {
               if (user) {
-                await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
+                await supabase.from("profiles").update({ onboarding_steps_completed: [], onboarding_completed: false } as any).eq("user_id", user.id);
+                localStorage.removeItem("onboarding-dismissed");
+                toast({ title: "تم إعادة تعيين خطوات الإعداد" });
+                navigate("/dashboard");
               }
-              startTutorial();
             }}
           >
             <RotateCcw className="w-4 h-4" />
-            إعادة الجولة التعريفية
+            إعادة خطوات الإعداد
           </Button>
 
           <Separator />

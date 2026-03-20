@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FeatureTooltip from "@/components/FeatureTooltip";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -156,6 +157,7 @@ const Clients = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 page-enter">
+        <FeatureTooltip id="clients-add" targetSelector="[data-tour='add-client']" message="ابدأ بإضافة عملاءك هنا" />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

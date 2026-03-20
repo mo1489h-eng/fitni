@@ -995,6 +995,7 @@ export type Database = {
           notify_payments: boolean | null
           notify_weekly_report: boolean | null
           onboarding_completed: boolean | null
+          onboarding_steps_completed: string[]
           page_config: Json | null
           payment_status: string | null
           phone: string | null
@@ -1022,6 +1023,7 @@ export type Database = {
           notify_payments?: boolean | null
           notify_weekly_report?: boolean | null
           onboarding_completed?: boolean | null
+          onboarding_steps_completed?: string[]
           page_config?: Json | null
           payment_status?: string | null
           phone?: string | null
@@ -1049,6 +1051,7 @@ export type Database = {
           notify_payments?: boolean | null
           notify_weekly_report?: boolean | null
           onboarding_completed?: boolean | null
+          onboarding_steps_completed?: string[]
           page_config?: Json | null
           payment_status?: string | null
           phone?: string | null

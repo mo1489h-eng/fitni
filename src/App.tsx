@@ -5,9 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PortalTokenProvider } from "@/hooks/usePortalToken";
-import { TutorialProvider } from "@/hooks/useTutorial";
 import AuthGuard from "@/components/AuthGuard";
-import TutorialOverlay from "@/components/TutorialOverlay";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -55,8 +53,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <TutorialProvider>
-            <TutorialOverlay />
             <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
@@ -107,7 +103,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </TutorialProvider>
+          
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

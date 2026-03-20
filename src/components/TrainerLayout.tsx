@@ -29,7 +29,7 @@ const desktopNavItems = [
   { label: "التغذية", href: "/nutrition", icon: Utensils },
   { label: "التقويم", href: "/calendar", icon: CalendarDays },
   { label: "الاشتراكات", href: "/payments", icon: CreditCard },
-  { label: "AI كوبايلت", href: "/clients", icon: Sparkles },
+  { label: "AI كوبايلت", href: "/copilot", icon: Sparkles },
   { label: "الإعدادات", href: "/settings", icon: Settings2 },
 ];
 

@@ -175,7 +175,7 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "fitni <onboarding@resend.dev>",
+            from: "fitni <noreply@fitni.app>",
             to: [client_email],
             subject: `مرحباً ${client_name}! 💪 — اشتراكك جاهز`,
             html: `

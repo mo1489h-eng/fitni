@@ -180,7 +180,7 @@ const Dashboard = () => {
   });
 
   const { data: measurements = [], isLoading: measurementsLoading } = useQuery({
-    queryKey: ["dashboard-measurements"],
+    queryKey: ["dashboard-measurements", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("measurements").select("client_id, weight, recorded_at").order("recorded_at", { ascending: false });
       if (error) throw error;

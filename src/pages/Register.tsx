@@ -38,7 +38,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -114,7 +114,7 @@ const Register = () => {
           p_trainer_id: signUpData.user.id,
         });
       }
-      setShowConfirmation(true);
+      navigate(`/confirm-email?email=${encodeURIComponent(email)}`);
       setLoading(false);
       return;
     }
@@ -134,35 +134,6 @@ const Register = () => {
 
     setLoading(false);
   };
-
-  if (showConfirmation) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6" dir="rtl">
-        <div className="w-full max-w-md text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Mail className="w-8 h-8 text-primary" strokeWidth={1.5} />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">تم إرسال رابط التأكيد لبريدك</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            يرجى تأكيد بريدك الإلكتروني للمتابعة
-            <br />
-            <span className="text-foreground font-medium" dir="ltr">{email}</span>
-          </p>
-          <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
-            تحقق من بريدك الوارد (أو مجلد الرسائل غير المرغوب فيها) واضغط على رابط التأكيد
-          </div>
-          <div className="flex flex-col gap-3">
-            <Button variant="outline" onClick={() => navigate("/login")}>
-              انتقل لتسجيل الدخول
-            </Button>
-            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              العودة للرئيسية
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex bg-background" dir="rtl">

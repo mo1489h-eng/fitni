@@ -8,6 +8,7 @@ import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import AuthGuard from "@/components/AuthGuard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ConfirmEmail from "./pages/ConfirmEmail";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/confirm-email" element={<ConfirmEmail />} />
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
             <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
             <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />

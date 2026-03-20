@@ -216,10 +216,10 @@ const PortalSubscription = () => {
 
         {/* Expiry warnings */}
         {isExpiringSoon && !isExpiringTomorrow && (
-          <div className="rounded-xl p-3 bg-yellow-500/10 border border-yellow-500/30 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0" />
+          <div className="rounded-xl p-3 bg-warning/10 border border-warning/30 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-yellow-400">اشتراكك ينتهي خلال {daysLeft} أيام</p>
+              <p className="text-sm font-medium text-warning">اشتراكك ينتهي خلال {daysLeft} أيام</p>
               <p className="text-xs text-muted-foreground">جدد الآن واستمر في رحلتك</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>
@@ -229,10 +229,10 @@ const PortalSubscription = () => {
         )}
 
         {isExpiringTomorrow && (
-          <div className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/30 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
+          <div className="rounded-xl p-3 bg-destructive/10 border border-destructive/30 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-orange-400">اشتراكك ينتهي غداً</p>
+              <p className="text-sm font-bold text-destructive">اشتراكك ينتهي غداً</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>
               جدد الآن
@@ -320,7 +320,7 @@ const PortalSubscription = () => {
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-1.5">
                   <span className="text-muted-foreground">تنتهي في: <span className="text-card-foreground font-medium">{endDate.toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })}</span></span>
-                  <span className={`text-xs font-bold ${isActive ? (isExpiringSoon ? "text-yellow-400" : "text-primary") : "text-destructive"}`}>
+                  <span className={`text-xs font-bold ${isActive ? (isExpiringSoon ? "text-warning" : "text-primary") : "text-destructive"}`}>
                     {isActive ? `${Math.round(progressPercent)}% متبقي` : "منتهي"}
                   </span>
                 </div>

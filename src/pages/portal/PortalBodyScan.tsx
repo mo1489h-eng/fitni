@@ -398,7 +398,7 @@ const PortalBodyScan = () => {
               <div className="space-y-4 py-2 animate-fade-in">
                 <div className="text-center">
                   <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full border-4 ${
-                    displayResult.bmi < 18.5 ? "border-blue-400" : displayResult.bmi < 25 ? "border-green-400" : displayResult.bmi < 30 ? "border-yellow-400" : "border-red-400"
+                    displayResult.bmi < 18.5 ? "border-blue-400" : displayResult.bmi < 25 ? "border-success" : displayResult.bmi < 30 ? "border-warning" : "border-destructive"
                   }`}>
                     <div>
                       <p className="text-2xl font-black text-white">{displayResult.bmi}</p>

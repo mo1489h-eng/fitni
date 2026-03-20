@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { forwardRef, useMemo, useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -75,13 +75,13 @@ const formatWhatsApp = (phone?: string) => `https://wa.me/966${(phone || "").rep
 const formatMonthLabel = (date: Date) =>
   new Intl.DateTimeFormat("ar-SA", { month: "short" }).format(date);
 
-const CircularProgress = ({ value }: { value: number }) => {
+const CircularProgress = forwardRef<HTMLDivElement, { value: number }>(({ value }, ref) => {
   const radius = 34;
   const circumference = 2 * Math.PI * radius;
   const progress = circumference - (Math.max(0, Math.min(100, value)) / 100) * circumference;
 
   return (
-    <div className="relative flex h-24 w-24 items-center justify-center">
+    <div ref={ref} className="relative flex h-24 w-24 items-center justify-center">
       <svg viewBox="0 0 84 84" className="h-full w-full -rotate-90">
         <circle cx="42" cy="42" r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="6" />
         <circle
@@ -103,7 +103,8 @@ const CircularProgress = ({ value }: { value: number }) => {
       </div>
     </div>
   );
-};
+});
+CircularProgress.displayName = "CircularProgress";
 
 const StatCard = ({
   title,
@@ -142,18 +143,13 @@ const StatCard = ({
   </Card>
 );
 
-const EmptyPanel = ({
-  icon: Icon,
-  title,
-  cta,
-  onClick,
-}: {
+const EmptyPanel = forwardRef<HTMLDivElement, {
   icon: typeof Users;
   title: string;
   cta: string;
   onClick: () => void;
-}) => (
-  <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-12 text-center">
+}>(({ icon: Icon, title, cta, onClick }, ref) => (
+  <div ref={ref} className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-12 text-center">
     <Icon className="h-10 w-10 text-muted-foreground" strokeWidth={1.5} />
     <p className="mt-4 text-base text-muted-foreground">{title}</p>
     <Button className="mt-5 rounded-full px-5" onClick={onClick}>
@@ -161,7 +157,8 @@ const EmptyPanel = ({
       {cta}
     </Button>
   </div>
-);
+));
+EmptyPanel.displayName = "EmptyPanel";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();

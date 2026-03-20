@@ -20,7 +20,7 @@ interface Notification {
 const typeConfig: Record<string, { icon: typeof Bell; color: string }> = {
   payment: { icon: CreditCard, color: "text-primary" },
   new_client: { icon: UserPlus, color: "text-blue-400" },
-  expiring: { icon: AlertCircle, color: "text-yellow-400" },
+  expiring: { icon: AlertCircle, color: "text-warning" },
   copilot: { icon: Sparkles, color: "text-purple-400" },
   workout: { icon: CheckCircle, color: "text-primary" },
   message: { icon: MessageCircle, color: "text-muted-foreground" },

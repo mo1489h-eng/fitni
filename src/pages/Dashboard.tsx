@@ -144,18 +144,13 @@ const StatCard = ({
   </Card>
 );
 
-const EmptyPanel = ({
-  icon: Icon,
-  title,
-  cta,
-  onClick,
-}: {
+const EmptyPanel = forwardRef<HTMLDivElement, {
   icon: typeof Users;
   title: string;
   cta: string;
   onClick: () => void;
-}) => (
-  <div className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-12 text-center">
+}>(({ icon: Icon, title, cta, onClick }, ref) => (
+  <div ref={ref} className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-12 text-center">
     <Icon className="h-10 w-10 text-muted-foreground" strokeWidth={1.5} />
     <p className="mt-4 text-base text-muted-foreground">{title}</p>
     <Button className="mt-5 rounded-full px-5" onClick={onClick}>
@@ -163,7 +158,8 @@ const EmptyPanel = ({
       {cta}
     </Button>
   </div>
-);
+));
+EmptyPanel.displayName = "EmptyPanel";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();

@@ -210,7 +210,7 @@ const Dashboard = () => {
   });
 
   const { data: pendingCopilotCount = 0 } = useQuery({
-    queryKey: ["dashboard-copilot-pending-count"],
+    queryKey: ["dashboard-copilot-pending-count", user?.id],
     queryFn: async () => {
       const { count, error } = await supabase.from("copilot_recommendations").select("*", { head: true, count: "exact" }).eq("status", "pending");
       if (error) throw error;

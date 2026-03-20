@@ -21,10 +21,8 @@ const PhotoVisual = ({ src, alt }: {src: string;alt: string;}) =>
     src={src}
     alt={alt}
     loading="lazy"
-    className="w-full object-cover"
+    className="block w-full h-full object-cover"
     style={{ aspectRatio: "16/10" }} />
-  
-    {/* Subtle green border glow */}
     <div className="absolute inset-0 rounded-[12px] ring-1 ring-inset ring-primary/25 shadow-[inset_0_0_30px_hsl(var(--primary)/0.08)]" />
   </div>;
 

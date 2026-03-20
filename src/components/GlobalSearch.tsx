@@ -11,8 +11,13 @@ interface SearchResult {
   sessions: { id: string; session_date: string; client_name: string; session_type: string }[];
 }
 
-const GlobalSearch = () => {
-  const [open, setOpen] = useState(false);
+const GlobalSearch = ({ externalOpen, onExternalClose }: { externalOpen?: boolean; onExternalClose?: () => void } = {}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    if (!v && onExternalClose) onExternalClose();
+  };
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult>({ clients: [], programs: [], sessions: [] });
   const [loading, setLoading] = useState(false);

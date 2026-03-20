@@ -6,6 +6,15 @@ verify_jwt = false
 [functions.copilot-apply]
 verify_jwt = false
 
+[functions.copilot-chat]
+verify_jwt = false
+
+[functions.copilot-report]
+verify_jwt = false
+
+[functions.ocr-body-scan]
+verify_jwt = false
+
 [functions.public-purchase]
 verify_jwt = false
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Calculator, Save, History, Edit, Camera, PenLine, Plus, Dumbbell,
-  TrendingDown, TrendingUp, ScanLine, Activity, Heart, Droplets, Scale
+  TrendingDown, TrendingUp, ScanLine, Activity, Heart, Droplets, Scale,
+  Upload, FileImage, Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
@@ -65,9 +66,12 @@ const PortalBodyScan = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const [showNewScanModal, setShowNewScanModal] = useState(false);
-  const [mode, setMode] = useState<"choose" | "ocr" | "manual">("choose");
+  const [mode, setMode] = useState<"choose" | "ocr" | "ocr-loading" | "ocr-result" | "manual">("choose");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [ocrData, setOcrData] = useState<any>(null);
   const [height, setHeight] = useState(""); const [weight, setWeight] = useState("");
   const [age, setAge] = useState(""); const [gender, setGender] = useState("male");
   const [activityLevel, setActivityLevel] = useState("sedentary");
@@ -114,11 +118,12 @@ const PortalBodyScan = () => {
   const resetForm = () => {
     setShowNewScanModal(false); setMode("choose"); setResult(null); setEditResult(null);
     setIsEditing(false); setHeight(""); setWeight(""); setAge(""); setWaist(""); setNeck(""); setHip("");
-    setWaterPercentage(""); setVisceralFat("");
+    setWaterPercentage(""); setVisceralFat(""); setOcrData(null);
   };
 
   const handleOcrUpload = async (file: File) => {
     setIsOcrLoading(true);
+    setMode("ocr-loading");
     try {
       const reader = new FileReader();
       reader.onload = async () => {
@@ -126,33 +131,65 @@ const PortalBodyScan = () => {
         try {
           const { data, error } = await supabase.functions.invoke("ocr-body-scan", { body: { image_base64: base64 } });
           if (error) throw error;
-          if (data?.error) { toast({ title: "تعذر قراءة الصورة", description: data.error, variant: "destructive" }); setMode("manual"); return; }
+          if (data?.error) {
+            toast({ title: "تعذر قراءة التقرير", description: data.error, variant: "destructive" });
+            setMode("choose");
+            setIsOcrLoading(false);
+            return;
+          }
           const d = data?.data;
           if (d) {
+            setOcrData(d);
             if (d.height) setHeight(String(d.height));
             if (d.weight) setWeight(String(d.weight));
             if (d.age) setAge(String(d.age));
             if (d.gender) setGender(d.gender === "female" ? "female" : "male");
             if (d.water_percentage) setWaterPercentage(String(d.water_percentage));
             if (d.visceral_fat) setVisceralFat(String(d.visceral_fat));
-            setResult({
-              bmi: d.bmi || 0, bmiCategory: d.bmi < 18.5 ? "نقص في الوزن" : d.bmi < 25 ? "وزن طبيعي" : d.bmi < 30 ? "زيادة في الوزن" : "سمنة",
+
+            const scanResult: ScanResult = {
+              bmi: d.bmi || 0,
+              bmiCategory: d.bmi < 18.5 ? "نقص في الوزن" : d.bmi < 25 ? "وزن طبيعي" : d.bmi < 30 ? "زيادة في الوزن" : "سمنة",
               bmiColor: d.bmi < 18.5 ? "text-blue-500" : d.bmi < 25 ? "text-green-500" : d.bmi < 30 ? "text-yellow-500" : "text-red-500",
-              bodyFat: d.body_fat || 0, muscleMass: d.muscle_mass || 0, bmr: d.bmr || 0, tdee: (d.bmr || 0) * 1.2,
+              bodyFat: d.body_fat || 0, muscleMass: d.muscle_mass || 0,
+              bmr: d.bmr || 0, tdee: (d.bmr || 0) * 1.2,
               idealWeightMin: d.height ? Math.round(18.5 * (d.height / 100) ** 2) : 0,
               idealWeightMax: d.height ? Math.round(24.9 * (d.height / 100) ** 2) : 0,
               waterPercentage: d.water_percentage, visceralFat: d.visceral_fat,
-            });
-            setEditResult(null); setIsEditing(true);
-            toast({ title: "تم قراءة البيانات", description: "راجع البيانات وعدّل إذا احتجت" });
+            };
+            setResult(scanResult);
+            setEditResult({ ...scanResult });
+            setMode("ocr-result");
           }
-          setMode("manual");
-        } catch (err: any) { toast({ title: "خطأ في القراءة", description: err.message, variant: "destructive" }); setMode("manual"); }
-        finally { setIsOcrLoading(false); }
+        } catch (err: any) {
+          toast({ title: "خطأ في القراءة", description: err.message, variant: "destructive" });
+          setMode("choose");
+        } finally {
+          setIsOcrLoading(false);
+        }
       };
       reader.readAsDataURL(file);
-    } catch { setIsOcrLoading(false); }
+    } catch {
+      setIsOcrLoading(false);
+      setMode("choose");
+    }
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
+      handleOcrUpload(file);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => setIsDragging(false), []);
 
   const handleCalculate = () => {
     if (!height || !weight || !age) return;
@@ -189,6 +226,38 @@ const PortalBodyScan = () => {
           <Button size="sm" className="gap-1" onClick={() => setShowNewScanModal(true)}>
             <Plus className="w-4 h-4" strokeWidth={1.5} /> سكان جديد
           </Button>
+        </div>
+
+        {/* InBody Upload Section */}
+        <div
+          ref={dropZoneRef}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`relative rounded-xl border-2 border-dashed p-6 text-center transition-all cursor-pointer ${
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-[hsl(0_0%_15%)] bg-[hsl(0_0%_5%)] hover:border-primary/30"
+          }`}
+          onClick={() => {
+            const inp = document.createElement("input");
+            inp.type = "file";
+            inp.accept = "image/*,.pdf";
+            inp.onchange = (e: any) => {
+              const f = e.target.files?.[0];
+              if (f) { setShowNewScanModal(true); handleOcrUpload(f); }
+            };
+            inp.click();
+          }}
+        >
+          <Upload className="w-8 h-8 text-primary/60 mx-auto mb-2" strokeWidth={1.5} />
+          <p className="text-sm font-medium text-white">ارفع تقرير InBody الخاص بك</p>
+          <p className="text-xs text-[hsl(0_0%_40%)] mt-1">اسحب الصورة هنا أو اضغط للاختيار</p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <span className="text-[10px] text-[hsl(0_0%_30%)] px-2 py-0.5 rounded bg-[hsl(0_0%_8%)]">JPG</span>
+            <span className="text-[10px] text-[hsl(0_0%_30%)] px-2 py-0.5 rounded bg-[hsl(0_0%_8%)]">PNG</span>
+            <span className="text-[10px] text-[hsl(0_0%_30%)] px-2 py-0.5 rounded bg-[hsl(0_0%_8%)]">PDF</span>
+          </div>
         </div>
 
         {/* Latest scan */}
@@ -240,7 +309,7 @@ const PortalBodyScan = () => {
             )}
             {first && (
               <div className="mt-3 pt-3 border-t border-[hsl(0_0%_10%)]">
-                <p className="text-xs font-medium text-[hsl(0_0%_40%)] mb-2">مقارنة: أول فحص ← آخر فحص</p>
+                <p className="text-xs font-medium text-[hsl(0_0%_40%)] mb-2">مقارنة: أول فحص - آخر فحص</p>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {[
                     { label: "الوزن", diff: Number(latest.weight) - Number(first.weight), unit: "كجم" },
@@ -319,23 +388,102 @@ const PortalBodyScan = () => {
               </DialogTitle>
             </DialogHeader>
 
+            {/* Choose mode */}
             {mode === "choose" && (
               <div className="grid grid-cols-1 gap-3 py-4">
-                <input ref={fileInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+                <input ref={fileInputRef} type="file" accept="image/*,.pdf" capture="environment" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleOcrUpload(f); }} />
-                <Button variant="outline" className="h-24 gap-3 text-base flex-col border-[hsl(0_0%_15%)] text-white hover:border-primary/30" onClick={() => fileInputRef.current?.click()} disabled={isOcrLoading}>
-                  {isOcrLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Camera className="w-6 h-6" strokeWidth={1.5} />}
-                  صوّر ورقة السكان
-                  <span className="text-xs text-[hsl(0_0%_40%)] font-normal">التقط صورة وسنقرأ البيانات تلقائياً</span>
-                </Button>
-                <Button variant="outline" className="h-24 gap-3 text-base flex-col border-[hsl(0_0%_15%)] text-white hover:border-primary/30" onClick={() => setMode("manual")}>
-                  <PenLine className="w-6 h-6" strokeWidth={1.5} />
+
+                {/* InBody Upload */}
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={`rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
+                    isDragging ? "border-primary bg-primary/5" : "border-[hsl(0_0%_15%)] hover:border-primary/30"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FileImage className="w-8 h-8 text-primary/60 mx-auto mb-2" strokeWidth={1.5} />
+                  <p className="text-sm font-medium text-white">ارفع تقرير InBody</p>
+                  <p className="text-[10px] text-[hsl(0_0%_40%)] mt-1">اسحب الصورة أو اضغط للاختيار</p>
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <span className="text-[9px] text-[hsl(0_0%_30%)] px-1.5 py-0.5 rounded bg-[hsl(0_0%_8%)]">JPG</span>
+                    <span className="text-[9px] text-[hsl(0_0%_30%)] px-1.5 py-0.5 rounded bg-[hsl(0_0%_8%)]">PNG</span>
+                    <span className="text-[9px] text-[hsl(0_0%_30%)] px-1.5 py-0.5 rounded bg-[hsl(0_0%_8%)]">PDF</span>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="h-16 gap-3 text-sm flex-col border-[hsl(0_0%_15%)] text-white hover:border-primary/30" onClick={() => setMode("manual")}>
+                  <PenLine className="w-5 h-5" strokeWidth={1.5} />
                   أدخل يدوياً
-                  <span className="text-xs text-[hsl(0_0%_40%)] font-normal">أدخل القياسات بنفسك</span>
                 </Button>
               </div>
             )}
 
+            {/* OCR Loading */}
+            {mode === "ocr-loading" && (
+              <div className="py-12 text-center space-y-4 animate-fade-in">
+                <div className="relative w-20 h-20 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+                  <div className="absolute inset-3 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ScanLine className="w-6 h-6 text-primary animate-pulse" strokeWidth={1.5} />
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-white">الذكاء الاصطناعي يحلل تقريرك...</p>
+                <p className="text-xs text-[hsl(0_0%_40%)]">يتم استخراج البيانات من الصورة</p>
+                {/* Animated scan line */}
+                <div className="relative h-1 w-48 mx-auto rounded-full bg-[hsl(0_0%_10%)] overflow-hidden">
+                  <div className="absolute inset-y-0 w-1/3 bg-primary rounded-full animate-scan-line" />
+                </div>
+              </div>
+            )}
+
+            {/* OCR Result - Confirm or Edit */}
+            {mode === "ocr-result" && result && (
+              <div className="space-y-4 py-2 animate-fade-in">
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Check className="w-4 h-4 text-primary" strokeWidth={2} />
+                    <p className="text-sm font-medium text-primary">تم استخراج البيانات بنجاح</p>
+                  </div>
+                  <p className="text-xs text-primary/60">هل هذه بياناتك صحيحة؟</p>
+                </div>
+
+                {/* Extracted data cards */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "الوزن", value: `${weight} كجم`, icon: Scale },
+                    { label: "نسبة الدهون", value: `${result.bodyFat}%`, icon: Activity },
+                    { label: "الكتلة العضلية", value: `${result.muscleMass} كجم`, icon: Dumbbell },
+                    { label: "معدل الأيض", value: `${result.bmr} سعرة`, icon: Heart },
+                    ...(waterPercentage ? [{ label: "نسبة الماء", value: `${waterPercentage}%`, icon: Droplets }] : []),
+                    ...(visceralFat ? [{ label: "الدهون الحشوية", value: visceralFat, icon: Activity }] : []),
+                  ].map(stat => (
+                    <div key={stat.label} className="bg-[hsl(0_0%_4%)] rounded-xl p-3 text-center">
+                      <stat.icon className="w-4 h-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
+                      <p className="text-sm font-bold text-white">{stat.value}</p>
+                      <p className="text-[10px] text-[hsl(0_0%_40%)]">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button className="gap-1.5" onClick={() => saveScan.mutate()} disabled={saveScan.isPending}>
+                    {saveScan.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" strokeWidth={1.5} />}
+                    تأكيد وحفظ
+                  </Button>
+                  <Button variant="outline" className="gap-1.5 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)]"
+                    onClick={() => { setIsEditing(true); setMode("manual"); }}>
+                    <Edit className="w-4 h-4" strokeWidth={1.5} />
+                    تعديل يدوي
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Manual entry */}
             {mode === "manual" && !displayResult && (
               <div className="space-y-4 py-2">
                 {result && isEditing && (
@@ -394,7 +542,8 @@ const PortalBodyScan = () => {
               </div>
             )}
 
-            {displayResult && (
+            {/* Results display (for manual mode) */}
+            {mode === "manual" && displayResult && (
               <div className="space-y-4 py-2 animate-fade-in">
                 <div className="text-center">
                   <div className={`inline-flex items-center justify-center w-24 h-24 rounded-full border-4 ${

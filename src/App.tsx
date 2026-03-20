@@ -43,6 +43,7 @@ import TrainerPackages from "./pages/TrainerPackages";
 import PublicPayment from "./pages/PublicPayment";
 import AdminDashboard from "./pages/AdminDashboard";
 import PageBuilder from "./pages/PageBuilder";
+import Copilot from "./pages/Copilot";
 
 const queryClient = new QueryClient();
 

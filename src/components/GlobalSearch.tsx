@@ -44,7 +44,7 @@ const GlobalSearch = ({ externalOpen, onExternalClose }: { externalOpen?: boolea
     setResults({
       clients: (clientsRes.data as any) || [],
       programs: (programsRes.data as any) || [],
-      sessions: (sessionsRes.data as any)?.map((s: any) => ({ ...s, client_name: "" })) || [],
+      sessions: (sessionsRes.data as any)?.map((s: any) => ({ ...s, client_name: s.clients?.name || "" })) || [],
     });
     setLoading(false);
   }, [user]);

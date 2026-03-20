@@ -200,7 +200,7 @@ const Dashboard = () => {
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["dashboard-payments"],
+    queryKey: ["dashboard-payments", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("client_payments").select("id, amount, created_at, status").eq("status", "paid").order("created_at", { ascending: true });
       if (error) throw error;

@@ -1174,19 +1174,21 @@ const Settings = () => {
 
           <Separator />
 
-          {/* Replay Tour */}
+          {/* Reset Onboarding */}
           <Button
             variant="outline"
             className="w-full gap-2 text-primary hover:text-primary"
             onClick={async () => {
               if (user) {
-                await supabase.from("profiles").update({ onboarding_completed: false } as any).eq("user_id", user.id);
+                await supabase.from("profiles").update({ onboarding_steps_completed: [], onboarding_completed: false } as any).eq("user_id", user.id);
+                localStorage.removeItem("onboarding-dismissed");
+                toast({ title: "تم إعادة تعيين خطوات الإعداد" });
+                navigate("/dashboard");
               }
-              startTutorial();
             }}
           >
             <RotateCcw className="w-4 h-4" />
-            إعادة الجولة التعريفية
+            إعادة خطوات الإعداد
           </Button>
 
           <Separator />

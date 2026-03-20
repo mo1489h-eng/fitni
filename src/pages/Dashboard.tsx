@@ -170,7 +170,7 @@ const Dashboard = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
-    queryKey: ["dashboard-clients"],
+    queryKey: ["dashboard-clients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
       if (error) throw error;
@@ -180,7 +180,7 @@ const Dashboard = () => {
   });
 
   const { data: measurements = [], isLoading: measurementsLoading } = useQuery({
-    queryKey: ["dashboard-measurements"],
+    queryKey: ["dashboard-measurements", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("measurements").select("client_id, weight, recorded_at").order("recorded_at", { ascending: false });
       if (error) throw error;
@@ -190,7 +190,7 @@ const Dashboard = () => {
   });
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
-    queryKey: ["dashboard-sessions"],
+    queryKey: ["dashboard-sessions", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("trainer_sessions").select("id, client_id, session_date, start_time, session_type, notes").order("session_date", { ascending: true });
       if (error) throw error;
@@ -200,7 +200,7 @@ const Dashboard = () => {
   });
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["dashboard-payments"],
+    queryKey: ["dashboard-payments", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("client_payments").select("id, amount, created_at, status").eq("status", "paid").order("created_at", { ascending: true });
       if (error) throw error;
@@ -210,7 +210,7 @@ const Dashboard = () => {
   });
 
   const { data: pendingCopilotCount = 0 } = useQuery({
-    queryKey: ["dashboard-copilot-pending-count"],
+    queryKey: ["dashboard-copilot-pending-count", user?.id],
     queryFn: async () => {
       const { count, error } = await supabase.from("copilot_recommendations").select("*", { head: true, count: "exact" }).eq("status", "pending");
       if (error) throw error;

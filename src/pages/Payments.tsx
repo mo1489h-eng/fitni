@@ -20,7 +20,7 @@ const Payments = () => {
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
   const { data: clients = [], isLoading, refetch } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
       if (error) throw error;

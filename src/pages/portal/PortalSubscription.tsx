@@ -229,10 +229,10 @@ const PortalSubscription = () => {
         )}
 
         {isExpiringTomorrow && (
-          <div className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/30 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-orange-500 shrink-0" />
+          <div className="rounded-xl p-3 bg-destructive/10 border border-destructive/30 flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-bold text-orange-400">اشتراكك ينتهي غداً</p>
+              <p className="text-sm font-bold text-destructive">اشتراكك ينتهي غداً</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>
               جدد الآن

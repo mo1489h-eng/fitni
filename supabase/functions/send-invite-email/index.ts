@@ -100,7 +100,7 @@ serve(async (req) => {
                 </div>
                 <h2 style="font-size: 22px; margin-bottom: 8px;">مرحباً ${clientName} 👋</h2>
                 <p style="color: #a0a0a0; font-size: 16px; line-height: 1.8;">
-                  مدربك <strong style="color: #22c55e;">${trainerName}</strong> أضافك على منصة fitni
+                  مدربك <strong style="color: #16a34a;">${trainerName}</strong> أضافك على منصة fitni
                 </p>
                 <p style="color: #a0a0a0; font-size: 16px;">أنشئ حسابك المجاني الآن:</p>
                 <div style="text-align: center; margin: 30px 0;">

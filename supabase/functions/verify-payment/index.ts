@@ -95,9 +95,24 @@ serve(async (req) => {
       });
     }
 
-    // Update profile with subscription
+    // Check for payment replay — ensure this payment_id hasn't been used before
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("last_payment_id", payment_id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      return new Response(JSON.stringify({ error: "Payment already used" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Update profile with subscription
 
     const now = new Date();
     const endDate = new Date(now);

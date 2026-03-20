@@ -105,7 +105,6 @@ const CircularProgress = forwardRef<HTMLDivElement, { value: number }>(({ value 
   );
 });
 CircularProgress.displayName = "CircularProgress";
-};
 
 const StatCard = ({
   title,

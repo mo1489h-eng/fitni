@@ -342,6 +342,7 @@ const Dashboard = () => {
     <TrainerLayout onQuickAdd={() => setShowImport(true)}>
       <div className="space-y-6 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
+        <OnboardingChecklist />
 
         {profile?.username ? (
           <Card className="border-border bg-card">

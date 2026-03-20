@@ -187,8 +187,8 @@ const Copilot = () => {
                     onClick={() => navigate(`/clients/${rec.client_id}`)}
                     className="flex w-full items-center gap-4 rounded-xl border border-border bg-background px-5 py-4 text-right transition-all duration-200 hover:border-primary/30"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-yellow-400/20 bg-yellow-400/10">
-                      <Sparkles className="h-4 w-4 text-yellow-400" strokeWidth={1.5} />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-warning/20 bg-warning/10">
+                      <Sparkles className="h-4 w-4 text-warning" strokeWidth={1.5} />
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-semibold text-foreground">{rec.title}</div>

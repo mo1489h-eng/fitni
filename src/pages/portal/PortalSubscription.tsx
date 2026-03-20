@@ -320,7 +320,7 @@ const PortalSubscription = () => {
               <div className="mb-4">
                 <div className="flex items-center justify-between text-sm mb-1.5">
                   <span className="text-muted-foreground">تنتهي في: <span className="text-card-foreground font-medium">{endDate.toLocaleDateString("ar-SA", { day: "numeric", month: "long", year: "numeric" })}</span></span>
-                  <span className={`text-xs font-bold ${isActive ? (isExpiringSoon ? "text-yellow-400" : "text-primary") : "text-destructive"}`}>
+                  <span className={`text-xs font-bold ${isActive ? (isExpiringSoon ? "text-warning" : "text-primary") : "text-destructive"}`}>
                     {isActive ? `${Math.round(progressPercent)}% متبقي` : "منتهي"}
                   </span>
                 </div>

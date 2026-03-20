@@ -509,6 +509,30 @@ export type Database = {
           },
         ]
       }
+      copilot_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          trainer_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role?: string
+          trainer_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
       copilot_recommendations: {
         Row: {
           client_id: string

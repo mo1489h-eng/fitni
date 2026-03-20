@@ -85,7 +85,7 @@ const TrainerLayout = ({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <GlobalSearch />
+      <GlobalSearch externalOpen={searchOpen} onExternalClose={() => setSearchOpen(false)} />
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <aside className="hidden w-[290px] shrink-0 border-l border-border bg-sidebar md:flex md:flex-col">
           <div className="border-b border-border px-6 py-6">

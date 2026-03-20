@@ -39,7 +39,7 @@ const GlobalSearch = ({ externalOpen, onExternalClose }: { externalOpen?: boolea
     const [clientsRes, programsRes, sessionsRes] = await Promise.all([
       supabase.from("clients").select("id, name, goal").eq("trainer_id", user.id).ilike("name", `%${q}%`).limit(5),
       supabase.from("programs").select("id, name, weeks").eq("trainer_id", user.id).ilike("name", `%${q}%`).limit(5),
-      supabase.from("trainer_sessions").select("id, session_date, session_type, client_id").eq("trainer_id", user.id).limit(5),
+      supabase.from("trainer_sessions").select("id, session_date, session_type, client_id, clients!inner(name)").eq("trainer_id", user.id).limit(5),
     ]);
     setResults({
       clients: (clientsRes.data as any) || [],

@@ -189,7 +189,7 @@ serve(async (req) => {
                    <p><strong style="color: #16a34a;">صالح حتى:</strong> ${endDate.toLocaleDateString("ar-SA")}</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://fitni.lovable.app/client-login" style="background: #22c55e; color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">ادخل لبوابتك الآن</a>
+                  <a href="https://fitni.lovable.app/client-login" style="background: #16a34a; color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">ادخل لبوابتك الآن</a>
                 </div>
                 <p style="color: #666; font-size: 12px; text-align: center;">شكراً لثقتك — فريق fitni</p>
               </div>

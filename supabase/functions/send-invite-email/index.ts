@@ -104,7 +104,7 @@ serve(async (req) => {
                 </p>
                 <p style="color: #a0a0a0; font-size: 16px;">أنشئ حسابك المجاني الآن:</p>
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${setupLink}" style="display: inline-block; background: #22c55e; color: #000; font-weight: bold; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-size: 18px;">
+                  <a href="${setupLink}" style="display: inline-block; background: #16a34a; color: #000; font-weight: bold; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-size: 18px;">
                     أنشئ حسابي 💪
                   </a>
                 </div>

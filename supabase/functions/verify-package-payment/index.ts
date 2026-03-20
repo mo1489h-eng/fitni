@@ -182,9 +182,9 @@ serve(async (req) => {
                 <h1 style="color: #16a34a; text-align: center;">fitni</h1>
                 <h2>تم استلام الدفع بنجاح ✅</h2>
                 <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                  <p><strong style="color: #22c55e;">الباقة:</strong> ${pkg.name}</p>
-                  <p><strong style="color: #22c55e;">المبلغ:</strong> ${pkg.price} ر.س</p>
-                  <p><strong style="color: #22c55e;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
+                  <p><strong style="color: #16a34a;">الباقة:</strong> ${pkg.name}</p>
+                  <p><strong style="color: #16a34a;">المبلغ:</strong> ${pkg.price} ر.س</p>
+                  <p><strong style="color: #16a34a;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
                 </div>
                 <p style="color: #666; font-size: 12px; text-align: center;">شكراً لثقتك — فريق fitni</p>
               </div>

@@ -169,10 +169,10 @@ serve(async (req) => {
                 </p>
                 <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
                   <p style="margin: 8px 0; font-size: 16px;">
-                    <strong style="color: #22c55e;">الخطة:</strong> ${planName}
+                    <strong style="color: #16a34a;">الخطة:</strong> ${planName}
                   </p>
                   <p style="margin: 8px 0; font-size: 16px;">
-                    <strong style="color: #22c55e;">تاريخ التجديد:</strong> ${renewDate}
+                    <strong style="color: #16a34a;">تاريخ التجديد:</strong> ${renewDate}
                   </p>
                 </div>
                 <p style="color: #666; font-size: 12px; text-align: center; margin-top: 30px;">

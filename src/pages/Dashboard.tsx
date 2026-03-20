@@ -190,7 +190,7 @@ const Dashboard = () => {
   });
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
-    queryKey: ["dashboard-sessions"],
+    queryKey: ["dashboard-sessions", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("trainer_sessions").select("id, client_id, session_date, start_time, session_type, notes").order("session_date", { ascending: true });
       if (error) throw error;

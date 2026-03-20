@@ -2,6 +2,7 @@ import { BarChart3, Check, FileText, MessageSquareText, Receipt, X } from "lucid
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Reveal, SectionHeading } from "./LandingUtils";
+import trainerConfident from "@/assets/landing-trainer-confident.jpeg";
 
 const ProblemPanel = ({ variant, title, items }: { variant: "before" | "after"; title: string; items: string[] }) => {
   const before = variant === "before";
@@ -18,9 +19,11 @@ const ProblemPanel = ({ variant, title, items }: { variant: "before" | "after"; 
             <h3 className="text-3xl font-black text-foreground">{title}</h3>
           </div>
         </div>
-        <div className="mb-8 grid grid-cols-3 gap-3">
+
+        {/* Visual area */}
+        <div className="mb-8">
           {before ? (
-            <>
+            <div className="grid grid-cols-3 gap-3">
               <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
                 <MessageSquareText className="mb-8 h-8 w-8 text-destructive" />
                 <div className="h-2 w-14 rounded-full bg-destructive/40" />
@@ -33,17 +36,22 @@ const ProblemPanel = ({ variant, title, items }: { variant: "before" | "after"; 
                 <Receipt className="mb-8 h-8 w-8 text-foreground/40" />
                 <div className="h-2 w-10 rounded-full bg-foreground/10" />
               </div>
-            </>
+            </div>
           ) : (
-            <div className="col-span-3 rounded-[1.75rem] border border-primary/20 bg-background/80 p-4 shadow-[0_20px_60px_hsl(var(--primary)/0.12)]">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-card/80 p-4"><div className="mb-5 text-sm text-foreground/50">العملاء</div><div className="text-2xl font-black text-foreground">42</div></div>
-                <div className="rounded-2xl border border-border bg-card/80 p-4"><div className="mb-5 text-sm text-foreground/50">الاشتراكات</div><div className="text-2xl font-black text-foreground">18</div></div>
-                <div className="rounded-2xl border border-border bg-card/80 p-4"><div className="mb-5 text-sm text-foreground/50">المهام</div><div className="text-2xl font-black text-foreground">09</div></div>
-              </div>
+            <div className="relative overflow-hidden rounded-[12px]">
+              <img
+                src={trainerConfident}
+                alt="مدرب يستخدم fitni باحترافية"
+                loading="lazy"
+                className="w-full object-cover"
+                style={{ aspectRatio: "16/9" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+              <div className="absolute inset-0 rounded-[12px] ring-1 ring-inset ring-primary/20" />
             </div>
           )}
         </div>
+
         <div className="space-y-4">
           {items.map((item) => (
             <div key={item} className="flex items-center gap-3 text-lg text-foreground/78">

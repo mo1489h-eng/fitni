@@ -103,7 +103,7 @@ serve(async (req) => {
             to: [client.email],
             subject: "تم تجديد اشتراكك بنجاح ✅",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
-              <h1 style="color:#22c55e;text-align:center;">fitni</h1>
+              <h1 style="color:#16a34a;text-align:center;">fitni</h1>
               <h2>تم تجديد اشتراكك بنجاح ✅</h2>
               <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
                 <p><strong style="color:#22c55e;">المبلغ:</strong> ${amount} ر.س</p>

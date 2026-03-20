@@ -114,7 +114,7 @@ const Register = () => {
           p_trainer_id: signUpData.user.id,
         });
       }
-      setShowConfirmation(true);
+      navigate(`/confirm-email?email=${encodeURIComponent(email)}`);
       setLoading(false);
       return;
     }

@@ -99,7 +99,7 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "fitni <onboarding@resend.dev>",
+            from: "fitni <noreply@fitni.app>",
             to: [client.email],
             subject: "تم تجديد اشتراكك بنجاح ✅",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">

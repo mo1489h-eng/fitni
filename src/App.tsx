@@ -44,6 +44,7 @@ import PublicPayment from "./pages/PublicPayment";
 import AdminDashboard from "./pages/AdminDashboard";
 import PageBuilder from "./pages/PageBuilder";
 import Copilot from "./pages/Copilot";
+import Store from "./pages/Store";
 
 const queryClient = new QueryClient();
 

@@ -59,7 +59,7 @@ const TrainerContent = () => {
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("id, name").order("name");
       if (error) throw error;

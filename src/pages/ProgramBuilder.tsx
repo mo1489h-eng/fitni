@@ -262,7 +262,7 @@ const ProgramBuilder = () => {
   });
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("id, name, program_id");
       return data || [];

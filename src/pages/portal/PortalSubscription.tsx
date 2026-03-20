@@ -219,7 +219,7 @@ const PortalSubscription = () => {
           <div className="rounded-xl p-3 bg-yellow-500/10 border border-yellow-500/30 flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-yellow-400">اشتراكك ينتهي خلال {daysLeft} أيام</p>
+              <p className="text-sm font-medium text-warning">اشتراكك ينتهي خلال {daysLeft} أيام</p>
               <p className="text-xs text-muted-foreground">جدد الآن واستمر في رحلتك</p>
             </div>
             <Button size="sm" onClick={() => { setSelectedPkgId(currentPkg?.id || null); setShowRenewal(true); }}>

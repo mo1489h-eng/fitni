@@ -157,6 +157,7 @@ const Clients = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 page-enter">
+        <FeatureTooltip id="clients-add" targetSelector="[data-tour='add-client']" message="ابدأ بإضافة عملاءك هنا" />
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

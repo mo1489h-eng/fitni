@@ -2,6 +2,8 @@ import { Check, CreditCard, Users, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Reveal, DeviceShell, MiniStat } from "./LandingUtils";
+import clientsFeatureImg from "@/assets/landing-clients-feature.jpeg";
+import portalFeatureImg from "@/assets/landing-portal-feature.jpeg";
 
 type Feature = { number: string; title: string; description: string; id: string };
 
@@ -12,24 +14,24 @@ const features: Feature[] = [
   { number: "04", title: "بورتال المتدرب", description: "كل عميل لديه بورتال خاص يشاهد منه برنامجه، يسجل تمارينه، ويتابع تقدمه أسبوعياً.", id: "portal" },
 ];
 
+/* ─── Photo-based visual for clients & portal ─── */
+const PhotoVisual = ({ src, alt }: { src: string; alt: string }) => (
+  <div className="relative overflow-hidden rounded-[12px] shadow-[0_0_40px_hsl(var(--primary)/0.12)]">
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      className="w-full object-cover"
+      style={{ aspectRatio: "16/10" }}
+    />
+    {/* Subtle green border glow */}
+    <div className="absolute inset-0 rounded-[12px] ring-1 ring-inset ring-primary/25 shadow-[inset_0_0_30px_hsl(var(--primary)/0.08)]" />
+  </div>
+);
+
 const ClientsVisual = () => (
   <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-    <Card className="border-border bg-card/80">
-      <CardContent className="p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div><div className="font-bold text-foreground">قائمة العملاء</div><div className="text-sm text-foreground/45">نشاط مباشر</div></div>
-          <Users className="h-5 w-5 text-primary" />
-        </div>
-        <div className="space-y-3">
-          {[{ name: "سارة", tag: "أسبوع 6" }, { name: "عبدالله", tag: "خطة جديدة" }, { name: "دانة", tag: "دفعة مكتملة" }].map((item) => (
-            <div key={item.name} className="flex items-center justify-between rounded-2xl border border-border bg-background/80 px-4 py-3">
-              <div><div className="font-semibold text-foreground">{item.name}</div><div className="text-sm text-foreground/45">{item.tag}</div></div>
-              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <PhotoVisual src={clientsFeatureImg} alt="مدرب يتابع عميله عبر fitni" />
     <Card className="border-border bg-card/80">
       <CardContent className="p-5">
         <div className="mb-6 flex items-center justify-between">
@@ -118,7 +120,8 @@ const PaymentsVisual = () => (
 );
 
 const PortalVisual = () => (
-  <div className="mx-auto max-w-sm">
+  <div className="grid gap-4 md:grid-cols-2">
+    <PhotoVisual src={portalFeatureImg} alt="متدرب يستخدم بورتال fitni" />
     <DeviceShell>
       <div className="bg-card/80 p-4">
         <div className="mb-4 rounded-[1.5rem] border border-primary/20 bg-primary/10 p-4">

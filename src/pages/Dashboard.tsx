@@ -170,7 +170,7 @@ const Dashboard = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
-    queryKey: ["dashboard-clients"],
+    queryKey: ["dashboard-clients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
       if (error) throw error;

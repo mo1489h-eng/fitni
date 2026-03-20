@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/confirm-email" element={<ConfirmEmail />} />
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
             <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
             <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />

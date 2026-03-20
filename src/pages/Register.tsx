@@ -38,7 +38,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();

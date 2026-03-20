@@ -66,7 +66,7 @@ const GOALS = [
   { value: "بناء عضلات", icon: "", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   { value: "لياقة عامة", icon: "", color: "bg-primary/10 text-primary border-primary/20" },
   { value: "تأهيل", icon: "", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
-  { value: "قوة", icon: "", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
+  { value: "قوة", icon: "", color: "bg-warning/10 text-warning border-warning/20" },
 ];
 const LEVELS = [
   { value: "مبتدئ", color: "bg-primary/10 text-primary border-primary/20" },

@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 
 import ImportClientsModal from "@/components/ImportClientsModal";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 import PremiumSkeleton from "@/components/PremiumSkeleton";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";

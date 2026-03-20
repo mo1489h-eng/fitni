@@ -8,6 +8,7 @@ import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import AuthGuard from "@/components/AuthGuard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ConfirmEmail from "./pages/ConfirmEmail";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";

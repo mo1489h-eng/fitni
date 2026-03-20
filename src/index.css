@@ -248,3 +248,12 @@
   25% { transform: translateX(-5px); }
   75% { transform: translateX(5px); }
 }
+
+@keyframes scan-line {
+  0% { transform: translateX(200%); }
+  100% { transform: translateX(-200%); }
+}
+
+.animate-scan-line {
+  animation: scan-line 1.5s ease-in-out infinite;
+}

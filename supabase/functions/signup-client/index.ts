@@ -52,6 +52,19 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Check for payment replay — ensure this payment_id hasn't been used before
+    const { data: existingPayment } = await supabase
+      .from("client_payments")
+      .select("id")
+      .eq("moyasar_payment_id", payment_id)
+      .maybeSingle();
+
+    if (existingPayment) {
+      return new Response(JSON.stringify({ error: "Payment already processed" }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Verify package exists and belongs to trainer
     const { data: pkg, error: pkgError } = await supabase
       .from("trainer_packages")

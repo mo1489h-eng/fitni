@@ -176,7 +176,7 @@ const Copilot = () => {
           <Card className="border-border bg-card">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Zap className="h-5 w-5 text-yellow-400" strokeWidth={1.5} />
+                <Zap className="h-5 w-5 text-warning" strokeWidth={1.5} />
                 <h3 className="text-lg font-semibold text-foreground">توصيات بانتظار المراجعة</h3>
               </div>
               <div className="space-y-3">

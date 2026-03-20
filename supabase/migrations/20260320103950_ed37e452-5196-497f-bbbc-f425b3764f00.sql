@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_steps_completed text[] NOT NULL DEFAULT '{}'::text[];

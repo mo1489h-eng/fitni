@@ -42,10 +42,9 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
-
-  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   const validateEmail = (value: string) => {
     setEmail(value);

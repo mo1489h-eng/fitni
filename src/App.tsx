@@ -44,6 +44,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PageBuilder from "./pages/PageBuilder";
 import Copilot from "./pages/Copilot";
 import Store from "./pages/Store";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +104,8 @@ const App = () => (
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
             <Route path="/admin-fitni-dashboard" element={<AdminDashboard />} />
             <Route path="/store" element={<Store />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

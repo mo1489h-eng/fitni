@@ -22,8 +22,8 @@ const Footer = () => (
       <div>
         <div className="mb-4 text-sm font-bold text-foreground">قانوني وتواصل</div>
         <div className="space-y-3 text-foreground/60">
-          <a href="#" className="block transition-colors hover:text-foreground">سياسة الخصوصية</a>
-          <a href="#" className="block transition-colors hover:text-foreground">الشروط</a>
+          <Link to="/privacy" className="block transition-colors hover:text-foreground">سياسة الخصوصية</Link>
+          <Link to="/terms" className="block transition-colors hover:text-foreground">الشروط والأحكام</Link>
           <div className="flex items-center gap-3 pt-2 text-foreground/55">
             <a href="#" aria-label="Instagram" className="rounded-full border border-border p-2 transition-colors hover:text-primary"><Instagram className="h-4 w-4" /></a>
             <a href="#" aria-label="Twitter" className="rounded-full border border-border p-2 transition-colors hover:text-primary"><Twitter className="h-4 w-4" /></a>

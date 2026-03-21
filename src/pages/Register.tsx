@@ -276,7 +276,7 @@ const Register = () => {
 
               <label className="flex items-start gap-2.5 text-sm text-muted-foreground cursor-pointer pt-1">
                 <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="rounded border-border bg-background h-4 w-4 accent-primary mt-0.5" />
-                <span>أوافق على <button type="button" className="text-primary hover:underline">الشروط</button> و<button type="button" className="text-primary hover:underline">سياسة الخصوصية</button></span>
+                <span>أوافق على <Link to="/terms" target="_blank" className="text-primary hover:underline">الشروط والأحكام</Link> و<Link to="/privacy" target="_blank" className="text-primary hover:underline">سياسة الخصوصية</Link></span>
               </label>
 
               <Button type="submit" className="w-full" size="lg" disabled={loading || !agreeTerms || !!emailError}>

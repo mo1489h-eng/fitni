@@ -159,7 +159,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
           onOpenChange={setShowUpgrade}
           title={getProFeatureBlockReason().title}
           description={getProFeatureBlockReason().description}
-          ctaText="ترقية للاحترافي - 69 ريال/شهر ←"
+          ctaText="ترقية للاحترافي - 179 ريال/شهر ←"
           secondaryText="لاحقاً"
           onUpgrade={() => {
             setShowUpgrade(false);

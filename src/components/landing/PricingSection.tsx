@@ -42,7 +42,7 @@ const PricingSection = () => (
             <div className="absolute right-6 top-6 rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">الأكثر شعبية</div>
             <CardContent className="p-8 pt-20">
               <div className="text-sm text-foreground/55">احترافي</div>
-              <div className="mt-2 text-5xl font-black text-foreground">69 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
+              <div className="mt-2 text-5xl font-black text-foreground">179 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
               <p className="mt-4 text-lg text-foreground/70">عملاء غير محدودين</p>
               <div className="mt-8 space-y-4">
                 {planFeatures.pro.map((item) => (

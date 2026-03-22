@@ -78,7 +78,7 @@ export function usePlanLimits() {
   };
 
   const getProFeatureBlockReason = () => ({
-    blocked: !isPro,
+    blocked: !hasFullAccess,
     title: "هذه الميزة للباقة الاحترافية",
     description: "احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية",
   });

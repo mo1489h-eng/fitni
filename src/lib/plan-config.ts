@@ -11,26 +11,26 @@ export interface PlanDetails {
 
 export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
   free: {
-    name: "مجاني",
+    name: "مجاني (تجريبي)",
     price: 0,
-    clientLimit: 10,
-    durationLabel: "6 أشهر من التسجيل",
+    clientLimit: Number.POSITIVE_INFINITY,
+    durationLabel: "6 أشهر - كل الميزات متاحة",
     includedFeatures: [
-      "حتى 10 عملاء",
+      "عملاء غير محدودين",
       "إدارة العملاء",
       "البرامج التدريبية",
       "الخطط الغذائية",
       "التقويم",
       "بوابة العميل",
-      "الصفحة العامة",
-      "المدفوعات",
-      "المزايا الأساسية",
+      "AI كوبايلت",
+      "التحديات الجماعية",
+      "سوق البرامج",
+      "كل الميزات متاحة",
     ],
-    excludedFeatures: ["AI كوبايلت", "التحديات الجماعية", "سوق البرامج", "Nearby Discovery"],
   },
   basic: {
     name: "أساسي",
-    price: 49,
+    price: 99,
     clientLimit: 10,
     includedFeatures: [
       "حتى 10 عملاء",
@@ -48,7 +48,7 @@ export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
   },
   pro: {
     name: "احترافي",
-    price: 69,
+    price: 179,
     clientLimit: Number.POSITIVE_INFINITY,
     includedFeatures: [
       "عملاء غير محدودين",
@@ -66,7 +66,7 @@ export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
 export const PRO_UPGRADE_PROMPT = {
   title: "هذه الميزة للباقة الاحترافية",
   description: "احصل على عملاء غير محدودين وAI كوبايلت والتحديات الجماعية",
-  ctaText: "ترقية للاحترافي - 69 ريال/شهر",
+  ctaText: "ترقية للاحترافي - 179 ريال/شهر",
   secondaryText: "لاحقاً",
 };
 

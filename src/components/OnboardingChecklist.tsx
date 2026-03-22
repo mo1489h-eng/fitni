@@ -59,16 +59,18 @@ const OnboardingChecklist = () => {
   const { data: counts } = useQuery({
     queryKey: ["onboarding-counts", user?.id],
     queryFn: async () => {
-      const [clients, programs, packages, profileData] = await Promise.all([
+      const [clients, programs, packages, profileData, copilotMsgs] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }),
         supabase.from("programs").select("id", { head: true, count: "exact" }),
         supabase.from("trainer_packages").select("id", { head: true, count: "exact" }),
         supabase.from("profiles").select("full_name, avatar_url, bio, specialization").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("copilot_messages").select("id", { head: true, count: "exact" }).eq("role", "user"),
       ]);
       return {
         clients: clients.count ?? 0,
         programs: programs.count ?? 0,
         packages: packages.count ?? 0,
+        copilotUsed: (copilotMsgs.count ?? 0) > 0,
         profileComplete: !!(profileData.data?.full_name && profileData.data?.avatar_url),
         pageCustomized: !!(profileData.data?.bio && profileData.data?.avatar_url),
       };

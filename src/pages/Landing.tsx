@@ -9,6 +9,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import ProblemSection from "@/components/landing/ProblemSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import AICopilotSection from "@/components/landing/AICopilotSection";
+import AIAgentSection from "@/components/landing/AIAgentSection";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
@@ -92,6 +93,7 @@ const Landing = () => {
         <ProblemSection />
         <FeaturesSection />
         <AICopilotSection copilotStep={copilotStep} />
+        <AIAgentSection />
         <PricingSection />
         <TestimonialsSection />
         <FinalCTA />

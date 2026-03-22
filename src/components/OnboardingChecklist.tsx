@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle, UserPlus, ClipboardList, Globe, CreditCard, Share2,
-  ChevronDown, ChevronUp, Rocket,
+  ChevronDown, ChevronUp, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -59,16 +59,18 @@ const OnboardingChecklist = () => {
   const { data: counts } = useQuery({
     queryKey: ["onboarding-counts", user?.id],
     queryFn: async () => {
-      const [clients, programs, packages, profileData] = await Promise.all([
+      const [clients, programs, packages, profileData, copilotMsgs] = await Promise.all([
         supabase.from("clients").select("id", { head: true, count: "exact" }),
         supabase.from("programs").select("id", { head: true, count: "exact" }),
         supabase.from("trainer_packages").select("id", { head: true, count: "exact" }),
         supabase.from("profiles").select("full_name, avatar_url, bio, specialization").eq("user_id", user!.id).maybeSingle(),
+        supabase.from("copilot_messages").select("id", { head: true, count: "exact" }).eq("role", "user"),
       ]);
       return {
         clients: clients.count ?? 0,
         programs: programs.count ?? 0,
         packages: packages.count ?? 0,
+        copilotUsed: (copilotMsgs.count ?? 0) > 0,
         profileComplete: !!(profileData.data?.full_name && profileData.data?.avatar_url),
         pageCustomized: !!(profileData.data?.bio && profileData.data?.avatar_url),
       };
@@ -97,6 +99,7 @@ const OnboardingChecklist = () => {
     if (counts.programs > 0 && !completedSteps.includes("program")) markStep("program");
     if (counts.pageCustomized && !completedSteps.includes("page")) markStep("page");
     if (counts.packages > 0 && !completedSteps.includes("package")) markStep("package");
+    if (counts.copilotUsed && !completedSteps.includes("copilot")) markStep("copilot");
   }, [counts, completedSteps, markStep, user]);
 
   const handleCopyLink = async () => {
@@ -159,6 +162,14 @@ const OnboardingChecklist = () => {
       description: "انشر رابط صفحتك على سوشيال ميديا",
       actionLabel: "نسخ الرابط",
       action: handleCopyLink,
+    },
+    {
+      id: "copilot",
+      icon: Sparkles,
+      title: "جرّب الكوبايلت الذكي",
+      description: "اطلب منه تعديل برنامج أو إضافة جلسة",
+      actionLabel: "جرّب الآن",
+      action: () => navigate("/copilot"),
     },
   ];
 

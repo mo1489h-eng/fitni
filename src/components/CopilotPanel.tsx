@@ -152,7 +152,7 @@ const CopilotPanel = ({ clientId, clientName }: CopilotPanelProps) => {
             <h3 className="font-bold text-card-foreground">هذه الميزة للباقة الاحترافية</h3>
             <p className="text-sm text-muted-foreground mt-1">احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية</p>
           </div>
-          <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 69 ريال/شهر ←</Button>
+          <Button onClick={() => setShowUpgrade(true)}>ترقية للاحترافي - 179 ريال/شهر ←</Button>
         </Card>
         <UpgradeModal
           open={showUpgrade}

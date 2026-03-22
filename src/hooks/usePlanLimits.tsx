@@ -38,18 +38,22 @@ export function usePlanLimits() {
   const isTrialExpired = plan === "free" && trialDaysLeft <= 0;
   const isOnTrial = plan === "free" && trialDaysLeft > 0;
 
-  const maxClients = PLAN_LIMITS[plan]?.maxClients ?? 10;
+  // During free trial: unlimited clients; after trial expired on free: 0; basic: 10; pro: unlimited
+  const effectiveMaxClients = isOnTrial ? Infinity : (PLAN_LIMITS[plan]?.maxClients ?? 10);
+  const maxClients = effectiveMaxClients;
   const canAddClient = clientCount < maxClients && !isTrialExpired;
 
   const isFree = plan === "free";
   const isBasic = plan === "basic";
   const isPro = plan === "pro";
 
-  const hasReportsAccess = isPro;
-  const hasCopilotAccess = isPro;
-  const hasChallengesAccess = isPro;
-  const hasMarketplaceAccess = isPro;
-  const hasDiscoveryAccess = isPro;
+  // During free trial period: ALL features unlocked (full Pro access)
+  const hasFullAccess = isPro || isOnTrial;
+  const hasReportsAccess = hasFullAccess;
+  const hasCopilotAccess = hasFullAccess;
+  const hasChallengesAccess = hasFullAccess;
+  const hasMarketplaceAccess = hasFullAccess;
+  const hasDiscoveryAccess = hasFullAccess;
 
   const getAddClientBlockReason = (): {
     blocked: boolean;

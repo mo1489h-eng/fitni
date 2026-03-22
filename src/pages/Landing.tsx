@@ -93,6 +93,7 @@ const Landing = () => {
         <ProblemSection />
         <FeaturesSection />
         <AICopilotSection copilotStep={copilotStep} />
+        <AIAgentSection />
         <PricingSection />
         <TestimonialsSection />
         <FinalCTA />

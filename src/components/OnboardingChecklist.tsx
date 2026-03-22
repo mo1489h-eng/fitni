@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle, UserPlus, ClipboardList, Globe, CreditCard, Share2,
-  ChevronDown, ChevronUp, Rocket,
+  ChevronDown, ChevronUp, Rocket, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

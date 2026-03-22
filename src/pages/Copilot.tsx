@@ -47,6 +47,11 @@ const Copilot = () => {
   return (
     <TrainerLayout title="AI كوبايلت">
       <div className="space-y-4 page-enter">
+        <FeatureTooltip
+          id="copilot-agent"
+          targetSelector="[value='chat']"
+          message="الكوبايلت يقدر يعدّل بياناتك مباشرة — جرّب قل له: عدّل برنامج عميل"
+        />
         <Tabs defaultValue="programs" dir="rtl">
           <TabsList className="grid w-full grid-cols-3 bg-card border border-border">
             <TabsTrigger value="programs" className="gap-1.5 text-xs sm:text-sm">

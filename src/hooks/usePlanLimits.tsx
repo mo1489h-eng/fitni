@@ -7,7 +7,7 @@ export type PlanType = "free" | "basic" | "pro" | null;
 const FREE_TRIAL_DAYS = 183; // 6 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
-  free: { maxClients: 10 },
+  free: { maxClients: Infinity }, // During trial: unlimited
   basic: { maxClients: 10 },
   pro: { maxClients: Infinity },
 };

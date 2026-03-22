@@ -12,7 +12,7 @@ const plans = [
   {
     key: "basic" as const,
     name: "أساسي",
-    price: 49,
+    price: 99,
     icon: BadgeCheck,
     popular: false,
     features: [
@@ -27,7 +27,7 @@ const plans = [
   {
     key: "pro" as const,
     name: "احترافي",
-    price: 69,
+    price: 179,
     icon: Star,
     popular: true,
     features: [

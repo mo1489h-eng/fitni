@@ -35,7 +35,7 @@ const Copilot = () => {
           </p>
           <Button className="mt-8 rounded-full px-8" size="lg" onClick={() => setShowUpgrade(true)}>
             <Sparkles className="ml-2 h-4 w-4" strokeWidth={1.5} />
-            ترقية الآن - 69 ر.س/شهر
+            ترقية الآن - 179 ر.س/شهر
           </Button>
           <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title="هذه الميزة للباقة الاحترافية" description="كوبايلت الذكاء الاصطناعي متاح فقط في الباقة الاحترافية" onUpgrade={() => { setShowUpgrade(false); navigate("/subscription"); }} />
         </div>

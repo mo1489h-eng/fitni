@@ -99,6 +99,7 @@ const OnboardingChecklist = () => {
     if (counts.programs > 0 && !completedSteps.includes("program")) markStep("program");
     if (counts.pageCustomized && !completedSteps.includes("page")) markStep("page");
     if (counts.packages > 0 && !completedSteps.includes("package")) markStep("package");
+    if (counts.copilotUsed && !completedSteps.includes("copilot")) markStep("copilot");
   }, [counts, completedSteps, markStep, user]);
 
   const handleCopyLink = async () => {

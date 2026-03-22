@@ -23,7 +23,7 @@ const PricingSection = () => (
           <Card className="h-full border-border bg-card/85">
             <CardContent className="p-8">
               <div className="text-sm text-foreground/45">أساسي</div>
-              <div className="mt-2 text-5xl font-black text-foreground">49 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
+              <div className="mt-2 text-5xl font-black text-foreground">99 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
               <p className="mt-4 text-lg text-foreground/60">حتى 10 عملاء</p>
               <div className="mt-8 space-y-4">
                 {planFeatures.basic.map((item) => (

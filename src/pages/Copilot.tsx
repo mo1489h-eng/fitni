@@ -6,6 +6,7 @@ import {
 
 import TrainerLayout from "@/components/TrainerLayout";
 import UpgradeModal from "@/components/UpgradeModal";
+import FeatureTooltip from "@/components/FeatureTooltip";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";

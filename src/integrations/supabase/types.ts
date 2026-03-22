@@ -509,6 +509,45 @@ export type Database = {
           },
         ]
       }
+      copilot_action_logs: {
+        Row: {
+          action_type: string
+          affected_resource: string
+          affected_resource_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          confirmed_by_trainer: boolean
+          created_at: string
+          id: string
+          trainer_id: string
+          undone: boolean
+        }
+        Insert: {
+          action_type?: string
+          affected_resource?: string
+          affected_resource_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          confirmed_by_trainer?: boolean
+          created_at?: string
+          id?: string
+          trainer_id: string
+          undone?: boolean
+        }
+        Update: {
+          action_type?: string
+          affected_resource?: string
+          affected_resource_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          confirmed_by_trainer?: boolean
+          created_at?: string
+          id?: string
+          trainer_id?: string
+          undone?: boolean
+        }
+        Relationships: []
+      }
       copilot_messages: {
         Row: {
           content: string

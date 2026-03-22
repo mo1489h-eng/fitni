@@ -163,6 +163,14 @@ const OnboardingChecklist = () => {
       actionLabel: "نسخ الرابط",
       action: handleCopyLink,
     },
+    {
+      id: "copilot",
+      icon: Sparkles,
+      title: "جرّب الكوبايلت الذكي",
+      description: "اطلب منه تعديل برنامج أو إضافة جلسة",
+      actionLabel: "جرّب الآن",
+      action: () => navigate("/copilot"),
+    },
   ];
 
   const completedCount = steps.filter((s) => completedSteps.includes(s.id)).length;

@@ -36,11 +36,10 @@ const TrialExpiryModal = ({ open, onDismiss, onSubscribe }: TrialExpiryModalProp
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="max-h-[90vh] max-w-lg overflow-y-auto border-border bg-[#0a0a0a] p-0"
+        className="max-h-[90vh] max-w-lg overflow-y-auto border-border bg-[#0a0a0a] p-0 [&>button]:hidden"
         aria-describedby={undefined}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        hideClose
       >
         <div className="p-6" dir="rtl">
           {selectedPlan ? (

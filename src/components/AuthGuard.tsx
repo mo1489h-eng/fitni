@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { Loader2, Lock, Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TrialBanner from "@/components/TrialBanner";
+import TrialExpiryModal from "@/components/TrialExpiryModal";
+import ReadOnlyBanner from "@/components/ReadOnlyBanner";
+import NpsFeedbackModal from "@/components/NpsFeedbackModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const FREE_TRIAL_DAYS = 183; // 6 months
+const FREE_TRIAL_DAYS = 183;
 
 const EmailConfirmBanner = () => {
   const [sending, setSending] = useState(false);
@@ -53,6 +56,51 @@ const EmailConfirmBanner = () => {
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, session, profile, loading } = useAuth();
   const [showPlans, setShowPlans] = useState(false);
+  const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const [readOnlyDismissed, setReadOnlyDismissed] = useState(false);
+  const [showNps, setShowNps] = useState(false);
+  const [npsChecked, setNpsChecked] = useState(false);
+
+  // Determine trial state
+  const isTrialExpired = (() => {
+    if (!profile) return false;
+    const plan = profile.subscription_plan;
+    const isSubscribed = plan && plan !== "free" && plan !== null;
+    if (isSubscribed) return false;
+    const createdAt = new Date(profile.created_at);
+    const daysSinceCreation = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+    return daysSinceCreation >= FREE_TRIAL_DAYS;
+  })();
+
+  const daysBeforeExpiry = (() => {
+    if (!profile) return 999;
+    const createdAt = new Date(profile.created_at);
+    const trialEndDate = new Date(createdAt.getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    return Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  })();
+
+  // Show expiry modal on first load if expired and no dismissal in session
+  useEffect(() => {
+    if (isTrialExpired && !readOnlyDismissed) {
+      setShowExpiryModal(true);
+    }
+  }, [isTrialExpired, readOnlyDismissed]);
+
+  // NPS trigger: 7 days before trial ends
+  useEffect(() => {
+    if (npsChecked || !user || !profile) return;
+    setNpsChecked(true);
+
+    const plan = profile.subscription_plan;
+    const isSubscribed = plan && plan !== "free";
+
+    if (!isSubscribed && daysBeforeExpiry <= 7 && daysBeforeExpiry > 0) {
+      const key = `nps_trial_end_${user.id}`;
+      if (!localStorage.getItem(key)) {
+        setTimeout(() => setShowNps(true), 2000);
+      }
+    }
+  }, [user, profile, daysBeforeExpiry, npsChecked]);
 
   if (loading) {
     return (
@@ -68,39 +116,35 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   const emailConfirmed = user.email_confirmed_at || user.confirmed_at;
 
-  // Check if free year expired and no subscription
-  if (profile) {
-    const plan = profile.subscription_plan;
-    const isSubscribed = plan && plan !== "free" && plan !== null;
-    if (!isSubscribed) {
-      const createdAt = new Date(profile.created_at);
-      const daysSinceCreation = Math.floor(
-        (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysSinceCreation >= FREE_TRIAL_DAYS) {
-        return (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center" dir="rtl">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8 text-destructive" />
-            </div>
-            <h1 className="text-xl font-bold text-foreground mb-2">
-               انتهت الفترة التجريبية المجانية
-             </h1>
-             <p className="text-muted-foreground text-sm mb-6 max-w-xs">
-               اشترك للاستمرار في استخدام fitni وإدارة عملائك
-            </p>
-            <Button onClick={() => setShowPlans(true)}>اشترك الآن</Button>
-            <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
-          </div>
-        );
-      }
-    }
+  if (isTrialExpired && showExpiryModal && !readOnlyDismissed) {
+    return (
+      <>
+        <TrialExpiryModal
+          open={showExpiryModal}
+          onDismiss={() => {
+            setShowExpiryModal(false);
+            setReadOnlyDismissed(true);
+          }}
+          onSubscribe={() => {
+            setShowExpiryModal(false);
+            setReadOnlyDismissed(false);
+            toast.success("تم تفعيل باقتك بنجاح - مرحبا بعودتك");
+          }}
+        />
+      </>
+    );
   }
 
   return (
     <>
       {!emailConfirmed && <EmailConfirmBanner />}
+      {isTrialExpired && readOnlyDismissed && <ReadOnlyBanner />}
       {children}
+      <NpsFeedbackModal
+        open={showNps}
+        onOpenChange={setShowNps}
+        triggerType="trial_end"
+      />
     </>
   );
 };

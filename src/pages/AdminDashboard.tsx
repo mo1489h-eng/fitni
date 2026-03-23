@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, UserCheck, DollarSign, TrendingUp, Lock, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, UserCheck, DollarSign, TrendingUp, Lock, LogOut, Star, BarChart2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -393,6 +394,91 @@ export default function AdminDashboard() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* NPS Section */}
+        {data?.nps && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Star className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                تقييمات المدربين (NPS)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[
+                  { label: "NPS Score", value: data.nps.score, color: data.nps.score >= 50 ? "text-primary" : data.nps.score >= 0 ? "text-amber-500" : "text-destructive" },
+                  { label: "عدد المقيّمين", value: data.nps.count, color: "text-foreground" },
+                  { label: "المروّجين (9-10)", value: `${data.nps.promoters_pct}%`, color: "text-primary" },
+                  { label: "المحايدين (7-8)", value: `${data.nps.passives_pct}%`, color: "text-amber-500" },
+                  { label: "المنتقدين (0-6)", value: `${data.nps.detractors_pct}%`, color: "text-destructive" },
+                ].map((s, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-3 text-center">
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className={`mt-1 text-xl font-bold ${s.color}`}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {data.nps.recent?.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground">آخر التقييمات</h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => {
+                        const csv = "Score,Comment,Date,Trainer\n" +
+                          data.nps.recent.map((n: any) =>
+                            `${n.score},"${(n.comment || "").replace(/"/g, '""')}",${new Date(n.created_at).toLocaleDateString("ar-SA")},${n.trainer_name}`
+                          ).join("\n");
+                        const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "nps_feedback.csv";
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      تصدير CSV
+                    </Button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">التقييم</TableHead>
+                          <TableHead className="text-right">التعليق</TableHead>
+                          <TableHead className="text-right">التاريخ</TableHead>
+                          <TableHead className="text-right">المدرب</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.nps.recent.map((n: any) => (
+                          <TableRow key={n.id}>
+                            <TableCell>
+                              <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                                n.score >= 9 ? "bg-primary/20 text-primary" : n.score >= 7 ? "bg-amber-500/20 text-amber-500" : "bg-destructive/20 text-destructive"
+                              }`}>
+                                {n.score}
+                              </span>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{n.comment || "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleDateString("ar-SA")}</TableCell>
+                            <TableCell className="text-sm">{n.trainer_name}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Charts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

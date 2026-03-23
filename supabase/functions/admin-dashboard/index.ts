@@ -122,12 +122,14 @@ Deno.serve(async (req) => {
       { data: payments },
       { data: payouts },
       { data: paymentSettings },
+      { data: npsFeedback },
     ] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("clients").select("id, name, trainer_id, subscription_price, created_at"),
       supabase.from("client_payments").select("*"),
       supabase.from("payout_requests").select("*").order("requested_at", { ascending: false }),
       supabase.from("trainer_payment_settings").select("*"),
+      supabase.from("nps_feedback").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
 
     const trainerMap: Record<string, any> = {};
@@ -218,6 +220,21 @@ Deno.serve(async (req) => {
       .filter((p: any) => p.status === "paid" && p.created_at?.substring(0, 7) === filterMonth)
       .reduce((sum: number, p: any) => sum + Number(p.amount), 0);
 
+    // NPS stats
+    const npsItems = npsFeedback || [];
+    const npsCount = npsItems.length;
+    const npsAvg = npsCount > 0 ? npsItems.reduce((s: number, n: any) => s + n.score, 0) / npsCount : 0;
+    const promoters = npsItems.filter((n: any) => n.score >= 9).length;
+    const passives = npsItems.filter((n: any) => n.score >= 7 && n.score <= 8).length;
+    const detractors = npsItems.filter((n: any) => n.score <= 6).length;
+    const npsScore = npsCount > 0 ? Math.round(((promoters - detractors) / npsCount) * 100) : 0;
+
+    // Map trainer names for NPS
+    const npsWithNames = npsItems.slice(0, 50).map((n: any) => ({
+      ...n,
+      trainer_name: trainerMap[n.trainer_id]?.name || "مدرب",
+    }));
+
     return jsonResponse({
       trainers,
       payouts,
@@ -231,6 +248,15 @@ Deno.serve(async (req) => {
         monthly_revenue: monthlyRevenue,
         trainer_growth: trainerGrowth,
         plan_distribution: planDist,
+      },
+      nps: {
+        score: npsScore,
+        avg: Math.round(npsAvg * 10) / 10,
+        count: npsCount,
+        promoters_pct: npsCount > 0 ? Math.round((promoters / npsCount) * 100) : 0,
+        passives_pct: npsCount > 0 ? Math.round((passives / npsCount) * 100) : 0,
+        detractors_pct: npsCount > 0 ? Math.round((detractors / npsCount) * 100) : 0,
+        recent: npsWithNames,
       },
       filter_month: filterMonth,
       session_token: nextSessionToken,

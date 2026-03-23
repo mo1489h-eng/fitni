@@ -944,6 +944,33 @@ export type Database = {
           },
         ]
       }
+      nps_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          score: number
+          trainer_id: string
+          trigger_type: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score: number
+          trainer_id: string
+          trigger_type?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score?: number
+          trainer_id?: string
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       package_checkout_sessions: {
         Row: {
           client_email: string | null

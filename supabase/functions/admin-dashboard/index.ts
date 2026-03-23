@@ -122,12 +122,14 @@ Deno.serve(async (req) => {
       { data: payments },
       { data: payouts },
       { data: paymentSettings },
+      { data: npsFeedback },
     ] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("clients").select("id, name, trainer_id, subscription_price, created_at"),
       supabase.from("client_payments").select("*"),
       supabase.from("payout_requests").select("*").order("requested_at", { ascending: false }),
       supabase.from("trainer_payment_settings").select("*"),
+      supabase.from("nps_feedback").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
 
     const trainerMap: Record<string, any> = {};

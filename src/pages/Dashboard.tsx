@@ -340,7 +340,7 @@ const Dashboard = () => {
 
   return (
     <TrainerLayout onQuickAdd={() => setShowImport(true)}>
-      <div className="space-y-6 page-enter">
+      <div className="space-y-8 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         <OnboardingChecklist />
 

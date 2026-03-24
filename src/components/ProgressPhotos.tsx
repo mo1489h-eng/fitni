@@ -74,22 +74,20 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
       const result = await uploadImage(file, "progress-photos", path);
 
       if (portalToken) {
-        // Portal: use secure RPC to insert
         const { error: dbErr } = await supabase.rpc("insert_portal_progress_photo" as any, {
           p_token: portalToken,
           p_photo_type: type,
-          p_photo_url: storagePath,
+          p_photo_url: result.storagePath,
         });
         if (dbErr) throw dbErr;
       } else {
-        // Trainer: direct insert (RLS enforced)
         const { error: dbErr } = await (supabase as any)
           .from("progress_photos")
           .insert({
             client_id: clientId,
             trainer_id: trainerId || null,
             photo_type: type,
-            photo_url: storagePath,
+            photo_url: result.storagePath,
             uploaded_by: uploadedBy,
           });
         if (dbErr) throw dbErr;

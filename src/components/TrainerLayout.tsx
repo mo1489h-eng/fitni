@@ -88,7 +88,7 @@ const TrainerLayout = ({
       <GlobalSearch externalOpen={searchOpen} onExternalClose={() => setSearchOpen(false)} />
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <aside className="hidden w-[290px] shrink-0 border-l border-border bg-sidebar md:flex md:flex-col">
-          <div className="border-b border-border px-6 py-6">
+          <div className="border-b border-border px-6 py-7">
             <Link to="/dashboard" className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
                 <TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} />
@@ -100,7 +100,7 @@ const TrainerLayout = ({
             </Link>
           </div>
 
-          <div className="border-b border-border px-6 py-6">
+          <div className="border-b border-border px-6 py-7">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12 border border-border">
                 <AvatarImage src={profile?.avatar_url ?? undefined} alt={trainerName} />
@@ -116,20 +116,22 @@ const TrainerLayout = ({
             </div>
           </div>
 
-          <nav className="flex-1 space-y-1 px-4 py-6">
+          <nav className="flex-1 space-y-1.5 px-4 py-7">
             {desktopNavItems.map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
                   key={`${item.href}-${item.label}`}
                   to={item.href}
-                  className={`group relative flex items-center gap-3 rounded-xl border border-transparent px-4 py-3 transition-all duration-200 ${
-                    active ? "bg-card text-foreground" : "text-muted-foreground hover:bg-card hover:text-foreground"
+                  className={`group relative flex items-center gap-3 rounded-xl border border-transparent px-4 py-3.5 transition-all duration-200 ${
+                    active
+                      ? "bg-primary/[0.08] border-primary/20 text-foreground"
+                      : "text-muted-foreground hover:bg-card hover:text-foreground"
                   }`}
                 >
-                  <span className={`absolute inset-y-2 right-0 w-0.5 rounded-full ${active ? "bg-primary" : "bg-transparent"}`} />
+                  <span className={`absolute inset-y-2 right-0 w-[3px] rounded-full transition-colors ${active ? "bg-primary" : "bg-transparent"}`} />
                   <item.icon className={`h-5 w-5 shrink-0 ${active ? "text-primary" : "text-muted-foreground group-hover:text-primary/80"}`} strokeWidth={1.5} />
-                  <span className={`text-sm ${active ? "font-semibold text-foreground" : "font-medium text-muted-foreground group-hover:text-foreground/80"}`}>
+                  <span className={`text-sm ${active ? "font-semibold text-primary" : "font-medium text-muted-foreground group-hover:text-foreground/80"}`}>
                     {item.label}
                   </span>
                 </Link>
@@ -137,8 +139,8 @@ const TrainerLayout = ({
             })}
           </nav>
 
-          <div className="border-t border-border px-4 py-5">
-            <div className="mb-4 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-center text-xs font-semibold text-primary">
+          <div className="border-t border-border px-4 py-6">
+            <div className="mb-4 rounded-full border border-primary/20 bg-primary/10 px-4 py-2.5 text-center text-xs font-semibold text-primary">
               {profile?.subscription_plan === "pro" ? "الخطة الاحترافية" : "الخطة الأساسية"}
             </div>
             <button
@@ -154,9 +156,9 @@ const TrainerLayout = ({
 
         <div className="flex min-h-screen flex-1 flex-col bg-background">
           <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-2xl">
-            <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-8">
+            <div className="flex items-center justify-between gap-4 px-5 py-5 md:px-8">
               <div>
-                <div className="text-2xl font-semibold tracking-tight text-foreground">{title || greeting}</div>
+                <div className="text-2xl font-bold tracking-tight text-foreground">{title || greeting}</div>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -185,7 +187,7 @@ const TrainerLayout = ({
             </div>
           </header>
 
-          <main className="flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-8">{children}</main>
+          <main className="flex-1 px-5 pb-24 pt-8 md:px-8 md:pb-10">{children}</main>
         </div>
       </div>
 

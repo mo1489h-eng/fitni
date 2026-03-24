@@ -70,14 +70,8 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
     if (!file) return;
     setUploading(type);
     try {
-      const compressed = await compressImage(file, MAX_SIZE);
       const path = `${trainerId || "portal"}/${clientId}/${type}_${Date.now()}.jpg`;
-      const { error: uploadErr } = await supabase.storage
-        .from("progress-photos")
-        .upload(path, compressed, { contentType: "image/jpeg" });
-      if (uploadErr) throw uploadErr;
-
-      const storagePath = path;
+      const result = await uploadImage(file, "progress-photos", path);
 
       if (portalToken) {
         // Portal: use secure RPC to insert

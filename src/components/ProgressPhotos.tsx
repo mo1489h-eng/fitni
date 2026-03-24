@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, Images, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { uploadImage } from "@/lib/image-upload";
 
 interface ProgressPhotosProps {
   clientId: string;
@@ -12,32 +13,6 @@ interface ProgressPhotosProps {
   trainerId?: string;
   portalToken?: string;
 }
-
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-
-const compressImage = (file: File, maxSize: number): Promise<File> => {
-  return new Promise((resolve) => {
-    if (file.size <= maxSize) { resolve(file); return; }
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement("canvas");
-      let { width, height } = img;
-      const scale = Math.sqrt(maxSize / file.size);
-      width *= scale;
-      height *= scale;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob((blob) => {
-        resolve(new File([blob!], file.name, { type: "image/jpeg" }));
-      }, "image/jpeg", 0.8);
-    };
-    img.src = url;
-  });
-};
 
 const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: ProgressPhotosProps) => {
   const { toast } = useToast();
@@ -95,32 +70,24 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
     if (!file) return;
     setUploading(type);
     try {
-      const compressed = await compressImage(file, MAX_SIZE);
       const path = `${trainerId || "portal"}/${clientId}/${type}_${Date.now()}.jpg`;
-      const { error: uploadErr } = await supabase.storage
-        .from("progress-photos")
-        .upload(path, compressed, { contentType: "image/jpeg" });
-      if (uploadErr) throw uploadErr;
-
-      const storagePath = path;
+      const result = await uploadImage(file, "progress-photos", path);
 
       if (portalToken) {
-        // Portal: use secure RPC to insert
         const { error: dbErr } = await supabase.rpc("insert_portal_progress_photo" as any, {
           p_token: portalToken,
           p_photo_type: type,
-          p_photo_url: storagePath,
+          p_photo_url: result.storagePath,
         });
         if (dbErr) throw dbErr;
       } else {
-        // Trainer: direct insert (RLS enforced)
         const { error: dbErr } = await (supabase as any)
           .from("progress_photos")
           .insert({
             client_id: clientId,
             trainer_id: trainerId || null,
             photo_type: type,
-            photo_url: storagePath,
+            photo_url: result.storagePath,
             uploaded_by: uploadedBy,
           });
         if (dbErr) throw dbErr;

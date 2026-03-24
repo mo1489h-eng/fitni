@@ -14,6 +14,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadImage } from "@/lib/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
@@ -250,34 +251,21 @@ const Settings = () => {
     setLoading: (v: boolean) => void
   ) => {
     if (!user) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: "حجم الصورة يجب أن يكون أقل من 2MB", variant: "destructive" });
-      return;
-    }
     setLoading(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `${folder}/${user.id}/img.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("progress-photos")
-        .upload(path, file, { upsert: true });
-      if (uploadError) throw uploadError;
-
-      // Create a long-lived signed URL for profile images
-      const { data: signedData } = await supabase.storage
-        .from("progress-photos")
-        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      const path = `${folder}/${user.id}/img.jpg`;
+      const result = await uploadImage(file, "progress-photos", path);
 
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ [column]: signedData?.signedUrl || path })
+        .update({ [column]: result.signedUrl })
         .eq("user_id", user.id);
       if (updateError) throw updateError;
 
       await refreshProfile();
       toast({ title: "تم رفع الصورة بنجاح" });
-    } catch {
-      toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -985,22 +973,15 @@ const Settings = () => {
               onChange={async (e) => {
                 const f = e.target.files?.[0];
                 if (!f || !user) return;
-                if (f.size > 2 * 1024 * 1024) {
-                  toast({ title: "حجم الصورة يجب أن يكون أقل من 2MB", variant: "destructive" });
-                  return;
-                }
                 setUploadingGallery(true);
                 try {
-                  const ext = f.name.split(".").pop();
-                  const path = `gallery/${user.id}/${Date.now()}.${ext}`;
-                  const { error: uploadError } = await supabase.storage.from("progress-photos").upload(path, f, { upsert: true });
-                  if (uploadError) throw uploadError;
-                  const { data: signedData } = await supabase.storage.from("progress-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
-                  if (signedData?.signedUrl) {
-                    setGalleryImages([...galleryImages, signedData.signedUrl]);
+                  const path = `gallery/${user.id}/${Date.now()}.jpg`;
+                  const result = await uploadImage(f, "progress-photos", path);
+                  if (result.signedUrl) {
+                    setGalleryImages([...galleryImages, result.signedUrl]);
                   }
-                } catch {
-                  toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
+                } catch (err: any) {
+                  toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
                 } finally {
                   setUploadingGallery(false);
                 }

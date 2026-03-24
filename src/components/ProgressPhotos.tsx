@@ -14,32 +14,6 @@ interface ProgressPhotosProps {
   portalToken?: string;
 }
 
-const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-
-const compressImage = (file: File, maxSize: number): Promise<File> => {
-  return new Promise((resolve) => {
-    if (file.size <= maxSize) { resolve(file); return; }
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement("canvas");
-      let { width, height } = img;
-      const scale = Math.sqrt(maxSize / file.size);
-      width *= scale;
-      height *= scale;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob((blob) => {
-        resolve(new File([blob!], file.name, { type: "image/jpeg" }));
-      }, "image/jpeg", 0.8);
-    };
-    img.src = url;
-  });
-};
-
 const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: ProgressPhotosProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();

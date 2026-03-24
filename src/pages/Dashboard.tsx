@@ -123,16 +123,18 @@ const StatCard = ({
   ring?: boolean;
 }) => (
   <Card className="group rounded-xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_20px_60px_hsl(var(--primary)/0.08)]">
-    <CardContent className="p-6">
-      <div className="mb-5 flex items-start justify-between border-t-2 border-primary pt-4">
+    <CardContent className="p-7">
+      <div className="mb-5 flex items-start justify-between border-t-2 border-primary pt-5">
         <div>
-          <div className="text-sm text-muted-foreground">{title}</div>
+          <div className="text-sm font-medium text-muted-foreground">{title}</div>
           <div className="mt-4 text-4xl font-black leading-none text-foreground tabular-nums">
             {ring ? <span className="sr-only">{value}%</span> : <AnimatedCounter end={value} suffix={suffix} />}
           </div>
-          <div className="mt-3 text-sm text-primary">{trend}</div>
+          <div className="mt-3 text-sm font-medium text-primary">{trend}</div>
         </div>
-        <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+        </div>
       </div>
       {ring ? (
         <div className="flex items-center justify-between">

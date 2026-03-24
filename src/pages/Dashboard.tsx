@@ -386,7 +386,7 @@ const Dashboard = () => {
           <PremiumSkeleton rows={6} />
         ) : (
           <>
-            <section className="grid gap-4 xl:grid-cols-4 md:grid-cols-2">
+            <section className="grid gap-5 xl:grid-cols-4 md:grid-cols-2">
               <StatCard title="العملاء النشطون" icon={Users} value={clients.length} trend={`+${Math.max(1, Math.ceil(clients.length / 6))} هذا الشهر`} />
               <StatCard title="إيرادات الشهر" icon={TrendingUp} value={monthlyRevenue} suffix=" ر.س" trend={`${revenueChange >= 0 ? "+" : ""}${revenueChange}% مقارنة بالشهر الماضي`} />
               <StatCard title="جلسات هذا الأسبوع" icon={CalendarDays} value={weeklySessions.length} trend={`${upcomingSessions} جلسة قادمة`} />

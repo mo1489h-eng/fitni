@@ -175,20 +175,13 @@ const PageBuilder = () => {
 
   const handleGalleryUpload = async (f: File) => {
     if (!user) return;
-    if (f.size > 2 * 1024 * 1024) {
-      toast({ title: "حجم الصورة يجب أن يكون أقل من 2MB", variant: "destructive" });
-      return;
-    }
     setUploadingGallery(true);
     try {
-      const ext = f.name.split(".").pop();
-      const path = `gallery/${user.id}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("progress-photos").upload(path, f, { upsert: true });
-      if (error) throw error;
-      const { data: signedData } = await supabase.storage.from("progress-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
-      if (signedData?.signedUrl) setGalleryImages(prev => [...prev, signedData.signedUrl]);
-    } catch {
-      toast({ title: "حدث خطأ في رفع الصورة", variant: "destructive" });
+      const path = `gallery/${user.id}/${Date.now()}.jpg`;
+      const result = await uploadImage(f, "progress-photos", path);
+      setGalleryImages(prev => [...prev, result.signedUrl]);
+    } catch (err: any) {
+      toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {
       setUploadingGallery(false);
     }

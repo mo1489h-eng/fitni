@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3.1%;
-    --foreground: 0 0% 93%;
+    --background: 0 0% 2%;
+    --foreground: 0 0% 100%;
 
     --card: 0 0% 6.7%;
-    --card-foreground: 0 0% 93%;
+    --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 6.7%;
-    --popover-foreground: 0 0% 93%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 142 76% 36%;
+    --primary: 142 71% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 85%;
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 53%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 40%;
 
     --accent: 142 40% 12%;
-    --accent-foreground: 142 76% 60%;
+    --accent-foreground: 142 71% 60%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -31,23 +31,26 @@
     --warning: 45 93% 47%;
     --warning-foreground: 45 93% 15%;
 
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --border: 0 0% 11%;
-    --input: 0 0% 11%;
-    --ring: 142 76% 36%;
+    --border: 0 0% 13.5%;
+    --input: 0 0% 13.5%;
+    --ring: 142 71% 45%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 142 76% 36%;
+    /* Elevated surface for layered cards */
+    --card-elevated: 0 0% 8.6%;
+
+    --sidebar-background: 0 0% 3.5%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 142 71% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 13.5%;
+    --sidebar-ring: 142 71% 45%;
   }
 }
 
@@ -72,13 +75,13 @@
 
   /* Text selection */
   ::selection {
-    background: hsl(142 76% 36% / 0.2);
+    background: hsl(142 71% 45% / 0.25);
     color: white;
   }
 
   /* Focus rings */
   :focus-visible {
-    outline: 2px solid hsl(142 76% 36%);
+    outline: 2px solid hsl(142 71% 45%);
     outline-offset: 2px;
   }
 
@@ -88,14 +91,14 @@
     height: 4px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(0 0% 4%);
+    background: hsl(0 0% 3%);
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 11%);
+    background: hsl(0 0% 14%);
     border-radius: 2px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(142 76% 36%);
+    background: hsl(142 71% 45%);
   }
 
   /* Tabular numbers for stats */
@@ -126,23 +129,23 @@
     @apply transition-all duration-200 ease-out border-border;
   }
   .card-premium:hover {
-    border-color: hsl(142 76% 36% / 0.3);
+    border-color: hsl(142 71% 45% / 0.3);
   }
 
   /* ━━━ INPUT FOCUS GLOW ━━━ */
   .input-premium:focus-within {
-    border-color: hsl(142 76% 36% / 0.5);
-    box-shadow: 0 0 0 2px hsl(142 76% 36% / 0.08);
+    border-color: hsl(142 71% 45% / 0.5);
+    box-shadow: 0 0 0 2px hsl(142 71% 45% / 0.08);
   }
 
   /* ━━━ FAB BUTTON ━━━ */
   .fab-premium {
     @apply transition-all duration-200;
-    box-shadow: 0 4px 20px hsl(142 76% 36% / 0.25);
+    box-shadow: 0 4px 20px hsl(142 71% 45% / 0.25);
   }
   .fab-premium:hover {
     transform: scale(1.06);
-    box-shadow: 0 6px 28px hsl(142 76% 36% / 0.35);
+    box-shadow: 0 6px 28px hsl(142 71% 45% / 0.35);
   }
   .fab-premium:active {
     transform: scale(0.95);
@@ -150,16 +153,18 @@
 
   /* ━━━ GRADIENT PRIMARY BUTTON ━━━ */
   .btn-gradient {
-    background: hsl(142 76% 36%);
+    background: hsl(142 71% 45%);
+    box-shadow: 0 0 20px hsl(142 71% 45% / 0.2);
   }
   .btn-gradient:hover {
-    background: hsl(142 76% 40%);
+    background: hsl(142 71% 50%);
+    box-shadow: 0 0 28px hsl(142 71% 45% / 0.3);
   }
 
   /* ━━━ STAT CARD — LINEAR STYLE ━━━ */
   .stat-card {
     @apply relative overflow-hidden;
-    border-top: 2px solid hsl(142 76% 36%);
+    border-top: 2px solid hsl(142 71% 45%);
   }
 
   /* ━━━ PAGE TRANSITION ━━━ */
@@ -169,7 +174,7 @@
 
   /* ━━━ STATUS RING ━━━ */
   .ring-active {
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 3px hsl(142 76% 36%);
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 3px hsl(142 71% 45%);
   }
   .ring-warning {
     box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 3px hsl(45 93% 47%);
@@ -181,12 +186,12 @@
   /* ━━━ GLASS EFFECT ━━━ */
   .glass {
     backdrop-filter: blur(16px);
-    background: hsl(0 0% 4% / 0.92);
+    background: hsl(0 0% 3% / 0.92);
   }
 
   /* ━━━ SKELETON SHIMMER ━━━ */
   .skeleton-premium {
-    background: linear-gradient(90deg, hsl(0 0% 10%) 25%, hsl(0 0% 13%) 50%, hsl(0 0% 10%) 75%);
+    background: linear-gradient(90deg, hsl(0 0% 10%) 25%, hsl(0 0% 14%) 50%, hsl(0 0% 10%) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -209,12 +214,25 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: hsl(142 76% 36%);
+    background: hsl(142 71% 45%);
   }
 
   /* ━━━ LEFT ACCENT BORDER — CLIENT CARDS ━━━ */
   .card-accent-left {
-    border-right: 3px solid hsl(142 76% 36%);
+    border-right: 3px solid hsl(142 71% 45%);
+  }
+
+  /* ━━━ ELEVATED CARD ━━━ */
+  .card-elevated {
+    background: hsl(var(--card-elevated));
+  }
+
+  /* ━━━ GREEN GLOW FOR PRIMARY BUTTONS ━━━ */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(142 71% 45% / 0.2);
+  }
+  .glow-primary:hover {
+    box-shadow: 0 0 28px hsl(142 71% 45% / 0.35);
   }
 }
 
@@ -229,8 +247,8 @@
 }
 
 @keyframes pulseGreen {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 36% / 0.3); }
-  50% { box-shadow: 0 0 0 5px hsl(142 76% 36% / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 hsl(142 71% 45% / 0.3); }
+  50% { box-shadow: 0 0 0 5px hsl(142 71% 45% / 0); }
 }
 
 @keyframes countUp {

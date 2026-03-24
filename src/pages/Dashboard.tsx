@@ -467,7 +467,7 @@ const Dashboard = () => {
                 </Card>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">

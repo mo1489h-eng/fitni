@@ -393,7 +393,7 @@ const Dashboard = () => {
               <StatCard title="معدل الالتزام" icon={Activity} value={adherenceRate} trend="مبني على آخر نشاط مسجل" ring />
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+            <section className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
               <div className="space-y-6">
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">

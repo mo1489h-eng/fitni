@@ -14,6 +14,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadImage } from "@/lib/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,

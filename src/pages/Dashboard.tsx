@@ -534,7 +534,7 @@ const Dashboard = () => {
               </div>
             </section>
 
-            <section className="grid gap-6 xl:grid-cols-[1.25fr_0.95fr]">
+            <section className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
               <Card className="border-border bg-card">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">

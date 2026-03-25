@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { payment_id, package_id, checkout_token } = await req.json();
+    const { payment_id, package_id, checkout_token, referral_code } = await req.json();
 
     if (!payment_id || !package_id || !checkout_token) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import PortalPrivacySettings from "@/components/PortalPrivacySettings";
 import PortalMoodSelector from "@/components/PortalMoodSelector";
+import PortalReferral from "@/components/PortalReferral";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

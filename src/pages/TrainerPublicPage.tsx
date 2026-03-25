@@ -189,7 +189,7 @@ const TrainerPublicPage = () => {
           publishable_api_key: MOYASAR_PUBLISHABLE_KEY,
           callback_url: window.location.href,
           methods: ["creditcard", "applepay"],
-          apple_pay: { country: "SA", label: "fitni", validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate" },
+          apple_pay: { country: "SA", label: "CoachBase", validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate" },
           on_completed: (payment: any) => {
             if (payment.status === "paid") {
               setPaymentId(payment.id);
@@ -706,7 +706,7 @@ const TrainerPublicPage = () => {
 
   return (
     <div className="min-h-screen" dir="rtl" style={{ backgroundColor: t.bg, fontFamily }}>
-      <title>{profile.full_name} — مدرب شخصي | fitni</title>
+      <title>{profile.full_name} — مدرب شخصي | CoachBase</title>
 
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style={{
@@ -717,7 +717,7 @@ const TrainerPublicPage = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Dumbbell className="w-5 h-5" style={{ color: brandColor }} strokeWidth={1.5} />
-            <span className="font-black text-lg" style={{ color: t.text }}>fitni</span>
+            <span className="font-black text-lg" style={{ color: t.text }}>CoachBase</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/client-login" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: t.muted }}>
@@ -736,7 +736,7 @@ const TrainerPublicPage = () => {
       <footer className="max-w-6xl mx-auto px-6 py-8 text-center" style={{ borderTop: `1px solid ${t.border}` }}>
         <div className="flex items-center justify-center gap-2 mb-2">
           <Dumbbell className="w-4 h-4" style={{ color: brandColor }} strokeWidth={1.5} />
-          <span className="text-sm font-bold" style={{ color: t.text }}>fitni</span>
+          <span className="text-sm font-bold" style={{ color: t.text }}>CoachBase</span>
         </div>
         <p className="text-xs" style={{ color: t.muted }}>صُنع في السعودية</p>
       </footer>

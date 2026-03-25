@@ -19,7 +19,7 @@ export interface TutorialStep {
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "welcome",
-    title: "أهلاً بك في fitni",
+    title: "أهلاً بك في CoachBase",
     description: "جولة سريعة تعرّفك على كل شيء — خلّنا نبدأ",
     icon: Dumbbell,
     route: "/dashboard",

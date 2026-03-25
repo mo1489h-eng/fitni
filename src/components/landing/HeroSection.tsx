@@ -58,7 +58,7 @@ const HeroSection = ({ heroParallax }: { heroParallax: number }) => (
           <div className="absolute inset-x-10 bottom-0 h-28 rounded-full bg-primary/20 blur-3xl" />
           <img
             src={heroTrainer}
-            alt="مدرب شخصي يستخدم منصة fitni"
+            alt="مدرب شخصي يستخدم منصة CoachBase"
             loading="lazy"
             className="relative w-full rounded-[1rem] object-cover shadow-[0_30px_90px_hsl(var(--primary)/0.15)]"
             style={{ aspectRatio: "4/3" }}

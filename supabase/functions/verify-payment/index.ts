@@ -155,15 +155,15 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: "fitni <noreply@fitni.app>",
+            from: "CoachBase <noreply@coachbase.health>",
             to: [userEmail],
-            subject: "شكراً لاشتراكك في fitni 🎉",
+            subject: "شكراً لاشتراكك في CoachBase 🎉",
             html: `
               <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #ffffff; border-radius: 16px;">
                 <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #16a34a; font-size: 28px; margin: 0;">fitni</h1>
+                  <h1 style="color: #16a34a; font-size: 28px; margin: 0;">CoachBase</h1>
                 </div>
-                <h2 style="font-size: 22px; margin-bottom: 8px;">شكراً لاشتراكك في fitni 🎉</h2>
+                <h2 style="font-size: 22px; margin-bottom: 8px;">شكراً لاشتراكك في CoachBase 🎉</h2>
                 <p style="color: #a0a0a0; font-size: 16px; line-height: 1.8;">
                   تم تفعيل اشتراكك بنجاح
                 </p>
@@ -176,7 +176,7 @@ serve(async (req) => {
                   </p>
                 </div>
                 <p style="color: #666; font-size: 12px; text-align: center; margin-top: 30px;">
-                  شكراً لثقتك بنا — فريق fitni
+                  شكراً لثقتك بنا — فريق CoachBase
                 </p>
               </div>
             `,

@@ -109,7 +109,7 @@ const OnboardingChecklist = () => {
       navigate("/settings");
       return;
     }
-    await navigator.clipboard.writeText(`https://fitni.lovable.app/t/${username}`);
+    await navigator.clipboard.writeText(`https://coachbase.health/t/${username}`);
     toast.success("تم نسخ الرابط");
     markStep("link");
   };
@@ -258,7 +258,7 @@ const OnboardingChecklist = () => {
               <Rocket className="h-5 w-5 text-primary" strokeWidth={1.5} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">ابدأ رحلتك مع fitni</h3>
+              <h3 className="text-base font-bold text-foreground">ابدأ رحلتك مع CoachBase</h3>
               <p className="text-xs text-muted-foreground">
                 {completedCount} من {steps.length} مكتمل ({Math.round(progress)}%)
               </p>

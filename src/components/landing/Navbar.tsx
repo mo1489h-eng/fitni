@@ -23,7 +23,7 @@ const Navbar = ({ scrolled }: { scrolled: boolean }) => {
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
             <Dumbbell className="h-5 w-5" />
           </div>
-          <div className="text-2xl font-black tracking-tight text-primary">fitni</div>
+          <div className="text-2xl font-black tracking-tight text-primary">CoachBase</div>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

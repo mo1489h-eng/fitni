@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
 const sections = [
-  { title: "القبول", content: "باستخدامك منصة fitni فإنك توافق على هذه الشروط والأحكام كاملة." },
-  { title: "الخدمة", content: "fitni منصة إدارة للمدربين الشخصيين تتيح إدارة العملاء والبرامج والمدفوعات." },
+  { title: "القبول", content: "باستخدامك منصة CoachBase فإنك توافق على هذه الشروط والأحكام كاملة." },
+  { title: "الخدمة", content: "CoachBase منصة إدارة للمدربين الشخصيين تتيح إدارة العملاء والبرامج والمدفوعات." },
   { title: "الحسابات", content: null, list: [
     "يجب أن تكون +18 سنة",
     "معلوماتك يجب أن تكون صحيحة",
@@ -28,7 +28,7 @@ const sections = [
     "تمنحنا رخصة لعرضه على المنصة",
     "نحتفظ بحق إزالة المحتوى المخالف",
   ]},
-  { title: "المسؤولية", content: "fitni غير مسؤولة عن:", list: [
+  { title: "المسؤولية", content: "CoachBase غير مسؤولة عن:", list: [
     "النتائج الرياضية للمتدربين",
     "دقة المعلومات الصحية المدخلة",
     "أي أضرار غير مباشرة",
@@ -36,7 +36,7 @@ const sections = [
   { title: "إنهاء الخدمة", content: "نحتفظ بحق إيقاف الحسابات المخالفة مع إشعار مسبق قدر الإمكان." },
   { title: "التعديلات", content: "نحتفظ بحق تعديل هذه الشروط مع إشعار المستخدمين مسبقا." },
   { title: "القانون المطبق", content: "تخضع هذه الشروط للأنظمة والقوانين المعمول بها في المملكة العربية السعودية." },
-  { title: "تواصل معنا", content: "support@fitni.app" },
+  { title: "تواصل معنا", content: "support@coachbase.health" },
 ];
 
 const Terms = () => (
@@ -50,7 +50,7 @@ const Terms = () => (
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-4 w-4" />
           </div>
-          <span className="text-xl font-black text-primary">fitni</span>
+          <span className="text-xl font-black text-primary">CoachBase</span>
         </Link>
       </div>
     </header>

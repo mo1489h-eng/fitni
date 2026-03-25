@@ -113,7 +113,7 @@ const TrainerPayoutSection = () => {
             <span className="text-card-foreground">{totalPaid.toLocaleString()} ر.س</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">عمولة fitni (10%)</span>
+            <span className="text-muted-foreground">عمولة CoachBase (10%)</span>
             <span className="text-destructive">-{totalCommission.toLocaleString()} ر.س</span>
           </div>
           <div className="flex justify-between">

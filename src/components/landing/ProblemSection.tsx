@@ -15,7 +15,7 @@ const ProblemPanel = ({ variant, title, items }: { variant: "before" | "after"; 
             {before ? <MessageSquareText className="h-6 w-6" /> : <BarChart3 className="h-6 w-6" />}
           </div>
           <div>
-            <div className="text-sm text-foreground/45">{before ? "قبل fitni" : "مع fitni"}</div>
+            <div className="text-sm text-foreground/45">{before ? "قبل CoachBase" : "مع CoachBase"}</div>
             <h3 className="text-3xl font-black text-foreground">{title}</h3>
           </div>
         </div>
@@ -41,7 +41,7 @@ const ProblemPanel = ({ variant, title, items }: { variant: "before" | "after"; 
             <div className="relative overflow-hidden rounded-[12px]">
               <img
                 src={trainerConfident}
-                alt="مدرب يستخدم fitni باحترافية"
+                alt="مدرب يستخدم CoachBase باحترافية"
                 loading="lazy"
                 className="w-full object-cover"
                 style={{ aspectRatio: "16/9" }}

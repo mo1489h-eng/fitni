@@ -356,7 +356,7 @@ const ClientProfile = () => {
               }}>
                 <Copy className="w-4 h-4" strokeWidth={1.5} /> نسخ الرابط
               </Button>
-              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلا! برنامجك جاهز على fitni، افتح الرابط لتشوف تمارينك ${window.location.origin}/client-portal/${client.portal_token}`)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`أهلا! برنامجك جاهز على CoachBase، افتح الرابط لتشوف تمارينك ${window.location.origin}/client-portal/${client.portal_token}`)}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm" className="gap-1 w-full">
                   <Send className="w-4 h-4" strokeWidth={1.5} /> إرسال واتساب
                 </Button>
@@ -382,7 +382,7 @@ const ClientProfile = () => {
               }}>
                 <Copy className="w-4 h-4" strokeWidth={1.5} /> نسخ الرابط
               </Button>
-              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`مرحبا ${client.name}\nمدربك أضافك على fitni\nأنشئ حسابك المجاني:\n${window.location.origin}/client-register/${(client as any).invite_token}`)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`مرحبا ${client.name}\nمدربك أضافك على CoachBase\nأنشئ حسابك المجاني:\n${window.location.origin}/client-register/${(client as any).invite_token}`)}`} target="_blank" rel="noopener noreferrer">
                 <Button size="sm" className="gap-1 w-full">
                   <Send className="w-4 h-4" strokeWidth={1.5} /> إرسال دعوة واتساب
                 </Button>

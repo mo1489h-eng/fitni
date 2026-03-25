@@ -99,17 +99,17 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "fitni <noreply@fitni.app>",
+            from: "CoachBase <noreply@coachbase.health>",
             to: [client.email],
             subject: "تم تجديد اشتراكك بنجاح ✅",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
-              <h1 style="color:#16a34a;text-align:center;">fitni</h1>
+              <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
               <h2>تم تجديد اشتراكك بنجاح ✅</h2>
               <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
                  <p><strong style="color:#16a34a;">المبلغ:</strong> ${amount} ر.س</p>
                  <p><strong style="color:#16a34a;">ساري حتى:</strong> ${newEnd.toLocaleDateString("ar-SA")}</p>
               </div>
-              <p style="color:#666;font-size:12px;text-align:center;">شكراً لثقتك — فريق fitni</p>
+              <p style="color:#666;font-size:12px;text-align:center;">شكراً لثقتك — فريق CoachBase</p>
             </div>`,
           }),
         });

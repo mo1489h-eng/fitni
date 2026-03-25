@@ -158,9 +158,37 @@ serve(async (req) => {
       trainer_id,
       client_id: newClient.id,
       type: "payment",
-      title: `💰 ${client_name} دفع ${pkg.price} ريال - ${pkg.name}`,
-      body: `تم إضافة ${client_name} تلقائياً كعميل جديد`,
+      title: `${client_name} دفع ${pkg.price} ريال - ${pkg.name}`,
+      body: `تم إضافة ${client_name} تلقائيا كعميل جديد`,
     });
+
+    // Handle referral tracking
+    if (referral_code) {
+      const { data: referrer } = await supabase
+        .from("clients")
+        .select("id, name, trainer_id")
+        .eq("referral_code", referral_code)
+        .eq("trainer_id", trainer_id)
+        .maybeSingle();
+
+      if (referrer) {
+        await supabase.from("referrals").insert({
+          referrer_client_id: referrer.id,
+          referred_client_id: newClient.id,
+          trainer_id,
+          reward_status: "pending",
+        });
+
+        // Notify trainer about referral
+        await supabase.from("trainer_notifications").insert({
+          trainer_id,
+          client_id: newClient.id,
+          type: "referral",
+          title: `متدرب جديد انضم عبر إحالة ${referrer.name}`,
+          body: `${client_name} انضم عبر رابط إحالة ${referrer.name}`,
+        });
+      }
+    }
 
     await supabase
       .from("package_checkout_sessions")

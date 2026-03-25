@@ -156,9 +156,36 @@ serve(async (req) => {
       trainer_id: trainer_id,
       client_id: clientData.id,
       type: "new_client",
-      title: `🎉 عميل جديد! ${client_name} اشترك في ${pkg.name}`,
+      title: `عميل جديد! ${client_name} اشترك في ${pkg.name}`,
       body: `المبلغ: ${pkg.price} ر.س — الهدف: ${client_goal || "غير محدد"}`,
     });
+
+    // 5b. Handle referral tracking
+    if (referral_code) {
+      const { data: referrer } = await supabase
+        .from("clients")
+        .select("id, name, trainer_id")
+        .eq("referral_code", referral_code)
+        .eq("trainer_id", trainer_id)
+        .maybeSingle();
+
+      if (referrer) {
+        await supabase.from("referrals").insert({
+          referrer_client_id: referrer.id,
+          referred_client_id: clientData.id,
+          trainer_id: trainer_id,
+          reward_status: "pending",
+        });
+
+        await supabase.from("trainer_notifications").insert({
+          trainer_id: trainer_id,
+          client_id: clientData.id,
+          type: "referral",
+          title: `متدرب جديد انضم عبر إحالة ${referrer.name}`,
+          body: `${client_name} انضم عبر رابط إحالة ${referrer.name}`,
+        });
+      }
+    }
 
     // 6. Send welcome email
     const resendKey = Deno.env.get("RESEND_API_KEY");

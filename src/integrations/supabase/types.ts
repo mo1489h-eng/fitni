@@ -433,6 +433,8 @@ export type Database = {
           privacy_scans: boolean
           privacy_weight: boolean
           program_id: string | null
+          referral_code: string | null
+          referred_by_client_id: string | null
           subscription_end_date: string
           subscription_price: number
           trainer_id: string | null
@@ -463,6 +465,8 @@ export type Database = {
           privacy_scans?: boolean
           privacy_weight?: boolean
           program_id?: string | null
+          referral_code?: string | null
+          referred_by_client_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
@@ -493,6 +497,8 @@ export type Database = {
           privacy_scans?: boolean
           privacy_weight?: boolean
           program_id?: string | null
+          referral_code?: string | null
+          referred_by_client_id?: string | null
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
@@ -505,6 +511,13 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_referred_by_client_id_fkey"
+            columns: ["referred_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -1065,6 +1078,9 @@ export type Database = {
           page_config: Json | null
           payment_status: string | null
           phone: string | null
+          referral_enabled: boolean | null
+          referral_reward_text: string | null
+          referral_reward_type: string | null
           social_links: Json | null
           specialization: string | null
           subscribed_at: string | null
@@ -1093,6 +1109,9 @@ export type Database = {
           page_config?: Json | null
           payment_status?: string | null
           phone?: string | null
+          referral_enabled?: boolean | null
+          referral_reward_text?: string | null
+          referral_reward_type?: string | null
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
@@ -1121,6 +1140,9 @@ export type Database = {
           page_config?: Json | null
           payment_status?: string | null
           phone?: string | null
+          referral_enabled?: boolean | null
+          referral_reward_text?: string | null
+          referral_reward_type?: string | null
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
@@ -1309,6 +1331,48 @@ export type Database = {
           used_count?: number
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_client_id: string
+          referrer_client_id: string
+          reward_status: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_client_id: string
+          referrer_client_id: string
+          reward_status?: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_client_id?: string
+          referrer_client_id?: string
+          reward_status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_client_id_fkey"
+            columns: ["referred_client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_client_id_fkey"
+            columns: ["referrer_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trainer_discovery_profiles: {
         Row: {

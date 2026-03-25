@@ -144,13 +144,16 @@ const PublicPayment = () => {
         throw new Error("فشل إنشاء جلسة الدفع الآمنة");
       }
 
+      const referralCode = sessionStorage.getItem("referral_code");
       const { data, error: fnError } = await supabase.functions.invoke("verify-package-payment", {
         body: {
           payment_id: paymentId,
           package_id: selectedPkg!.id,
           checkout_token: checkoutSession.token,
+          referral_code: referralCode || null,
         },
       });
+      if (referralCode) sessionStorage.removeItem("referral_code");
       if (fnError || !data?.success) {
         throw new Error(data?.error || "فشل التحقق من الدفع");
       }

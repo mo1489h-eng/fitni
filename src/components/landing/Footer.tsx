@@ -7,7 +7,7 @@ const Footer = () => (
       <div>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"><Dumbbell className="h-5 w-5" /></div>
-          <div><div className="text-2xl font-black text-primary">fitni</div><div className="text-sm text-foreground/45">منصة المدرب الشخصي</div></div>
+          <div><div className="text-2xl font-black text-primary">CoachBase</div><div className="text-sm text-foreground/45">منصة المدرب الشخصي</div></div>
         </div>
         <p className="mt-4 max-w-md text-base leading-8 text-foreground/60">منصة عربية premium تساعد المدربين الشخصيين على إدارة العمل، تجربة العميل، والمدفوعات في مكان واحد.</p>
       </div>
@@ -33,7 +33,7 @@ const Footer = () => (
       </div>
     </div>
     <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-3 border-t border-border pt-6 text-sm text-foreground/40 md:flex-row md:items-center md:justify-between">
-      <div>© 2026 fitni. جميع الحقوق محفوظة.</div>
+      <div>© 2026 CoachBase. جميع الحقوق محفوظة.</div>
       <div>صُنع في السعودية</div>
     </div>
   </footer>

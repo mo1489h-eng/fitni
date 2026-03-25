@@ -1,7 +1,7 @@
 {
-  "name": "fitni",
-  "short_name": "fitni",
-  "description": "منصة fitni للمدربين الشخصيين — أدر عملاءك باحترافية",
+  "name": "CoachBase",
+  "short_name": "CoachBase",
+  "description": "منصة CoachBase للمدربين الشخصيين — أدر عملاءك باحترافية",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#050505",

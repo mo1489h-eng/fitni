@@ -94,7 +94,7 @@ const TrainerLayout = ({
                 <TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} />
               </div>
               <div>
-                <div className="text-2xl font-black tracking-tight text-primary">fitni</div>
+                <div className="text-2xl font-black tracking-tight text-primary">CoachBase</div>
                 <div className="text-xs text-muted-foreground">لوحة تشغيل المدرب</div>
               </div>
             </Link>

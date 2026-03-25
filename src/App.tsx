@@ -102,7 +102,7 @@ const App = () => (
             <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
-            <Route path="/admin-fitni-dashboard" element={<AdminDashboard />} />
+            <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
             <Route path="/store" element={<Store />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />

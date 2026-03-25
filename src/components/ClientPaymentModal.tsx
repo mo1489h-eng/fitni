@@ -63,7 +63,7 @@ const ClientPaymentModal = ({ open, onClose, clientId, clientName, amount, billi
         methods: ["creditcard", "applepay"],
         apple_pay: {
           country: "SA",
-          label: "fitni",
+          label: "CoachBase",
           validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate",
         },
         on_completed: async (payment: any) => {

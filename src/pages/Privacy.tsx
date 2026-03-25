@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
 const sections = [
-  { title: "مقدمة", content: "تلتزم منصة fitni بحماية خصوصية مستخدميها. تصف هذه السياسة كيفية جمع بياناتك واستخدامها وحمايتها." },
+  { title: "مقدمة", content: "تلتزم منصة CoachBase بحماية خصوصية مستخدميها. تصف هذه السياسة كيفية جمع بياناتك واستخدامها وحمايتها." },
   { title: "البيانات التي نجمعها", content: null, list: [
     "الاسم والبريد الإلكتروني",
     "رقم الجوال",
@@ -37,7 +37,7 @@ const sections = [
     "تصدير بياناتك",
   ]},
   { title: "ملفات تعريف الارتباط", content: "نستخدم ملفات تعريف الارتباط لتحسين تجربتك وحفظ تفضيلاتك." },
-  { title: "تواصل معنا", content: "لأي استفسار عن الخصوصية: support@fitni.app" },
+  { title: "تواصل معنا", content: "لأي استفسار عن الخصوصية: support@coachbase.health" },
 ];
 
 const Privacy = () => (
@@ -51,7 +51,7 @@ const Privacy = () => (
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Dumbbell className="h-4 w-4" />
           </div>
-          <span className="text-xl font-black text-primary">fitni</span>
+          <span className="text-xl font-black text-primary">CoachBase</span>
         </Link>
       </div>
     </header>

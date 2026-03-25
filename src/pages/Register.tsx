@@ -145,7 +145,7 @@ const Register = () => {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
               <TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} />
             </div>
-            <span className="text-3xl font-black text-primary">fitni</span>
+            <span className="text-3xl font-black text-primary">CoachBase</span>
           </Link>
           <h1 className="text-4xl font-black text-foreground leading-tight mb-4">ابدأ رحلتك المهنية</h1>
           <p className="text-lg text-muted-foreground mb-12">انضم لمئات المدربين في السعودية</p>
@@ -179,7 +179,7 @@ const Register = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
               <TrendingUp className="h-5 w-5 text-primary" strokeWidth={1.5} />
             </div>
-            <span className="text-2xl font-black text-primary">fitni</span>
+            <span className="text-2xl font-black text-primary">CoachBase</span>
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-8 md:p-10">

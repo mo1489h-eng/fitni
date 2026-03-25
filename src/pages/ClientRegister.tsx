@@ -133,7 +133,7 @@ const ClientRegister = () => {
             <div className="w-9 h-9 rounded-xl bg-[#16a34a] flex items-center justify-center">
               <Dumbbell className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-black">fitni</span>
+            <span className="text-xl font-black">CoachBase</span>
           </Link>
           <Link to="/client-login">
             <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs">

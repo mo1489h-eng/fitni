@@ -34,16 +34,16 @@ serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "fitni <noreply@fitni.app>",
+          from: "CoachBase <noreply@coachbase.health>",
           to: [to],
           subject,
           html: `<div dir="rtl" style="font-family:Tajawal,Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
-            <h1 style="color:#16a34a;text-align:center;font-size:28px;margin-bottom:24px;">fitni</h1>
+            <h1 style="color:#16a34a;text-align:center;font-size:28px;margin-bottom:24px;">CoachBase</h1>
             ${body}
             <div style="text-align:center;margin-top:24px;">
-              <a href="https://fitni.lovable.app/subscription" style="display:inline-block;background:#16a34a;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">اشترك الآن</a>
+              <a href="https://coachbase.health/subscription" style="display:inline-block;background:#16a34a;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">اشترك الآن</a>
             </div>
-            <p style="color:#666;font-size:12px;text-align:center;margin-top:20px;">فريق fitni</p>
+            <p style="color:#666;font-size:12px;text-align:center;margin-top:20px;">فريق CoachBase</p>
           </div>`,
         }),
       });

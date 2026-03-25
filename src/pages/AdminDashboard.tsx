@@ -11,7 +11,7 @@ import { Users, UserCheck, DollarSign, TrendingUp, Lock, LogOut, Star, BarChart2
 import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-const SESSION_KEY = "fitni_admin_session";
+const SESSION_KEY = "CoachBase_admin_session";
 
 function getSession(): string | null {
   try {

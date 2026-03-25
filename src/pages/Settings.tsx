@@ -503,7 +503,7 @@ const Settings = () => {
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">شعارك الخاص</label>
                 <p className="text-xs text-muted-foreground mb-3">
-                  يظهر في بوابة العميل بدلاً من شعار fitni
+                  يظهر في بوابة العميل بدلاً من شعار CoachBase
                 </p>
                 {profile?.logo_url ? (
                   <div className="flex items-center gap-3">
@@ -850,14 +850,14 @@ const Settings = () => {
              <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <p className="text-xs text-muted-foreground" dir="ltr">
-                  https://fitni.lovable.app/t/{usernameForm}
+                  https://coachbase.health/t/{usernameForm}
                 </p>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط" }); }}>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(`https://coachbase.health/t/${usernameForm}`); toast({ title: "تم نسخ الرابط" }); }}>
                   <Copy className="w-3 h-3" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground" dir="ltr">
-                https://fitni.lovable.app/pay/{usernameForm}
+                https://coachbase.health/pay/{usernameForm}
               </p>
             </div>
           )}
@@ -871,13 +871,13 @@ const Settings = () => {
           </div>
           {usernameForm ? (
             <div className="rounded-lg bg-secondary/50 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground truncate" dir="ltr">fitni.lovable.app/t/{usernameForm}</p>
+              <p className="text-xs text-muted-foreground truncate" dir="ltr">coachbase.health/t/{usernameForm}</p>
               <p className="text-[10px] text-muted-foreground">هذا الرابط عام — شاركه في انستقرام أو واتساب أو أي مكان</p>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام" }); }}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs flex-1" onClick={() => { navigator.clipboard.writeText(`https://coachbase.health/t/${usernameForm}`); toast({ title: "تم نسخ الرابط العام" }); }}>
                   <Copy className="w-3 h-3" /> نسخ رابط صفحتك
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: https://fitni.lovable.app/t/${usernameForm}`)}`, "_blank"); }}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: https://coachbase.health/t/${usernameForm}`)}`, "_blank"); }}>
                   <MessageCircle className="w-3 h-3" /> واتساب
                 </Button>
               </div>
@@ -1031,13 +1031,13 @@ const Settings = () => {
                 <label className="text-sm font-medium text-foreground mb-2 block">شارك صفحتك</label>
                 <div className="flex items-center gap-2 bg-secondary rounded-lg p-3">
                   <p className="text-sm text-foreground flex-1 truncate" dir="ltr">
-                    fitni.lovable.app/t/{usernameForm}
+                    coachbase.health/t/{usernameForm}
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                     navigator.clipboard.writeText(`https://fitni.lovable.app/t/${usernameForm}`);
+                     navigator.clipboard.writeText(`https://coachbase.health/t/${usernameForm}`);
                       toast({ title: "تم نسخ الرابط" });
                     }}
                   >
@@ -1050,7 +1050,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
+                       const url = `https://coachbase.health/t/${usernameForm}`;
                       window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${url}`)}`, "_blank");
                     }}
                   >
@@ -1061,7 +1061,7 @@ const Settings = () => {
                     size="sm"
                     className="flex-1 gap-1"
                     onClick={() => {
-                       const url = `https://fitni.lovable.app/t/${usernameForm}`;
+                       const url = `https://coachbase.health/t/${usernameForm}`;
                       navigator.clipboard.writeText(url);
                       toast({ title: "تم نسخ الرابط — الصقه في انستقرام" });
                     }}

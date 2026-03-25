@@ -171,7 +171,7 @@ const ClientLogin = () => {
               <div className="relative">
                 <Link2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(0_0%_30%)]" strokeWidth={1.5} />
                 <Input
-                  placeholder="https://fitni.lovable.app/client-portal/..."
+                  placeholder="https://coachbase.health/client-portal/..."
                   value={portalLink}
                   onChange={e => setPortalLink(e.target.value)}
                   className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)] text-white placeholder:text-[hsl(0_0%_20%)] pr-10 h-12 focus:border-primary/60"

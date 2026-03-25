@@ -188,7 +188,7 @@ const PageBuilder = () => {
     }
   };
 
-  const publicDomain = "https://fitni.lovable.app";
+  const publicDomain = "https://coachbase.health";
   const pageUrl = profile?.username ? `${publicDomain}/t/${profile.username}` : "";
 
   const themeColors: Record<string, { bg: string; accent: string; text: string; muted: string; card: string; border: string }> = {
@@ -535,7 +535,7 @@ const PageBuilder = () => {
               </div>
               <div className="flex-1 bg-[#1a1a1a] rounded-lg py-1 px-3">
                 <p className="text-[10px] text-[#555] text-center truncate" dir="ltr">
-                  {pageUrl || "fitni.app/t/username"}
+                  {pageUrl || "coachbase.health/t/username"}
                 </p>
               </div>
             </div>

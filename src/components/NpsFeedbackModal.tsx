@@ -22,7 +22,7 @@ const NpsFeedbackModal = ({ open, onOpenChange, triggerType }: NpsFeedbackModalP
 
   const getFollowUpQuestion = () => {
     if (score === null) return "";
-    if (score <= 6) return "ما الذي كان ينقص fitni؟";
+    if (score <= 6) return "ما الذي كان ينقص CoachBase؟";
     if (score <= 8) return "ما الذي يمكن تحسينه؟";
     return "ما الذي أعجبك أكثر؟";
   };
@@ -81,7 +81,7 @@ const NpsFeedbackModal = ({ open, onOpenChange, triggerType }: NpsFeedbackModalP
           {step === 1 && (
             <div className="space-y-5">
               <p className="text-center text-sm font-medium text-foreground">
-                ما مدى احتمال أن توصي بـ fitni لمدرب آخر؟
+                ما مدى احتمال أن توصي بـ CoachBase لمدرب آخر؟
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {Array.from({ length: 11 }, (_, i) => (

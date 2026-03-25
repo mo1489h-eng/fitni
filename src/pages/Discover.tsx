@@ -61,7 +61,7 @@ const Discover = () => {
       <header className="bg-card border-b border-border px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-2">
           <Dumbbell className="w-6 h-6 text-primary" />
-          <span className="font-black text-lg">fitni</span>
+          <span className="font-black text-lg">CoachBase</span>
           <span className="text-muted-foreground mr-2">| اعثر على مدربك المثالي</span>
         </div>
       </header>

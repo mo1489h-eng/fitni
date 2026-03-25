@@ -18,7 +18,7 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "أهلاً بك في fitni",
+    title: "أهلاً بك في CoachBase",
     description: "جولة سريعة تريك كل شيء",
     icon: Dumbbell,
     route: "/dashboard",

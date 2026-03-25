@@ -29,7 +29,7 @@ const PhotoVisual = ({ src, alt }: {src: string;alt: string;}) =>
 
 const ClientsVisual = () =>
 <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-    <PhotoVisual src={clientsFeatureImg} alt="مدرب يتابع عميله عبر fitni" />
+    <PhotoVisual src={clientsFeatureImg} alt="مدرب يتابع عميله عبر CoachBase" />
     <Card className="border-border bg-card/80">
       <CardContent className="p-5">
         <div className="mb-6 flex items-center justify-between">
@@ -119,7 +119,7 @@ const PaymentsVisual = () =>
 
 const PortalVisual = () =>
 <div className="grid gap-4 md:grid-cols-2">
-    <PhotoVisual src={portalFeatureImg} alt="متدرب يستخدم بورتال fitni" />
+    <PhotoVisual src={portalFeatureImg} alt="متدرب يستخدم بورتال CoachBase" />
     <DeviceShell>
       <div className="bg-card/80 p-4">
         <div className="mb-4 rounded-[1.5rem] border border-primary/20 bg-primary/10 p-4">

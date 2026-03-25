@@ -354,7 +354,7 @@ const Dashboard = () => {
                   <Bell className="h-4 w-4 text-primary" strokeWidth={1.5} />
                   صفحتك العامة
                 </div>
-                <p className="truncate text-sm text-muted-foreground" dir="ltr">fitni.lovable.app/t/{profile.username}</p>
+                <p className="truncate text-sm text-muted-foreground" dir="ltr">coachbase.health/t/{profile.username}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -362,7 +362,7 @@ const Dashboard = () => {
                   size="sm"
                   className="gap-2"
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://fitni.lovable.app/t/${profile.username}`);
+                    navigator.clipboard.writeText(`https://coachbase.health/t/${profile.username}`);
                     toast.success("تم نسخ الرابط العام");
                   }}
                 >
@@ -370,7 +370,7 @@ const Dashboard = () => {
                   نسخ الرابط
                 </Button>
                 <Button variant="outline" size="sm" className="gap-2" asChild>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`رابط صفحتي التدريبية: https://fitni.lovable.app/t/${profile.username}`)}`} target="_blank" rel="noreferrer">
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`رابط صفحتي التدريبية: https://coachbase.health/t/${profile.username}`)}`} target="_blank" rel="noreferrer">
                     <MessageCircle className="h-4 w-4" strokeWidth={1.5} />
                     واتساب
                   </a>

@@ -16,7 +16,7 @@ serve(async (req) => {
       payment_id, package_id, trainer_id,
       client_name, client_phone, client_email, client_password,
       client_age, client_weight, client_height, client_goal, client_notes,
-      amount,
+      amount, referral_code,
     } = await req.json();
 
     if (!payment_id || !package_id || !trainer_id || !client_name || !client_email || !client_password) {

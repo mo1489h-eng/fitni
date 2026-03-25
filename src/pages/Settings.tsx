@@ -22,6 +22,7 @@ import {
    RotateCcw, Banknote, Share2, Copy, Link, Instagram, Twitter, Plus, X, Image, MessageCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ReferralSettings from "@/components/ReferralSettings";
 
 const SPECIALIZATIONS = [
   "لياقة عامة",

@@ -1075,6 +1075,9 @@ const Settings = () => {
           )}
         </Card>
 
+        {/* ━━━ REFERRAL SYSTEM ━━━ */}
+        <ReferralSettings />
+
         {/* ━━━ SAVE BUTTON ━━━ */}
         <Button className="w-full gap-2" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

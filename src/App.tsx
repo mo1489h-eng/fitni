@@ -105,6 +105,7 @@ const App = () => (
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
             <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
             <Route path="/store" element={<Store />} />
+            <Route path="/ref/:code" element={<ReferralRedirect />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
 

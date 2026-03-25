@@ -134,6 +134,9 @@ const PortalAccount = () => {
           </div>
         )}
 
+        {/* Referral */}
+        <PortalReferral />
+
         {/* Mood */}
         <PortalMoodSelector />
 

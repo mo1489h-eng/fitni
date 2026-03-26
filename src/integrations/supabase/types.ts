@@ -632,6 +632,54 @@ export type Database = {
           },
         ]
       }
+      exercise_library: {
+        Row: {
+          created_at: string
+          difficulty: string
+          equipment: string
+          id: string
+          instructions_ar: string | null
+          is_custom: boolean
+          movement_pattern: string | null
+          muscle_group: string
+          name_ar: string
+          name_en: string
+          secondary_muscles: string[] | null
+          trainer_id: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string
+          equipment?: string
+          id?: string
+          instructions_ar?: string | null
+          is_custom?: boolean
+          movement_pattern?: string | null
+          muscle_group?: string
+          name_ar: string
+          name_en?: string
+          secondary_muscles?: string[] | null
+          trainer_id?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          equipment?: string
+          id?: string
+          instructions_ar?: string | null
+          is_custom?: boolean
+          movement_pattern?: string | null
+          muscle_group?: string
+          name_ar?: string
+          name_en?: string
+          secondary_muscles?: string[] | null
+          trainer_id?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       gulf_foods: {
         Row: {
           added_by_trainer_id: string | null
@@ -1191,33 +1239,54 @@ export type Database = {
         Row: {
           created_at: string
           day_id: string
+          exercise_library_id: string | null
           exercise_order: number
           id: string
+          is_warmup: boolean
           name: string
+          notes: string | null
           reps: number
+          rest_seconds: number
+          rpe: number | null
           sets: number
+          superset_group: string | null
+          tempo: string | null
           video_url: string | null
           weight: number
         }
         Insert: {
           created_at?: string
           day_id: string
+          exercise_library_id?: string | null
           exercise_order?: number
           id?: string
+          is_warmup?: boolean
           name: string
+          notes?: string | null
           reps?: number
+          rest_seconds?: number
+          rpe?: number | null
           sets?: number
+          superset_group?: string | null
+          tempo?: string | null
           video_url?: string | null
           weight?: number
         }
         Update: {
           created_at?: string
           day_id?: string
+          exercise_library_id?: string | null
           exercise_order?: number
           id?: string
+          is_warmup?: boolean
           name?: string
+          notes?: string | null
           reps?: number
+          rest_seconds?: number
+          rpe?: number | null
           sets?: number
+          superset_group?: string | null
+          tempo?: string | null
           video_url?: string | null
           weight?: number
         }
@@ -1229,26 +1298,45 @@ export type Database = {
             referencedRelation: "program_days"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "program_exercises_exercise_library_id_fkey"
+            columns: ["exercise_library_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_library"
+            referencedColumns: ["id"]
+          },
         ]
       }
       programs: {
         Row: {
           created_at: string
+          description: string | null
+          difficulty: string | null
+          goal: string | null
           id: string
+          is_template: boolean
           name: string
           trainer_id: string
           weeks: number
         }
         Insert: {
           created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          goal?: string | null
           id?: string
+          is_template?: boolean
           name: string
           trainer_id: string
           weeks?: number
         }
         Update: {
           created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          goal?: string | null
           id?: string
+          is_template?: boolean
           name?: string
           trainer_id?: string
           weeks?: number
@@ -1620,6 +1708,133 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_logs: {
+        Row: {
+          actual_reps: number | null
+          actual_weight: number | null
+          client_id: string
+          completed: boolean
+          created_at: string
+          exercise_id: string
+          id: string
+          logged_at: string
+          notes: string | null
+          planned_reps: number
+          planned_weight: number
+          program_day_id: string
+          rpe: number | null
+          set_number: number
+        }
+        Insert: {
+          actual_reps?: number | null
+          actual_weight?: number | null
+          client_id: string
+          completed?: boolean
+          created_at?: string
+          exercise_id: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          planned_reps?: number
+          planned_weight?: number
+          program_day_id: string
+          rpe?: number | null
+          set_number?: number
+        }
+        Update: {
+          actual_reps?: number | null
+          actual_weight?: number | null
+          client_id?: string
+          completed?: boolean
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          logged_at?: string
+          notes?: string | null
+          planned_reps?: number
+          planned_weight?: number
+          program_day_id?: string
+          rpe?: number | null
+          set_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_logs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "program_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_logs_program_day_id_fkey"
+            columns: ["program_day_id"]
+            isOneToOne: false
+            referencedRelation: "program_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_sessions: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          notes: string | null
+          program_day_id: string
+          started_at: string
+          total_sets: number | null
+          total_volume: number | null
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          program_day_id: string
+          started_at?: string
+          total_sets?: number | null
+          total_volume?: number | null
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          notes?: string | null
+          program_day_id?: string
+          started_at?: string
+          total_sets?: number | null
+          total_volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_sessions_program_day_id_fkey"
+            columns: ["program_day_id"]
+            isOneToOne: false
+            referencedRelation: "program_days"
             referencedColumns: ["id"]
           },
         ]

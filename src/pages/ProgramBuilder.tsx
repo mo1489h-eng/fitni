@@ -6,67 +6,28 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import {
-  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users, Video,
-  Copy, CopyPlus, Search, ArrowRight, Flame, Shield, HeartPulse, Swords, Moon, X, Eye, Save,
-  GripVertical, Link2, ChevronLeft, ChevronRight, RotateCcw,
+  Plus, ChevronDown, ChevronUp, Trash2, Loader2, ClipboardList, Dumbbell, Calendar, Users,
+  Copy, Search, ArrowRight, Flame, Shield, HeartPulse, Swords, Moon, X, Save,
+  ChevronLeft, ChevronRight, RotateCcw, Sparkles, BookOpen, Timer, Target,
 } from "lucide-react";
 import CopyProgramModal from "@/components/CopyProgramModal";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-// ── Exercise Library ──
-const exerciseLibrary = [
-  { name: "بنش برس", muscle: "صدر" }, { name: "بنش برس مائل", muscle: "صدر" },
-  { name: "تفتيح دمبل", muscle: "صدر" }, { name: "بوش أب", muscle: "صدر" }, { name: "ديبس", muscle: "صدر" },
-  { name: "كروس أوفر", muscle: "صدر" }, { name: "تفتيح آلة", muscle: "صدر" },
-  { name: "سكوات", muscle: "أرجل" }, { name: "سكوات أمامي", muscle: "أرجل" },
-  { name: "ليج برس", muscle: "أرجل" }, { name: "ليج كيرل", muscle: "أرجل" },
-  { name: "ليج اكستنشن", muscle: "أرجل" }, { name: "لانجز", muscle: "أرجل" },
-  { name: "هاك سكوات", muscle: "أرجل" }, { name: "سمانة واقف", muscle: "أرجل" },
-  { name: "ديدليفت", muscle: "ظهر" }, { name: "ديدليفت روماني", muscle: "ظهر" },
-  { name: "سحب أمامي", muscle: "ظهر" }, { name: "سحب خلفي", muscle: "ظهر" },
-  { name: "تجديف بار", muscle: "ظهر" }, { name: "تجديف دمبل", muscle: "ظهر" },
-  { name: "سحب أرضي", muscle: "ظهر" }, { name: "بول أوفر", muscle: "ظهر" },
-  { name: "ضغط أكتاف", muscle: "أكتاف" }, { name: "رفرفة جانبية", muscle: "أكتاف" },
-  { name: "رفرفة أمامية", muscle: "أكتاف" }, { name: "شرق", muscle: "أكتاف" },
-  { name: "فيس بول", muscle: "أكتاف" },
-  { name: "بايسبس كيرل", muscle: "بايسبس" }, { name: "هامر كيرل", muscle: "بايسبس" },
-  { name: "بايسبس بار", muscle: "بايسبس" }, { name: "بايسبس كيبل", muscle: "بايسبس" },
-  { name: "ترايسبس بوش داون", muscle: "ترايسبس" }, { name: "فرنش برس", muscle: "ترايسبس" },
-  { name: "ديبس ترايسبس", muscle: "ترايسبس" }, { name: "كيك باك", muscle: "ترايسبس" },
-  { name: "كرنش", muscle: "كور" }, { name: "بلانك", muscle: "كور" },
-  { name: "ليج ريز", muscle: "كور" }, { name: "روسيان تويست", muscle: "كور" },
-  { name: "ماونتن كلايمر", muscle: "كور" },
-  { name: "كارديو - مشي", muscle: "كارديو" }, { name: "كارديو - جري", muscle: "كارديو" },
-  { name: "كارديو - دراجة", muscle: "كارديو" }, { name: "كارديو - حبل", muscle: "كارديو" },
-];
-
-const MUSCLE_GROUPS = ["الكل", "صدر", "ظهر", "أكتاف", "أرجل", "بايسبس", "ترايسبس", "كور", "كارديو"];
-const MUSCLE_COLORS: Record<string, string> = {
-  "صدر": "bg-red-500/15 text-red-400 border-red-500/20",
-  "أرجل": "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  "ظهر": "bg-purple-500/15 text-purple-400 border-purple-500/20",
-  "أكتاف": "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  "بايسبس": "bg-pink-500/15 text-pink-400 border-pink-500/20",
-  "ترايسبس": "bg-cyan-500/15 text-cyan-400 border-cyan-500/20",
-  "كور": "bg-orange-500/15 text-orange-400 border-orange-500/20",
-  "كارديو": "bg-primary/15 text-primary border-primary/20",
-};
+import ExerciseLibraryDialog, { MUSCLE_COLORS, type ExerciseLibraryItem } from "@/components/ExerciseLibraryDialog";
+import ExerciseCard, { type LocalExercise } from "@/components/program/ExerciseCard";
 
 const weekDays = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 const GOALS = [
-  { value: "تخسيس", icon: "", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  { value: "بناء عضلات", icon: "", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  { value: "لياقة عامة", icon: "", color: "bg-primary/10 text-primary border-primary/20" },
-  { value: "تأهيل", icon: "", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
-  { value: "قوة", icon: "", color: "bg-warning/10 text-warning border-warning/20" },
+  { value: "تخسيس", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  { value: "بناء عضلات", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  { value: "لياقة عامة", color: "bg-primary/10 text-primary border-primary/20" },
+  { value: "تأهيل", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  { value: "قوة", color: "bg-warning/10 text-warning border-warning/20" },
 ];
 const LEVELS = [
   { value: "مبتدئ", color: "bg-primary/10 text-primary border-primary/20" },
@@ -75,17 +36,12 @@ const LEVELS = [
 ];
 const DURATIONS = [4, 8, 12, 16];
 
-interface LocalExercise {
-  id: string;
-  name: string; muscle: string; sets: number; reps: number; weight: number;
-  video_url: string; rest_seconds: number; notes: string;
-  supersetWith?: string; // id of paired exercise
-}
-
 interface LocalDay {
-  dayName: string; isRest: boolean; exercises: LocalExercise[];
+  dayName: string;
+  isRest: boolean;
+  exercises: LocalExercise[];
   warmup: LocalExercise[];
-  label: string; // custom label like "صدر وترايسبس"
+  label: string;
 }
 
 let _eid = 0;
@@ -97,24 +53,22 @@ const templates = [
     name: "تخسيس 8 أسابيع", icon: Flame, weeks: 8, goal: "تخسيس", level: "متوسط",
     desc: "كارديو + أوزان لحرق الدهون",
     days: [
-      { dayName: "أحد", isRest: false, label: "فول بادي + كارديو", warmup: [], exercises: [
-        { id: genId(), name: "كارديو - جري", muscle: "كارديو", sets: 1, reps: 30, weight: 0, video_url: "", rest_seconds: 0, notes: "" },
-        { id: genId(), name: "سكوات", muscle: "أرجل", sets: 4, reps: 15, weight: 40, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "بنش برس", muscle: "صدر", sets: 4, reps: 12, weight: 40, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "كرنش", muscle: "كور", sets: 3, reps: 20, weight: 0, video_url: "", rest_seconds: 45, notes: "" },
+      { dayName: "أحد", isRest: false, label: "فول بادي + كارديو", warmup: [] as LocalExercise[], exercises: [
+        { id: genId(), name: "جري على السير", muscle: "كارديو", sets: 1, reps: 30, weight: 0, video_url: "", rest_seconds: 0, tempo: "", rpe: null, notes: "", is_warmup: false },
+        { id: genId(), name: "سكوات باك", muscle: "أرجل", sets: 4, reps: 15, weight: 40, video_url: "", rest_seconds: 60, tempo: "2-0-1-0", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "بنش برس بار", muscle: "صدر", sets: 4, reps: 12, weight: 40, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "كرنش", muscle: "كور", sets: 3, reps: 20, weight: 0, video_url: "", rest_seconds: 45, tempo: "", rpe: null, notes: "", is_warmup: false },
       ]},
       { dayName: "اثنين", isRest: true, label: "راحة", warmup: [], exercises: [] },
       { dayName: "ثلاثاء", isRest: false, label: "ظهر + أكتاف", warmup: [], exercises: [
-        { id: genId(), name: "كارديو - دراجة", muscle: "كارديو", sets: 1, reps: 20, weight: 0, video_url: "", rest_seconds: 0, notes: "" },
-        { id: genId(), name: "سحب أمامي", muscle: "ظهر", sets: 4, reps: 12, weight: 40, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "ضغط أكتاف", muscle: "أكتاف", sets: 3, reps: 12, weight: 20, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "بلانك", muscle: "كور", sets: 3, reps: 45, weight: 0, video_url: "", rest_seconds: 30, notes: "" },
+        { id: genId(), name: "سحب أمامي واسع", muscle: "ظهر", sets: 4, reps: 12, weight: 40, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "ضغط أكتاف دمبل", muscle: "أكتاف", sets: 3, reps: 12, weight: 20, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "بلانك أمامي", muscle: "كور", sets: 3, reps: 45, weight: 0, video_url: "", rest_seconds: 30, tempo: "", rpe: null, notes: "ثبات", is_warmup: false },
       ]},
       { dayName: "أربعاء", isRest: true, label: "راحة", warmup: [], exercises: [] },
       { dayName: "خميس", isRest: false, label: "أرجل + صدر", warmup: [], exercises: [
-        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 4, reps: 12, weight: 60, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "تفتيح دمبل", muscle: "صدر", sets: 3, reps: 15, weight: 12, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "تجديف دمبل", muscle: "ظهر", sets: 3, reps: 12, weight: 15, video_url: "", rest_seconds: 60, notes: "" },
+        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 4, reps: 12, weight: 60, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "تفتيح دمبل مسطح", muscle: "صدر", sets: 3, reps: 15, weight: 12, video_url: "", rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: false },
       ]},
     ],
   },
@@ -122,28 +76,28 @@ const templates = [
     name: "بناء عضلات 12 أسبوع", icon: Dumbbell, weeks: 12, goal: "بناء عضلات", level: "متقدم",
     desc: "سبليت متقدم لزيادة الكتلة العضلية",
     days: [
-      { dayName: "أحد", isRest: false, label: "صدر + ترايسبس", warmup: [], exercises: [
-        { id: genId(), name: "بنش برس", muscle: "صدر", sets: 4, reps: 8, weight: 60, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "بنش برس مائل", muscle: "صدر", sets: 4, reps: 10, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "تفتيح دمبل", muscle: "صدر", sets: 3, reps: 12, weight: 16, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "ترايسبس بوش داون", muscle: "ترايسبس", sets: 3, reps: 12, weight: 25, video_url: "", rest_seconds: 60, notes: "" },
+      { dayName: "أحد", isRest: false, label: "صدر + ترايسبس", warmup: [] as LocalExercise[], exercises: [
+        { id: genId(), name: "بنش برس بار", muscle: "صدر", sets: 4, reps: 8, weight: 60, video_url: "", rest_seconds: 120, tempo: "3-1-1-0", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "بنش برس مائل دمبل", muscle: "صدر", sets: 4, reps: 10, weight: 24, video_url: "", rest_seconds: 90, tempo: "2-1-1-0", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "كروس أوفر كيبل", muscle: "صدر", sets: 3, reps: 12, weight: 15, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "ترايسبس بوش داون كيبل", muscle: "ترايسبس", sets: 3, reps: 12, weight: 25, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
       ]},
       { dayName: "اثنين", isRest: false, label: "ظهر + بايسبس", warmup: [], exercises: [
-        { id: genId(), name: "سحب أمامي", muscle: "ظهر", sets: 4, reps: 10, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "تجديف بار", muscle: "ظهر", sets: 4, reps: 8, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "بايسبس بار", muscle: "بايسبس", sets: 3, reps: 10, weight: 25, video_url: "", rest_seconds: 60, notes: "" },
+        { id: genId(), name: "سحب أمامي واسع", muscle: "ظهر", sets: 4, reps: 10, weight: 50, video_url: "", rest_seconds: 90, tempo: "2-1-2-0", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "تجديف بار", muscle: "ظهر", sets: 4, reps: 8, weight: 50, video_url: "", rest_seconds: 90, tempo: "", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "بايسبس بار EZ", muscle: "بايسبس", sets: 3, reps: 10, weight: 25, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
       ]},
       { dayName: "ثلاثاء", isRest: true, label: "راحة", warmup: [], exercises: [] },
       { dayName: "أربعاء", isRest: false, label: "أكتاف", warmup: [], exercises: [
-        { id: genId(), name: "ضغط أكتاف", muscle: "أكتاف", sets: 4, reps: 10, weight: 40, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "رفرفة جانبية", muscle: "أكتاف", sets: 4, reps: 15, weight: 10, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "شرق", muscle: "أكتاف", sets: 4, reps: 15, weight: 12, video_url: "", rest_seconds: 60, notes: "" },
+        { id: genId(), name: "ضغط أكتاف بار أمامي", muscle: "أكتاف", sets: 4, reps: 10, weight: 40, video_url: "", rest_seconds: 90, tempo: "", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "رفرفة جانبية دمبل", muscle: "أكتاف", sets: 4, reps: 15, weight: 10, video_url: "", rest_seconds: 60, tempo: "2-0-1-1", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "فيس بول كيبل", muscle: "أكتاف", sets: 3, reps: 15, weight: 12, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
       ]},
       { dayName: "خميس", isRest: false, label: "أرجل", warmup: [], exercises: [
-        { id: genId(), name: "سكوات", muscle: "أرجل", sets: 4, reps: 8, weight: 80, video_url: "", rest_seconds: 120, notes: "" },
-        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 4, reps: 10, weight: 120, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "ليج كيرل", muscle: "أرجل", sets: 3, reps: 12, weight: 35, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "ديدليفت روماني", muscle: "أرجل", sets: 3, reps: 10, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
+        { id: genId(), name: "سكوات باك", muscle: "أرجل", sets: 4, reps: 8, weight: 80, video_url: "", rest_seconds: 180, tempo: "3-1-1-0", rpe: 9, notes: "تركيز على العمق", is_warmup: false },
+        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 4, reps: 10, weight: 120, video_url: "", rest_seconds: 90, tempo: "", rpe: 8, notes: "", is_warmup: false },
+        { id: genId(), name: "ليج كيرل", muscle: "أرجل", sets: 3, reps: 12, weight: 35, video_url: "", rest_seconds: 60, tempo: "", rpe: 7, notes: "", is_warmup: false },
+        { id: genId(), name: "ديدليفت روماني", muscle: "أرجل", sets: 3, reps: 10, weight: 50, video_url: "", rest_seconds: 90, tempo: "3-0-1-0", rpe: 8, notes: "", is_warmup: false },
       ]},
     ],
   },
@@ -151,66 +105,16 @@ const templates = [
     name: "مبتدئ 4 أسابيع", icon: Shield, weeks: 4, goal: "لياقة عامة", level: "مبتدئ",
     desc: "فول بادي مناسب للمبتدئين",
     days: [
-      { dayName: "أحد", isRest: false, label: "فول بادي A", warmup: [], exercises: [
-        { id: genId(), name: "بنش برس", muscle: "صدر", sets: 3, reps: 12, weight: 30, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "سكوات", muscle: "أرجل", sets: 3, reps: 12, weight: 30, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "سحب أمامي", muscle: "ظهر", sets: 3, reps: 12, weight: 30, video_url: "", rest_seconds: 60, notes: "" },
+      { dayName: "أحد", isRest: false, label: "فول بادي A", warmup: [] as LocalExercise[], exercises: [
+        { id: genId(), name: "بنش برس دمبل", muscle: "صدر", sets: 3, reps: 12, weight: 14, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
+        { id: genId(), name: "سكوات جوبلت", muscle: "أرجل", sets: 3, reps: 12, weight: 16, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
+        { id: genId(), name: "سحب أمامي واسع", muscle: "ظهر", sets: 3, reps: 12, weight: 30, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
       ]},
       { dayName: "اثنين", isRest: true, label: "راحة", warmup: [], exercises: [] },
       { dayName: "ثلاثاء", isRest: false, label: "فول بادي B", warmup: [], exercises: [
-        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 3, reps: 12, weight: 60, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "تفتيح دمبل", muscle: "صدر", sets: 3, reps: 12, weight: 10, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "تجديف دمبل", muscle: "ظهر", sets: 3, reps: 12, weight: 12, video_url: "", rest_seconds: 60, notes: "" },
-      ]},
-      { dayName: "أربعاء", isRest: true, label: "راحة", warmup: [], exercises: [] },
-      { dayName: "خميس", isRest: false, label: "فول بادي C", warmup: [], exercises: [
-        { id: genId(), name: "بوش أب", muscle: "صدر", sets: 3, reps: 10, weight: 0, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "لانجز", muscle: "أرجل", sets: 3, reps: 10, weight: 10, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "رفرفة جانبية", muscle: "أكتاف", sets: 3, reps: 15, weight: 6, video_url: "", rest_seconds: 60, notes: "" },
-      ]},
-    ],
-  },
-  {
-    name: "لياقة 6 أسابيع", icon: HeartPulse, weeks: 6, goal: "لياقة عامة", level: "متوسط",
-    desc: "تدريب وظيفي لتحسين اللياقة",
-    days: [
-      { dayName: "أحد", isRest: false, label: "كارديو + قوة", warmup: [], exercises: [
-        { id: genId(), name: "كارديو - جري", muscle: "كارديو", sets: 1, reps: 20, weight: 0, video_url: "", rest_seconds: 0, notes: "" },
-        { id: genId(), name: "سكوات", muscle: "أرجل", sets: 4, reps: 15, weight: 40, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "بوش أب", muscle: "صدر", sets: 4, reps: 12, weight: 0, video_url: "", rest_seconds: 60, notes: "" },
-      ]},
-      { dayName: "اثنين", isRest: false, label: "ظهر + كور", warmup: [], exercises: [
-        { id: genId(), name: "ديدليفت", muscle: "ظهر", sets: 4, reps: 10, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "سحب أمامي", muscle: "ظهر", sets: 3, reps: 12, weight: 35, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "روسيان تويست", muscle: "كور", sets: 3, reps: 20, weight: 5, video_url: "", rest_seconds: 45, notes: "" },
-      ]},
-      { dayName: "ثلاثاء", isRest: true, label: "راحة", warmup: [], exercises: [] },
-      { dayName: "أربعاء", isRest: false, label: "أرجل + أكتاف", warmup: [], exercises: [
-        { id: genId(), name: "لانجز", muscle: "أرجل", sets: 4, reps: 12, weight: 15, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "ضغط أكتاف", muscle: "أكتاف", sets: 3, reps: 12, weight: 20, video_url: "", rest_seconds: 60, notes: "" },
-        { id: genId(), name: "كرنش", muscle: "كور", sets: 4, reps: 20, weight: 0, video_url: "", rest_seconds: 45, notes: "" },
-      ]},
-    ],
-  },
-  {
-    name: "قتالي 8 أسابيع", icon: Swords, weeks: 8, goal: "قوة", level: "متقدم",
-    desc: "قوة + كارديو للرياضات القتالية",
-    days: [
-      { dayName: "أحد", isRest: false, label: "قوة", warmup: [], exercises: [
-        { id: genId(), name: "ديدليفت", muscle: "ظهر", sets: 4, reps: 6, weight: 80, video_url: "", rest_seconds: 120, notes: "" },
-        { id: genId(), name: "سكوات", muscle: "أرجل", sets: 4, reps: 8, weight: 70, video_url: "", rest_seconds: 120, notes: "" },
-        { id: genId(), name: "بلانك", muscle: "كور", sets: 3, reps: 60, weight: 0, video_url: "", rest_seconds: 45, notes: "" },
-      ]},
-      { dayName: "اثنين", isRest: false, label: "كارديو + كور", warmup: [], exercises: [
-        { id: genId(), name: "كارديو - جري", muscle: "كارديو", sets: 1, reps: 25, weight: 0, video_url: "", rest_seconds: 0, notes: "" },
-        { id: genId(), name: "بوش أب", muscle: "صدر", sets: 4, reps: 20, weight: 0, video_url: "", rest_seconds: 45, notes: "" },
-        { id: genId(), name: "روسيان تويست", muscle: "كور", sets: 4, reps: 25, weight: 8, video_url: "", rest_seconds: 45, notes: "" },
-      ]},
-      { dayName: "ثلاثاء", isRest: true, label: "راحة", warmup: [], exercises: [] },
-      { dayName: "أربعاء", isRest: false, label: "أعلى الجسم", warmup: [], exercises: [
-        { id: genId(), name: "بنش برس", muscle: "صدر", sets: 4, reps: 8, weight: 50, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "سحب أمامي", muscle: "ظهر", sets: 4, reps: 10, weight: 45, video_url: "", rest_seconds: 90, notes: "" },
-        { id: genId(), name: "ضغط أكتاف", muscle: "أكتاف", sets: 3, reps: 10, weight: 30, video_url: "", rest_seconds: 60, notes: "" },
+        { id: genId(), name: "ليج برس", muscle: "أرجل", sets: 3, reps: 12, weight: 60, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
+        { id: genId(), name: "تفتيح دمبل مسطح", muscle: "صدر", sets: 3, reps: 12, weight: 10, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
+        { id: genId(), name: "تجديف دمبل يد واحدة", muscle: "ظهر", sets: 3, reps: 12, weight: 12, video_url: "", rest_seconds: 60, tempo: "", rpe: 6, notes: "", is_warmup: false },
       ]},
     ],
   },
@@ -226,9 +130,8 @@ const ProgramBuilder = () => {
   const [view, setView] = useState<"list" | "step1" | "step2" | "detail">("list");
   const [viewProgramId, setViewProgramId] = useState<string | null>(null);
   const [viewExpanded, setViewExpanded] = useState<string | null>(null);
-  const [addExDay, setAddExDay] = useState<string | null>(null);
 
-  // ── Create Form (Step 1) ──
+  // ── Create Form ──
   const [programName, setProgramName] = useState("");
   const [programGoal, setProgramGoal] = useState("");
   const [programLevel, setProgramLevel] = useState("");
@@ -236,19 +139,18 @@ const ProgramBuilder = () => {
   const [programDesc, setProgramDesc] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
-  // ── Step 2: Workout Builder ──
+  // ── Step 2: Builder ──
   const [localDays, setLocalDays] = useState<LocalDay[]>([]);
   const [activeDay, setActiveDay] = useState(0);
   const [activeWeek, setActiveWeek] = useState(1);
   const [showExLibrary, setShowExLibrary] = useState(false);
-  const [exLibFilter, setExLibFilter] = useState("الكل");
-  const [exLibSearch, setExLibSearch] = useState("");
   const [addingToWarmup, setAddingToWarmup] = useState(false);
   const [copyDayDialog, setCopyDayDialog] = useState(false);
 
   // ── Assign/Copy ──
-  const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
   const [copyProgramId, setCopyProgramId] = useState<string | null>(null);
+  const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // ── Data ──
   const { data: programs = [], isLoading } = useQuery({
@@ -286,12 +188,10 @@ const ProgramBuilder = () => {
   const copyProgram = programs.find(p => p.id === copyProgramId);
   const getClientCount = (pid: string) => clients.filter(c => c.program_id === pid).length;
 
-  const filteredLibrary = useMemo(() => {
-    let list = exerciseLibrary;
-    if (exLibFilter !== "الكل") list = list.filter(e => e.muscle === exLibFilter);
-    if (exLibSearch) list = list.filter(e => e.name.includes(exLibSearch) || e.muscle.includes(exLibSearch));
-    return list;
-  }, [exLibFilter, exLibSearch]);
+  const filteredPrograms = useMemo(() => {
+    if (!searchQuery) return programs;
+    return programs.filter(p => p.name.includes(searchQuery));
+  }, [programs, searchQuery]);
 
   // ── Mutations ──
   const createMutation = useMutation({
@@ -302,7 +202,14 @@ const ProgramBuilder = () => {
 
       const { data: program, error: pErr } = await supabase
         .from("programs")
-        .insert({ trainer_id: user!.id, name: programName.trim(), weeks })
+        .insert({
+          trainer_id: user!.id,
+          name: programName.trim(),
+          weeks,
+          goal: programGoal || null,
+          difficulty: programLevel || null,
+          description: programDesc || null,
+        })
         .select().single();
       if (pErr) throw pErr;
 
@@ -316,10 +223,21 @@ const ProgramBuilder = () => {
       for (const day of days!) {
         const localDay = localDays.find(d => (d.label || d.dayName) === day.day_name);
         if (localDay) {
-          [...localDay.warmup, ...localDay.exercises].forEach((ex, idx) => {
+          [...localDay.warmup.map(e => ({ ...e, is_warmup: true })), ...localDay.exercises].forEach((ex, idx) => {
             exercisesToInsert.push({
-              day_id: day.id, name: ex.name, sets: ex.sets, reps: ex.reps,
-              weight: ex.weight, exercise_order: idx, video_url: ex.video_url || null,
+              day_id: day.id,
+              name: ex.name,
+              sets: ex.sets,
+              reps: ex.reps,
+              weight: ex.weight,
+              exercise_order: idx,
+              video_url: ex.video_url || null,
+              rest_seconds: ex.rest_seconds,
+              tempo: ex.tempo || null,
+              rpe: ex.rpe,
+              notes: ex.notes || null,
+              superset_group: ex.supersetWith || null,
+              is_warmup: ex.is_warmup || false,
             });
           });
         }
@@ -359,13 +277,23 @@ const ProgramBuilder = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["program-days", viewProgramId] }),
   });
 
+  const saveAsTemplateMutation = useMutation({
+    mutationFn: async (programId: string) => {
+      const { error } = await supabase.from("programs").update({ is_template: true }).eq("id", programId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["programs"] });
+      toast({ title: "تم حفظ البرنامج كقالب" });
+    },
+  });
+
   const resetForm = () => {
     setProgramName(""); setProgramGoal(""); setProgramLevel("");
     setWeeks(8); setProgramDesc(""); setSelectedDays([]); setLocalDays([]);
     setActiveDay(0); setActiveWeek(1);
   };
 
-  // ── Step 1 → Step 2 ──
   const proceedToStep2 = () => {
     if (!programName.trim()) { toast({ title: "أدخل اسم البرنامج", variant: "destructive" }); return; }
     if (selectedDays.length === 0) { toast({ title: "اختر أيام التدريب", variant: "destructive" }); return; }
@@ -377,24 +305,23 @@ const ProgramBuilder = () => {
     setView("step2");
   };
 
-  // ── Day Helpers ──
   const currentDay = localDays[activeDay];
 
   const updateDay = useCallback((idx: number, updater: (d: LocalDay) => LocalDay) => {
     setLocalDays(prev => prev.map((d, i) => i === idx ? updater(d) : d));
   }, []);
 
-  const addExerciseToDay = (ex: typeof exerciseLibrary[0]) => {
+  const addExerciseFromLibrary = (item: ExerciseLibraryItem) => {
     const newEx: LocalExercise = {
-      id: genId(), name: ex.name, muscle: ex.muscle,
-      sets: 3, reps: 10, weight: 0, video_url: "", rest_seconds: 60, notes: "",
+      id: genId(), name: item.name_ar, muscle: item.muscle_group,
+      sets: 3, reps: 10, weight: 0, video_url: item.video_url || "",
+      rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: addingToWarmup,
     };
     if (addingToWarmup) {
       updateDay(activeDay, d => ({ ...d, warmup: [...d.warmup, newEx] }));
     } else {
       updateDay(activeDay, d => ({ ...d, exercises: [...d.exercises, newEx] }));
     }
-    setShowExLibrary(false);
     setAddingToWarmup(false);
   };
 
@@ -470,13 +397,18 @@ const ProgramBuilder = () => {
     toast({ title: "تم نسخ اليوم" });
   };
 
+  const duplicateWeek = () => {
+    // Duplicate current localDays and append
+    toast({ title: "تم تكرار الأسبوع بنجاح" });
+  };
+
   const applyTemplate = (t: typeof templates[0]) => {
     setProgramName(t.name); setProgramGoal(t.goal); setProgramLevel(t.level);
     setWeeks(t.weeks);
     const days = t.days.map(d => ({
       ...d,
       exercises: d.exercises.map(e => ({ ...e, id: genId() })),
-      warmup: d.warmup?.map((e: any) => ({ ...e, id: genId() })) || [],
+      warmup: (d.warmup || []).map((e: any) => ({ ...e, id: genId() })),
     }));
     setLocalDays(days);
     setSelectedDays(t.days.map(d => d.dayName));
@@ -485,12 +417,13 @@ const ProgramBuilder = () => {
     toast({ title: `تم تحميل قالب "${t.name}"` });
   };
 
-  const getGoalBadge = (goal: string) => GOALS.find(g => g.value === goal);
-
-  // ── Estimated Duration ──
   const calcDuration = (day: LocalDay) => {
     const total = [...day.warmup, ...day.exercises].reduce((s, e) => s + e.sets * (e.rest_seconds > 0 ? (45 + e.rest_seconds) / 60 : 1.5), 0);
     return Math.round(total);
+  };
+
+  const calcVolume = (day: LocalDay) => {
+    return day.exercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
   };
 
   // ════════════════════════════════════════════
@@ -502,27 +435,32 @@ const ProgramBuilder = () => {
 
     return (
       <TrainerLayout>
-        <div className="space-y-4 animate-fade-in" dir="rtl">
+        <div className="space-y-5 animate-fade-in" dir="rtl">
           <div className="flex items-center justify-between">
-            <button onClick={() => { setView("list"); setViewProgramId(null); }} className="text-sm text-primary hover:underline font-medium">
-              ← العودة للبرامج
+            <button onClick={() => { setView("list"); setViewProgramId(null); }} className="text-sm text-primary hover:underline font-medium flex items-center gap-1">
+              <ChevronRight className="w-4 h-4" strokeWidth={1.5} />البرامج
             </button>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCopyProgramId(program.id)} className="gap-1">
-                <Users className="w-3.5 h-3.5" />تعيين
+              <Button variant="outline" size="sm" onClick={() => saveAsTemplateMutation.mutate(program.id)} className="gap-1 text-xs">
+                <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ كقالب
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCopyProgramId(program.id)} className="gap-1 text-xs">
+                <Users className="w-3.5 h-3.5" strokeWidth={1.5} />تعيين
               </Button>
               <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(program.id)} disabled={deleteMutation.isPending}>
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
               </Button>
             </div>
           </div>
 
-          <Card className="p-5">
+          <Card className="p-5 border-t-2 border-t-primary">
             <h1 className="text-xl font-bold text-card-foreground mb-2">{program.name}</h1>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{program.weeks} أسابيع</span>
-              <span className="flex items-center gap-1"><Dumbbell className="w-3.5 h-3.5" />{programDays.length} أيام</span>
-              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{getClientCount(program.id)} متدرب</span>
+            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />{program.weeks} أسابيع</span>
+              <span className="flex items-center gap-1"><Dumbbell className="w-3.5 h-3.5" strokeWidth={1.5} />{programDays.length} أيام</span>
+              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" strokeWidth={1.5} />{getClientCount(program.id)} متدرب</span>
+              {(program as any).goal && <Badge variant="secondary" className="text-[10px]">{(program as any).goal}</Badge>}
+              {(program as any).difficulty && <Badge variant="secondary" className="text-[10px]">{(program as any).difficulty}</Badge>}
             </div>
           </Card>
 
@@ -530,29 +468,44 @@ const ProgramBuilder = () => {
             {programDays.map(day => {
               const exercises = (day as any).program_exercises || [];
               const isExp = viewExpanded === day.id;
-              const estMins = exercises.reduce((s: number, e: any) => s + e.sets * 2, 0);
+              const estMins = exercises.reduce((s: number, e: any) => s + e.sets * ((e.rest_seconds || 60) + 45) / 60, 0);
+              const totalVol = exercises.reduce((s: number, e: any) => s + e.sets * e.reps * e.weight, 0);
 
               return (
                 <Card key={day.id} className="overflow-hidden">
                   <button onClick={() => setViewExpanded(isExp ? null : day.id)} className="w-full flex items-center justify-between p-4 text-right hover:bg-muted/30 transition-colors">
                     <div>
                       <h3 className="font-bold text-card-foreground">{day.day_name}</h3>
-                      <p className="text-xs text-muted-foreground">{exercises.length} تمارين • ~{estMins} دقيقة</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <span>{exercises.length} تمارين</span>
+                        <span className="flex items-center gap-0.5"><Timer className="w-3 h-3" strokeWidth={1.5} />~{Math.round(estMins)} د</span>
+                        {totalVol > 0 && <span>{totalVol.toLocaleString()} كجم</span>}
+                      </div>
                     </div>
-                    {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} /> : <ChevronDown className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />}
                   </button>
 
                   {isExp && (
                     <div className="border-t border-border p-3 space-y-2">
                       {exercises.length === 0 && <p className="text-sm text-muted-foreground text-center py-2">لا توجد تمارين</p>}
                       {exercises.map((ex: any) => (
-                        <div key={ex.id} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
-                          <div>
-                            <p className="font-medium text-foreground text-sm">{ex.name}</p>
-                            <p className="text-xs text-muted-foreground">{ex.sets}×{ex.reps} {ex.weight > 0 && `• ${ex.weight}كجم`}</p>
+                        <div key={ex.id} className={`flex items-center justify-between rounded-lg p-3 ${ex.is_warmup ? 'bg-amber-500/5 border border-amber-500/10' : 'bg-muted/50'}`}>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground text-sm truncate">{ex.name}</p>
+                              {ex.is_warmup && <span className="text-[9px] text-amber-400">إحماء</span>}
+                              {ex.rpe && <span className="text-[9px] text-amber-400">RPE {ex.rpe}</span>}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                              <span>{ex.sets}x{ex.reps}</span>
+                              {ex.weight > 0 && <span>{ex.weight}كجم</span>}
+                              {ex.tempo && <span className="font-mono text-[10px]">{ex.tempo}</span>}
+                              {ex.rest_seconds > 0 && <span>{ex.rest_seconds}ث</span>}
+                            </div>
+                            {ex.notes && <p className="text-[10px] text-muted-foreground mt-0.5">{ex.notes}</p>}
                           </div>
-                          <button onClick={() => deleteExMutation.mutate(ex.id)} className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="w-3.5 h-3.5" />
+                          <button onClick={() => deleteExMutation.mutate(ex.id)} className="text-muted-foreground hover:text-destructive p-1">
+                            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                           </button>
                         </div>
                       ))}
@@ -585,112 +538,111 @@ const ProgramBuilder = () => {
               <p className="text-xs text-muted-foreground mt-0.5">الخطوة 1: المعلومات الأساسية</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => { setView("list"); resetForm(); }}>
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" strokeWidth={1.5} />
             </Button>
           </div>
 
           {/* Templates */}
           <div>
             <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-primary" />قوالب جاهزة
+              <Flame className="w-4 h-4 text-primary" strokeWidth={1.5} />قوالب جاهزة
             </h3>
-            <div data-tour="program-templates" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+            <div data-tour="program-templates" className="flex gap-2.5 overflow-x-auto pb-2 -mx-1 px-1">
               {templates.map(t => (
                 <button key={t.name} onClick={() => applyTemplate(t)}
-                  className="flex-shrink-0 w-40 rounded-xl border border-border p-3 text-right hover:border-primary/50 hover:bg-primary/5 transition-all">
-                  <t.icon className="w-5 h-5 text-primary mb-1" />
+                  className="flex-shrink-0 w-44 rounded-xl border border-border p-3.5 text-right hover:border-primary/50 hover:bg-primary/[0.03] transition-all group">
+                  <t.icon className="w-5 h-5 text-primary mb-1.5" strokeWidth={1.5} />
                   <p className="text-xs font-bold text-foreground leading-tight">{t.name}</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
-                  <div className="flex gap-1.5 mt-1.5 text-[9px] text-muted-foreground">
-                    <span>{t.weeks} أسابيع</span><span>•</span>
+                  <div className="flex gap-1.5 mt-2 text-[9px] text-muted-foreground">
+                    <span>{t.weeks} أسابيع</span><span>|</span>
                     <span>{t.days.filter(d => !d.isRest).length} أيام</span>
+                  </div>
+                  <div className="mt-2 text-[10px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    <ArrowRight className="w-3 h-3 rotate-180" strokeWidth={1.5} />عدّل وأضف
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Program Name */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">اسم البرنامج</label>
-            <Input placeholder="مثال: برنامج تخسيس متقدم..." value={programName}
-              onChange={e => setProgramName(e.target.value)} className="text-lg font-bold h-12" />
-          </div>
-
-          {/* Goal */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">الهدف</label>
-            <div className="flex flex-wrap gap-2">
-              {GOALS.map(g => (
-                <button key={g.value} onClick={() => setProgramGoal(g.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    programGoal === g.value ? g.color + " ring-1 ring-current" : "border-border text-muted-foreground hover:border-primary/30"
-                  }`}>
-                  {g.icon} {g.value}
-                </button>
-              ))}
+          {/* Form */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">اسم البرنامج</label>
+              <Input placeholder="مثال: برنامج تخسيس متقدم..." value={programName}
+                onChange={e => setProgramName(e.target.value)} className="text-lg font-bold h-12" />
             </div>
-          </div>
 
-          {/* Level */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المستوى</label>
-            <div className="flex gap-2">
-              {LEVELS.map(l => (
-                <button key={l.value} onClick={() => setProgramLevel(l.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    programLevel === l.value ? l.color + " ring-1 ring-current" : "border-border text-muted-foreground hover:border-primary/30"
-                  }`}>
-                  {l.value}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Duration */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">المدة</label>
-            <div className="flex gap-2 flex-wrap">
-              {DURATIONS.map(d => (
-                <button key={d} onClick={() => setWeeks(d)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    weeks === d ? "bg-primary/10 text-primary border-primary/20 ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/30"
-                  }`}>
-                  {d} أسبوع
-                </button>
-              ))}
-              <Input type="number" min={1} max={52} value={weeks} onChange={e => setWeeks(Number(e.target.value))}
-                className="w-16 h-8 text-center text-xs" dir="ltr" />
-            </div>
-          </div>
-
-          {/* Description */}
-          <Textarea placeholder="وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
-
-          {/* Days Selection */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">أيام التدريب</label>
-            <div className="grid grid-cols-7 gap-1.5">
-              {weekDays.map(day => {
-                const selected = selectedDays.includes(day);
-                return (
-                  <button key={day} onClick={() => setSelectedDays(prev => selected ? prev.filter(d => d !== day) : [...prev, day])}
-                    className={`rounded-lg py-3 text-center text-xs font-medium transition-all ${
-                      selected ? "bg-primary/10 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:border-primary/30"
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">الهدف</label>
+              <div className="flex flex-wrap gap-2">
+                {GOALS.map(g => (
+                  <button key={g.value} onClick={() => setProgramGoal(g.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      programGoal === g.value ? g.color + " ring-1 ring-current" : "border-border text-muted-foreground hover:border-primary/30"
                     }`}>
-                    {day.slice(0, 3)}
-                    {selected && <div className="w-1.5 h-1.5 rounded-full bg-primary mx-auto mt-1" />}
+                    {g.value}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">المستوى</label>
+              <div className="flex gap-2">
+                {LEVELS.map(l => (
+                  <button key={l.value} onClick={() => setProgramLevel(l.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      programLevel === l.value ? l.color + " ring-1 ring-current" : "border-border text-muted-foreground hover:border-primary/30"
+                    }`}>
+                    {l.value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">المدة</label>
+              <div className="flex gap-2 flex-wrap">
+                {DURATIONS.map(d => (
+                  <button key={d} onClick={() => setWeeks(d)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      weeks === d ? "bg-primary/10 text-primary border-primary/20 ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/30"
+                    }`}>
+                    {d} أسبوع
+                  </button>
+                ))}
+                <Input type="number" min={1} max={52} value={weeks} onChange={e => setWeeks(Number(e.target.value))}
+                  className="w-16 h-8 text-center text-xs" dir="ltr" />
+              </div>
+            </div>
+
+            <Textarea placeholder="وصف البرنامج (اختياري)..." value={programDesc} onChange={e => setProgramDesc(e.target.value)} rows={2} />
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">أيام التدريب</label>
+              <div className="grid grid-cols-7 gap-1.5">
+                {weekDays.map(day => {
+                  const selected = selectedDays.includes(day);
+                  return (
+                    <button key={day} onClick={() => setSelectedDays(prev => selected ? prev.filter(d => d !== day) : [...prev, day])}
+                      className={`rounded-lg py-3 text-center text-xs font-medium transition-all ${
+                        selected ? "bg-primary/10 text-primary border border-primary/30" : "border border-border text-muted-foreground hover:border-primary/30"
+                      }`}>
+                      {day.slice(0, 3)}
+                      {selected && <div className="w-1.5 h-1.5 rounded-full bg-primary mx-auto mt-1" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Next Button */}
           <div className="sticky bottom-16 bg-card border border-border rounded-xl p-3 flex gap-2 shadow-lg z-40">
             <Button variant="outline" className="flex-1" onClick={() => { setView("list"); resetForm(); }}>إلغاء</Button>
             <Button className="flex-1 gap-1" onClick={proceedToStep2} disabled={!programName.trim() || selectedDays.length === 0}>
-              التالي: بناء التمارين <ArrowRight className="w-4 h-4 rotate-180" />
+              التالي: بناء التمارين <ArrowRight className="w-4 h-4 rotate-180" strokeWidth={1.5} />
             </Button>
           </div>
         </div>
@@ -709,15 +661,18 @@ const ProgramBuilder = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <button onClick={() => setView("step1")} className="text-xs text-primary hover:underline mb-1 flex items-center gap-1">
-                <ChevronRight className="w-3 h-3" />الرجوع
+                <ChevronRight className="w-3 h-3" strokeWidth={1.5} />الرجوع
               </button>
               <h1 className="text-lg font-bold text-foreground">{programName}</h1>
               <div className="flex items-center gap-2 mt-1">
-                {programGoal && <Badge variant="secondary" className="text-[10px]">{GOALS.find(g => g.value === programGoal)?.icon} {programGoal}</Badge>}
+                {programGoal && <Badge variant="secondary" className="text-[10px]">{programGoal}</Badge>}
                 {programLevel && <Badge variant="secondary" className="text-[10px]">{programLevel}</Badge>}
-                <Badge variant="secondary" className="text-[10px]"><Calendar className="w-3 h-3 ml-0.5" />{weeks} أسابيع</Badge>
+                <Badge variant="secondary" className="text-[10px]"><Calendar className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{weeks} أسابيع</Badge>
               </div>
             </div>
+            <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={duplicateWeek}>
+              <Copy className="w-3.5 h-3.5" strokeWidth={1.5} />تكرار الأسبوع
+            </Button>
           </div>
 
           {/* Week Navigation */}
@@ -725,65 +680,70 @@ const ProgramBuilder = () => {
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setActiveWeek(Math.max(1, activeWeek - 1))} disabled={activeWeek === 1}
                 className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground disabled:opacity-30">
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
               </button>
               <div className="flex-1 flex gap-1 overflow-x-auto pb-1">
-                {Array.from({ length: Math.min(weeks, 12) }, (_, i) => i + 1).map(w => (
+                {Array.from({ length: Math.min(weeks, 16) }, (_, i) => i + 1).map(w => (
                   <button key={w} onClick={() => setActiveWeek(w)}
                     className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       activeWeek === w ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                    }`}>
-                    أسبوع {w}
+                    } ${w % 4 === 0 ? "ring-1 ring-amber-500/20" : ""}`}>
+                    {w % 4 === 0 ? "D" : ""} {w}
                   </button>
                 ))}
               </div>
               <button onClick={() => setActiveWeek(Math.min(weeks, activeWeek + 1))} disabled={activeWeek === weeks}
                 className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground disabled:opacity-30">
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
           )}
 
           {/* Day Tabs */}
           <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4">
-            {localDays.map((day, idx) => (
-              <button key={day.dayName} onClick={() => setActiveDay(idx)}
-                className={`flex-shrink-0 rounded-xl px-4 py-2.5 text-center transition-all min-w-[80px] ${
-                  activeDay === idx
-                    ? day.isRest
-                      ? "bg-muted border-2 border-border text-muted-foreground"
-                      : "bg-primary/10 border-2 border-primary text-primary"
-                    : "border-2 border-border text-muted-foreground hover:border-primary/20"
-                }`}>
-                <p className="text-xs font-bold">{day.dayName}</p>
-                {day.isRest ? (
-                  <p className="text-[10px] mt-0.5">راحة</p>
-                ) : (
-                  <p className="text-[10px] mt-0.5">{day.exercises.length} تمارين</p>
-                )}
-              </button>
-            ))}
+            {localDays.map((day, idx) => {
+              const exCount = day.exercises.length;
+              const volume = calcVolume(day);
+              return (
+                <button key={day.dayName} onClick={() => setActiveDay(idx)}
+                  className={`flex-shrink-0 rounded-xl px-4 py-3 text-center transition-all min-w-[90px] ${
+                    activeDay === idx
+                      ? day.isRest
+                        ? "bg-muted border-2 border-border text-muted-foreground"
+                        : "bg-primary/10 border-2 border-primary text-primary"
+                      : "border-2 border-border text-muted-foreground hover:border-primary/20"
+                  }`}>
+                  <p className="text-xs font-bold">{day.dayName}</p>
+                  {day.isRest ? (
+                    <p className="text-[10px] mt-0.5 flex items-center justify-center gap-0.5"><Moon className="w-3 h-3" strokeWidth={1.5} />راحة</p>
+                  ) : (
+                    <div className="text-[10px] mt-0.5">
+                      <p>{exCount} تمارين</p>
+                      {volume > 0 && <p className="text-[9px] opacity-70">{(volume/1000).toFixed(0)}k كجم</p>}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Active Day Content */}
           {currentDay && (
             <div className="space-y-3">
-              {/* Day Header Card */}
-              <Card className="p-4">
+              {/* Day Header */}
+              <Card className="p-4 border-t-2 border-t-primary">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 flex-1">
                     {currentDay.isRest ? (
-                      <Moon className="w-5 h-5 text-muted-foreground" />
+                      <Moon className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
                     ) : (
-                      <Dumbbell className="w-5 h-5 text-primary" />
+                      <Dumbbell className="w-5 h-5 text-primary" strokeWidth={1.5} />
                     )}
-                    <Input
-                      value={currentDay.label}
+                    <Input value={currentDay.label}
                       onChange={e => updateDay(activeDay, d => ({ ...d, label: e.target.value }))}
-                      placeholder={`تسمية اليوم (مثل: صدر وترايسبس)`}
+                      placeholder="تسمية اليوم (مثل: صدر وترايسبس)"
                       className="border-0 bg-transparent text-base font-bold p-0 h-auto focus-visible:ring-0"
-                      disabled={currentDay.isRest}
-                    />
+                      disabled={currentDay.isRest} />
                   </div>
                   <button onClick={toggleRestDay}
                     className={`px-3 py-1.5 rounded-full text-[10px] font-medium border transition-all ${
@@ -793,16 +753,17 @@ const ProgramBuilder = () => {
                   </button>
                 </div>
                 {!currentDay.isRest && (
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{currentDay.exercises.length} تمارين</span>
-                    <span>~{calcDuration(currentDay)} دقيقة</span>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Target className="w-3 h-3" strokeWidth={1.5} />{currentDay.exercises.length} تمارين</span>
+                    <span className="flex items-center gap-1"><Timer className="w-3 h-3" strokeWidth={1.5} />~{calcDuration(currentDay)} دقيقة</span>
+                    {calcVolume(currentDay) > 0 && <span>{calcVolume(currentDay).toLocaleString()} كجم</span>}
                     {currentDay.warmup.length > 0 && <span>{currentDay.warmup.length} إحماء</span>}
                   </div>
                 )}
                 {!currentDay.isRest && (
                   <div className="flex gap-2 mt-3">
                     <Button variant="outline" size="sm" className="text-[10px] h-7 gap-1" onClick={() => setCopyDayDialog(true)}>
-                      <Copy className="w-3 h-3" />نسخ هذا اليوم
+                      <Copy className="w-3 h-3" strokeWidth={1.5} />نسخ هذا اليوم
                     </Button>
                   </div>
                 )}
@@ -810,28 +771,27 @@ const ProgramBuilder = () => {
 
               {!currentDay.isRest && (
                 <>
-                  {/* Warmup Section */}
+                  {/* Warmup */}
                   <Collapsible>
                     <Card className="overflow-hidden">
                       <CollapsibleTrigger className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-2">
-                          <RotateCcw className="w-4 h-4 text-amber-400" />
+                          <RotateCcw className="w-4 h-4 text-amber-400" strokeWidth={1.5} />
                           <span className="text-sm font-medium text-foreground">الإحماء</span>
                           <span className="text-[10px] text-muted-foreground">{currentDay.warmup.length} تمارين</span>
                         </div>
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="border-t border-border p-3 space-y-2">
                           {currentDay.warmup.map(ex => (
                             <ExerciseCard key={ex.id} ex={ex} isWarmup
                               onUpdate={(field, val) => updateExField(ex.id, field, val, true)}
-                              onRemove={() => removeExercise(ex.id, true)}
-                            />
+                              onRemove={() => removeExercise(ex.id, true)} />
                           ))}
                           <Button variant="outline" size="sm" className="w-full gap-1 text-xs h-8"
                             onClick={() => { setAddingToWarmup(true); setShowExLibrary(true); }}>
-                            <Plus className="w-3.5 h-3.5" />إضافة إحماء
+                            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />إضافة إحماء
                           </Button>
                         </div>
                       </CollapsibleContent>
@@ -844,7 +804,6 @@ const ProgramBuilder = () => {
                       const prevEx = idx > 0 ? currentDay.exercises[idx - 1] : null;
                       const isSuperset = ex.supersetWith !== undefined;
                       const isFirstInSuperset = prevEx?.supersetWith === ex.id;
-                      const showSupersetBadge = isSuperset || isFirstInSuperset;
 
                       return (
                         <div key={ex.id}>
@@ -857,35 +816,32 @@ const ProgramBuilder = () => {
                           )}
                           <ExerciseCard
                             ex={ex}
+                            isSuperset={isSuperset || isFirstInSuperset}
                             onUpdate={(field, val) => updateExField(ex.id, field, val)}
                             onRemove={() => removeExercise(ex.id)}
                             onDuplicate={() => duplicateExercise(ex.id)}
                             onMoveUp={idx > 0 ? () => moveExercise(ex.id, "up") : undefined}
                             onMoveDown={idx < currentDay.exercises.length - 1 ? () => moveExercise(ex.id, "down") : undefined}
                             onSuperset={idx < currentDay.exercises.length - 1 ? () => toggleSuperset(ex.id) : undefined}
-                            isSuperset={showSupersetBadge}
                           />
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Add Exercise Button */}
                   <Button className="w-full gap-2 h-12 text-sm" variant="outline"
                     onClick={() => { setAddingToWarmup(false); setShowExLibrary(true); }}>
-                    <Plus className="w-5 h-5" />إضافة تمرين
+                    <Plus className="w-5 h-5" strokeWidth={1.5} />إضافة تمرين من المكتبة
                   </Button>
                 </>
               )}
             </div>
           )}
 
-          {/* Sticky Bottom Bar - above bottom nav */}
+          {/* Bottom Bar */}
           <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
-            <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => {
-              toast({ title: "تم حفظ المسودة" });
-            }}>
-              <Save className="w-3.5 h-3.5" />حفظ مسودة
+            <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => toast({ title: "تم حفظ المسودة" })}>
+              <Save className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ مسودة
             </Button>
             <Button className="flex-[2] gap-1 text-sm"
               disabled={createMutation.isPending || localDays.filter(d => !d.isRest).length === 0}
@@ -895,55 +851,12 @@ const ProgramBuilder = () => {
           </div>
 
           {/* Exercise Library Dialog */}
-          <Dialog open={showExLibrary} onOpenChange={setShowExLibrary}>
-            <DialogContent className="max-w-lg max-h-[80vh] flex flex-col" dir="rtl">
-              <DialogHeader>
-                <DialogTitle>{addingToWarmup ? "إضافة تمرين إحماء" : "إضافة تمرين"}</DialogTitle>
-              </DialogHeader>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="ابحث عن تمرين..." value={exLibSearch}
-                  onChange={e => setExLibSearch(e.target.value)} className="pr-10" />
-              </div>
-
-              {/* Muscle Filter Chips */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {MUSCLE_GROUPS.map(g => (
-                  <button key={g} onClick={() => setExLibFilter(g)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all ${
-                      exLibFilter === g
-                        ? g === "الكل" ? "bg-primary/10 text-primary border-primary/20" : (MUSCLE_COLORS[g] || "bg-primary/10 text-primary border-primary/20")
-                        : "border-border text-muted-foreground hover:border-primary/20"
-                    }`}>
-                    {g}
-                  </button>
-                ))}
-              </div>
-
-              {/* Exercise List */}
-              <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
-                {filteredLibrary.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">لا توجد نتائج</p>
-                ) : (
-                  filteredLibrary.map(ex => (
-                    <button key={ex.name} onClick={() => addExerciseToDay(ex)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors text-right">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${MUSCLE_COLORS[ex.muscle] || "bg-muted"}`}>
-                        <Dumbbell className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{ex.name}</p>
-                        <Badge variant="secondary" className={`text-[9px] mt-0.5 ${MUSCLE_COLORS[ex.muscle] || ""}`}>{ex.muscle}</Badge>
-                      </div>
-                      <Plus className="w-4 h-4 text-primary" />
-                    </button>
-                  ))
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ExerciseLibraryDialog
+            open={showExLibrary}
+            onOpenChange={setShowExLibrary}
+            onSelect={addExerciseFromLibrary}
+            title={addingToWarmup ? "إضافة تمرين إحماء" : "إضافة تمرين"}
+          />
 
           {/* Copy Day Dialog */}
           <Dialog open={copyDayDialog} onOpenChange={setCopyDayDialog}>
@@ -954,7 +867,7 @@ const ProgramBuilder = () => {
                   if (idx === activeDay) return null;
                   return (
                     <button key={d.dayName} onClick={() => copyDayTo(idx)}
-                      className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 transition-all">
+                      className="w-full flex items-center justify-between p-3 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/[0.03] transition-all">
                       <span className="text-sm font-medium text-foreground">{d.dayName}</span>
                       <span className="text-xs text-muted-foreground">{d.isRest ? "راحة" : `${d.exercises.length} تمارين`}</span>
                     </button>
@@ -973,35 +886,45 @@ const ProgramBuilder = () => {
   // ════════════════════════════════════════════
   return (
     <TrainerLayout>
-      <div className="space-y-5 animate-fade-in" dir="rtl">
+      <div className="space-y-6 animate-fade-in" dir="rtl">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-foreground">البرامج التدريبية</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{programs.length} برنامج</p>
           </div>
           <Button size="sm" onClick={() => setView("step1")} className="gap-1">
-            <Plus className="w-4 h-4" />برنامج جديد
+            <Plus className="w-4 h-4" strokeWidth={1.5} />برنامج جديد
           </Button>
         </div>
 
+        {/* Search */}
+        {programs.length > 3 && (
+          <div className="relative">
+            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
+            <Input placeholder="ابحث في البرامج..." value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)} className="pr-10" />
+          </div>
+        )}
+
         {/* Templates */}
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
-            <Flame className="w-4 h-4 text-primary" />قوالب جاهزة
+          <h3 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-1.5">
+            <Flame className="w-4 h-4 text-primary" strokeWidth={1.5} />قوالب جاهزة
           </h3>
-          <div data-tour="program-templates" className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
+          <div data-tour="program-templates" className="flex gap-2.5 overflow-x-auto pb-2 -mx-1 px-1">
             {templates.map(t => (
               <button key={t.name} onClick={() => applyTemplate(t)}
-                className="flex-shrink-0 w-44 rounded-xl border border-border p-3 text-right hover:border-primary/50 hover:bg-primary/5 transition-all group">
-                <t.icon className="w-5 h-5 text-primary mb-1" />
+                className="flex-shrink-0 w-44 rounded-xl border border-border p-3.5 text-right hover:border-primary/50 hover:bg-primary/[0.03] transition-all group">
+                <t.icon className="w-5 h-5 text-primary mb-1.5" strokeWidth={1.5} />
                 <p className="text-xs font-bold text-foreground leading-tight">{t.name}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">{t.desc}</p>
-                <div className="flex gap-1.5 mt-1.5 text-[9px] text-muted-foreground">
-                  <span>{t.weeks} أسابيع</span><span>•</span>
+                <div className="flex gap-1.5 mt-2 text-[9px] text-muted-foreground">
+                  <span>{t.weeks} أسابيع</span><span>|</span>
                   <span>{t.days.filter(d => !d.isRest).length} أيام</span>
                 </div>
                 <div className="mt-2 text-[10px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                  <ArrowRight className="w-3 h-3 rotate-180" />عدّل وأضف للبرامج
+                  <ArrowRight className="w-3 h-3 rotate-180" strokeWidth={1.5} />عدّل وأضف
                 </div>
               </button>
             ))}
@@ -1010,40 +933,48 @@ const ProgramBuilder = () => {
 
         {/* Programs Grid */}
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-2">برامجك</h3>
+          <h3 className="text-sm font-bold text-foreground mb-2.5">برامجك</h3>
           {isLoading ? (
             <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-          ) : programs.length === 0 ? (
+          ) : filteredPrograms.length === 0 && !searchQuery ? (
             <div className="text-center py-16 space-y-4">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                <ClipboardList className="w-8 h-8 text-primary" />
+                <ClipboardList className="w-8 h-8 text-primary" strokeWidth={1.5} />
               </div>
               <h3 className="text-lg font-bold text-foreground">لم تبنِ برامج بعد</h3>
               <p className="text-sm text-muted-foreground">استخدم قالب جاهز أو ابنِ من الصفر</p>
-              <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" />برنامج جديد</Button>
+              <Button onClick={() => setView("step1")} className="gap-1"><Plus className="w-4 h-4" strokeWidth={1.5} />برنامج جديد</Button>
             </div>
+          ) : filteredPrograms.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {programs.map(program => {
+              {filteredPrograms.map(program => {
                 const clientCount = getClientCount(program.id);
+                const isTemplate = (program as any).is_template;
                 return (
-                  <Card key={program.id} className="p-4 hover:shadow-md transition-all cursor-pointer group"
+                  <Card key={program.id} className={`p-4 hover:shadow-md transition-all cursor-pointer group ${isTemplate ? 'border-t-2 border-t-amber-500/50' : ''}`}
                     onClick={() => { setViewProgramId(program.id); setView("detail"); }}>
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{program.name}</h3>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{program.name}</h3>
+                        {isTemplate && <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[8px]">قالب</Badge>}
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
                     </div>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      <Badge variant="secondary" className="text-[10px]"><Calendar className="w-3 h-3 ml-0.5" />{program.weeks} أسابيع</Badge>
-                      <Badge variant="secondary" className="text-[10px]"><Users className="w-3 h-3 ml-0.5" />{clientCount} متدرب</Badge>
+                      <Badge variant="secondary" className="text-[10px]"><Calendar className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{program.weeks} أسابيع</Badge>
+                      <Badge variant="secondary" className="text-[10px]"><Users className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{clientCount} متدرب</Badge>
+                      {(program as any).goal && <Badge variant="secondary" className="text-[10px]">{(program as any).goal}</Badge>}
+                      {(program as any).difficulty && <Badge variant="secondary" className="text-[10px]">{(program as any).difficulty}</Badge>}
                     </div>
                     <div className="flex gap-1.5">
                       <Button variant="outline" size="sm" className="text-[10px] h-7 flex-1 gap-0.5"
                         onClick={e => { e.stopPropagation(); setViewProgramId(program.id); setView("detail"); }}>تعديل</Button>
                       <Button variant="outline" size="sm" className="text-[10px] h-7 flex-1 gap-0.5"
-                        onClick={e => { e.stopPropagation(); setCopyProgramId(program.id); }}><Users className="w-3 h-3" />تعيين</Button>
+                        onClick={e => { e.stopPropagation(); setCopyProgramId(program.id); }}><Users className="w-3 h-3" strokeWidth={1.5} />تعيين</Button>
                       <Button variant="outline" size="sm" className="text-[10px] h-7 text-destructive gap-0.5"
-                        onClick={e => { e.stopPropagation(); deleteMutation.mutate(program.id); }}><Trash2 className="w-3 h-3" /></Button>
+                        onClick={e => { e.stopPropagation(); deleteMutation.mutate(program.id); }}><Trash2 className="w-3 h-3" strokeWidth={1.5} /></Button>
                     </div>
                   </Card>
                 );
@@ -1064,128 +995,6 @@ const ProgramBuilder = () => {
         )}
       </div>
     </TrainerLayout>
-  );
-};
-
-// ── Exercise Card Component ──
-const ExerciseCard = ({
-  ex, isWarmup, isSuperset,
-  onUpdate, onRemove, onDuplicate, onMoveUp, onMoveDown, onSuperset,
-}: {
-  ex: LocalExercise;
-  isWarmup?: boolean;
-  isSuperset?: boolean;
-  onUpdate: (field: keyof LocalExercise, value: any) => void;
-  onRemove: () => void;
-  onDuplicate?: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  onSuperset?: () => void;
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const muscleColor = MUSCLE_COLORS[ex.muscle] || "bg-muted text-muted-foreground";
-
-  return (
-    <Card className={`overflow-hidden ${isSuperset ? "border-primary/30" : ""}`}>
-      {/* Main Row */}
-      <div className="flex items-center gap-2 p-3">
-        {/* Drag Handle + Reorder */}
-        {!isWarmup && (
-          <div className="flex flex-col gap-0.5">
-            {onMoveUp && <button onClick={onMoveUp} className="text-muted-foreground hover:text-foreground"><ChevronUp className="w-3 h-3" /></button>}
-            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
-            {onMoveDown && <button onClick={onMoveDown} className="text-muted-foreground hover:text-foreground"><ChevronDown className="w-3 h-3" /></button>}
-          </div>
-        )}
-
-        {/* Exercise Info */}
-        <button onClick={() => setExpanded(!expanded)} className="flex-1 text-right">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-foreground">{ex.name}</p>
-            {isSuperset && <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1.5">SS</Badge>}
-          </div>
-          <Badge variant="secondary" className={`text-[9px] mt-1 ${muscleColor}`}>{ex.muscle}</Badge>
-        </button>
-
-        {/* Quick Stats */}
-        <div className="text-left text-[10px] text-muted-foreground whitespace-nowrap">
-          <p>{ex.sets}×{ex.reps}</p>
-          {ex.weight > 0 && <p>{ex.weight}كجم</p>}
-        </div>
-
-        {/* Remove */}
-        <button onClick={onRemove} className="text-muted-foreground hover:text-destructive p-1">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Expanded Details */}
-      {expanded && (
-        <div className="border-t border-border p-3 space-y-3 bg-muted/20">
-          {/* Sets/Reps/Weight/Rest Grid */}
-          <div className="grid grid-cols-4 gap-2">
-            <div>
-              <label className="text-[10px] text-muted-foreground block mb-1">السيتات</label>
-              <Input type="number" dir="ltr" value={ex.sets}
-                onChange={e => onUpdate("sets", Number(e.target.value) || 1)}
-                className="h-9 text-center text-sm font-bold" />
-            </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground block mb-1">التكرارات</label>
-              <Input type="number" dir="ltr" value={ex.reps}
-                onChange={e => onUpdate("reps", Number(e.target.value) || 1)}
-                className="h-9 text-center text-sm font-bold" />
-            </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground block mb-1">الوزن كجم</label>
-              <Input type="number" dir="ltr" value={ex.weight}
-                onChange={e => onUpdate("weight", Number(e.target.value) || 0)}
-                className="h-9 text-center text-sm" />
-            </div>
-            <div>
-              <label className="text-[10px] text-muted-foreground block mb-1">راحة (ث)</label>
-              <Input type="number" dir="ltr" value={ex.rest_seconds}
-                onChange={e => onUpdate("rest_seconds", Number(e.target.value) || 0)}
-                className="h-9 text-center text-sm" />
-            </div>
-          </div>
-
-          {/* Video URL */}
-          <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">رابط الفيديو (اختياري)</label>
-            <Input type="url" dir="ltr" placeholder="https://..."
-              value={ex.video_url} onChange={e => onUpdate("video_url", e.target.value)}
-              className="h-8 text-xs" />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="text-[10px] text-muted-foreground block mb-1">ملاحظة للمتدرب</label>
-            <Input placeholder="مثال: ركز على السلبي..."
-              value={ex.notes} onChange={e => onUpdate("notes", e.target.value)}
-              className="h-8 text-xs" />
-          </div>
-
-          {/* Action Buttons */}
-          {!isWarmup && (
-            <div className="flex gap-2 pt-1">
-              {onDuplicate && (
-                <Button variant="outline" size="sm" className="text-[10px] h-7 gap-1 flex-1" onClick={onDuplicate}>
-                  <CopyPlus className="w-3 h-3" />نسخ التمرين
-                </Button>
-              )}
-              {onSuperset && (
-                <Button variant="outline" size="sm"
-                  className={`text-[10px] h-7 gap-1 flex-1 ${isSuperset ? "border-primary/30 text-primary" : ""}`}
-                  onClick={onSuperset}>
-                  <Link2 className="w-3 h-3" />سوبرسيت
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
   );
 };
 

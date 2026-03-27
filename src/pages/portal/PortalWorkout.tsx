@@ -5,22 +5,35 @@ import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Check, ArrowLeft, Timer, Play, Dumbbell, Trophy, Flame, Moon, Target,
-  X, CheckCircle, Share2, ChevronLeft, Loader2
+  X, CheckCircle, Share2, ChevronLeft, Loader2, MessageSquare, Gauge,
+  TrendingUp, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 interface ExerciseData {
   id: string; name: string; sets: number; reps: number; weight: number;
   video_url: string | null; exercise_order: number;
+  rest_seconds: number; tempo: string | null; rpe: number | null;
+  notes: string | null; is_warmup: boolean; superset_group: string | null;
 }
 interface ProgramDay {
   id: string; day_name: string; day_order: number; exercises: ExerciseData[];
 }
 interface ProgramData {
   id: string; name: string; weeks: number; days: ProgramDay[];
+}
+
+interface SetLog {
+  exerciseIdx: number;
+  setNumber: number;
+  reps: number;
+  weight: number;
+  rpe: number | null;
+  notes: string;
 }
 
 const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
@@ -34,12 +47,17 @@ const PortalWorkout = () => {
   const [currentSet, setCurrentSet] = useState(1);
   const [actualWeight, setActualWeight] = useState("");
   const [actualReps, setActualReps] = useState("");
+  const [actualRpe, setActualRpe] = useState("");
+  const [setNotes, setSetNotes] = useState("");
+  const [showNotes, setShowNotes] = useState(false);
   const [resting, setResting] = useState(false);
   const [restTime, setRestTime] = useState(60);
   const [completed, setCompleted] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [totalSets, setTotalSets] = useState(0);
   const [totalVolume, setTotalVolume] = useState(0);
+  const [setLogs, setSetLogs] = useState<SetLog[]>([]);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   const { data: clientData } = useQuery({
     queryKey: ["portal-client", token],
@@ -63,9 +81,9 @@ const PortalWorkout = () => {
       const enrichedDays: ProgramDay[] = [];
       for (const day of days || []) {
         const { data: exercises } = await supabase.from("program_exercises")
-          .select("id, name, sets, reps, weight, video_url, exercise_order")
+          .select("id, name, sets, reps, weight, video_url, exercise_order, rest_seconds, tempo, rpe, notes, is_warmup, superset_group")
           .eq("day_id", day.id).order("exercise_order");
-        enrichedDays.push({ ...day, exercises: exercises || [] });
+        enrichedDays.push({ ...day, exercises: (exercises || []) as ExerciseData[] });
       }
       return { ...prog, days: enrichedDays } as ProgramData;
     },
@@ -82,7 +100,12 @@ const PortalWorkout = () => {
     return program.days.find(d => d.day_name.includes(todayName)) || program.days[0] || null;
   }, [program, activeDayId, todayIndex]);
 
-  const activeExercises = activeDay?.exercises || [];
+  const activeExercises = useMemo(() => {
+    if (!activeDay) return [];
+    return activeDay.exercises.filter(e => !e.is_warmup);
+  }, [activeDay]);
+  const warmupExercises = useMemo(() => activeDay?.exercises.filter(e => e.is_warmup) || [], [activeDay]);
+  
   const ex = activeExercises[currentExIdx];
   const isLastSet = currentSet >= (ex?.sets || 0);
   const isLastExercise = currentExIdx >= activeExercises.length - 1;
@@ -90,40 +113,64 @@ const PortalWorkout = () => {
   useEffect(() => {
     if (!resting) return;
     if (restTime <= 0) {
-      setResting(false); setRestTime(60);
+      setResting(false); setRestTime(ex?.rest_seconds || 60);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
       return;
     }
     const t = setTimeout(() => setRestTime(r => r - 1), 1000);
     return () => clearTimeout(t);
-  }, [resting, restTime]);
+  }, [resting, restTime, ex?.rest_seconds]);
 
   const startWorkout = (dayId: string) => {
     setActiveDayId(dayId); setWorkoutStarted(true); setCurrentExIdx(0);
     setCurrentSet(1); setCompleted(false); setTotalSets(0); setTotalVolume(0);
     setStartTime(Date.now()); setActualWeight(""); setActualReps("");
+    setActualRpe(""); setSetNotes(""); setSetLogs([]);
   };
 
   const handleCompleteSet = useCallback(() => {
     const w = Number(actualWeight) || ex?.weight || 0;
     const r = Number(actualReps) || ex?.reps || 0;
+    const rpe = actualRpe ? Number(actualRpe) : null;
+    
+    setSetLogs(prev => [...prev, {
+      exerciseIdx: currentExIdx,
+      setNumber: currentSet,
+      reps: r,
+      weight: w,
+      rpe,
+      notes: setNotes,
+    }]);
+    
     setTotalVolume(v => v + w * r);
     setTotalSets(s => s + 1);
+    
     if (isLastSet && isLastExercise) { setCompleted(true); return; }
     if (isLastSet) {
       setCurrentExIdx(i => i + 1); setCurrentSet(1);
-      setActualWeight(""); setActualReps("");
+      setActualWeight(""); setActualReps(""); setActualRpe(""); setSetNotes(""); setShowNotes(false);
     } else {
-      setCurrentSet(s => s + 1); setResting(true);
-      setActualWeight(""); setActualReps("");
+      setCurrentSet(s => s + 1);
+      setResting(true); setRestTime(ex?.rest_seconds || 60);
+      setActualWeight(""); setActualReps(""); setActualRpe(""); setSetNotes(""); setShowNotes(false);
     }
-  }, [isLastSet, isLastExercise, actualWeight, actualReps, ex]);
+  }, [isLastSet, isLastExercise, actualWeight, actualReps, actualRpe, setNotes, ex, currentExIdx, currentSet]);
 
-  const skipRest = () => { setResting(false); setRestTime(60); };
+  const skipRest = () => { setResting(false); setRestTime(ex?.rest_seconds || 60); };
+
+  // Get previous set data for current exercise
+  const prevSetData = useMemo(() => {
+    if (!ex) return null;
+    const lastLog = [...setLogs].reverse().find(l => l.exerciseIdx === currentExIdx);
+    return lastLog || null;
+  }, [setLogs, currentExIdx, ex]);
 
   // COMPLETION SCREEN
   if (workoutStarted && completed) {
     const mins = Math.round((Date.now() - startTime) / 60000);
+    const avgRpe = setLogs.filter(l => l.rpe !== null).length > 0
+      ? (setLogs.filter(l => l.rpe !== null).reduce((s, l) => s + (l.rpe || 0), 0) / setLogs.filter(l => l.rpe !== null).length).toFixed(1)
+      : null;
     return (
       <ClientPortalLayout>
         <div className="flex flex-col items-center justify-center min-h-[75vh] text-center animate-fade-in space-y-6">
@@ -147,15 +194,22 @@ const PortalWorkout = () => {
               </div>
             ))}
           </div>
-          {totalVolume > 0 && (
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 w-full max-w-xs text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Flame className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                <span className="text-xs text-[hsl(0_0%_45%)]">مجموع الوزن المرفوع</span>
+          <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+            {totalVolume > 0 && (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center">
+                <Flame className="w-4 h-4 text-primary mx-auto mb-1" strokeWidth={1.5} />
+                <p className="text-lg font-bold text-primary">{totalVolume.toLocaleString()}</p>
+                <p className="text-[10px] text-[hsl(0_0%_40%)]">كجم مرفوع</p>
               </div>
-              <p className="text-2xl font-bold text-primary">{totalVolume.toLocaleString()} كجم</p>
-            </div>
-          )}
+            )}
+            {avgRpe && (
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
+                <Gauge className="w-4 h-4 text-amber-400 mx-auto mb-1" strokeWidth={1.5} />
+                <p className="text-lg font-bold text-amber-400">{avgRpe}</p>
+                <p className="text-[10px] text-[hsl(0_0%_40%)]">متوسط RPE</p>
+              </div>
+            )}
+          </div>
           <div className="w-full max-w-xs space-y-2">
             <Button variant="outline" className="w-full h-11 gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)]">
               <Share2 className="w-4 h-4" strokeWidth={1.5} /> مشاركة
@@ -171,8 +225,9 @@ const PortalWorkout = () => {
 
   // REST TIMER
   if (workoutStarted && resting && ex) {
+    const maxRest = ex.rest_seconds || 60;
     const circumference = 2 * Math.PI * 45;
-    const dashOffset = circumference * (1 - restTime / 60);
+    const dashOffset = circumference * (1 - restTime / maxRest);
     return (
       <ClientPortalLayout>
         <div className="flex flex-col items-center justify-center min-h-[75vh] text-center animate-fade-in space-y-6">
@@ -200,6 +255,8 @@ const PortalWorkout = () => {
   // ACTIVE WORKOUT
   if (workoutStarted && ex) {
     const exerciseProgress = ((currentExIdx) / activeExercises.length) * 100;
+    const completedSetsForEx = setLogs.filter(l => l.exerciseIdx === currentExIdx);
+    
     return (
       <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">
         {/* Top bar */}
@@ -226,21 +283,63 @@ const PortalWorkout = () => {
               <Target className="w-5 h-5 text-primary" strokeWidth={1.5} />
               {ex.name}
             </h1>
-            <p className="text-sm text-[hsl(0_0%_35%)] mt-1">
-              المطلوب: {ex.sets} سيت × {ex.reps} تكرار{ex.weight > 0 && ` × ${ex.weight} كجم`}
-            </p>
+            <div className="flex items-center justify-center gap-3 mt-1 text-sm text-[hsl(0_0%_35%)]">
+              <span>{ex.sets} سيت × {ex.reps} تكرار{ex.weight > 0 && ` × ${ex.weight} كجم`}</span>
+            </div>
+            {/* Tempo & RPE target */}
+            <div className="flex items-center justify-center gap-3 mt-1">
+              {ex.tempo && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[hsl(0_0%_8%)] text-[hsl(0_0%_50%)]">
+                  Tempo: {ex.tempo}
+                </span>
+              )}
+              {ex.rpe && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400">
+                  RPE {ex.rpe}
+                </span>
+              )}
+              {ex.rest_seconds > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-[hsl(0_0%_8%)] text-[hsl(0_0%_50%)]">
+                  راحة {ex.rest_seconds}ث
+                </span>
+              )}
+            </div>
+            {ex.notes && (
+              <p className="text-[11px] text-[hsl(0_0%_30%)] mt-2 bg-[hsl(0_0%_6%)] rounded-lg p-2">
+                {ex.notes}
+              </p>
+            )}
           </div>
+
+          {/* Completed sets for this exercise */}
+          {completedSetsForEx.length > 0 && (
+            <div className="space-y-1">
+              {completedSetsForEx.map((log, i) => (
+                <div key={i} className="flex items-center justify-between text-xs bg-[hsl(0_0%_6%)] rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />
+                    <span className="text-[hsl(0_0%_50%)]">سيت {log.setNumber}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[hsl(0_0%_40%)]">
+                    <span>{log.weight} كجم × {log.reps}</span>
+                    {log.rpe && <span className="text-amber-400">RPE {log.rpe}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Set tracker */}
           <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-5">
             <h3 className="font-bold text-white text-center mb-4">السيت {currentSet} من {ex.sets}</h3>
-            {/* Previous performance hint */}
-            {ex.weight > 0 && (
-              <p className="text-xs text-[hsl(0_0%_30%)] text-center mb-3">
-                آخر مرة: {ex.weight} كجم × {ex.reps}
+            {prevSetData && (
+              <p className="text-xs text-[hsl(0_0%_30%)] text-center mb-3 flex items-center justify-center gap-1">
+                <TrendingUp className="w-3 h-3" strokeWidth={1.5} />
+                السيت السابق: {prevSetData.weight} كجم × {prevSetData.reps}
+                {prevSetData.rpe && ` @ RPE ${prevSetData.rpe}`}
               </p>
             )}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label className="text-xs text-[hsl(0_0%_40%)] block mb-1.5">التكرارات</label>
                 <Input type="number" dir="ltr" placeholder={String(ex.reps)} value={actualReps}
@@ -254,6 +353,40 @@ const PortalWorkout = () => {
                   className="text-center text-xl font-bold h-14 bg-[hsl(0_0%_4%)] border-[hsl(0_0%_12%)] text-white" />
               </div>
             </div>
+
+            {/* RPE slider */}
+            <div className="mb-3">
+              <label className="text-xs text-[hsl(0_0%_40%)] block mb-1.5 flex items-center gap-1">
+                <Gauge className="w-3 h-3" strokeWidth={1.5} /> RPE (صعوبة الجهد)
+              </label>
+              <div className="flex gap-1.5">
+                {[6, 7, 7.5, 8, 8.5, 9, 9.5, 10].map(v => (
+                  <button key={v} onClick={() => setActualRpe(String(v))}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                      actualRpe === String(v)
+                        ? v >= 9 ? "bg-destructive/20 text-destructive border border-destructive/30"
+                          : v >= 8 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          : "bg-primary/20 text-primary border border-primary/30"
+                        : "bg-[hsl(0_0%_8%)] text-[hsl(0_0%_35%)] border border-transparent"
+                    }`}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes toggle */}
+            <button onClick={() => setShowNotes(!showNotes)}
+              className="flex items-center gap-1.5 text-xs text-[hsl(0_0%_35%)] hover:text-[hsl(0_0%_60%)] mb-3 transition-colors">
+              <MessageSquare className="w-3 h-3" strokeWidth={1.5} />
+              {showNotes ? "إخفاء الملاحظات" : "إضافة ملاحظة"}
+            </button>
+            {showNotes && (
+              <Textarea placeholder="ملاحظات على هذا السيت..." value={setNotes}
+                onChange={e => setSetNotes(e.target.value)} rows={2}
+                className="mb-3 bg-[hsl(0_0%_4%)] border-[hsl(0_0%_12%)] text-white text-xs" />
+            )}
+
             <Button className="w-full h-14 text-base gap-2" onClick={handleCompleteSet}>
               <Check className="w-5 h-5" strokeWidth={1.5} />
               {isLastSet && isLastExercise ? "إنهاء التمرين" : "أكمل السيت"}
@@ -329,7 +462,7 @@ const PortalWorkout = () => {
             {WEEKDAYS.map((dayName, idx) => {
               const matchDay = program.days.find(d => d.day_name.includes(dayName));
               const isToday = idx === todayIndex;
-              const hasWorkout = !!matchDay && matchDay.exercises.length > 0;
+              const hasWorkout = !!matchDay && matchDay.exercises.filter(e => !e.is_warmup).length > 0;
               return (
                 <button
                   key={dayName}
@@ -359,6 +492,11 @@ const PortalWorkout = () => {
           <h3 className="text-sm font-bold text-white">تمارين البرنامج</h3>
           {program.days.map(day => {
             const isToday = day.day_name.includes(todayDayName);
+            const mainExercises = day.exercises.filter(e => !e.is_warmup);
+            const warmups = day.exercises.filter(e => e.is_warmup);
+            const isExpanded = expandedDay === day.id;
+            const estVolume = mainExercises.reduce((s, e) => s + e.sets * e.reps * e.weight, 0);
+            
             return (
               <div key={day.id} className={`bg-[hsl(0_0%_6%)] rounded-xl border overflow-hidden ${
                 isToday ? "border-primary/30" : "border-[hsl(0_0%_10%)]"
@@ -369,24 +507,61 @@ const PortalWorkout = () => {
                     <h4 className="font-semibold text-sm text-white">{day.day_name}</h4>
                     {isToday && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">اليوم</span>}
                   </div>
-                  <Button size="sm" variant="ghost" className="text-xs gap-1 text-[hsl(0_0%_40%)] hover:text-primary"
-                    onClick={() => startWorkout(day.id)}>
-                    <Play className="w-3 h-3" strokeWidth={1.5} /> ابدأ
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setExpandedDay(isExpanded ? null : day.id)}
+                      className="text-[hsl(0_0%_40%)] hover:text-white p-1">
+                      {isExpanded ? <ChevronUp className="w-4 h-4" strokeWidth={1.5} /> : <ChevronDown className="w-4 h-4" strokeWidth={1.5} />}
+                    </button>
+                    <Button size="sm" variant="ghost" className="text-xs gap-1 text-[hsl(0_0%_40%)] hover:text-primary"
+                      onClick={() => startWorkout(day.id)}>
+                      <Play className="w-3 h-3" strokeWidth={1.5} /> ابدأ
+                    </Button>
+                  </div>
                 </div>
-                <div className="p-3 space-y-1">
-                  {day.exercises.map((exercise, idx) => (
-                    <div key={exercise.id} className="flex items-center justify-between py-1.5 text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-[hsl(0_0%_25%)] w-5 tabular-nums">{idx + 1}.</span>
-                        <span className="text-[hsl(0_0%_70%)]">{exercise.name}</span>
+                
+                {/* Summary row */}
+                <div className="px-4 py-2 flex items-center gap-4 text-[10px] text-[hsl(0_0%_35%)]">
+                  <span>{mainExercises.length} تمارين</span>
+                  {warmups.length > 0 && <span>{warmups.length} إحماء</span>}
+                  {estVolume > 0 && <span>{(estVolume / 1000).toFixed(0)}k كجم</span>}
+                </div>
+
+                {isExpanded && (
+                  <div className="p-3 space-y-1 border-t border-[hsl(0_0%_8%)]">
+                    {warmups.length > 0 && (
+                      <p className="text-[10px] text-amber-400 mb-1">الإحماء</p>
+                    )}
+                    {warmups.map((exercise, idx) => (
+                      <div key={exercise.id} className="flex items-center justify-between py-1.5 text-sm bg-amber-500/5 rounded-lg px-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[hsl(0_0%_25%)] w-5 tabular-nums">{idx + 1}.</span>
+                          <span className="text-amber-200/70 text-xs">{exercise.name}</span>
+                        </div>
+                        <span className="text-xs text-[hsl(0_0%_35%)] tabular-nums">
+                          {exercise.sets}×{exercise.reps}
+                        </span>
                       </div>
-                      <span className="text-xs text-[hsl(0_0%_35%)] tabular-nums">
-                        {exercise.sets}×{exercise.reps} {exercise.weight > 0 && `@ ${exercise.weight}كجم`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                    {warmups.length > 0 && mainExercises.length > 0 && (
+                      <div className="h-px bg-[hsl(0_0%_10%)] my-1" />
+                    )}
+                    {mainExercises.map((exercise, idx) => (
+                      <div key={exercise.id} className="flex items-center justify-between py-1.5 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[hsl(0_0%_25%)] w-5 tabular-nums">{idx + 1}.</span>
+                          <span className="text-[hsl(0_0%_70%)]">{exercise.name}</span>
+                          {exercise.rpe && <span className="text-[9px] text-amber-400">RPE {exercise.rpe}</span>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {exercise.tempo && <span className="text-[9px] font-mono text-[hsl(0_0%_25%)]">{exercise.tempo}</span>}
+                          <span className="text-xs text-[hsl(0_0%_35%)] tabular-nums">
+                            {exercise.sets}×{exercise.reps} {exercise.weight > 0 && `@ ${exercise.weight}كجم`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

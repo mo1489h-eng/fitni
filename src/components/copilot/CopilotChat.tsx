@@ -77,10 +77,12 @@ const CopilotChat = () => {
       const { data, error } = await supabase
         .from("copilot_messages" as any)
         .select("*")
-        .order("created_at", { ascending: true })
-        .limit(100);
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
-      return (data as any[]).map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      return (data as any[])
+        .reverse()
+        .map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }));
     },
     enabled: !!user,
   });
@@ -102,8 +104,17 @@ const CopilotChat = () => {
     return () => clearInterval(interval);
   }, [undoTimer]);
 
+  const compressContent = (text: string) =>
+    text.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+
   const saveMessage = async (role: string, content: string) => {
-    await supabase.from("copilot_messages" as any).insert({ trainer_id: user!.id, role, content });
+    const compressed = compressContent(content);
+    if (!compressed) return;
+    await supabase.from("copilot_messages" as any).insert({
+      trainer_id: user!.id,
+      role,
+      content: compressed,
+    });
   };
 
   const clearChat = useMutation({
@@ -507,12 +518,13 @@ const CopilotChat = () => {
         {messages.length > 0 && (
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
+            size="sm"
+            className="shrink-0 text-muted-foreground hover:text-destructive gap-1 text-xs"
             onClick={() => clearChat.mutate()}
             disabled={clearChat.isPending || isStreaming}
           >
-            <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+            مسح المحادثة
           </Button>
         )}
         <div className="flex-1 relative">

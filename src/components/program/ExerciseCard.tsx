@@ -77,7 +77,7 @@ const ExerciseCard = ({
     onUpdate("sets", newDetails.length);
   };
 
-  const proxiedGif = getProxiedImageUrl(ex.gifUrl);
+  const imageUrl = ex.exerciseDbId ? getExerciseImageUrl(ex.exerciseDbId) : '';
   const youtubeId = ex.video_url ? extractYouTubeId(ex.video_url) : null;
 
   return (

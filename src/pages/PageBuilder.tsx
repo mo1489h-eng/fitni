@@ -85,6 +85,8 @@ const PageBuilder = () => {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [newStat, setNewStat] = useState({ label: "", value: "" });
   const [newTestimonial, setNewTestimonial] = useState<Testimonial>({ name: "", text: "", rating: 5, result: "" });
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);

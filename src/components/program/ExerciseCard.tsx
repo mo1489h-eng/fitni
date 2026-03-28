@@ -111,7 +111,7 @@ const ExerciseCard = ({
               <MoreHorizontal className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" dir="rtl">
+          <DropdownMenuContent align="end">
             {onDuplicate && (
               <DropdownMenuItem onClick={onDuplicate} className="gap-2 text-xs">
                 <CopyPlus className="w-3.5 h-3.5" />نسخ التمرين

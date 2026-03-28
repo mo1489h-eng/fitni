@@ -26,6 +26,7 @@ const desktopNavItems = [
   { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
+  { label: "القوالب", href: "/templates", icon: BookOpen },
   { label: "التغذية", href: "/nutrition", icon: Utensils },
   { label: "التقويم", href: "/calendar", icon: CalendarDays },
   { label: "الاشتراكات", href: "/payments", icon: CreditCard },

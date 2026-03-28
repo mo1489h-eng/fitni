@@ -352,6 +352,44 @@ export type Database = {
           },
         ]
       }
+      client_notifications: {
+        Row: {
+          body: string | null
+          client_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title: string
+          type?: string
+        }
+        Update: {
+          body?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_payments: {
         Row: {
           amount: number
@@ -2018,6 +2056,10 @@ export type Database = {
         }[]
       }
       get_portal_meal_plans: { Args: { p_token: string }; Returns: Json }
+      get_portal_notifications: {
+        Args: { p_limit?: number; p_token: string }
+        Returns: Json
+      }
       get_portal_program: { Args: { p_token: string }; Returns: Json }
       get_portal_progress_photos: {
         Args: { p_token: string }
@@ -2136,6 +2178,10 @@ export type Database = {
       log_portal_mood: {
         Args: { p_mood: string; p_note?: string; p_token: string }
         Returns: string
+      }
+      mark_portal_notifications_read: {
+        Args: { p_token: string }
+        Returns: boolean
       }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }

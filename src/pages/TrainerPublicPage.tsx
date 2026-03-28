@@ -503,11 +503,7 @@ const TrainerPublicPage = () => {
             )}
             <span className="font-bold text-sm" style={{ color: scrolled ? COLORS.text : `${COLORS.text}90`, transition: "color 300ms" }}>{profile.full_name}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium hidden sm:inline-block" style={{ color: COLORS.dim }}>
-              <Dumbbell className="w-3.5 h-3.5 inline-block ml-1" strokeWidth={1.5} />
-              CoachBase
-            </span>
+          <div className="flex items-center gap-2">
             {packages.length > 0 && (
               <button
                 onClick={scrollToPackages}

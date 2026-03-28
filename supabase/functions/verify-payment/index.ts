@@ -25,15 +25,16 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    // Use getUser() for reliable auth verification
+    const { data: userData, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error("Auth error:", userError);
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userId = userData.user.id;
+    const userEmail = userData.user.email;
 
     const { payment_id, plan } = await req.json();
 
@@ -62,12 +63,14 @@ serve(async (req) => {
     });
 
     if (!tapRes.ok) {
+      console.error("Tap API response not ok:", tapRes.status);
       return new Response(JSON.stringify({ error: "Failed to verify payment" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const payment = await tapRes.json();
+    console.log("Tap charge status:", payment.status, "id:", payment.id);
 
     if (payment.status !== "CAPTURED") {
       return new Response(JSON.stringify({ error: "Payment not completed", status: payment.status }), {
@@ -75,8 +78,10 @@ serve(async (req) => {
       });
     }
 
-    const expectedAmount = plan === "basic" ? 99 : 199;
-    if (Number(payment.amount) !== expectedAmount) {
+    const expectedAmount = plan === "basic" ? 99 : 179;
+    // Also accept 199 for legacy pricing
+    if (Number(payment.amount) !== expectedAmount && Number(payment.amount) !== 199) {
+      console.error("Amount mismatch: expected", expectedAmount, "got", payment.amount);
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -119,6 +124,8 @@ serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("Subscription upgraded:", userId, "plan:", plan, "end:", endDate.toISOString());
 
     // Send confirmation email
     const resendKey = Deno.env.get("RESEND_API_KEY");

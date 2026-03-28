@@ -30,13 +30,40 @@ const PaymentCallback = () => {
     try {
       if (type === "trainer_subscription") {
         const plan = searchParams.get("plan") || "basic";
-        const { data, error } = await supabase.functions.invoke("verify-payment", {
-          body: { payment_id: tapId, plan },
-        });
-        if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
-        setStatus("success");
-        toast({ title: "تم الدفع بنجاح", description: `تم تفعيل باقة ${plan === "basic" ? "أساسي" : "احترافي"}` });
-        setTimeout(() => navigate("/dashboard"), 2000);
+        
+        // Retry logic - Tap redirect may arrive before session is fully ready
+        let lastError: Error | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const { data, error } = await supabase.functions.invoke("verify-payment", {
+              body: { payment_id: tapId, plan },
+            });
+            if (error) throw new Error(error.message || "فشل التحقق");
+            if (!data?.success) throw new Error(data?.error || "فشل التحقق");
+            
+            setStatus("success");
+            const planName = plan === "basic" ? "أساسي" : "احترافي";
+            toast({ title: "تم الترقية بنجاح 🎉", description: `تم تفعيل باقة ${planName}` });
+            setTimeout(() => navigate("/dashboard"), 2000);
+            return;
+          } catch (e: any) {
+            lastError = e;
+            // If unauthorized, wait and retry (session may not be ready yet)
+            if (attempt < 2 && (e.message?.includes("Unauthorized") || e.message?.includes("Invalid token"))) {
+              await new Promise(r => setTimeout(r, 1500));
+              continue;
+            }
+            // If payment already used (409), treat as success
+            if (e.message?.includes("Payment already used")) {
+              setStatus("success");
+              toast({ title: "تم الترقية بنجاح 🎉" });
+              setTimeout(() => navigate("/dashboard"), 2000);
+              return;
+            }
+            throw e;
+          }
+        }
+        throw lastError || new Error("فشل التحقق");
 
       } else if (type === "client_payment") {
         const clientId = searchParams.get("client_id");
@@ -62,12 +89,10 @@ const PaymentCallback = () => {
         setStatus("success");
         toast({ title: "تم الدفع بنجاح" });
 
-        // Check if there's a registration step stored
         const regContext = sessionStorage.getItem("tap_register_context");
         if (regContext) {
           const ctx = JSON.parse(regContext);
           sessionStorage.removeItem("tap_register_context");
-          // Redirect to trainer page for registration step
           navigate(`/t/${ctx.username}?step=register&payment_id=${tapId}&package_id=${packageId}`);
         } else {
           setTimeout(() => navigate("/"), 2000);
@@ -132,8 +157,8 @@ const PaymentCallback = () => {
             </div>
             <h2 className="text-xl font-bold text-foreground">فشل التحقق</h2>
             <p className="text-sm text-destructive">{errorMsg}</p>
-            <Button onClick={() => navigate("/")} variant="outline" className="mt-4">
-              العودة للرئيسية
+            <Button onClick={() => navigate("/subscription")} variant="outline" className="mt-4">
+              العودة للاشتراك
             </Button>
           </>
         )}

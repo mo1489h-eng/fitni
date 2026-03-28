@@ -1307,6 +1307,54 @@ export type Database = {
           },
         ]
       }
+      program_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          days_per_week: number | null
+          description: string | null
+          duration_weeks: number | null
+          id: string
+          is_public: boolean | null
+          is_system: boolean | null
+          level: string | null
+          name: string
+          program_data: Json | null
+          trainer_id: string
+          use_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          days_per_week?: number | null
+          description?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_public?: boolean | null
+          is_system?: boolean | null
+          level?: string | null
+          name: string
+          program_data?: Json | null
+          trainer_id: string
+          use_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          days_per_week?: number | null
+          description?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_public?: boolean | null
+          is_system?: boolean | null
+          level?: string | null
+          name?: string
+          program_data?: Json | null
+          trainer_id?: string
+          use_count?: number | null
+        }
+        Relationships: []
+      }
       programs: {
         Row: {
           created_at: string

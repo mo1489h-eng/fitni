@@ -14,9 +14,10 @@ import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, CalendarDays, Copy, Send,
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
-  Sparkles, Eye, Activity, UserCheck,
+  Sparkles, Eye, Activity, UserCheck, BookOpen,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
+import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import CopilotPanel from "@/components/CopilotPanel";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -159,6 +160,7 @@ const ClientProfile = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [showProgramModal, setShowProgramModal] = useState(false);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newFat, setNewFat] = useState("");
   const { toast } = useToast();
@@ -529,9 +531,14 @@ const ClientProfile = () => {
                 <div className="text-center py-10 text-muted-foreground">
                   <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-40" strokeWidth={1.5} />
                   <p className="text-sm">لم يتم تعيين برنامج بعد</p>
-                  <Button className="mt-4 gap-1" onClick={() => setShowProgramModal(true)}>
-                    <ClipboardList className="w-4 h-4" strokeWidth={1.5} /> تعيين برنامج
-                  </Button>
+                  <div className="flex gap-2 justify-center mt-4">
+                    <Button className="gap-1" onClick={() => setShowProgramModal(true)}>
+                      <ClipboardList className="w-4 h-4" strokeWidth={1.5} /> تعيين برنامج
+                    </Button>
+                    <Button variant="outline" className="gap-1" onClick={() => setShowTemplateLibrary(true)}>
+                      <BookOpen className="w-4 h-4" strokeWidth={1.5} /> من المكتبة
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -626,6 +633,26 @@ const ClientProfile = () => {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Library Modal */}
+      <Dialog open={showTemplateLibrary} onOpenChange={setShowTemplateLibrary}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              إضافة برنامج من المكتبة
+            </DialogTitle>
+          </DialogHeader>
+          <TemplatesLibrary
+            forClientId={id}
+            onAssigned={() => {
+              setShowTemplateLibrary(false);
+              queryClient.invalidateQueries({ queryKey: ["assigned-program"] });
+              queryClient.invalidateQueries({ queryKey: ["client", id] });
+            }}
+          />
         </DialogContent>
       </Dialog>
     </TrainerLayout>

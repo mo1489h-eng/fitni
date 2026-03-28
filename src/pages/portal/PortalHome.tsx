@@ -30,27 +30,19 @@ const PortalHome = () => {
   });
 
   const { data: program } = useQuery({
-    queryKey: ["portal-program-summary", client?.program_id],
+    queryKey: ["portal-program-summary", token],
     queryFn: async () => {
-      if (!client?.program_id) return null;
-      const { data: prog } = await supabase
-        .from("programs").select("id, name, weeks").eq("id", client.program_id).maybeSingle();
-      if (!prog) return null;
-      const { data: days } = await supabase
-        .from("program_days").select("id, day_name, day_order")
-        .eq("program_id", prog.id).order("day_order");
+      const { data, error } = await supabase.rpc("get_portal_program", { p_token: token! });
+      if (error || !data) return null;
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      const days = parsed.days || [];
       const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
       const todayName = WEEKDAYS[new Date().getDay()];
-      const todayDay = (days || []).find(d => d.day_name.includes(todayName));
-      let exerciseCount = 0;
-      if (todayDay) {
-        const { count } = await supabase
-          .from("program_exercises").select("id", { count: "exact", head: true }).eq("day_id", todayDay.id);
-        exerciseCount = count || 0;
-      }
-      return { ...prog, todayDay, exerciseCount, totalDays: (days || []).length };
+      const todayDay = days.find((d: any) => d.day_name.includes(todayName));
+      const exerciseCount = todayDay ? (todayDay.exercises || []).length : 0;
+      return { ...parsed, todayDay, exerciseCount, totalDays: days.length };
     },
-    enabled: !!client?.program_id,
+    enabled: !!token,
   });
 
   const getGreeting = () => {

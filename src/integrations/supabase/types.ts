@@ -2018,6 +2018,7 @@ export type Database = {
         }[]
       }
       get_portal_meal_plans: { Args: { p_token: string }; Returns: Json }
+      get_portal_program: { Args: { p_token: string }; Returns: Json }
       get_portal_progress_photos: {
         Args: { p_token: string }
         Returns: {

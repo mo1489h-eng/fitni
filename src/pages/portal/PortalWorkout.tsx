@@ -70,24 +70,25 @@ const PortalWorkout = () => {
   });
 
   const { data: program, isLoading } = useQuery({
-    queryKey: ["portal-program", clientData?.program_id],
+    queryKey: ["portal-program", token],
     queryFn: async () => {
-      if (!clientData?.program_id) return null;
-      const { data: prog } = await supabase.from("programs").select("id, name, weeks")
-        .eq("id", clientData.program_id).maybeSingle();
-      if (!prog) return null;
-      const { data: days } = await supabase.from("program_days").select("id, day_name, day_order")
-        .eq("program_id", prog.id).order("day_order");
-      const enrichedDays: ProgramDay[] = [];
-      for (const day of days || []) {
-        const { data: exercises } = await supabase.from("program_exercises")
-          .select("id, name, sets, reps, weight, video_url, exercise_order, rest_seconds, tempo, rpe, notes, is_warmup, superset_group")
-          .eq("day_id", day.id).order("exercise_order");
-        enrichedDays.push({ ...day, exercises: (exercises || []) as ExerciseData[] });
-      }
-      return { ...prog, days: enrichedDays } as ProgramData;
+      const { data, error } = await supabase.rpc("get_portal_program", { p_token: token! });
+      if (error) { console.error("get_portal_program error:", error); return null; }
+      if (!data) return null;
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      return {
+        id: parsed.id,
+        name: parsed.name,
+        weeks: parsed.weeks,
+        days: (parsed.days || []).map((d: any) => ({
+          id: d.id,
+          day_name: d.day_name,
+          day_order: d.day_order,
+          exercises: (d.exercises || []) as ExerciseData[],
+        })),
+      } as ProgramData;
     },
-    enabled: !!clientData?.program_id,
+    enabled: !!token,
   });
 
   const todayIndex = new Date().getDay();

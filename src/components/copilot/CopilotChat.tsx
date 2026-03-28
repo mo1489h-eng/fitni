@@ -7,7 +7,10 @@ import { toast } from "@/hooks/use-toast";
 import {
   Send, Loader2, Sparkles, Trash2, Check, X, Undo2,
   ClipboardEdit, Dumbbell, UtensilsCrossed, CalendarPlus, UserCog, MessageSquare,
+  ChevronDown, UserCircle,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Msg = { role: "user" | "assistant"; content: string };
 

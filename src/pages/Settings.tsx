@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ReferralSettings from "@/components/ReferralSettings";
+import TapAccountConnect from "@/components/TapAccountConnect";
 
 const SPECIALIZATIONS = [
   "لياقة عامة",

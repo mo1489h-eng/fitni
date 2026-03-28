@@ -161,8 +161,26 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         }`}
         onClick={() => toggleSelect(ex)}
       >
-        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-          <img src={ex.gifUrl} alt={ex.name} className="w-full h-full object-cover" loading="lazy" />
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
+          <img
+            src={ex.gifUrl}
+            alt={ex.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+              if (sibling) sibling.style.display = 'flex';
+            }}
+          />
+          <div
+            style={{ display: 'none' }}
+            className="w-full h-full rounded-lg bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0"
+          >
+            {ex.name.charAt(0).toUpperCase()}
+          </div>
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-bold text-foreground truncate">{arName}</p>
@@ -197,9 +215,26 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         </div>
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto">
-              <img src={ex.gifUrl} alt={ex.name} className="w-full h-full object-contain" />
-            </div>
+             <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative">
+               <img
+                 src={ex.gifUrl}
+                 alt={ex.name}
+                 className="w-full h-full object-contain"
+                 referrerPolicy="no-referrer"
+                 crossOrigin="anonymous"
+                 onError={(e) => {
+                   e.currentTarget.style.display = 'none';
+                   const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                   if (sibling) sibling.style.display = 'flex';
+                 }}
+               />
+               <div
+                 style={{ display: 'none' }}
+                 className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-5xl font-bold absolute inset-0"
+               >
+                 {ex.name.charAt(0).toUpperCase()}
+               </div>
+             </div>
             <div>
               <p className="text-lg font-bold text-foreground">{getArabicName(ex.name)}</p>
               <p className="text-sm text-muted-foreground">{ex.name}</p>

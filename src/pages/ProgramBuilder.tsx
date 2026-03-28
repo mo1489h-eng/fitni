@@ -389,6 +389,69 @@ const ProgramBuilder = () => {
     saveMutation.mutate(asTemplate);
   };
 
+  // ── Open existing program in editor
+  const handleOpenProgram = async (programId: string) => {
+    try {
+      const program = programs.find(p => p.id === programId);
+      if (!program) return;
+
+      setProgramName(program.name);
+      setProgramGoal(program.goal || "");
+      setProgramLevel(program.difficulty || "");
+      setProgramWeeks(program.weeks);
+      setEditingProgramId(programId);
+
+      // Fetch days and exercises
+      const { data: dbDays } = await supabase
+        .from("program_days")
+        .select("*")
+        .eq("program_id", programId)
+        .order("day_order");
+
+      const { data: dbExercises } = await supabase
+        .from("program_exercises")
+        .select("*")
+        .in("day_id", (dbDays || []).map(d => d.id))
+        .order("exercise_order");
+
+      const loadedDays: ProgramDay[] = (dbDays || []).map((d, i) => ({
+        id: d.id,
+        weekIndex: Math.floor(i / 7),
+        label: d.day_name,
+        type: "training" as const,
+        exercises: (dbExercises || [])
+          .filter(e => e.day_id === d.id)
+          .map(e => ({
+            id: e.id,
+            name: e.name,
+            name_en: "",
+            muscle: "",
+            gifUrl: e.video_url || "",
+            sets: e.sets,
+            reps: e.reps,
+            weight: e.weight,
+            video_url: e.video_url || "",
+            rest_seconds: e.rest_seconds,
+            tempo: e.tempo || "",
+            rpe: e.rpe,
+            notes: e.notes || "",
+            is_warmup: e.is_warmup,
+            supersetWith: e.superset_group || undefined,
+          })),
+      }));
+
+      setDays(loadedDays.length > 0 ? loadedDays : []);
+      setActiveWeek(0);
+      setActiveDayId(loadedDays[0]?.id || null);
+      setView("editor");
+      setLastSaved(null);
+      setHasUnsavedChanges(false);
+    } catch (err) {
+      console.error("Error loading program:", err);
+      toast({ title: "خطأ في تحميل البرنامج", variant: "destructive" });
+    }
+  };
+
   // ── Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -577,11 +640,8 @@ const ProgramBuilder = () => {
               const isTemplate = program.is_template;
               return (
                 <Card key={program.id}
-                  className={`p-4 hover:shadow-md transition-all cursor-pointer group ${isTemplate ? "border-r-2 border-r-amber-500/50" : ""}`}
-                  onClick={() => {
-                    // TODO: load existing program into editor
-                    toast({ title: "عرض البرنامج" });
-                  }}>
+                  className={`p-4 transition-all cursor-pointer group hover:shadow-md hover:border-primary/40 ${isTemplate ? "border-r-2 border-r-amber-500/50" : ""}`}
+                  onClick={() => handleOpenProgram(program.id)}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{program.name}</h3>

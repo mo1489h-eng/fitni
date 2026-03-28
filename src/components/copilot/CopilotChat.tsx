@@ -198,10 +198,18 @@ const CopilotChat = () => {
 
     try {
       const headers = await getAuthHeaders();
+      const contextPrefix = selectedClient
+        ? `[السياق: العميل المحدد هو "${selectedClient.name}" بمعرف ${selectedClient.id}]\n`
+        : "";
+      const messagesWithContext = contextPrefix
+        ? newMessages.map((m, i) => i === newMessages.length - 1 && m.role === "user"
+          ? { ...m, content: contextPrefix + m.content }
+          : m)
+        : newMessages;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: messagesWithContext }),
       });
 
       if (!resp.ok) {

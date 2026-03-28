@@ -47,6 +47,19 @@ const AVATAR_COLORS = [
   "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
 ];
 
+const PhoneRevealButton = ({ phone }: { phone: string }) => {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRevealed(!revealed); }}
+      className="flex items-center gap-0.5 hover:text-primary transition-colors"
+    >
+      <Phone className="w-3 h-3" strokeWidth={1.5} />
+      {revealed ? <span dir="ltr">{phone}</span> : <span className="text-[10px]">إظهار الرقم</span>}
+    </button>
+  );
+};
+
 const Clients = () => {
   usePageTitle("العملاء");
   const [search, setSearch] = useState("");

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
+  BookOpen,
   CalendarDays,
   ClipboardList,
   CreditCard,

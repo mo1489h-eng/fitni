@@ -164,7 +164,7 @@ const Settings = () => {
     const fetchPersonalPage = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("title, social_links, gallery_images")
+        .select("title, social_links, gallery_images, page_config")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
@@ -176,6 +176,10 @@ const Settings = () => {
           social_tiktok: links.tiktok || "",
         });
         setGalleryImages((data as any).gallery_images || []);
+        const pc = (data as any).page_config;
+        if (pc && typeof pc === "object") {
+          setCoverImageUrl(pc.cover_image_url || null);
+        }
       }
     };
     fetchPersonalPage();

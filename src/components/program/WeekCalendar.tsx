@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft, ChevronRight, Copy, Moon, Dumbbell, Timer, Target, Zap,
+  RotateCcw,
 } from "lucide-react";
 import { LocalDay } from "./types";
 
@@ -13,6 +14,7 @@ interface Props {
   onSelectDay: (idx: number) => void;
   onWeekChange: (week: number) => void;
   onDuplicateWeek: () => void;
+  onCreateDeload?: () => void;
 }
 
 const calcDuration = (day: LocalDay) => {
@@ -27,7 +29,7 @@ const calcVolume = (day: LocalDay) =>
 
 const WeekCalendar = ({
   days, activeDay, activeWeek, totalWeeks,
-  onSelectDay, onWeekChange, onDuplicateWeek,
+  onSelectDay, onWeekChange, onDuplicateWeek, onCreateDeload,
 }: Props) => {
   return (
     <div className="space-y-3">
@@ -47,9 +49,16 @@ const WeekCalendar = ({
           </Button>
           <span className="text-[10px] text-muted-foreground">من {totalWeeks}</span>
         </div>
-        <Button variant="outline" size="sm" className="gap-1 text-[10px] h-7" onClick={onDuplicateWeek}>
-          <Copy className="w-3 h-3" strokeWidth={1.5} />تكرار الأسبوع
-        </Button>
+        <div className="flex gap-1.5">
+          {onCreateDeload && (
+            <Button variant="outline" size="sm" className="gap-1 text-[10px] h-7" onClick={onCreateDeload}>
+              <RotateCcw className="w-3 h-3" strokeWidth={1.5} />ديلود
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="gap-1 text-[10px] h-7" onClick={onDuplicateWeek}>
+            <Copy className="w-3 h-3" strokeWidth={1.5} />تكرار
+          </Button>
+        </div>
       </div>
 
       {/* Day Cards Grid */}
@@ -57,8 +66,6 @@ const WeekCalendar = ({
         {days.map((day, idx) => {
           const isActive = activeDay === idx;
           const exCount = day.exercises.length;
-          const volume = calcVolume(day);
-          const duration = calcDuration(day);
 
           return (
             <button

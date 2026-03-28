@@ -387,6 +387,87 @@ const Settings = () => {
             }}
           />
 
+          {/* Cover Photo */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-card-foreground">صورة الغلاف</p>
+            <p className="text-xs text-muted-foreground">تظهر كخلفية في صفحتك العامة — يُفضل 16:9</p>
+            {coverImageUrl ? (
+              <div className="relative rounded-xl overflow-hidden border border-border">
+                <img src={coverImageUrl} alt="صورة الغلاف" className="w-full aspect-video object-cover" />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => coverRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="px-3 py-1.5 rounded-lg bg-card/80 text-card-foreground text-xs font-medium backdrop-blur-sm"
+                  >
+                    {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : "تغيير"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!user) return;
+                      const { data: profileData } = await supabase.from("profiles").select("page_config").eq("user_id", user.id).maybeSingle();
+                      const pc = (profileData as any)?.page_config || {};
+                      delete pc.cover_image_url;
+                      await supabase.from("profiles").update({ page_config: pc } as any).eq("user_id", user.id);
+                      setCoverImageUrl(null);
+                      toast({ title: "تم حذف صورة الغلاف" });
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-destructive/80 text-destructive-foreground text-xs font-medium backdrop-blur-sm"
+                  >
+                    حذف
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => coverRef.current?.click()}
+                disabled={uploadingCover}
+                className="w-full aspect-video rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-6 h-6" />}
+                <span className="text-xs">{uploadingCover ? "جاري الرفع..." : "اضغط لرفع صورة الغلاف"}</span>
+              </button>
+            )}
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !user) return;
+                setUploadingCover(true);
+                try {
+                  const path = `covers/${user.id}/${Date.now()}.jpg`;
+                  const result = await uploadImage(f, "progress-photos", path);
+                  // Save to page_config
+                  const { data: profileData } = await supabase.from("profiles").select("page_config").eq("user_id", user.id).maybeSingle();
+                  const pc = (profileData as any)?.page_config || {};
+                  pc.cover_image_url = result.signedUrl;
+                  await supabase.from("profiles").update({ page_config: pc } as any).eq("user_id", user.id);
+                  setCoverImageUrl(result.signedUrl);
+                  toast({ title: "تم رفع صورة الغلاف بنجاح" });
+                } catch (err: any) {
+                  toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
+                } finally {
+                  setUploadingCover(false);
+                }
+              }}
+            />
+          </div>
+
+          {/* Preview button */}
+          {profile?.username && (
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => window.open(`https://coachbase.health/t/${profile.username}`, "_blank")}
+            >
+              <Globe className="w-4 h-4" />
+              معاينة صفحتي العامة
+            </Button>
+          )}
+
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground">الاسم الكامل</label>

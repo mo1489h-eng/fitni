@@ -27,7 +27,9 @@ export function usePlanLimits() {
     enabled: !!user,
   });
 
-  const plan: PlanType = (profile?.subscription_plan as PlanType) || "free";
+  // Normalize plan: only "basic" and "pro" are paid plans, everything else is treated as "free"
+  const rawPlan = profile?.subscription_plan;
+  const plan: PlanType = (rawPlan === "basic" || rawPlan === "pro") ? rawPlan : "free";
 
   const createdAt = profile ? new Date(profile.created_at) : new Date();
   const daysSinceCreation = Math.floor(

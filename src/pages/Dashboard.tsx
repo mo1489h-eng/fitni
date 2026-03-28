@@ -166,7 +166,7 @@ EmptyPanel.displayName = "EmptyPanel";
 const Dashboard = () => {
   const { user, profile } = useAuth();
   usePageTitle("لوحة التحكم");
-  const { isPro, getProFeatureBlockReason } = usePlanLimits();
+  const { hasCopilotAccess, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -219,7 +219,7 @@ const Dashboard = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user && isPro,
+    enabled: !!user && hasCopilotAccess,
   });
 
   const isLoading = clientsLoading || measurementsLoading || sessionsLoading || paymentsLoading;
@@ -332,7 +332,7 @@ const Dashboard = () => {
   });
 
   const handleCopilot = () => {
-    if (!isPro) {
+    if (!hasCopilotAccess) {
       setShowUpgrade(true);
       return;
     }

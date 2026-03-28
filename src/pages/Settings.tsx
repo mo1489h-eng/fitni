@@ -36,8 +36,7 @@ const SPECIALIZATIONS = [
 const Settings = () => {
   usePageTitle("الإعدادات");
   const { user, profile, signOut, refreshProfile } = useAuth();
-  const { plan } = usePlanLimits();
-  const isPro = plan === "pro";
+  const { plan, hasFullAccess } = usePlanLimits();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -490,15 +489,15 @@ const Settings = () => {
               <Palette className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-bold text-card-foreground">العلامة التجارية</h2>
             </div>
-            {!isPro && (
+            {!hasFullAccess && (
               <span className="text-xs bg-warning/10 text-warning px-2 py-1 rounded-full flex items-center gap-1">
                 <Lock className="w-3 h-3" />
-                احترافي
+                غير متاح حالياً
               </span>
             )}
           </div>
 
-          {isPro ? (
+          {hasFullAccess ? (
             <div className="space-y-5">
               {/* Logo */}
               <div>
@@ -599,10 +598,10 @@ const Settings = () => {
                 <Lock className="w-7 h-7 text-warning" />
               </div>
               <p className="text-sm text-muted-foreground">
-                العلامة التجارية المخصصة متاحة فقط في الباقة الاحترافية
+                هذه الخيارات متاحة أثناء الفترة المجانية أو مع أي باقة نشطة.
               </p>
               <Button size="sm" onClick={() => setShowUpgrade(true)}>
-                ترقية الآن
+                عرض الباقات
               </Button>
             </div>
           )}

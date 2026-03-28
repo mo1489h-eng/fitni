@@ -62,20 +62,26 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [npsChecked, setNpsChecked] = useState(false);
 
   // Determine trial state
+  const normalizedPlan = profile?.subscription_plan === "basic" || profile?.subscription_plan === "pro"
+    ? profile.subscription_plan
+    : "free";
+
   const isTrialExpired = (() => {
     if (!profile) return false;
-    const plan = profile.subscription_plan;
-    const isSubscribed = plan && plan !== "free" && plan !== null;
-    if (isSubscribed) return false;
+    if (normalizedPlan !== "free") return false;
+
     const createdAt = new Date(profile.created_at);
-    const daysSinceCreation = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-    return daysSinceCreation >= FREE_TRIAL_DAYS;
+    const trialEndDate = new Date(createdAt);
+    trialEndDate.setMonth(trialEndDate.getMonth() + 6);
+
+    return new Date() >= trialEndDate;
   })();
 
   const daysBeforeExpiry = (() => {
     if (!profile) return 999;
     const createdAt = new Date(profile.created_at);
-    const trialEndDate = new Date(createdAt.getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    const trialEndDate = new Date(createdAt);
+    trialEndDate.setMonth(trialEndDate.getMonth() + 6);
     return Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   })();
 
@@ -91,8 +97,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     if (npsChecked || !user || !profile) return;
     setNpsChecked(true);
 
-    const plan = profile.subscription_plan;
-    const isSubscribed = plan && plan !== "free";
+    const isSubscribed = normalizedPlan !== "free";
 
     if (!isSubscribed && daysBeforeExpiry <= 7 && daysBeforeExpiry > 0) {
       const key = `nps_trial_end_${user.id}`;
@@ -100,7 +105,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => setShowNps(true), 2000);
       }
     }
-  }, [user, profile, daysBeforeExpiry, npsChecked]);
+  }, [user, profile, daysBeforeExpiry, npsChecked, normalizedPlan]);
 
   if (loading) {
     return (

@@ -8,17 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, CreditCard, Check, Dumbbell, UtensilsCrossed,
-  MessageCircle, User, ArrowRight, CheckCircle,
+  MessageCircle, User, ArrowRight, CheckCircle, ShieldCheck,
 } from "lucide-react";
-
-const PUBLISHABLE_KEY = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";
 
 const PublicPayment = () => {
   const { trainerSlug, packageId } = useParams();
   const { toast } = useToast();
-  const formRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
-  const [verifying, setVerifying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clientName, setClientName] = useState("");
@@ -26,11 +22,9 @@ const PublicPayment = () => {
   const [clientEmail, setClientEmail] = useState("");
   const [step, setStep] = useState<"info" | "pay">("info");
 
-  // Fetch trainer profile
   const { data: trainer, isLoading: trainerLoading } = useQuery({
     queryKey: ["public-trainer", trainerSlug],
     queryFn: async () => {
-      // Try by username first, then by user_id
       let { data } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url, specialization, bio")
@@ -49,7 +43,6 @@ const PublicPayment = () => {
     enabled: !!trainerSlug,
   });
 
-  // Fetch packages for this trainer
   const { data: packages = [], isLoading: pkgLoading } = useQuery({
     queryKey: ["public-packages", trainer?.user_id],
     queryFn: async () => {
@@ -68,72 +61,14 @@ const PublicPayment = () => {
   const selectedPkg = packageId ? packages.find((p) => p.id === packageId) : null;
   const isListView = !packageId;
 
-  // Initialize Moyasar when on pay step
-  useEffect(() => {
-    if (step !== "pay" || !selectedPkg || initializedRef.current || !formRef.current) return;
-
-    if (!document.getElementById("moyasar-css")) {
-      const link = document.createElement("link");
-      link.id = "moyasar-css";
-      link.rel = "stylesheet";
-      link.href = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.css";
-      document.head.appendChild(link);
-    }
-
-    const loadMoyasar = () => {
-      if ((window as any).Moyasar) {
-        initForm();
-        return;
-      }
-      const script = document.createElement("script");
-      script.src = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.js";
-      script.onload = () => initForm();
-      document.head.appendChild(script);
-    };
-
-    const initForm = () => {
-      if (initializedRef.current || !formRef.current) return;
-      initializedRef.current = true;
-
-      (window as any).Moyasar.init({
-        element: formRef.current,
-        amount: selectedPkg.price * 100,
-        currency: "SAR",
-        description: `اشتراك ${selectedPkg.name} - ${trainer?.full_name}`,
-        publishable_api_key: PUBLISHABLE_KEY,
-        callback_url: window.location.href,
-        methods: ["creditcard", "applepay"],
-        apple_pay: {
-          country: "SA",
-          label: "CoachBase",
-          validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate",
-        },
-        on_completed: async (payment: any) => {
-          if (payment.status === "paid") {
-            await verifyPayment(payment.id);
-          } else {
-            setError("لم يتم اكتمال الدفع. حاول مرة أخرى");
-          }
-        },
-        on_failure: () => {
-          setError("فشلت عملية الدفع. حاول مرة أخرى");
-        },
-      });
-    };
-
-    loadMoyasar();
-
-    return () => {
-      initializedRef.current = false;
-    };
-  }, [step, selectedPkg]);
-
-  const verifyPayment = async (paymentId: string) => {
-    setVerifying(true);
+  const handlePay = async () => {
+    if (!selectedPkg) return;
+    setLoading(true);
     setError(null);
     try {
+      // Create checkout session first
       const { data: sessionData, error: sessionError } = await supabase.rpc("create_package_checkout_session", {
-        p_package_id: selectedPkg!.id,
+        p_package_id: selectedPkg.id,
         p_client_name: clientName,
         p_client_phone: clientPhone,
         p_client_email: clientEmail || null,
@@ -145,24 +80,35 @@ const PublicPayment = () => {
       }
 
       const referralCode = sessionStorage.getItem("referral_code");
-      const { data, error: fnError } = await supabase.functions.invoke("verify-package-payment", {
+
+      const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
         body: {
-          payment_id: paymentId,
-          package_id: selectedPkg!.id,
-          checkout_token: checkoutSession.token,
-          referral_code: referralCode || null,
+          amount: selectedPkg.price,
+          currency: "SAR",
+          description: `اشتراك ${selectedPkg.name} - ${trainer?.full_name}`,
+          customer: {
+            name: clientName,
+            email: clientEmail,
+            phone: clientPhone,
+          },
+          redirect_url: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPkg.id}&checkout_token=${checkoutSession.token}`,
+          metadata: {
+            type: "package_purchase",
+            package_id: selectedPkg.id,
+            checkout_token: checkoutSession.token,
+            referral_code: referralCode || "",
+          },
         },
       });
-      if (referralCode) sessionStorage.removeItem("referral_code");
-      if (fnError || !data?.success) {
-        throw new Error(data?.error || "فشل التحقق من الدفع");
+
+      if (fnError || !data?.redirect_url) {
+        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
       }
-      setSuccess(true);
-      toast({ title: "تم الدفع بنجاح" });
+
+      window.location.href = data.redirect_url;
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
-    } finally {
-      setVerifying(false);
+      setLoading(false);
     }
   };
 
@@ -202,7 +148,6 @@ const PublicPayment = () => {
           <p className="text-muted-foreground text-sm">
             تم تسجيلك مع المدرب {trainer.full_name}. سيتم التواصل معك قريباً.
           </p>
-          <p className="text-xs text-muted-foreground">تم إرسال إيصال الدفع إلى بريدك الإلكتروني</p>
         </Card>
       </div>
     );
@@ -210,7 +155,6 @@ const PublicPayment = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Trainer Header */}
       <div className="bg-card border-b border-border p-6 text-center">
         <div className="max-w-md mx-auto">
           {trainer.avatar_url ? (
@@ -221,21 +165,16 @@ const PublicPayment = () => {
             </div>
           )}
           <h1 className="text-xl font-bold text-foreground">{trainer.full_name}</h1>
-          {trainer.specialization && (
-            <p className="text-sm text-muted-foreground mt-1">{trainer.specialization}</p>
-          )}
+          {trainer.specialization && <p className="text-sm text-muted-foreground mt-1">{trainer.specialization}</p>}
         </div>
       </div>
 
       <div className="max-w-md mx-auto p-4 space-y-4">
-        {/* Package List View */}
         {isListView && (
           <>
             <h2 className="text-lg font-bold text-foreground">الباقات المتاحة</h2>
             {packages.length === 0 ? (
-              <Card className="p-8 text-center">
-                <p className="text-muted-foreground">لا توجد باقات متاحة حالياً</p>
-              </Card>
+              <Card className="p-8 text-center"><p className="text-muted-foreground">لا توجد باقات متاحة حالياً</p></Card>
             ) : (
               packages.map((pkg) => (
                 <Card key={pkg.id} className="p-5 space-y-3">
@@ -246,28 +185,16 @@ const PublicPayment = () => {
                     <span className="text-sm text-muted-foreground">ر.س / {cycleLabel[pkg.billing_cycle]}</span>
                   </div>
                   <div className="space-y-2">
-                    {pkg.sessions_per_week > 0 && (
-                      <div className="flex items-center gap-2 text-sm"><Dumbbell className="w-4 h-4 text-primary" />{pkg.sessions_per_week} جلسات أسبوعياً</div>
-                    )}
-                    {pkg.includes_program && (
-                      <div className="flex items-center gap-2 text-sm"><Check className="w-4 h-4 text-primary" />برنامج تدريب</div>
-                    )}
-                    {pkg.includes_nutrition && (
-                      <div className="flex items-center gap-2 text-sm"><UtensilsCrossed className="w-4 h-4 text-primary" />جدول غذائي</div>
-                    )}
-                    {pkg.includes_followup && (
-                      <div className="flex items-center gap-2 text-sm"><MessageCircle className="w-4 h-4 text-primary" />متابعة يومية</div>
-                    )}
+                    {pkg.sessions_per_week > 0 && <div className="flex items-center gap-2 text-sm"><Dumbbell className="w-4 h-4 text-primary" />{pkg.sessions_per_week} جلسات أسبوعياً</div>}
+                    {pkg.includes_program && <div className="flex items-center gap-2 text-sm"><Check className="w-4 h-4 text-primary" />برنامج تدريب</div>}
+                    {pkg.includes_nutrition && <div className="flex items-center gap-2 text-sm"><UtensilsCrossed className="w-4 h-4 text-primary" />جدول غذائي</div>}
+                    {pkg.includes_followup && <div className="flex items-center gap-2 text-sm"><MessageCircle className="w-4 h-4 text-primary" />متابعة يومية</div>}
                     {(pkg.custom_features as string[] || []).map((f: string, i: number) => (
                       <div key={i} className="flex items-center gap-2 text-sm"><Check className="w-4 h-4 text-primary" />{f}</div>
                     ))}
                   </div>
-                  <Button
-                    className="w-full gap-2"
-                    onClick={() => window.location.href = `${window.location.pathname}/${pkg.id}`}
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    اشترك الآن
+                  <Button className="w-full gap-2" onClick={() => window.location.href = `${window.location.pathname}/${pkg.id}`}>
+                    <CreditCard className="w-4 h-4" /> اشترك الآن
                   </Button>
                 </Card>
               ))
@@ -275,7 +202,6 @@ const PublicPayment = () => {
           </>
         )}
 
-        {/* Single Package Payment View */}
         {selectedPkg && step === "info" && (
           <div className="space-y-4">
             <Card className="p-5 space-y-3">
@@ -300,11 +226,7 @@ const PublicPayment = () => {
                 <label className="text-sm font-medium text-foreground">البريد الإلكتروني</label>
                 <Input value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="email@example.com" type="email" dir="ltr" />
               </div>
-              <Button
-                className="w-full gap-2"
-                onClick={() => setStep("pay")}
-                disabled={!clientName.trim() || !clientPhone.trim()}
-              >
+              <Button className="w-full gap-2" onClick={() => setStep("pay")} disabled={!clientName.trim() || !clientPhone.trim()}>
                 متابعة للدفع <ArrowRight className="w-4 h-4 rotate-180" />
               </Button>
             </Card>
@@ -313,31 +235,41 @@ const PublicPayment = () => {
 
         {selectedPkg && step === "pay" && (
           <div className="space-y-4">
-            <Button variant="ghost" size="sm" onClick={() => { setStep("info"); initializedRef.current = false; }}>
+            <Button variant="ghost" size="sm" onClick={() => setStep("info")}>
               <ArrowRight className="w-4 h-4 ml-1" /> رجوع
             </Button>
 
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
                 <CreditCard className="w-4 h-4" />
-                <span>ادفع بالبطاقة أو Apple Pay</span>
+                <span>ادفع عبر Tap Payments</span>
               </div>
 
-              {verifying ? (
-                <div className="flex flex-col items-center py-12 gap-3">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">جاري التحقق من الدفع...</p>
-                </div>
-              ) : (
-                <div ref={formRef} className="moyasar-form" />
-              )}
+              <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
+                {["Mada", "Visa", "MC", "Apple Pay", "STC Pay"].map(m => (
+                  <span key={m} className="px-2 py-1 rounded bg-secondary text-xs text-secondary-foreground border border-border">{m}</span>
+                ))}
+              </div>
+
+              <div className="bg-secondary rounded-xl p-4 text-center mb-4">
+                <p className="text-3xl font-black text-primary">{selectedPkg.price}</p>
+                <p className="text-sm text-muted-foreground">ر.س / {cycleLabel[selectedPkg.billing_cycle]}</p>
+              </div>
+
+              <Button onClick={handlePay} disabled={loading} className="w-full h-12 gap-2">
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                {loading ? "جاري التحويل..." : "ادفع الآن"}
+              </Button>
 
               {error && (
                 <div className="mt-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm text-center">{error}</div>
               )}
             </Card>
 
-            <p className="text-xs text-muted-foreground text-center">الدفع آمن ومشفر عبر Moyasar</p>
+            <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              الدفع آمن ومشفر عبر Tap Payments
+            </p>
           </div>
         )}
       </div>

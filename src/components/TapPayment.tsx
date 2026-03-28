@@ -68,6 +68,7 @@ const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
 
   return (
     <div className="space-y-4" dir="rtl">
+      <TapTestModeBanner />
       <div className="flex items-center gap-3 mb-4">
         <Button variant="ghost" size="sm" onClick={onBack} className="p-1">
           <ArrowRight className="w-5 h-5" />

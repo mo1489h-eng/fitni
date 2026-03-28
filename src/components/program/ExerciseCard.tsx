@@ -81,15 +81,33 @@ const ExerciseCard = ({
         )}
 
         {/* GIF Thumbnail */}
-        {ex.gifUrl ? (
-          <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-            <img src={ex.gifUrl} alt={ex.name} className="w-full h-full object-cover" loading="lazy" />
-          </div>
-        ) : (
-          <div className={`w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 ${bodyPartColor}`}>
-            <GripVertical className="w-5 h-5" strokeWidth={1.5} />
-          </div>
-        )}
+        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!ex.gifUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
+          {ex.gifUrl ? (
+            <>
+              <img
+                src={ex.gifUrl}
+                alt={ex.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (sibling) sibling.style.display = 'flex';
+                }}
+              />
+              <div
+                style={{ display: 'none' }}
+                className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0 rounded-lg"
+              >
+                {ex.name.charAt(0).toUpperCase()}
+              </div>
+            </>
+          ) : (
+            <span className="text-lg font-bold">{ex.name.charAt(0).toUpperCase()}</span>
+          )}
+        </div>
 
         {/* Name + Tags */}
         <div className="flex-1 min-w-0 text-right">

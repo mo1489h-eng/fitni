@@ -577,11 +577,8 @@ const ProgramBuilder = () => {
               const isTemplate = program.is_template;
               return (
                 <Card key={program.id}
-                  className={`p-4 hover:shadow-md transition-all cursor-pointer group ${isTemplate ? "border-r-2 border-r-amber-500/50" : ""}`}
-                  onClick={() => {
-                    // TODO: load existing program into editor
-                    toast({ title: "عرض البرنامج" });
-                  }}>
+                  className={`p-4 transition-all cursor-pointer group hover:shadow-md hover:border-primary/40 ${isTemplate ? "border-r-2 border-r-amber-500/50" : ""}`}
+                  onClick={() => handleOpenProgram(program.id)}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{program.name}</h3>

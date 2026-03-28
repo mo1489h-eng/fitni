@@ -14,7 +14,7 @@ import {
   ChevronUp, ChevronDown, Save, Loader2, Plus, X, Trash2, Star,
   Eye, GripVertical, Monitor, Smartphone, Copy, MessageCircle,
   QrCode, ArrowLeft, Palette, Type, Layout, Share2,
-  Package, CheckCircle, Sparkles, CloudOff,
+  Package, CheckCircle, Sparkles, CloudOff, ImageIcon,
 } from "lucide-react";
 
 interface PageStat { label: string; value: string }

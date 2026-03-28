@@ -494,7 +494,15 @@ const CopilotChat = () => {
         </div>
       )}
 
-      {/* Input */}
+      {/* Selected client tag + Input */}
+      {selectedClient && (
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="text-[10px] px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <UserCircle className="w-3 h-3" strokeWidth={1.5} />
+            {selectedClient.name}
+          </span>
+        </div>
+      )}
       <div className="flex items-end gap-2 border-t border-border pt-3">
         {messages.length > 0 && (
           <Button

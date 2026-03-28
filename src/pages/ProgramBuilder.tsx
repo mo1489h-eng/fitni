@@ -4,69 +4,88 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Calendar, Save, ChevronRight, BookOpen, Users, Dumbbell,
-  Flame, Shield, Target, HeartPulse, Zap, Activity,
+  Plus, Search, ArrowLeft, Calendar, Users, Dumbbell, Trash2,
+  ClipboardList, Loader2, Save, BookOpen, ChevronRight, Eye,
+  Check,
 } from "lucide-react";
 import CopyProgramModal from "@/components/CopyProgramModal";
-import ProgramList from "@/components/program/ProgramList";
-import ProgramSetup from "@/components/program/ProgramSetup";
-import ProgramDetail from "@/components/program/ProgramDetail";
-import WeekCalendar from "@/components/program/WeekCalendar";
-import DayEditor from "@/components/program/DayEditor";
+import CreateProgramModal from "@/components/program/CreateProgramModal";
+import WeekDayNav, { WeekData, DayData } from "@/components/program/WeekDayNav";
+import DayWorkoutEditor, { EditorDay } from "@/components/program/DayWorkoutEditor";
+import ExerciseLibraryPanel from "@/components/program/ExerciseLibraryPanel";
 import SmartWarnings from "@/components/program/SmartWarnings";
-import { LocalDay, LocalExercise, WEEK_DAYS, genId } from "@/components/program/types";
-import { ALL_TEMPLATES, ProgramTemplate } from "@/components/program/templates-data";
+import { LocalExercise, LocalDay, genId } from "@/components/program/types";
+import type { SelectedExercise } from "@/components/program/ExerciseLibraryPanel";
 
+// ──────────────── Types ────────────────
+interface ProgramDay {
+  id: string;
+  weekIndex: number;
+  label: string;
+  type: "training" | "rest" | "active_rest";
+  exercises: LocalExercise[];
+}
+
+// ──────────────── Component ────────────────
 const ProgramBuilder = () => {
   usePageTitle("البرامج");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // View State
-  const [view, setView] = useState<"list" | "step1" | "step2" | "detail">("list");
-  const [viewProgramId, setViewProgramId] = useState<string | null>(null);
+  // ── View State
+  const [view, setView] = useState<"list" | "editor">("list");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Create Form
+  // ── Editor State
+  const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
   const [programName, setProgramName] = useState("");
   const [programGoal, setProgramGoal] = useState("");
   const [programLevel, setProgramLevel] = useState("");
-  const [weeks, setWeeks] = useState(8);
-  const [programDesc, setProgramDesc] = useState("");
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [equipment, setEquipment] = useState("جيم كامل");
-
-  // Step 2: Builder
-  const [localDays, setLocalDays] = useState<LocalDay[]>([]);
-  const [activeDay, setActiveDay] = useState(0);
-  const [activeWeek, setActiveWeek] = useState(1);
-
-  // Library Panel
+  const [programWeeks, setProgramWeeks] = useState(8);
+  const [days, setDays] = useState<ProgramDay[]>([]);
+  const [activeWeek, setActiveWeek] = useState(0);
+  const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
-
-  // Assign/Copy
-  const [copyProgramId, setCopyProgramId] = useState<string | null>(null);
-  const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Auto-save timer
-  const autoSaveRef = useRef<NodeJS.Timeout>();
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Auto-save every 30 seconds in step2
+  // ── Assign
+  const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
+
+  // ── Auto-save
+  const autoSaveRef = useRef<ReturnType<typeof setInterval>>();
   useEffect(() => {
-    if (view !== "step2") return;
+    if (view !== "editor") return;
     autoSaveRef.current = setInterval(() => {
-      setLastSaved(new Date());
+      if (hasUnsavedChanges) {
+        setLastSaved(new Date());
+        setHasUnsavedChanges(false);
+      }
     }, 30000);
     return () => clearInterval(autoSaveRef.current);
-  }, [view]);
+  }, [view, hasUnsavedChanges]);
 
-  // Data
+  // ── Ctrl+S
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s" && view === "editor") {
+        e.preventDefault();
+        handleSave(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [view, days, programName]);
+
+  // ── Data
   const { data: programs = [], isLoading } = useQuery({
     queryKey: ["programs"],
     queryFn: async () => {
@@ -86,60 +105,270 @@ const ProgramBuilder = () => {
     enabled: !!user,
   });
 
-  const { data: programDays = [] } = useQuery({
-    queryKey: ["program-days", viewProgramId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("program_days")
-        .select("*, program_exercises(*)")
-        .eq("program_id", viewProgramId!)
-        .order("day_order", { ascending: true });
-      return data || [];
-    },
-    enabled: !!viewProgramId,
-  });
+  // ──────────── HELPERS ────────────
+  const getWeeks = useCallback((): WeekData[] => {
+    const weekMap = new Map<number, DayData[]>();
+    for (let i = 0; i < programWeeks; i++) weekMap.set(i, []);
 
-  const copyProgram = programs.find(p => p.id === copyProgramId);
+    days.forEach(d => {
+      const list = weekMap.get(d.weekIndex) || [];
+      list.push({
+        id: d.id,
+        label: d.label,
+        type: d.type,
+        exerciseCount: d.exercises.length,
+      });
+      weekMap.set(d.weekIndex, list);
+    });
 
-  // Mutations
-  const createMutation = useMutation({
+    return Array.from(weekMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([idx, dayList]) => ({ weekNumber: idx + 1, days: dayList }));
+  }, [days, programWeeks]);
+
+  const getActiveDay = useCallback((): EditorDay | null => {
+    const d = days.find(d => d.id === activeDayId);
+    if (!d) return null;
+    return { id: d.id, label: d.label, type: d.type, exercises: d.exercises };
+  }, [days, activeDayId]);
+
+  const updateDayField = useCallback((dayId: string, updater: (d: ProgramDay) => ProgramDay) => {
+    setDays(prev => prev.map(d => d.id === dayId ? updater(d) : d));
+    setHasUnsavedChanges(true);
+  }, []);
+
+  // ──────────── PROGRAM CREATION ────────────
+  const handleCreateProgram = (data: { name: string; goal: string; level: string; weeks: number; daysPerWeek: number }) => {
+    setProgramName(data.name);
+    setProgramGoal(data.goal);
+    setProgramLevel(data.level);
+    setProgramWeeks(data.weeks);
+    setEditingProgramId(null);
+
+    // Generate days
+    const newDays: ProgramDay[] = [];
+    for (let w = 0; w < data.weeks; w++) {
+      for (let d = 0; d < data.daysPerWeek; d++) {
+        newDays.push({
+          id: genId(),
+          weekIndex: w,
+          label: `اليوم ${d + 1}`,
+          type: "training",
+          exercises: [],
+        });
+      }
+    }
+    setDays(newDays);
+    setActiveWeek(0);
+    setActiveDayId(newDays[0]?.id || null);
+    setShowCreateModal(false);
+    setView("editor");
+    setLastSaved(null);
+    setHasUnsavedChanges(false);
+  };
+
+  // ──────────── WEEK/DAY OPERATIONS ────────────
+  const handleAddDay = (weekIdx: number) => {
+    const weekDays = days.filter(d => d.weekIndex === weekIdx);
+    const newDay: ProgramDay = {
+      id: genId(),
+      weekIndex: weekIdx,
+      label: `اليوم ${weekDays.length + 1}`,
+      type: "training",
+      exercises: [],
+    };
+    setDays(prev => [...prev, newDay]);
+    setActiveDayId(newDay.id);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleAddWeek = () => {
+    setProgramWeeks(prev => prev + 1);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDuplicateWeek = (weekIdx: number) => {
+    const weekDays = days.filter(d => d.weekIndex === weekIdx);
+    const newWeekIdx = programWeeks;
+    const newDays = weekDays.map(d => ({
+      ...d,
+      id: genId(),
+      weekIndex: newWeekIdx,
+      exercises: d.exercises.map(e => ({ ...e, id: genId(), supersetWith: undefined })),
+    }));
+    setProgramWeeks(prev => prev + 1);
+    setDays(prev => [...prev, ...newDays]);
+    setHasUnsavedChanges(true);
+    toast({ title: "تم تكرار الأسبوع" });
+  };
+
+  const handleCreateDeload = (weekIdx: number) => {
+    const weekDays = days.filter(d => d.weekIndex === weekIdx);
+    const newWeekIdx = programWeeks;
+    const newDays = weekDays.map(d => ({
+      ...d,
+      id: genId(),
+      weekIndex: newWeekIdx,
+      label: d.label + " (ديلود)",
+      exercises: d.exercises.map(e => ({
+        ...e,
+        id: genId(),
+        supersetWith: undefined,
+        sets: Math.max(2, Math.round(e.sets * 0.6)),
+        weight: Math.round(e.weight * 0.7),
+        rpe: e.rpe ? Math.max(5, e.rpe - 2) : 6,
+        notes: e.notes ? e.notes + " [ديلود]" : "ديلود - حجم مخفض 40%",
+        setDetails: e.setDetails?.map(s => ({
+          ...s,
+          weight: Math.round(s.weight * 0.7),
+        })),
+      })),
+    }));
+    setProgramWeeks(prev => prev + 1);
+    setDays(prev => [...prev, ...newDays]);
+    setHasUnsavedChanges(true);
+    toast({ title: "تم إنشاء أسبوع ديلود (حجم مخفض 40%)" });
+  };
+
+  // ──────────── EXERCISE OPERATIONS ────────────
+  const handleAddExercises = (selected: SelectedExercise[]) => {
+    if (!activeDayId) return;
+    const newExercises: LocalExercise[] = selected.map(item => ({
+      id: genId(),
+      name: item.name_ar,
+      name_en: item.name_en,
+      muscle: item.bodyPart,
+      gifUrl: item.gifUrl,
+      sets: 3,
+      reps: 10,
+      weight: 0,
+      video_url: "",
+      rest_seconds: 60,
+      tempo: "",
+      rpe: null,
+      notes: "",
+      is_warmup: false,
+    }));
+    updateDayField(activeDayId, d => ({ ...d, exercises: [...d.exercises, ...newExercises] }));
+    setShowLibrary(false);
+  };
+
+  const handleRemoveExercise = (exId: string) => {
+    if (!activeDayId) return;
+    updateDayField(activeDayId, d => ({
+      ...d,
+      exercises: d.exercises.filter(e => e.id !== exId),
+    }));
+  };
+
+  const handleDuplicateExercise = (exId: string) => {
+    if (!activeDayId) return;
+    updateDayField(activeDayId, d => {
+      const idx = d.exercises.findIndex(e => e.id === exId);
+      if (idx === -1) return d;
+      const exs = [...d.exercises];
+      exs.splice(idx + 1, 0, {
+        ...exs[idx],
+        id: genId(),
+        supersetWith: undefined,
+        setDetails: exs[idx].setDetails?.map(s => ({ ...s })),
+      });
+      return { ...d, exercises: exs };
+    });
+  };
+
+  const handleMoveExercise = (exId: string, dir: "up" | "down") => {
+    if (!activeDayId) return;
+    updateDayField(activeDayId, d => {
+      const exs = [...d.exercises];
+      const idx = exs.findIndex(e => e.id === exId);
+      const t = dir === "up" ? idx - 1 : idx + 1;
+      if (t < 0 || t >= exs.length) return d;
+      [exs[idx], exs[t]] = [exs[t], exs[idx]];
+      return { ...d, exercises: exs };
+    });
+  };
+
+  const handleToggleSuperset = (exId: string) => {
+    if (!activeDayId) return;
+    updateDayField(activeDayId, d => {
+      const exs = [...d.exercises];
+      const idx = exs.findIndex(e => e.id === exId);
+      if (idx === -1 || idx >= exs.length - 1) return d;
+      const current = exs[idx];
+      const next = exs[idx + 1];
+      if (current.supersetWith === next.id) {
+        exs[idx] = { ...current, supersetWith: undefined };
+        exs[idx + 1] = { ...next, supersetWith: undefined };
+      } else {
+        exs[idx] = { ...current, supersetWith: next.id };
+        exs[idx + 1] = { ...next, supersetWith: current.id };
+      }
+      return { ...d, exercises: exs };
+    });
+  };
+
+  const handleUpdateExercise = (exId: string, field: keyof LocalExercise, value: any) => {
+    if (!activeDayId) return;
+    updateDayField(activeDayId, d => ({
+      ...d,
+      exercises: d.exercises.map(e => e.id === exId ? { ...e, [field]: value } : e),
+    }));
+  };
+
+  // ──────────── SAVE ────────────
+  const saveMutation = useMutation({
     mutationFn: async (asTemplate: boolean) => {
       if (!programName.trim()) throw new Error("أدخل اسم البرنامج");
-      const activeDays = localDays.filter(d => !d.isRest);
-      if (activeDays.length === 0) throw new Error("أضف يوم تدريب واحد على الأقل");
+      const trainingDays = days.filter(d => d.type === "training" && d.exercises.length > 0);
+      if (trainingDays.length === 0) throw new Error("أضف تمارين في يوم واحد على الأقل");
 
       const { data: program, error: pErr } = await supabase
         .from("programs")
         .insert({
-          trainer_id: user!.id, name: programName.trim(), weeks,
-          goal: programGoal || null, difficulty: programLevel || null,
-          description: programDesc || null, is_template: asTemplate,
+          trainer_id: user!.id,
+          name: programName.trim(),
+          weeks: programWeeks,
+          goal: programGoal || null,
+          difficulty: programLevel || null,
+          is_template: asTemplate,
         })
         .select().single();
       if (pErr) throw pErr;
 
-      const daysToInsert = localDays.filter(d => !d.isRest).map((d, i) => ({
-        program_id: program.id, day_name: d.label || d.dayName, day_order: i,
+      // Insert unique days (deduplicated by label per week isn't needed - insert all training days)
+      const daysToInsert = trainingDays.map((d, i) => ({
+        program_id: program.id,
+        day_name: d.label,
+        day_order: i,
       }));
-      const { data: days, error: dErr } = await supabase.from("program_days").insert(daysToInsert).select();
+      const { data: savedDays, error: dErr } = await supabase.from("program_days").insert(daysToInsert).select();
       if (dErr) throw dErr;
 
       const exercisesToInsert: any[] = [];
-      for (const day of days!) {
-        const localDay = localDays.find(d => (d.label || d.dayName) === day.day_name);
+      savedDays!.forEach((savedDay, idx) => {
+        const localDay = trainingDays[idx];
         if (localDay) {
-          [...localDay.warmup.map(e => ({ ...e, is_warmup: true })), ...localDay.exercises].forEach((ex, idx) => {
+          localDay.exercises.forEach((ex, exIdx) => {
             exercisesToInsert.push({
-              day_id: day.id, name: ex.name, sets: ex.sets, reps: ex.reps,
-              weight: ex.weight, exercise_order: idx,
-              video_url: ex.video_url || null, rest_seconds: ex.rest_seconds,
-              tempo: ex.tempo || null, rpe: ex.rpe,
-              notes: ex.notes || null, superset_group: ex.supersetWith || null,
+              day_id: savedDay.id,
+              name: ex.name,
+              sets: ex.sets,
+              reps: ex.reps,
+              weight: ex.weight,
+              exercise_order: exIdx,
+              video_url: ex.video_url || null,
+              rest_seconds: ex.rest_seconds,
+              tempo: ex.tempo || null,
+              rpe: ex.rpe,
+              notes: ex.notes || null,
+              superset_group: ex.supersetWith || null,
               is_warmup: ex.is_warmup || false,
             });
           });
         }
-      }
+      });
+
       if (exercisesToInsert.length > 0) {
         const { error: eErr } = await supabase.from("program_exercises").insert(exercisesToInsert);
         if (eErr) throw eErr;
@@ -148,13 +377,19 @@ const ProgramBuilder = () => {
     },
     onSuccess: (program) => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
-      setView("list"); resetForm();
+      setView("list");
+      setHasUnsavedChanges(false);
       setAssignProgramId(program.id);
-      toast({ title: "تم إنشاء البرنامج بنجاح" });
+      toast({ title: "تم حفظ البرنامج بنجاح" });
     },
     onError: (err: Error) => toast({ title: "خطأ", description: err.message, variant: "destructive" }),
   });
 
+  const handleSave = (asTemplate: boolean) => {
+    saveMutation.mutate(asTemplate);
+  };
+
+  // ── Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("programs").delete().eq("id", id);
@@ -162,258 +397,241 @@ const ProgramBuilder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["programs"] });
-      setView("list"); toast({ title: "تم حذف البرنامج" });
+      toast({ title: "تم حذف البرنامج" });
     },
   });
 
-  const deleteExMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await supabase.from("program_exercises").delete().eq("id", id);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["program-days", viewProgramId] }),
-  });
-
-  const saveAsTemplateMutation = useMutation({
-    mutationFn: async (programId: string) => {
-      const { error } = await supabase.from("programs").update({ is_template: true }).eq("id", programId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["programs"] });
-      toast({ title: "تم حفظ البرنامج كقالب" });
-    },
-  });
-
-  const resetForm = () => {
-    setProgramName(""); setProgramGoal(""); setProgramLevel("");
-    setWeeks(8); setProgramDesc(""); setSelectedDays([]); setLocalDays([]);
-    setActiveDay(0); setActiveWeek(1); setEquipment("جيم كامل");
-  };
-
-  const proceedToStep2 = () => {
-    if (!programName.trim()) { toast({ title: "أدخل اسم البرنامج", variant: "destructive" }); return; }
-    if (selectedDays.length === 0) { toast({ title: "اختر أيام التدريب", variant: "destructive" }); return; }
-    const days: LocalDay[] = WEEK_DAYS.map(d => ({
-      dayName: d,
-      isRest: !selectedDays.includes(d),
-      exercises: [],
+  // ── Smart warnings data (convert to LocalDay format)
+  const getSmartWarningDays = (): LocalDay[] => {
+    const activeWeekDays = days.filter(d => d.weekIndex === activeWeek);
+    return activeWeekDays.map(d => ({
+      dayName: d.label,
+      isRest: d.type !== "training",
+      exercises: d.exercises,
       warmup: [],
-      label: selectedDays.includes(d) ? "" : "راحة",
+      label: d.label,
     }));
-    setLocalDays(days);
-    setActiveDay(days.findIndex(d => !d.isRest));
-    setView("step2");
   };
 
-  const applyTemplate = (t: ProgramTemplate) => {
-    setProgramName(t.name); setProgramGoal(t.goal); setProgramLevel(t.level);
-    setWeeks(t.weeks); setProgramDesc(t.description); setEquipment(t.equipment);
-    const days = t.days.map(d => ({
-      ...d,
-      exercises: d.exercises.map(e => ({ ...e, id: genId() })),
-      warmup: (d.warmup || []).map(e => ({ ...e, id: genId() })),
-    }));
-    setLocalDays(days);
-    setSelectedDays(t.days.filter(d => !d.isRest).map(d => d.dayName));
-    setActiveDay(days.findIndex(d => !d.isRest));
-    setView("step2");
-    toast({ title: `تم تحميل "${t.name}"` });
-  };
+  // ════════════════ EDITOR VIEW ════════════════
+  if (view === "editor") {
+    const activeDay = getActiveDay();
+    const weeks = getWeeks();
 
-  const updateDay = useCallback((idx: number, updater: (d: LocalDay) => LocalDay) => {
-    setLocalDays(prev => prev.map((d, i) => i === idx ? updater(d) : d));
-  }, []);
-
-  const duplicateWeek = () => {
-    // Duplicate current week's exercises to next week
-    toast({ title: "تم تكرار الأسبوع" });
-  };
-
-  const createDeloadWeek = () => {
-    setLocalDays(prev => prev.map(d => {
-      if (d.isRest) return d;
-      return {
-        ...d,
-        exercises: d.exercises.map(e => ({
-          ...e,
-          id: genId(),
-          sets: Math.max(2, Math.round(e.sets * 0.6)),
-          weight: Math.round(e.weight * 0.7),
-          rpe: e.rpe ? Math.max(5, e.rpe - 2) : 6,
-          notes: e.notes ? e.notes + " [ديلود]" : "ديلود - حجم مخفض 40%",
-        })),
-      };
-    }));
-    toast({ title: "تم إنشاء أسبوع ديلود (حجم مخفض 40%)" });
-  };
-
-  // VIEW: DETAIL
-  if (view === "detail" && viewProgramId) {
-    const program = programs.find(p => p.id === viewProgramId);
-    if (!program) return null;
     return (
-      <TrainerLayout>
-        <ProgramDetail
-          program={program}
-          programDays={programDays}
-          clientCount={clients.filter((c: any) => c.program_id === viewProgramId).length}
-          onBack={() => { setView("list"); setViewProgramId(null); }}
-          onSaveAsTemplate={(id) => saveAsTemplateMutation.mutate(id)}
-          onAssign={(id) => setCopyProgramId(id)}
-          onDelete={(id) => deleteMutation.mutate(id)}
-          onDeleteExercise={(id) => deleteExMutation.mutate(id)}
-          deletePending={deleteMutation.isPending}
-        />
-        {copyProgram && (
-          <CopyProgramModal open={!!copyProgramId} onOpenChange={o => { if (!o) setCopyProgramId(null); }}
-            program={copyProgram} clients={clients as any} programs={programs} />
-        )}
-      </TrainerLayout>
-    );
-  }
-
-  // VIEW: STEP 1
-  if (view === "step1") {
-    return (
-      <TrainerLayout>
-        <ProgramSetup
-          programName={programName} setProgramName={setProgramName}
-          programGoal={programGoal} setProgramGoal={setProgramGoal}
-          programLevel={programLevel} setProgramLevel={setProgramLevel}
-          weeks={weeks} setWeeks={setWeeks}
-          programDesc={programDesc} setProgramDesc={setProgramDesc}
-          selectedDays={selectedDays} setSelectedDays={setSelectedDays}
-          equipment={equipment} setEquipment={setEquipment}
-          onCancel={() => { setView("list"); resetForm(); }}
-          onProceed={proceedToStep2}
-          onApplyTemplate={applyTemplate}
-        />
-      </TrainerLayout>
-    );
-  }
-
-  // VIEW: STEP 2 - FULL BUILDER
-  if (view === "step2") {
-    return (
-      <TrainerLayout>
-        <div className="animate-fade-in pb-32" dir="rtl">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <button onClick={() => setView("step1")} className="text-xs text-primary hover:underline mb-1 flex items-center gap-1">
-                <ChevronRight className="w-3 h-3" strokeWidth={1.5} />الرجوع
-              </button>
-              <h1 className="text-lg font-bold text-foreground">{programName}</h1>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                {programGoal && <Badge variant="secondary" className="text-[10px]">{programGoal}</Badge>}
-                {programLevel && <Badge variant="secondary" className="text-[10px]">{programLevel}</Badge>}
-                <Badge variant="secondary" className="text-[10px]">
-                  <Calendar className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{weeks} أسابيع
-                </Badge>
-                {lastSaved && (
-                  <span className="text-[9px] text-muted-foreground">
-                    حُفظ {lastSaved.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
-                )}
-              </div>
-            </div>
+      <div className="h-screen flex flex-col bg-background" dir="rtl">
+        {/* Top Bar */}
+        <div className="h-14 border-b border-border flex items-center justify-between px-4 bg-card flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setView("list")} className="text-muted-foreground hover:text-foreground p-1.5 rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
+            </button>
+            <Input
+              value={programName}
+              onChange={e => { setProgramName(e.target.value); setHasUnsavedChanges(true); }}
+              className="border-0 bg-transparent text-base font-bold p-0 h-auto focus-visible:ring-0 max-w-[300px]"
+              placeholder="اسم البرنامج"
+            />
+            {programGoal && <Badge variant="secondary" className="text-[10px]">{programGoal}</Badge>}
+            {programLevel && <Badge variant="secondary" className="text-[10px]">{programLevel}</Badge>}
           </div>
 
-          {/* Week Calendar */}
-          <WeekCalendar
-            days={localDays}
-            activeDay={activeDay}
-            activeWeek={activeWeek}
-            totalWeeks={weeks}
-            onSelectDay={setActiveDay}
-            onWeekChange={setActiveWeek}
-            onDuplicateWeek={duplicateWeek}
-            onCreateDeload={createDeloadWeek}
-          />
-
-          {/* Smart Warnings */}
-          <div className="mt-3">
-            <SmartWarnings days={localDays} weeks={weeks} currentWeek={activeWeek} />
-          </div>
-
-          {/* Day Editor */}
-          <div className="mt-4">
-            {localDays[activeDay] && (
-              <DayEditor
-                day={localDays[activeDay]}
-                dayIndex={activeDay}
-                allDays={localDays}
-                onUpdateDay={updateDay}
-                onToast={(msg) => toast({ title: msg })}
-              />
+          <div className="flex items-center gap-2">
+            {/* Save indicator */}
+            {lastSaved && !hasUnsavedChanges && (
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Check className="w-3 h-3 text-primary" />
+                تم الحفظ {lastSaved.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+              </span>
             )}
-          </div>
+            {hasUnsavedChanges && (
+              <span className="text-[10px] text-warning flex items-center gap-1">تغييرات غير محفوظة</span>
+            )}
 
-          {/* Bottom Bar */}
-          <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
-            <Button variant="outline" className="gap-1 text-xs" onClick={() => {
-              setLastSaved(new Date());
-              toast({ title: "تم حفظ المسودة" });
-            }}>
-              <Save className="w-3.5 h-3.5" strokeWidth={1.5} />مسودة
-            </Button>
-            <Button variant="outline" className="gap-1 text-xs" onClick={() => createMutation.mutate(true)}
-              disabled={createMutation.isPending}>
+            <Button variant="outline" size="sm" className="gap-1 text-xs h-8" onClick={() => handleSave(true)}
+              disabled={saveMutation.isPending}>
               <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ كقالب
             </Button>
-            <Button className="flex-[2] gap-1 text-sm"
-              disabled={createMutation.isPending || localDays.filter(d => !d.isRest).length === 0}
-              onClick={() => createMutation.mutate(false)}>
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "نشر البرنامج"}
+            <Button size="sm" className="gap-1 text-xs h-8" onClick={() => handleSave(false)}
+              disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" strokeWidth={1.5} />}
+              حفظ
             </Button>
           </div>
         </div>
-      </TrainerLayout>
+
+        {/* Main Content - 3 Panel Layout */}
+        <div className="flex-1 flex min-h-0">
+          {/* Left: Week/Day Nav */}
+          <div className="w-56 flex-shrink-0">
+            <WeekDayNav
+              weeks={weeks}
+              activeWeek={activeWeek}
+              activeDayId={activeDayId}
+              onSelectDay={(wIdx, dayId) => {
+                setActiveWeek(wIdx);
+                setActiveDayId(dayId);
+                setShowLibrary(false);
+              }}
+              onAddDay={handleAddDay}
+              onAddWeek={handleAddWeek}
+              onDuplicateWeek={handleDuplicateWeek}
+              onCreateDeload={handleCreateDeload}
+              onRenameDayLabel={(wIdx, dayId, label) => updateDayField(dayId, d => ({ ...d, label }))}
+              onChangeDayType={(wIdx, dayId, type) => updateDayField(dayId, d => ({ ...d, type }))}
+            />
+          </div>
+
+          {/* Center: Day Workout Editor */}
+          <div className="flex-1 flex flex-col min-w-0 border-l border-border">
+            {/* Smart Warnings */}
+            {activeDay && activeDay.exercises.length > 0 && (
+              <div className="px-4 pt-3">
+                <SmartWarnings days={getSmartWarningDays()} weeks={programWeeks} currentWeek={activeWeek + 1} />
+              </div>
+            )}
+            <DayWorkoutEditor
+              day={activeDay}
+              onUpdateLabel={label => activeDayId && updateDayField(activeDayId, d => ({ ...d, label }))}
+              onUpdateType={type => activeDayId && updateDayField(activeDayId, d => ({
+                ...d,
+                type,
+                exercises: type !== "training" ? [] : d.exercises,
+              }))}
+              onUpdateExercise={handleUpdateExercise}
+              onRemoveExercise={handleRemoveExercise}
+              onDuplicateExercise={handleDuplicateExercise}
+              onMoveExercise={handleMoveExercise}
+              onToggleSuperset={handleToggleSuperset}
+              onOpenLibrary={() => setShowLibrary(true)}
+            />
+          </div>
+
+          {/* Right: Exercise Library Panel */}
+          {showLibrary && (
+            <div className="w-80 flex-shrink-0 border-l border-border animate-in slide-in-from-left duration-200">
+              <ExerciseLibraryPanel
+                open={showLibrary}
+                onClose={() => setShowLibrary(false)}
+                onAdd={handleAddExercises}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 
-  // VIEW: LIST
-  const listTemplates = ALL_TEMPLATES.slice(0, 4).map(t => ({
-    name: t.name,
-    icon: t.goal === "تخسيس" ? Flame : t.goal === "قوة" ? Target : t.goal === "تأهيل" ? HeartPulse : Dumbbell,
-    weeks: t.weeks,
-    goal: t.goal,
-    level: t.level,
-    desc: t.description.slice(0, 40) + "...",
-    days: t.days,
-  }));
+  // ════════════════ LIST VIEW ════════════════
+  const filteredPrograms = searchQuery
+    ? programs.filter(p => p.name.includes(searchQuery))
+    : programs;
+
+  const getClientCount = (pid: string) => clients.filter((c: any) => c.program_id === pid).length;
+
+  const assignProgram = programs.find(p => p.id === assignProgramId);
 
   return (
     <TrainerLayout>
-      <ProgramList
-        programs={programs}
-        clients={clients}
-        isLoading={isLoading}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onNewProgram={() => setView("step1")}
-        onViewProgram={(id) => { setViewProgramId(id); setView("detail"); }}
-        onAssignProgram={(id) => setCopyProgramId(id)}
-        onDeleteProgram={(id) => deleteMutation.mutate(id)}
-        onApplyTemplate={(t: any) => {
-          // Check if it's a full template or a simplified one
-          const fullTemplate = ALL_TEMPLATES.find(ft => ft.name === t.name);
-          if (fullTemplate) {
-            applyTemplate(fullTemplate);
-          } else {
-            applyTemplate(t);
-          }
-        }}
-        templates={listTemplates}
+      <div className="space-y-6 animate-fade-in" dir="rtl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">البرامج التدريبية</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{programs.length} برنامج</p>
+          </div>
+          <Button size="sm" onClick={() => setShowCreateModal(true)} className="gap-1">
+            <Plus className="w-4 h-4" strokeWidth={1.5} />برنامج جديد
+          </Button>
+        </div>
+
+        {/* Search */}
+        {programs.length > 3 && (
+          <div className="relative">
+            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
+            <Input placeholder="ابحث في البرامج..." value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)} className="pr-10" />
+          </div>
+        )}
+
+        {/* Programs Grid */}
+        {isLoading ? (
+          <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : filteredPrograms.length === 0 && !searchQuery ? (
+          <div className="text-center py-16 space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+              <ClipboardList className="w-8 h-8 text-primary" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-lg font-bold text-foreground">لم تبنِ برامج بعد</h3>
+            <p className="text-sm text-muted-foreground">أنشئ أول برنامج تدريبي لعملائك</p>
+            <Button onClick={() => setShowCreateModal(true)} className="gap-1">
+              <Plus className="w-4 h-4" strokeWidth={1.5} />برنامج جديد
+            </Button>
+          </div>
+        ) : filteredPrograms.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filteredPrograms.map((program: any) => {
+              const clientCount = getClientCount(program.id);
+              const isTemplate = program.is_template;
+              return (
+                <Card key={program.id}
+                  className={`p-4 hover:shadow-md transition-all cursor-pointer group ${isTemplate ? "border-r-2 border-r-amber-500/50" : ""}`}
+                  onClick={() => {
+                    // TODO: load existing program into editor
+                    toast({ title: "عرض البرنامج" });
+                  }}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-card-foreground group-hover:text-primary transition-colors">{program.name}</h3>
+                      {isTemplate && <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[8px]">قالب</Badge>}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors rotate-180" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge variant="secondary" className="text-[10px]">
+                      <Calendar className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{program.weeks} أسابيع
+                    </Badge>
+                    <Badge variant="secondary" className="text-[10px]">
+                      <Users className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{clientCount} متدرب
+                    </Badge>
+                    {program.goal && <Badge variant="secondary" className="text-[10px]">{program.goal}</Badge>}
+                    {program.difficulty && <Badge variant="secondary" className="text-[10px]">{program.difficulty}</Badge>}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button variant="outline" size="sm" className="text-[10px] h-7 flex-1 gap-0.5"
+                      onClick={e => { e.stopPropagation(); setAssignProgramId(program.id); }}>
+                      <Users className="w-3 h-3" strokeWidth={1.5} />تعيين
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-[10px] h-7 text-destructive gap-0.5"
+                      onClick={e => { e.stopPropagation(); deleteMutation.mutate(program.id); }}>
+                      <Trash2 className="w-3 h-3" strokeWidth={1.5} />
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Create Modal */}
+      <CreateProgramModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSubmit={handleCreateProgram}
       />
-      {copyProgram && (
-        <CopyProgramModal open={!!copyProgramId} onOpenChange={o => { if (!o) setCopyProgramId(null); }}
-          program={copyProgram} clients={clients as any} programs={programs} />
-      )}
-      {assignProgramId && (
-        <CopyProgramModal open={!!assignProgramId} onOpenChange={o => { if (!o) setAssignProgramId(null); }}
-          program={programs.find(p => p.id === assignProgramId) || { id: assignProgramId, name: "البرنامج الجديد" }}
-          clients={clients as any} programs={programs} />
+
+      {/* Assign Modal */}
+      {assignProgram && (
+        <CopyProgramModal
+          open={!!assignProgramId}
+          onOpenChange={o => { if (!o) setAssignProgramId(null); }}
+          program={assignProgram}
+          clients={clients as any}
+          programs={programs}
+        />
       )}
     </TrainerLayout>
   );

@@ -58,8 +58,8 @@ const ProgramBuilder = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // ── Assign
   const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
 
   // ── Auto-save
   const autoSaveRef = useRef<ReturnType<typeof setInterval>>();

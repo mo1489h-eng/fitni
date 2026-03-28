@@ -17,6 +17,7 @@ import {
   Sparkles, Eye, Activity, UserCheck, BookOpen,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
+import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import CopilotPanel from "@/components/CopilotPanel";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";

@@ -351,7 +351,7 @@ const PageBuilder = () => {
                     <img src={config.cover_image_url} alt="" className="w-full aspect-video object-cover" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
                       <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => coverRef.current?.click()}>
-                        <Image className="w-4 h-4" strokeWidth={1.5} />
+                        <ImageIcon className="w-4 h-4" strokeWidth={1.5} />
                         تغيير
                       </Button>
                       <Button variant="outline" size="sm" className="gap-1.5 border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => setConfig(c => ({ ...c, cover_image_url: undefined }))}>
@@ -366,7 +366,7 @@ const PageBuilder = () => {
                     disabled={uploadingCover}
                     className="w-full aspect-video rounded-xl border-2 border-dashed border-[hsl(0_0%_10%)] flex flex-col items-center justify-center gap-2 text-[#555] hover:border-primary hover:text-primary transition-colors"
                   >
-                    {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <Image className="w-6 h-6" strokeWidth={1.5} />}
+                    {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-6 h-6" strokeWidth={1.5} />}
                     <span className="text-xs">{uploadingCover ? "جاري الرفع..." : "اضغط لرفع صورة الغلاف"}</span>
                   </button>
                 )}

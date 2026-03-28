@@ -513,7 +513,7 @@ const ProgramBuilder = () => {
               <span className="text-[10px] text-warning flex items-center gap-1">تغييرات غير محفوظة</span>
             )}
 
-            <Button variant="outline" size="sm" className="gap-1 text-xs h-8" onClick={() => handleSave(true)}
+            <Button variant="outline" size="sm" className="gap-1 text-xs h-8" onClick={() => setShowSaveTemplateModal(true)}
               disabled={saveMutation.isPending}>
               <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ كقالب
             </Button>

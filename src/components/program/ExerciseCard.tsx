@@ -11,7 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getArabicBodyPart, BODY_PART_CONFIG } from "@/lib/exercise-translations";
-import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
+import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import { LocalExercise, SetDetail } from "./types";
 
 interface Props {
@@ -77,7 +77,7 @@ const ExerciseCard = ({
     onUpdate("sets", newDetails.length);
   };
 
-  const proxiedGif = getProxiedImageUrl(ex.gifUrl);
+  const imageUrl = ex.exerciseDbId ? getExerciseImageUrl(ex.exerciseDbId) : '';
   const youtubeId = ex.video_url ? extractYouTubeId(ex.video_url) : null;
 
   return (
@@ -93,11 +93,11 @@ const ExerciseCard = ({
         )}
 
         {/* GIF Thumbnail */}
-        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!proxiedGif ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
-          {proxiedGif ? (
+        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!imageUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
+          {imageUrl ? (
             <>
               <img
-                src={proxiedGif}
+                src={imageUrl}
                 alt={ex.name}
                 className="w-full h-full object-cover"
                 loading="lazy"

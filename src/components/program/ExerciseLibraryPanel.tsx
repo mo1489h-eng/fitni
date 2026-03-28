@@ -10,7 +10,7 @@ import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
-import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
+import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 
 export interface SelectedExercise {
   id: string;
@@ -164,7 +164,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       >
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
           <img
-            src={getProxiedImageUrl(ex.gifUrl)}
+            src={getExerciseImageUrl(ex.id)}
             alt={ex.name}
             className="w-full h-full object-cover"
             loading="lazy"
@@ -216,7 +216,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
           <div className="space-y-4">
              <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative">
                <img
-                 src={getProxiedImageUrl(ex.gifUrl)}
+                 src={getExerciseImageUrl(ex.id)}
                  alt={ex.name}
                  className="w-full h-full object-contain"
                  onError={(e) => {

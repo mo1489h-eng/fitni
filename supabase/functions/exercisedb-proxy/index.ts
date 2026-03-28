@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -20,6 +20,43 @@ serve(async (req) => {
 
     const url = new URL(req.url);
     const endpoint = url.searchParams.get('endpoint') || 'exercises';
+
+    // ── Image proxy route ──
+    if (endpoint === 'image') {
+      const exerciseId = url.searchParams.get('exerciseId');
+      if (!exerciseId) {
+        return new Response(JSON.stringify({ error: 'Missing exerciseId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const imageUrl = `https://exercisedb.p.rapidapi.com/image/${encodeURIComponent(exerciseId)}`;
+      const imgResponse = await fetch(imageUrl, {
+        headers: {
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+        },
+      });
+
+      if (!imgResponse.ok) {
+        return new Response(JSON.stringify({ error: `Image fetch failed: ${imgResponse.status}` }), {
+          status: imgResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const contentType = imgResponse.headers.get('content-type') || 'image/gif';
+      const body = await imgResponse.arrayBuffer();
+
+      return new Response(body, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+        },
+      });
+    }
+
+    // ── Data routes ──
     const limit = url.searchParams.get('limit') || '50';
     const offset = url.searchParams.get('offset') || '0';
     const bodyPart = url.searchParams.get('bodyPart') || '';

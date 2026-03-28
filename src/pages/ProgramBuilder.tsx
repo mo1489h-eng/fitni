@@ -239,6 +239,7 @@ const ProgramBuilder = () => {
       name_en: item.name_en,
       muscle: item.bodyPart,
       gifUrl: item.gifUrl,
+      exerciseDbId: item.id,
       sets: 3,
       reps: 10,
       weight: 0,

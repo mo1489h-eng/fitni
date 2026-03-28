@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePortalToken } from "@/hooks/usePortalToken";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

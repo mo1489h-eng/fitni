@@ -61,7 +61,7 @@ interface PageConfig {
   limited_offer_packages?: string[];
 }
 
-const MOYASAR_PUBLISHABLE_KEY = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";
+
 
 const THEME_COLORS: Record<string, { bg: string; accent: string; text: string; muted: string; card: string; border: string }> = {
   dark: { bg: "#050505", accent: "#16a34a", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },

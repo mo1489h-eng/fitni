@@ -530,9 +530,14 @@ const ClientProfile = () => {
                 <div className="text-center py-10 text-muted-foreground">
                   <Dumbbell className="w-8 h-8 mx-auto mb-2 opacity-40" strokeWidth={1.5} />
                   <p className="text-sm">لم يتم تعيين برنامج بعد</p>
-                  <Button className="mt-4 gap-1" onClick={() => setShowProgramModal(true)}>
-                    <ClipboardList className="w-4 h-4" strokeWidth={1.5} /> تعيين برنامج
-                  </Button>
+                  <div className="flex gap-2 justify-center mt-4">
+                    <Button className="gap-1" onClick={() => setShowProgramModal(true)}>
+                      <ClipboardList className="w-4 h-4" strokeWidth={1.5} /> تعيين برنامج
+                    </Button>
+                    <Button variant="outline" className="gap-1" onClick={() => setShowTemplateLibrary(true)}>
+                      <BookOpen className="w-4 h-4" strokeWidth={1.5} /> من المكتبة
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

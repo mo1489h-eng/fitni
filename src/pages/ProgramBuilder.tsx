@@ -247,17 +247,6 @@ const ProgramBuilder = () => {
     toast({ title: "تم إنشاء أسبوع ديلود (حجم مخفض 40%)" });
   };
 
-  const addExerciseFromLibrary = (item: ExerciseLibraryItem) => {
-    const currentDay = localDays[activeDay];
-    if (!currentDay || currentDay.isRest) return;
-    const newEx: LocalExercise = {
-      id: genId(), name: item.name_ar, muscle: item.muscle_group,
-      sets: 3, reps: 10, weight: 0, video_url: item.video_url || "",
-      rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: false,
-    };
-    updateDay(activeDay, d => ({ ...d, exercises: [...d.exercises, newEx] }));
-  };
-
   // VIEW: DETAIL
   if (view === "detail" && viewProgramId) {
     const program = programs.find(p => p.id === viewProgramId);

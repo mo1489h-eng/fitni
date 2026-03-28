@@ -51,6 +51,8 @@ interface PageConfig {
   font?: string;
   hero_style?: string;
   hero_color?: string;
+  hero_image_url?: string;
+  cover_image_url?: string;
   stats?: { label: string; value: string }[];
   specialties?: string[];
   about_text?: string;

@@ -77,10 +77,12 @@ const CopilotChat = () => {
       const { data, error } = await supabase
         .from("copilot_messages" as any)
         .select("*")
-        .order("created_at", { ascending: true })
-        .limit(100);
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (error) throw error;
-      return (data as any[]).map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      return (data as any[])
+        .reverse()
+        .map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }));
     },
     enabled: !!user,
   });

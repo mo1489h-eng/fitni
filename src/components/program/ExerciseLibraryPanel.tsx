@@ -10,6 +10,7 @@ import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
+import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
 
 export interface SelectedExercise {
   id: string;
@@ -163,12 +164,10 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       >
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
           <img
-            src={ex.gifUrl}
+            src={getProxiedImageUrl(ex.gifUrl)}
             alt={ex.name}
             className="w-full h-full object-cover"
             loading="lazy"
-            referrerPolicy="no-referrer"
-            crossOrigin="anonymous"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
               const sibling = e.currentTarget.nextElementSibling as HTMLElement;
@@ -217,11 +216,9 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
           <div className="space-y-4">
              <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative">
                <img
-                 src={ex.gifUrl}
+                 src={getProxiedImageUrl(ex.gifUrl)}
                  alt={ex.name}
                  className="w-full h-full object-contain"
-                 referrerPolicy="no-referrer"
-                 crossOrigin="anonymous"
                  onError={(e) => {
                    e.currentTarget.style.display = 'none';
                    const sibling = e.currentTarget.nextElementSibling as HTMLElement;

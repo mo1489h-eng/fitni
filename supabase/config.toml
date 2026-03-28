@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.subscription-reminders]
 verify_jwt = false
+
+[functions.create-tap-charge]
+verify_jwt = false
+
+[functions.tap-webhook]
+verify_jwt = false

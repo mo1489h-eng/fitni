@@ -51,6 +51,8 @@ interface PageConfig {
   font?: string;
   hero_style?: string;
   hero_color?: string;
+  hero_image_url?: string;
+  cover_image_url?: string;
   stats?: { label: string; value: string }[];
   specialties?: string[];
   about_text?: string;
@@ -527,32 +529,41 @@ const TrainerPublicPage = () => {
          ═══════════════════════════════════════════════ */}
       {!hiddenSections.includes("hero") && (
         <section className="relative min-h-screen flex items-center overflow-hidden">
-          {/* Ambient background effects */}
-          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 80% 60% at 75% 40%, ${brandColor}08 0%, transparent 70%)` }} />
-          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 50% 50% at 20% 80%, ${brandColor}06 0%, transparent 60%)` }} />
-          {/* Grid texture */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(${COLORS.text} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.text} 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
+          {/* Cover image background OR ambient effects */}
+          {pc.cover_image_url ? (
+            <>
+              <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${pc.cover_image_url})` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${COLORS.bg}e0 0%, ${COLORS.bg}b0 40%, ${COLORS.bg}e8 100%)` }} />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 80% 60% at 75% 40%, ${brandColor}08 0%, transparent 70%)` }} />
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 50% 50% at 20% 80%, ${brandColor}06 0%, transparent 60%)` }} />
+              {/* Grid texture */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(${COLORS.text} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.text} 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
+            </>
+          )}
           {/* Bottom gradient */}
           <div className="absolute bottom-0 left-0 right-0 h-48" style={{ background: `linear-gradient(to top, ${COLORS.bg}, transparent)` }} />
 
           <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative w-full">
             <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-              {/* Image side (left in RTL = appears right visually) */}
+              {/* Profile image - circular with green glow */}
               <Reveal className="relative order-1 lg:order-2 flex-shrink-0">
-                <div className="relative">
+                <div className="relative flex items-center justify-center">
                   {/* Green glow behind image */}
-                  <div className="absolute inset-0 rounded-[2rem] blur-[60px]" style={{ backgroundColor: `${brandColor}15` }} />
+                  <div className="absolute w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] rounded-full blur-[80px]" style={{ backgroundColor: `${brandColor}18` }} />
                   {profile.avatar_url ? (
                     <img
                       src={profile.avatar_url}
                       alt={profile.full_name}
-                      className="relative w-72 h-72 lg:w-[400px] lg:h-[480px] rounded-[2rem] object-cover"
-                      style={{ border: `1px solid ${COLORS.border}`, boxShadow: `0 0 80px ${brandColor}12, 0 40px 80px rgba(0,0,0,0.5)` }}
+                      className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] rounded-full object-cover"
+                      style={{ border: `3px solid ${brandColor}30`, boxShadow: `0 0 60px ${brandColor}15, 0 0 120px ${brandColor}08, 0 40px 80px rgba(0,0,0,0.5)` }}
                     />
                   ) : (
                     <div
-                      className="relative w-72 h-72 lg:w-[400px] lg:h-[480px] rounded-[2rem] flex items-center justify-center text-7xl font-black"
-                      style={{ backgroundColor: `${brandColor}10`, color: brandColor, border: `1px solid ${COLORS.border}`, boxShadow: `0 0 80px ${brandColor}12` }}
+                      className="relative w-[280px] h-[280px] lg:w-[340px] lg:h-[340px] rounded-full flex items-center justify-center text-7xl lg:text-8xl font-black"
+                      style={{ backgroundColor: `${COLORS.card}`, color: brandColor, border: `3px solid ${brandColor}30`, boxShadow: `0 0 60px ${brandColor}15, 0 0 120px ${brandColor}08` }}
                     >
                       {initials}
                     </div>

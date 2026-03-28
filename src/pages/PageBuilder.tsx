@@ -14,7 +14,7 @@ import {
   ChevronUp, ChevronDown, Save, Loader2, Plus, X, Trash2, Star,
   Eye, GripVertical, Monitor, Smartphone, Copy, MessageCircle,
   QrCode, ArrowLeft, Palette, Type, Layout, Share2,
-  Package, CheckCircle, Sparkles, CloudOff,
+  Package, CheckCircle, Sparkles, CloudOff, ImageIcon,
 } from "lucide-react";
 
 interface PageStat { label: string; value: string }
@@ -25,6 +25,7 @@ interface PageConfig {
   hero_style: string;
   hero_image_url?: string;
   hero_color?: string;
+  cover_image_url?: string;
   stats: PageStat[];
   specialties: string[];
   about_text: string;
@@ -84,6 +85,8 @@ const PageBuilder = () => {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const galleryRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [newStat, setNewStat] = useState({ label: "", value: "" });
   const [newTestimonial, setNewTestimonial] = useState<Testimonial>({ name: "", text: "", rating: 5, result: "" });
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
@@ -185,6 +188,21 @@ const PageBuilder = () => {
       toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
     } finally {
       setUploadingGallery(false);
+    }
+  };
+
+  const handleCoverUpload = async (f: File) => {
+    if (!user) return;
+    setUploadingCover(true);
+    try {
+      const path = `covers/${user.id}/${Date.now()}.jpg`;
+      const result = await uploadImage(f, "progress-photos", path);
+      setConfig(c => ({ ...c, cover_image_url: result.signedUrl }));
+      toast({ title: "تم رفع صورة الغلاف" });
+    } catch (err: any) {
+      toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
+    } finally {
+      setUploadingCover(false);
     }
   };
 
@@ -320,6 +338,39 @@ const PageBuilder = () => {
                     <span className="text-xs text-[#555]">اختر لون الخلفية</span>
                   </div>
                 )}
+              </div>
+
+              <Separator className="bg-[hsl(0_0%_10%)]" />
+
+              {/* Cover image */}
+              <div className="space-y-3">
+                <h3 className="font-bold text-sm text-white">صورة الغلاف</h3>
+                <p className="text-xs text-[#555]">تظهر كخلفية في قسم الهيرو بالصفحة العامة</p>
+                {config.cover_image_url ? (
+                  <div className="relative rounded-xl overflow-hidden border border-[hsl(0_0%_10%)]">
+                    <img src={config.cover_image_url} alt="" className="w-full aspect-video object-cover" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                      <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => coverRef.current?.click()}>
+                        <ImageIcon className="w-4 h-4" strokeWidth={1.5} />
+                        تغيير
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-1.5 border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => setConfig(c => ({ ...c, cover_image_url: undefined }))}>
+                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        حذف
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => coverRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="w-full aspect-video rounded-xl border-2 border-dashed border-[hsl(0_0%_10%)] flex flex-col items-center justify-center gap-2 text-[#555] hover:border-primary hover:text-primary transition-colors"
+                  >
+                    {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-6 h-6" strokeWidth={1.5} />}
+                    <span className="text-xs">{uploadingCover ? "جاري الرفع..." : "اضغط لرفع صورة الغلاف"}</span>
+                  </button>
+                )}
+                <input ref={coverRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverUpload(f); }} />
               </div>
             </TabsContent>
 

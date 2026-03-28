@@ -80,6 +80,7 @@ const Subscription = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 pb-8" dir="rtl">
+        <TapTestModeBanner />
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="p-1 hover:bg-[hsl(0_0%_10%)]" onClick={() => navigate("/settings")}>

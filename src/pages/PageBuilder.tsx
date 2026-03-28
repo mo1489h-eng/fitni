@@ -191,6 +191,21 @@ const PageBuilder = () => {
     }
   };
 
+  const handleCoverUpload = async (f: File) => {
+    if (!user) return;
+    setUploadingCover(true);
+    try {
+      const path = `covers/${user.id}/${Date.now()}.jpg`;
+      const result = await uploadImage(f, "progress-photos", path);
+      setConfig(c => ({ ...c, cover_image_url: result.signedUrl }));
+      toast({ title: "تم رفع صورة الغلاف" });
+    } catch (err: any) {
+      toast({ title: err.message || "حدث خطأ في رفع الصورة", variant: "destructive" });
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
   const publicDomain = "https://coachbase.health";
   const pageUrl = profile?.username ? `${publicDomain}/t/${profile.username}` : "";
 

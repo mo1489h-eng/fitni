@@ -47,6 +47,19 @@ const AVATAR_COLORS = [
   "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
 ];
 
+const PhoneRevealButton = ({ phone }: { phone: string }) => {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRevealed(!revealed); }}
+      className="flex items-center gap-0.5 hover:text-primary transition-colors"
+    >
+      <Phone className="w-3 h-3" strokeWidth={1.5} />
+      {revealed ? <span dir="ltr">{phone}</span> : <span className="text-[10px]">إظهار الرقم</span>}
+    </button>
+  );
+};
+
 const Clients = () => {
   usePageTitle("العملاء");
   const [search, setSearch] = useState("");
@@ -285,10 +298,7 @@ const Clients = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                           {client.phone && (
-                            <span className="flex items-center gap-0.5">
-                              <Phone className="w-3 h-3" strokeWidth={1.5} />
-                              <span dir="ltr">{client.phone}</span>
-                            </span>
+                            <PhoneRevealButton phone={client.phone} />
                           )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

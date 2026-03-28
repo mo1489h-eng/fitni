@@ -77,8 +77,7 @@ const Payments = () => {
     return p.status === "paid" && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).reduce((s, p) => s + Number(p.amount), 0);
 
-  const commission = Math.round(paidThisMonth * 0.1);
-  const netEarnings = paidThisMonth - commission;
+  const netEarnings = paidThisMonth;
 
   const StatCard = ({ icon: Icon, label, value, suffix = "", color = "text-primary", borderColor = "border-t-primary" }: any) => (
     <div className={`bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] ${borderColor} border-t-2 p-5 transition-all duration-200 hover:-translate-y-0.5`}>
@@ -122,13 +121,6 @@ const Payments = () => {
               />
             </div>
 
-            {/* Commission info */}
-            <div className="bg-primary/5 rounded-xl border border-primary/20 p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">رسوم CoachBase (10%)</span>
-                <span className="font-bold text-foreground tabular-nums">{commission} ر.س</span>
-              </div>
-            </div>
 
             {/* Revenue Chart */}
             <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-5">

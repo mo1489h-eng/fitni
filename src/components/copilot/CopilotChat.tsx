@@ -7,7 +7,10 @@ import { toast } from "@/hooks/use-toast";
 import {
   Send, Loader2, Sparkles, Trash2, Check, X, Undo2,
   ClipboardEdit, Dumbbell, UtensilsCrossed, CalendarPlus, UserCog, MessageSquare,
+  ChevronDown, UserCircle,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -37,6 +40,11 @@ const ACTION_CHIPS = [
   { label: "عدّل بيانات عميل", icon: UserCog, prompt: "أريد تعديل بيانات عميل" },
 ];
 
+const AVATAR_COLORS = [
+  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-orange-600",
+  "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
+];
+
 const CopilotChat = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -47,9 +55,21 @@ const CopilotChat = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastActionLogId, setLastActionLogId] = useState<string | null>(null);
   const [undoTimer, setUndoTimer] = useState<number>(0);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["copilot-clients", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const { data: savedMessages } = useQuery({
     queryKey: ["copilot-chat-messages", user?.id],
@@ -178,10 +198,18 @@ const CopilotChat = () => {
 
     try {
       const headers = await getAuthHeaders();
+      const contextPrefix = selectedClient
+        ? `[السياق: العميل المحدد هو "${selectedClient.name}" بمعرف ${selectedClient.id}]\n`
+        : "";
+      const messagesWithContext = contextPrefix
+        ? newMessages.map((m, i) => i === newMessages.length - 1 && m.role === "user"
+          ? { ...m, content: contextPrefix + m.content }
+          : m)
+        : newMessages;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers,
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: messagesWithContext }),
       });
 
       if (!resp.ok) {
@@ -305,9 +333,54 @@ const CopilotChat = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
+      {/* Client Selector */}
+      <div className="mb-3 flex items-center gap-2">
+        <Popover open={clientPickerOpen} onOpenChange={setClientPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 bg-card border-border hover:border-primary/40">
+              <UserCircle className="w-4 h-4" strokeWidth={1.5} />
+              {selectedClient ? selectedClient.name : "اختر عميل"}
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="start">
+            <ScrollArea className="max-h-60">
+              <div className="p-1">
+                {clients.map((c, i) => (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSelectedClient({ id: c.id, name: c.name }); setClientPickerOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors ${selectedClient?.id === c.id ? "bg-primary/10 text-primary" : "text-foreground"}`}
+                  >
+                    <div className={`w-7 h-7 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-[10px] font-bold text-white">{c.name.charAt(0)}</span>
+                    </div>
+                    {c.name}
+                  </button>
+                ))}
+                {clients.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">لا يوجد عملاء</p>
+                )}
+              </div>
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+        {selectedClient && (
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setSelectedClient(null)}>
+            تغيير العميل
+          </Button>
+        )}
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-3 pb-4">
-        {messages.length === 0 && (
+        {!selectedClient && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <UserCircle className="w-12 h-12 text-muted-foreground/30 mb-3" strokeWidth={1} />
+            <p className="text-sm text-muted-foreground">اختر عميل أولاً للبدء</p>
+          </div>
+        )}
+        {selectedClient && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-7 h-7 text-primary" strokeWidth={1.5} />
@@ -407,7 +480,7 @@ const CopilotChat = () => {
       )}
 
       {/* Suggestions */}
-      {messages.length === 0 && (
+      {selectedClient && messages.length === 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {SUGGESTIONS.map(s => (
             <button
@@ -421,7 +494,15 @@ const CopilotChat = () => {
         </div>
       )}
 
-      {/* Input */}
+      {/* Selected client tag + Input */}
+      {selectedClient && (
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="text-[10px] px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+            <UserCircle className="w-3 h-3" strokeWidth={1.5} />
+            {selectedClient.name}
+          </span>
+        </div>
+      )}
       <div className="flex items-end gap-2 border-t border-border pt-3">
         {messages.length > 0 && (
           <Button
@@ -440,17 +521,17 @@ const CopilotChat = () => {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="اكتب أمرك... (مثال: عدّل برنامج أحمد)"
+            placeholder={selectedClient ? `اكتب أمرك عن ${selectedClient.name}...` : "اختر عميل أولاً"}
             rows={1}
-            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            disabled={isStreaming || isExecuting}
+            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            disabled={isStreaming || isExecuting || !selectedClient}
           />
         </div>
         <Button
           size="icon"
           className="shrink-0 rounded-xl"
           onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isStreaming || isExecuting}
+          disabled={!input.trim() || isStreaming || isExecuting || !selectedClient}
         >
           {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" strokeWidth={1.5} />}
         </Button>

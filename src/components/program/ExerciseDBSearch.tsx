@@ -84,14 +84,6 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
       } else {
         params.set("endpoint", "exercises");
       }
-
-      const { data, error } = await supabase.functions.invoke("exercisedb-proxy", {
-        body: null,
-        headers: {},
-        method: "GET",
-      });
-
-      // Use URL-based call instead
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
       const response = await fetch(url, {

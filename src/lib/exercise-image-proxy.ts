@@ -4,6 +4,6 @@
  */
 export function getExerciseImageUrl(exerciseId: string): string {
   if (!exerciseId) return '';
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  return `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?endpoint=image&exerciseId=${encodeURIComponent(exerciseId)}`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  return `${supabaseUrl}/functions/v1/exercise-gif?id=${encodeURIComponent(exerciseId)}`;
 }

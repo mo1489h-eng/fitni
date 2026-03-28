@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import TapTestModeBanner from "@/components/TapTestModeBanner";
 
 interface TapPaymentProps {
   plan: "basic" | "pro";

@@ -10,35 +10,8 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getArabicBodyPart, getArabicTarget, BODY_PART_CONFIG } from "@/lib/exercise-translations";
-
-export interface LocalExercise {
-  id: string;
-  name: string;
-  name_en?: string;
-  muscle: string;
-  gifUrl?: string;
-  sets: number;
-  reps: number;
-  weight: number;
-  video_url: string;
-  rest_seconds: number;
-  tempo: string;
-  rpe: number | null;
-  notes: string;
-  supersetWith?: string;
-  is_warmup: boolean;
-  // Set-level data
-  setDetails?: SetDetail[];
-}
-
-export interface SetDetail {
-  setNumber: number;
-  weight: number;
-  reps: number;
-  tempo: string;
-  rest: number;
-}
+import { getArabicBodyPart, BODY_PART_CONFIG } from "@/lib/exercise-translations";
+import { LocalExercise, SetDetail } from "./types";
 
 interface Props {
   ex: LocalExercise;

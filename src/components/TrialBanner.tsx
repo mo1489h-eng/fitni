@@ -64,7 +64,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
 
   if (!profile) return null;
 
-  const isSubscribed = profile.subscription_plan && profile.subscription_plan !== "free";
+  const isSubscribed = profile.subscription_plan === "basic" || profile.subscription_plan === "pro";
   const formattedTrialEnd = trialEndDate.toLocaleDateString("ar-SA", {
     year: "numeric",
     month: "long",

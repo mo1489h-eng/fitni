@@ -7,7 +7,7 @@ export type PlanType = "free" | "basic" | "pro" | null;
 const FREE_TRIAL_DAYS = 183; // 6 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
-  free: { maxClients: Infinity }, // During trial: unlimited
+  free: { maxClients: 0 },
   basic: { maxClients: 10 },
   pro: { maxClients: Infinity },
 };
@@ -27,30 +27,27 @@ export function usePlanLimits() {
     enabled: !!user,
   });
 
-  // Normalize plan: only "basic" and "pro" are paid plans, everything else is treated as "free"
   const rawPlan = profile?.subscription_plan;
-  const plan: PlanType = (rawPlan === "basic" || rawPlan === "pro") ? rawPlan : "free";
+  const plan: PlanType = rawPlan === "basic" || rawPlan === "pro" ? rawPlan : "free";
 
   const createdAt = profile ? new Date(profile.created_at) : new Date();
-  const daysSinceCreation = Math.floor(
-    (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
-  );
-  const trialDaysLeft = Math.max(FREE_TRIAL_DAYS - daysSinceCreation, 0);
-  const trialEndDate = new Date(createdAt.getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000);
-  const isTrialExpired = plan === "free" && trialDaysLeft <= 0;
-  const isOnTrial = plan === "free" && trialDaysLeft > 0;
+  const trialEndDate = new Date(createdAt);
+  trialEndDate.setMonth(trialEndDate.getMonth() + 6);
 
-  // During free trial: unlimited clients; after trial expired on free: 0; basic: 10; pro: unlimited
-  const effectiveMaxClients = isOnTrial ? Infinity : (PLAN_LIMITS[plan]?.maxClients ?? 10);
-  const maxClients = effectiveMaxClients;
-  const canAddClient = clientCount < maxClients && !isTrialExpired;
+  const now = new Date();
+  const msRemaining = trialEndDate.getTime() - now.getTime();
+  const trialDaysLeft = Math.max(Math.ceil(msRemaining / (1000 * 60 * 60 * 24)), 0);
+  const isOnTrial = plan === "free" && msRemaining > 0;
+  const isTrialExpired = plan === "free" && !isOnTrial;
 
   const isFree = plan === "free";
   const isBasic = plan === "basic";
   const isPro = plan === "pro";
+  const hasFullAccess = isPro || isBasic || isOnTrial;
 
-  // During free trial period: ALL features unlocked (full Pro access)
-  const hasFullAccess = isPro || isOnTrial;
+  const maxClients = isOnTrial ? Infinity : (PLAN_LIMITS[plan]?.maxClients ?? 0);
+  const canAddClient = clientCount < maxClients && !isTrialExpired;
+
   const hasReportsAccess = hasFullAccess;
   const hasCopilotAccess = hasFullAccess;
   const hasChallengesAccess = hasFullAccess;
@@ -69,20 +66,22 @@ export function usePlanLimits() {
         description: "اشترك للاستمرار في إضافة العملاء وإدارة برامجك.",
       };
     }
-    if (clientCount >= maxClients && (isBasic || isFree)) {
+
+    if (clientCount >= maxClients && isBasic) {
       return {
         blocked: true,
         title: "وصلت الحد الأقصى للباقة الأساسية",
         description: "ترقّ للاحترافي لإضافة عملاء غير محدودين",
       };
     }
+
     return null;
   };
 
   const getProFeatureBlockReason = () => ({
     blocked: !hasFullAccess,
-    title: "هذه الميزة للباقة الاحترافية",
-    description: "احصل على عملاء غير محدودين + AI كوبايلت + التحديات الجماعية",
+    title: "هذه الميزة غير متاحة حالياً",
+    description: "فعّل باقتك للاستمرار في استخدام هذه الميزة بعد انتهاء الفترة المجانية.",
   });
 
   return {
@@ -90,6 +89,7 @@ export function usePlanLimits() {
     clientCount,
     maxClients,
     canAddClient,
+    hasFullAccess,
     hasReportsAccess,
     hasCopilotAccess,
     hasChallengesAccess,

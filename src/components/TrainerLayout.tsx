@@ -148,7 +148,7 @@ const TrainerLayout = ({
 
           <div className="border-t border-border px-4 py-6">
             <div className="mb-4 rounded-full border border-primary/20 bg-primary/10 px-4 py-2.5 text-center text-xs font-semibold text-primary">
-              {profile?.subscription_plan === "pro" ? "الخطة الاحترافية" : "الخطة الأساسية"}
+              {currentPlanLabel}
             </div>
             <button
               type="button"

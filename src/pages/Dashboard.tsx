@@ -193,6 +193,7 @@ const Dashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user, queryClient]);
 
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["dashboard-clients", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });

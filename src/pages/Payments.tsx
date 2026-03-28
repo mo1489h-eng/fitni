@@ -121,13 +121,6 @@ const Payments = () => {
               />
             </div>
 
-            {/* Commission info */}
-            <div className="bg-primary/5 rounded-xl border border-primary/20 p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">رسوم CoachBase (10%)</span>
-                <span className="font-bold text-foreground tabular-nums">{commission} ر.س</span>
-              </div>
-            </div>
 
             {/* Revenue Chart */}
             <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-5">

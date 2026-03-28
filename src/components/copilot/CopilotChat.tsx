@@ -40,6 +40,11 @@ const ACTION_CHIPS = [
   { label: "عدّل بيانات عميل", icon: UserCog, prompt: "أريد تعديل بيانات عميل" },
 ];
 
+const AVATAR_COLORS = [
+  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-orange-600",
+  "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
+];
+
 const CopilotChat = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -50,9 +55,21 @@ const CopilotChat = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastActionLogId, setLastActionLogId] = useState<string | null>(null);
   const [undoTimer, setUndoTimer] = useState<number>(0);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["copilot-clients", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const { data: savedMessages } = useQuery({
     queryKey: ["copilot-chat-messages", user?.id],

@@ -15,6 +15,7 @@ import {
   Check,
 } from "lucide-react";
 import CopyProgramModal from "@/components/CopyProgramModal";
+import SaveAsTemplateModal from "@/components/templates/SaveAsTemplateModal";
 import CreateProgramModal from "@/components/program/CreateProgramModal";
 import WeekDayNav, { WeekData, DayData } from "@/components/program/WeekDayNav";
 import DayWorkoutEditor, { EditorDay } from "@/components/program/DayWorkoutEditor";

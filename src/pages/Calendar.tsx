@@ -15,7 +15,6 @@ import CalendarWeekGrid from "@/components/calendar/CalendarWeekGrid";
 import CalendarDayTimeline from "@/components/calendar/CalendarDayTimeline";
 import SessionSlidePanel from "@/components/calendar/SessionSlidePanel";
 import SessionDetailPanel from "@/components/calendar/SessionDetailPanel";
-import { getSessionTypeStyle } from "@/components/calendar/calendar-utils";
 import {
   ViewMode, Session, Client, MONTHS_AR, DAYS_AR,
   getDateStr, getWeekDays, getSessionTypeStyle,

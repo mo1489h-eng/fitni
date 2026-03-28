@@ -90,8 +90,6 @@ const TrainerPublicPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const moyasarRef = useRef<HTMLDivElement>(null);
-  const moyasarInitRef = useRef(false);
   const packagesRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
 

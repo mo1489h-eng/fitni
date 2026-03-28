@@ -7,8 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ChevronRight, ChevronLeft, Plus, CalendarDays, Loader2,
-  Search, CalendarClock,
+  ChevronRight, ChevronLeft, Plus, Loader2,
 } from "lucide-react";
 import CalendarMonthGrid from "@/components/calendar/CalendarMonthGrid";
 import CalendarWeekGrid from "@/components/calendar/CalendarWeekGrid";

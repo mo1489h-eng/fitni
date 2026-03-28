@@ -8,6 +8,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import TrialBanner from "@/components/TrialBanner";
+import TapTestModeBanner from "@/components/TapTestModeBanner";
 import { TRAINER_PLAN_DETAILS } from "@/lib/plan-config";
 import {
   Crown, Users, CheckCircle, AlertTriangle,

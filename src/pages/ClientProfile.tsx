@@ -14,7 +14,7 @@ import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, CalendarDays, Copy, Send,
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
-  Sparkles, Eye, Activity, UserCheck,
+  Sparkles, Eye, Activity, UserCheck, BookOpen,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
 import CopilotPanel from "@/components/CopilotPanel";

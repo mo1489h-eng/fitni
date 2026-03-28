@@ -518,12 +518,13 @@ const CopilotChat = () => {
         {messages.length > 0 && (
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
+            size="sm"
+            className="shrink-0 text-muted-foreground hover:text-destructive gap-1 text-xs"
             onClick={() => clearChat.mutate()}
             disabled={clearChat.isPending || isStreaming}
           >
-            <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+            مسح المحادثة
           </Button>
         )}
         <div className="flex-1 relative">

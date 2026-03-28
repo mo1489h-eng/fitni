@@ -1,0 +1,73 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY');
+    if (!RAPIDAPI_KEY) {
+      return new Response(JSON.stringify({ error: 'RAPIDAPI_KEY not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const url = new URL(req.url);
+    const endpoint = url.searchParams.get('endpoint') || 'exercises';
+    const limit = url.searchParams.get('limit') || '50';
+    const offset = url.searchParams.get('offset') || '0';
+    const bodyPart = url.searchParams.get('bodyPart') || '';
+    const target = url.searchParams.get('target') || '';
+    const name = url.searchParams.get('name') || '';
+
+    let apiUrl = 'https://exercisedb.p.rapidapi.com';
+
+    if (endpoint === 'exercises') {
+      apiUrl += `/exercises?limit=${limit}&offset=${offset}`;
+    } else if (endpoint === 'bodyPartList') {
+      apiUrl += '/exercises/bodyPartList';
+    } else if (endpoint === 'byBodyPart' && bodyPart) {
+      apiUrl += `/exercises/bodyPart/${encodeURIComponent(bodyPart)}?limit=${limit}&offset=${offset}`;
+    } else if (endpoint === 'byTarget' && target) {
+      apiUrl += `/exercises/target/${encodeURIComponent(target)}?limit=${limit}&offset=${offset}`;
+    } else if (endpoint === 'byName' && name) {
+      apiUrl += `/exercises/name/${encodeURIComponent(name)}?limit=${limit}&offset=${offset}`;
+    } else if (endpoint === 'targetList') {
+      apiUrl += '/exercises/targetList';
+    } else if (endpoint === 'equipmentList') {
+      apiUrl += '/exercises/equipmentList';
+    } else {
+      apiUrl += `/exercises?limit=${limit}&offset=${offset}`;
+    }
+
+    const response = await fetch(apiUrl, {
+      headers: {
+        'X-RapidAPI-Key': RAPIDAPI_KEY,
+        'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return new Response(JSON.stringify({ error: `ExerciseDB API error [${response.status}]: ${text}` }), {
+        status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});

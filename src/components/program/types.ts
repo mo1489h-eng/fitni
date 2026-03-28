@@ -1,7 +1,17 @@
+export interface SetDetail {
+  setNumber: number;
+  weight: number;
+  reps: number;
+  tempo: string;
+  rest: number;
+}
+
 export interface LocalExercise {
   id: string;
   name: string;
+  name_en?: string;
   muscle: string;
+  gifUrl?: string;
   sets: number;
   reps: number;
   weight: number;
@@ -12,6 +22,7 @@ export interface LocalExercise {
   notes: string;
   supersetWith?: string;
   is_warmup: boolean;
+  setDetails?: SetDetail[];
 }
 
 export interface LocalDay {

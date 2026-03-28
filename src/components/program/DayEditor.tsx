@@ -8,7 +8,7 @@ import {
   Plus, Moon, Dumbbell, Copy, RotateCcw, ChevronDown,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ExerciseLibraryDialog, { type ExerciseLibraryItem } from "@/components/ExerciseLibraryDialog";
+import ExerciseDBSearch, { type SelectedExercise } from "@/components/program/ExerciseDBSearch";
 import ExerciseCard from "@/components/program/ExerciseCard";
 import { LocalDay, LocalExercise, genId } from "./types";
 
@@ -21,7 +21,7 @@ interface Props {
 }
 
 const DayEditor = ({ day, dayIndex, allDays, onUpdateDay, onToast }: Props) => {
-  const [showExLibrary, setShowExLibrary] = useState(false);
+  const [showExSearch, setShowExSearch] = useState(false);
   const [addingToWarmup, setAddingToWarmup] = useState(false);
   const [copyDayDialog, setCopyDayDialog] = useState(false);
 
@@ -30,16 +30,28 @@ const DayEditor = ({ day, dayIndex, allDays, onUpdateDay, onToast }: Props) => {
     [dayIndex, onUpdateDay]
   );
 
-  const addExerciseFromLibrary = (item: ExerciseLibraryItem) => {
-    const newEx: LocalExercise = {
-      id: genId(), name: item.name_ar, muscle: item.muscle_group,
-      sets: 3, reps: 10, weight: 0, video_url: item.video_url || "",
-      rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: addingToWarmup,
-    };
+  const addExercisesFromDB = (selected: SelectedExercise[]) => {
+    const newExercises: LocalExercise[] = selected.map(item => ({
+      id: genId(),
+      name: item.name_ar,
+      name_en: item.name_en,
+      muscle: item.bodyPart,
+      gifUrl: item.gifUrl,
+      sets: 3,
+      reps: 10,
+      weight: 0,
+      video_url: "",
+      rest_seconds: 60,
+      tempo: "",
+      rpe: null,
+      notes: "",
+      is_warmup: addingToWarmup,
+    }));
+
     if (addingToWarmup) {
-      updateDay(d => ({ ...d, warmup: [...d.warmup, newEx] }));
+      updateDay(d => ({ ...d, warmup: [...d.warmup, ...newExercises] }));
     } else {
-      updateDay(d => ({ ...d, exercises: [...d.exercises, newEx] }));
+      updateDay(d => ({ ...d, exercises: [...d.exercises, ...newExercises] }));
     }
     setAddingToWarmup(false);
   };
@@ -185,7 +197,7 @@ const DayEditor = ({ day, dayIndex, allDays, onUpdateDay, onToast }: Props) => {
                 />
               ))}
               <Button variant="outline" size="sm" className="w-full gap-1 text-xs h-8"
-                onClick={() => { setAddingToWarmup(true); setShowExLibrary(true); }}>
+                onClick={() => { setAddingToWarmup(true); setShowExSearch(true); }}>
                 <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />إضافة إحماء
               </Button>
             </div>
@@ -228,19 +240,19 @@ const DayEditor = ({ day, dayIndex, allDays, onUpdateDay, onToast }: Props) => {
       <Button
         className="w-full gap-2 h-12 text-sm"
         variant="outline"
-        onClick={() => { setAddingToWarmup(false); setShowExLibrary(true); }}
+        onClick={() => { setAddingToWarmup(false); setShowExSearch(true); }}
       >
-        <Plus className="w-5 h-5" strokeWidth={1.5} />إضافة تمرين من المكتبة
+        <Plus className="w-5 h-5" strokeWidth={1.5} />إضافة تمرين
       </Button>
 
-      {/* Dialogs */}
-      <ExerciseLibraryDialog
-        open={showExLibrary}
-        onOpenChange={setShowExLibrary}
-        onSelect={addExerciseFromLibrary}
-        title={addingToWarmup ? "إضافة تمرين إحماء" : "إضافة تمرين"}
+      {/* Exercise DB Search Dialog */}
+      <ExerciseDBSearch
+        open={showExSearch}
+        onOpenChange={setShowExSearch}
+        onSelect={addExercisesFromDB}
       />
 
+      {/* Copy Day Dialog */}
       <Dialog open={copyDayDialog} onOpenChange={setCopyDayDialog}>
         <DialogContent className="max-w-sm" dir="rtl">
           <DialogHeader><DialogTitle>نسخ اليوم إلى</DialogTitle></DialogHeader>

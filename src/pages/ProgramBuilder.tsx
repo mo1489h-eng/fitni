@@ -18,7 +18,6 @@ import ProgramDetail from "@/components/program/ProgramDetail";
 import WeekCalendar from "@/components/program/WeekCalendar";
 import DayEditor from "@/components/program/DayEditor";
 import SmartWarnings from "@/components/program/SmartWarnings";
-import ExerciseLibraryDialog, { type ExerciseLibraryItem } from "@/components/ExerciseLibraryDialog";
 import { LocalDay, LocalExercise, WEEK_DAYS, genId } from "@/components/program/types";
 import { ALL_TEMPLATES, ProgramTemplate } from "@/components/program/templates-data";
 
@@ -246,17 +245,6 @@ const ProgramBuilder = () => {
       };
     }));
     toast({ title: "تم إنشاء أسبوع ديلود (حجم مخفض 40%)" });
-  };
-
-  const addExerciseFromLibrary = (item: ExerciseLibraryItem) => {
-    const currentDay = localDays[activeDay];
-    if (!currentDay || currentDay.isRest) return;
-    const newEx: LocalExercise = {
-      id: genId(), name: item.name_ar, muscle: item.muscle_group,
-      sets: 3, reps: 10, weight: 0, video_url: item.video_url || "",
-      rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: false,
-    };
-    updateDay(activeDay, d => ({ ...d, exercises: [...d.exercises, newEx] }));
   };
 
   // VIEW: DETAIL

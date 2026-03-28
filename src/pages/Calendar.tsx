@@ -18,7 +18,7 @@ import SessionDetailPanel from "@/components/calendar/SessionDetailPanel";
 import { getSessionTypeStyle } from "@/components/calendar/calendar-utils";
 import {
   ViewMode, Session, Client, MONTHS_AR, DAYS_AR,
-  getDateStr, getWeekDays,
+  getDateStr, getWeekDays, getSessionTypeStyle,
 } from "@/components/calendar/calendar-utils";
 
 const CalendarPage = () => {

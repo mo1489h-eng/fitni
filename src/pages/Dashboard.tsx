@@ -332,7 +332,7 @@ const Dashboard = () => {
   });
 
   const handleCopilot = () => {
-    if (!isPro) {
+    if (!hasCopilotAccess) {
       setShowUpgrade(true);
       return;
     }

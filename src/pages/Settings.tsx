@@ -598,10 +598,10 @@ const Settings = () => {
                 <Lock className="w-7 h-7 text-warning" />
               </div>
               <p className="text-sm text-muted-foreground">
-                العلامة التجارية المخصصة متاحة فقط في الباقة الاحترافية
+                هذه الخيارات متاحة أثناء الفترة المجانية أو مع أي باقة نشطة.
               </p>
               <Button size="sm" onClick={() => setShowUpgrade(true)}>
-                ترقية الآن
+                عرض الباقات
               </Button>
             </div>
           )}

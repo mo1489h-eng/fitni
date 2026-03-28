@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePortalToken } from "@/hooks/usePortalToken";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +90,23 @@ const PortalWorkout = () => {
     },
     enabled: !!token,
   });
+
+  const portalQueryClient = useQueryClient();
+
+  // Real-time sync: program updates from trainer
+  useEffect(() => {
+    if (!token) return;
+    const channel = supabase
+      .channel('portal-program-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_exercises' }, () => {
+        portalQueryClient.invalidateQueries({ queryKey: ["portal-program", token] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_days' }, () => {
+        portalQueryClient.invalidateQueries({ queryKey: ["portal-program", token] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [token, portalQueryClient]);
 
   const todayIndex = new Date().getDay();
   const weekNumber = clientData?.week_number || 1;

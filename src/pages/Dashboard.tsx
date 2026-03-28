@@ -1,7 +1,7 @@
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
@@ -171,6 +171,27 @@ const Dashboard = () => {
   const [showPlans, setShowPlans] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Real-time sync: workout completions + measurements
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_sessions' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["dashboard-clients", user.id] });
+        toast.success("تم التحديث");
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'measurements' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["dashboard-measurements", user.id] });
+        toast.success("تم التحديث");
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_logs' }, () => {
+        queryClient.invalidateQueries({ queryKey: ["dashboard-clients", user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, queryClient]);
 
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["dashboard-clients", user?.id],

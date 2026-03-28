@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import TrainerBodyScans from "@/components/TrainerBodyScans";
 import ClientPaymentModal from "@/components/ClientPaymentModal";
@@ -175,6 +175,27 @@ const ClientProfile = () => {
     },
     enabled: !!id,
   });
+
+  // Real-time sync: workout_logs, measurements, workout_sessions
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`client-realtime-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_logs', filter: `client_id=eq.${id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["client", id] });
+        toast({ title: "تم التحديث", description: "تم تحديث بيانات التمرين" });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'measurements', filter: `client_id=eq.${id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["measurements", id] });
+        toast({ title: "تم التحديث", description: "تم تحديث القياسات" });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_sessions', filter: `client_id=eq.${id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["client", id] });
+        toast({ title: "تم التحديث", description: "تم تحديث حالة الجلسة" });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [id, queryClient, toast]);
 
   const { data: measurements } = useQuery({
     queryKey: ["measurements", id],

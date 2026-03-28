@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import TrainerBodyScans from "@/components/TrainerBodyScans";
 import ClientPaymentModal from "@/components/ClientPaymentModal";

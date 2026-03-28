@@ -159,6 +159,7 @@ const ClientProfile = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [showProgramModal, setShowProgramModal] = useState(false);
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newFat, setNewFat] = useState("");
   const { toast } = useToast();

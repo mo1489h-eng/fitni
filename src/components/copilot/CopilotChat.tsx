@@ -513,10 +513,10 @@ const CopilotChat = () => {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="اكتب أمرك... (مثال: عدّل برنامج أحمد)"
+            placeholder={selectedClient ? `اكتب أمرك عن ${selectedClient.name}...` : "اختر عميل أولاً"}
             rows={1}
-            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            disabled={isStreaming || isExecuting}
+            className="w-full resize-none rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            disabled={isStreaming || isExecuting || !selectedClient}
           />
         </div>
         <Button

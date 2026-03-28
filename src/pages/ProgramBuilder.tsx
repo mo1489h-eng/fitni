@@ -583,6 +583,48 @@ const ProgramBuilder = () => {
             </div>
           )}
         </div>
+
+        {/* Save as Template Modal */}
+        <SaveAsTemplateModal
+          open={showSaveTemplateModal}
+          onOpenChange={setShowSaveTemplateModal}
+          defaultName={programName}
+          defaultCategory={programGoal}
+          defaultLevel={programLevel}
+          onSave={async (data) => {
+            const trainingDays = days.filter(d => d.type === "training");
+            const programData = trainingDays.map(d => ({
+              dayName: d.label,
+              exercises: d.exercises.map(ex => ({
+                name: ex.name,
+                sets: ex.sets,
+                reps: ex.reps,
+                weight: ex.weight,
+                rest_seconds: ex.rest_seconds,
+                tempo: ex.tempo,
+                rpe: ex.rpe,
+                notes: ex.notes,
+                video_url: ex.video_url,
+                is_warmup: ex.is_warmup,
+              })),
+            }));
+
+            const { error } = await supabase.from("program_templates").insert({
+              trainer_id: user!.id,
+              name: data.name,
+              category: data.category,
+              level: data.level,
+              description: data.description,
+              is_public: data.isPublic,
+              duration_weeks: programWeeks,
+              days_per_week: trainingDays.length > 0 ? Math.ceil(trainingDays.length / programWeeks) : 0,
+              program_data: programData,
+            });
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ["program-templates"] });
+            toast({ title: "تم حفظ القالب بنجاح ✅" });
+          }}
+        />
       </div>
     );
   }

@@ -1,17 +1,16 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Search, X, Check, Dumbbell, Clock, Loader2,
+  Search, Check, Dumbbell, Clock, Loader2,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
-  getArabicEquipment, BODY_PART_CONFIG, BODY_PART_TRANSLATIONS,
+  getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
 
 interface Props {

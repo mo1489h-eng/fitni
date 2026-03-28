@@ -333,9 +333,54 @@ const CopilotChat = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
+      {/* Client Selector */}
+      <div className="mb-3 flex items-center gap-2">
+        <Popover open={clientPickerOpen} onOpenChange={setClientPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 bg-card border-border hover:border-primary/40">
+              <UserCircle className="w-4 h-4" strokeWidth={1.5} />
+              {selectedClient ? selectedClient.name : "اختر عميل"}
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align="start">
+            <ScrollArea className="max-h-60">
+              <div className="p-1">
+                {clients.map((c, i) => (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSelectedClient({ id: c.id, name: c.name }); setClientPickerOpen(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm hover:bg-accent transition-colors ${selectedClient?.id === c.id ? "bg-primary/10 text-primary" : "text-foreground"}`}
+                  >
+                    <div className={`w-7 h-7 rounded-full ${AVATAR_COLORS[i % AVATAR_COLORS.length]} flex items-center justify-center flex-shrink-0`}>
+                      <span className="text-[10px] font-bold text-white">{c.name.charAt(0)}</span>
+                    </div>
+                    {c.name}
+                  </button>
+                ))}
+                {clients.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">لا يوجد عملاء</p>
+                )}
+              </div>
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+        {selectedClient && (
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground" onClick={() => setSelectedClient(null)}>
+            تغيير العميل
+          </Button>
+        )}
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-3 pb-4">
-        {messages.length === 0 && (
+        {!selectedClient && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <UserCircle className="w-12 h-12 text-muted-foreground/30 mb-3" strokeWidth={1} />
+            <p className="text-sm text-muted-foreground">اختر عميل أولاً للبدء</p>
+          </div>
+        )}
+        {selectedClient && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-7 h-7 text-primary" strokeWidth={1.5} />

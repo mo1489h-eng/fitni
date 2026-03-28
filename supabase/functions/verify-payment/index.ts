@@ -12,12 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -31,8 +29,7 @@ serve(async (req) => {
     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const userId = claimsData.claims.sub as string;
@@ -42,60 +39,50 @@ serve(async (req) => {
 
     if (!payment_id || typeof payment_id !== "string") {
       return new Response(JSON.stringify({ error: "Missing payment_id" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!plan || !["basic", "pro"].includes(plan)) {
       return new Response(JSON.stringify({ error: "Invalid plan" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify payment with Moyasar API
-    const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
-    if (!moyasarSecret) {
+    // Verify payment with Tap API
+    const tapSecret = Deno.env.get("TAP_SECRET_KEY");
+    if (!tapSecret) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
-      headers: {
-        Authorization: `Basic ${btoa(moyasarSecret + ":")}`,
-      },
+    const tapRes = await fetch(`https://api.tap.company/v2/charges/${payment_id}`, {
+      headers: { Authorization: `Bearer ${tapSecret}` },
     });
 
-    if (!moyasarRes.ok) {
+    if (!tapRes.ok) {
       return new Response(JSON.stringify({ error: "Failed to verify payment" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const payment = await moyasarRes.json();
+    const payment = await tapRes.json();
 
-    // Verify payment status
-    if (payment.status !== "paid") {
+    if (payment.status !== "CAPTURED") {
       return new Response(JSON.stringify({ error: "Payment not completed", status: payment.status }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify amount matches plan
-    const expectedAmount = plan === "basic" ? 9900 : 19900;
-    if (payment.amount !== expectedAmount) {
+    const expectedAmount = plan === "basic" ? 99 : 199;
+    if (Number(payment.amount) !== expectedAmount) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check for payment replay — ensure this payment_id hasn't been used before
+    // Check for payment replay
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
@@ -107,12 +94,9 @@ serve(async (req) => {
 
     if (existingProfile) {
       return new Response(JSON.stringify({ error: "Payment already used" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Update profile with subscription
 
     const now = new Date();
     const endDate = new Date(now);
@@ -132,59 +116,35 @@ serve(async (req) => {
     if (updateError) {
       console.error("Profile update error:", updateError);
       return new Response(JSON.stringify({ error: "Failed to update subscription" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Send confirmation email via Resend
+    // Send confirmation email
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && userEmail) {
       const planName = plan === "basic" ? "أساسي" : "احترافي";
-      const renewDate = endDate.toLocaleDateString("ar-SA", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-
+      const renewDate = endDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
       try {
         await fetch("https://api.resend.com/emails", {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${resendKey}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: "CoachBase <noreply@coachbase.health>",
             to: [userEmail],
             subject: "شكراً لاشتراكك في CoachBase 🎉",
-            html: `
-              <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #ffffff; border-radius: 16px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #16a34a; font-size: 28px; margin: 0;">CoachBase</h1>
-                </div>
-                <h2 style="font-size: 22px; margin-bottom: 8px;">شكراً لاشتراكك في CoachBase 🎉</h2>
-                <p style="color: #a0a0a0; font-size: 16px; line-height: 1.8;">
-                  تم تفعيل اشتراكك بنجاح
-                </p>
-                <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                  <p style="margin: 8px 0; font-size: 16px;">
-                    <strong style="color: #16a34a;">الخطة:</strong> ${planName}
-                  </p>
-                  <p style="margin: 8px 0; font-size: 16px;">
-                    <strong style="color: #16a34a;">تاريخ التجديد:</strong> ${renewDate}
-                  </p>
-                </div>
-                <p style="color: #666; font-size: 12px; text-align: center; margin-top: 30px;">
-                  شكراً لثقتك بنا — فريق CoachBase
-                </p>
+            html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
+              <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
+              <h2>شكراً لاشتراكك 🎉</h2>
+              <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
+                <p><strong style="color:#16a34a;">الخطة:</strong> ${planName}</p>
+                <p><strong style="color:#16a34a;">تاريخ التجديد:</strong> ${renewDate}</p>
               </div>
-            `,
+              <p style="color:#666;font-size:12px;text-align:center;">شكراً لثقتك — فريق CoachBase</p>
+            </div>`,
           }),
         });
-      } catch (emailErr) {
-        console.error("Email send error:", emailErr);
-      }
+      } catch (e) { console.error("Email error:", e); }
     }
 
     return new Response(
@@ -194,8 +154,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

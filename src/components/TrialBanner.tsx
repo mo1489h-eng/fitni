@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BadgeCheck, Check, CreditCard, Gift, ShieldCheck, Star, X } from "lucide-react";
 
-import MoyasarPayment from "@/components/MoyasarPayment";
+import TapPayment from "@/components/TapPayment";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -112,7 +112,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
           </DialogHeader>
 
           {selectedPlan ? (
-            <MoyasarPayment
+            <TapPayment
               plan={selectedPlan}
               onSuccess={() => {
                 setShowPlans(false);

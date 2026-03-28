@@ -7,25 +7,21 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { payment_id, package_id, checkout_token, referral_code } = await req.json();
 
     if (!payment_id || !package_id || !checkout_token) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
-    if (!moyasarSecret) {
+    const tapSecret = Deno.env.get("TAP_SECRET_KEY");
+    if (!tapSecret) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -34,78 +30,62 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: pkg, error: pkgError } = await supabase
-      .from("trainer_packages")
-      .select("*")
-      .eq("id", package_id)
-      .eq("is_active", true)
-      .maybeSingle();
+      .from("trainer_packages").select("*").eq("id", package_id).eq("is_active", true).maybeSingle();
 
     if (pkgError || !pkg) {
       return new Response(JSON.stringify({ error: "Package not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { data: session, error: sessionError } = await supabase
-      .from("package_checkout_sessions")
-      .select("*")
-      .eq("token", checkout_token)
-      .eq("package_id", package_id)
-      .is("used_at", null)
-      .maybeSingle();
+      .from("package_checkout_sessions").select("*")
+      .eq("token", checkout_token).eq("package_id", package_id).is("used_at", null).maybeSingle();
 
     if (sessionError || !session) {
       return new Response(JSON.stringify({ error: "Invalid checkout session" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (new Date(session.expires_at).getTime() < Date.now()) {
       return new Response(JSON.stringify({ error: "Checkout session expired" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
-      headers: { Authorization: `Basic ${btoa(moyasarSecret + ":")}` },
+    // Verify payment with Tap
+    const tapRes = await fetch(`https://api.tap.company/v2/charges/${payment_id}`, {
+      headers: { Authorization: `Bearer ${tapSecret}` },
     });
 
-    if (!moyasarRes.ok) {
+    if (!tapRes.ok) {
       return new Response(JSON.stringify({ error: "Failed to verify payment" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const payment = await moyasarRes.json();
+    const payment = await tapRes.json();
 
-    if (payment.status !== "paid") {
+    if (payment.status !== "CAPTURED") {
       return new Response(JSON.stringify({ error: "Payment not completed" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (payment.amount !== pkg.price * 100) {
+    if (Number(payment.amount) !== Number(pkg.price)) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Check duplicate
     const { data: existingPayment } = await supabase
-      .from("client_payments")
-      .select("id")
-      .eq("moyasar_payment_id", payment_id)
-      .maybeSingle();
+      .from("client_payments").select("id").eq("moyasar_payment_id", payment_id).maybeSingle();
 
     if (existingPayment) {
       return new Response(JSON.stringify({ error: "Payment already processed" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -121,80 +101,55 @@ serve(async (req) => {
     else endDate.setMonth(endDate.getMonth() + 1);
 
     const { data: newClient, error: clientError } = await supabase
-      .from("clients")
-      .insert({
-        trainer_id,
-        name: client_name,
-        phone: client_phone || "",
-        email: client_email || null,
-        subscription_price: pkg.price,
+      .from("clients").insert({
+        trainer_id, name: client_name, phone: client_phone || "",
+        email: client_email || null, subscription_price: pkg.price,
         subscription_end_date: endDate.toISOString().split("T")[0],
-        billing_cycle: pkg.billing_cycle,
-        goal: pkg.name,
-      })
-      .select("id")
-      .single();
+        billing_cycle: pkg.billing_cycle, goal: pkg.name,
+      }).select("id").single();
 
     if (clientError) {
       console.error("Client creation error:", clientError);
       return new Response(JSON.stringify({ error: "Failed to create client" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     await supabase.from("client_payments").insert({
-      client_id: newClient.id,
-      trainer_id,
-      amount: pkg.price,
-      moyasar_payment_id: payment_id,
-      status: "paid",
-      billing_cycle: pkg.billing_cycle,
+      client_id: newClient.id, trainer_id, amount: pkg.price,
+      moyasar_payment_id: payment_id, status: "paid", billing_cycle: pkg.billing_cycle,
       period_start: now.toISOString().split("T")[0],
       period_end: endDate.toISOString().split("T")[0],
     });
 
     await supabase.from("trainer_notifications").insert({
-      trainer_id,
-      client_id: newClient.id,
-      type: "payment",
+      trainer_id, client_id: newClient.id, type: "payment",
       title: `${client_name} دفع ${pkg.price} ريال - ${pkg.name}`,
       body: `تم إضافة ${client_name} تلقائيا كعميل جديد`,
     });
 
-    // Handle referral tracking
+    // Handle referral
     if (referral_code) {
       const { data: referrer } = await supabase
-        .from("clients")
-        .select("id, name, trainer_id")
-        .eq("referral_code", referral_code)
-        .eq("trainer_id", trainer_id)
-        .maybeSingle();
-
+        .from("clients").select("id, name, trainer_id")
+        .eq("referral_code", referral_code).eq("trainer_id", trainer_id).maybeSingle();
       if (referrer) {
         await supabase.from("referrals").insert({
-          referrer_client_id: referrer.id,
-          referred_client_id: newClient.id,
-          trainer_id,
-          reward_status: "pending",
+          referrer_client_id: referrer.id, referred_client_id: newClient.id,
+          trainer_id, reward_status: "pending",
         });
-
-        // Notify trainer about referral
         await supabase.from("trainer_notifications").insert({
-          trainer_id,
-          client_id: newClient.id,
-          type: "referral",
+          trainer_id, client_id: newClient.id, type: "referral",
           title: `متدرب جديد انضم عبر إحالة ${referrer.name}`,
           body: `${client_name} انضم عبر رابط إحالة ${referrer.name}`,
         });
       }
     }
 
-    await supabase
-      .from("package_checkout_sessions")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", session.id);
+    await supabase.from("package_checkout_sessions")
+      .update({ used_at: new Date().toISOString() }).eq("id", session.id);
 
+    // Send receipt
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && client_email) {
       try {
@@ -205,23 +160,19 @@ serve(async (req) => {
             from: "CoachBase <noreply@coachbase.health>",
             to: [client_email],
             subject: "إيصال دفع — CoachBase 🧾",
-            html: `
-              <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #fff; border-radius: 16px;">
-                <h1 style="color: #16a34a; text-align: center;">CoachBase</h1>
-                <h2>تم استلام الدفع بنجاح ✅</h2>
-                <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                  <p><strong style="color: #16a34a;">الباقة:</strong> ${pkg.name}</p>
-                  <p><strong style="color: #16a34a;">المبلغ:</strong> ${pkg.price} ر.س</p>
-                  <p><strong style="color: #16a34a;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
-                </div>
-                <p style="color: #666; font-size: 12px; text-align: center;">شكراً لثقتك — فريق CoachBase</p>
+            html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
+              <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
+              <h2>تم استلام الدفع بنجاح ✅</h2>
+              <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
+                <p><strong style="color:#16a34a;">الباقة:</strong> ${pkg.name}</p>
+                <p><strong style="color:#16a34a;">المبلغ:</strong> ${pkg.price} ر.س</p>
+                <p><strong style="color:#16a34a;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
               </div>
-            `,
+              <p style="color:#666;font-size:12px;text-align:center;">شكراً لثقتك — فريق CoachBase</p>
+            </div>`,
           }),
         });
-      } catch (e) {
-        console.error("Email error:", e);
-      }
+      } catch (e) { console.error("Email error:", e); }
     }
 
     return new Response(JSON.stringify({ success: true, client_id: newClient.id }), {
@@ -230,8 +181,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

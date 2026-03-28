@@ -1172,6 +1172,7 @@ export type Database = {
           subscribed_at: string | null
           subscription_end_date: string | null
           subscription_plan: string | null
+          tap_destination_id: string | null
           title: string | null
           user_id: string
           username: string | null
@@ -1203,6 +1204,7 @@ export type Database = {
           subscribed_at?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
+          tap_destination_id?: string | null
           title?: string | null
           user_id: string
           username?: string | null
@@ -1234,6 +1236,7 @@ export type Database = {
           subscribed_at?: string | null
           subscription_end_date?: string | null
           subscription_plan?: string | null
+          tap_destination_id?: string | null
           title?: string | null
           user_id?: string
           username?: string | null

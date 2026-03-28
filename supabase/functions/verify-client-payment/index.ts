@@ -7,16 +7,13 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -30,8 +27,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -39,62 +35,51 @@ serve(async (req) => {
 
     if (!payment_id || !client_id || !amount) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify payment with Moyasar
-    const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
-    if (!moyasarSecret) {
+    // Verify payment with Tap API
+    const tapSecret = Deno.env.get("TAP_SECRET_KEY");
+    if (!tapSecret) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
-      headers: { Authorization: `Basic ${btoa(moyasarSecret + ":")}` },
+    const tapRes = await fetch(`https://api.tap.company/v2/charges/${payment_id}`, {
+      headers: { Authorization: `Bearer ${tapSecret}` },
     });
 
-    if (!moyasarRes.ok) {
+    if (!tapRes.ok) {
       return new Response(JSON.stringify({ error: "Failed to verify payment" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const payment = await moyasarRes.json();
+    const payment = await tapRes.json();
 
-    if (payment.status !== "paid") {
+    if (payment.status !== "CAPTURED") {
       return new Response(JSON.stringify({ error: "Payment not completed", status: payment.status }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify amount matches
-    if (payment.amount !== amount * 100) {
+    if (Number(payment.amount) !== Number(amount)) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify client belongs to this trainer
     const { data: client, error: clientError } = await supabase
-      .from("clients")
-      .select("id, trainer_id, name")
-      .eq("id", client_id)
-      .maybeSingle();
+      .from("clients").select("id, trainer_id, name").eq("id", client_id).maybeSingle();
 
     if (clientError || !client || client.trainer_id !== user.id) {
       return new Response(JSON.stringify({ error: "Client not found or access denied" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -105,40 +90,21 @@ serve(async (req) => {
     else if (cycle === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
     else endDate.setMonth(endDate.getMonth() + 1);
 
-    // Record payment
-    const { error: paymentError } = await supabase.from("client_payments").insert({
-      client_id,
-      trainer_id: user.id,
-      amount,
-      moyasar_payment_id: payment_id,
-      status: "paid",
-      billing_cycle: cycle,
+    await supabase.from("client_payments").insert({
+      client_id, trainer_id: user.id, amount,
+      moyasar_payment_id: payment_id, status: "paid", billing_cycle: cycle,
       period_start: now.toISOString().split("T")[0],
       period_end: endDate.toISOString().split("T")[0],
     });
 
-    if (paymentError) {
-      console.error("Payment insert error:", paymentError);
-    }
-
-    // Update client subscription dates
-    const { error: updateError } = await supabase
-      .from("clients")
-      .update({
-        subscription_end_date: endDate.toISOString().split("T")[0],
-        subscription_price: amount,
-        billing_cycle: cycle,
-      })
-      .eq("id", client_id);
-
-    if (updateError) {
-      console.error("Client update error:", updateError);
-    }
+    await supabase.from("clients").update({
+      subscription_end_date: endDate.toISOString().split("T")[0],
+      subscription_price: amount, billing_cycle: cycle,
+    }).eq("id", client_id);
 
     // Send receipt email
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const { data: clientFull } = await supabase.from("clients").select("email, name").eq("id", client_id).maybeSingle();
-
     if (resendKey && clientFull?.email) {
       try {
         await fetch("https://api.resend.com/emails", {
@@ -148,17 +114,15 @@ serve(async (req) => {
             from: "CoachBase <noreply@coachbase.health>",
             to: [clientFull.email],
             subject: "إيصال دفع — CoachBase 🧾",
-            html: `
-              <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #fff; border-radius: 16px;">
-                <h1 style="color: #16a34a; text-align: center;">CoachBase</h1>
-                <h2>تم استلام الدفع بنجاح ✅</h2>
-                <div style="background: rgba(34,197,94,0.1); border-radius: 12px; padding: 20px; margin: 20px 0;">
-                  <p><strong style="color: #16a34a;">المبلغ:</strong> ${amount} ر.س</p>
-                  <p><strong style="color: #16a34a;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
-                </div>
-                <p style="color: #666; font-size: 12px; text-align: center;">شكراً لثقتك — فريق CoachBase</p>
+            html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
+              <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
+              <h2>تم استلام الدفع بنجاح ✅</h2>
+              <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
+                <p><strong style="color:#16a34a;">المبلغ:</strong> ${amount} ر.س</p>
+                <p><strong style="color:#16a34a;">الفترة:</strong> حتى ${endDate.toLocaleDateString("ar-SA")}</p>
               </div>
-            `,
+              <p style="color:#666;font-size:12px;text-align:center;">شكراً لثقتك — فريق CoachBase</p>
+            </div>`,
           }),
         });
       } catch (e) { console.error("Email error:", e); }
@@ -171,8 +135,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

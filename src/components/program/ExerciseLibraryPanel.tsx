@@ -164,7 +164,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       >
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
           <img
-            src={getProxiedImageUrl(ex.gifUrl)}
+            src={getExerciseImageUrl(ex.id)}
             alt={ex.name}
             className="w-full h-full object-cover"
             loading="lazy"

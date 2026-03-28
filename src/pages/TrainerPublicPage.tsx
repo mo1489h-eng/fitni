@@ -299,14 +299,31 @@ const TrainerPublicPage = () => {
               <div className="rounded-2xl p-5" style={{ backgroundColor: t.card, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: t.muted }}>
                   <CreditCard className="w-4 h-4" strokeWidth={1.5} />
-                  <span>معلومات الدفع</span>
+                  <span>اختر طريقة الدفع</span>
                 </div>
-                <div ref={moyasarRef} className="moyasar-form" />
+                <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
+                  {["Mada", "Visa", "MC", "Apple Pay", "STC Pay"].map((m) => (
+                    <div key={m} className="px-3 py-1.5 rounded-lg text-xs font-medium border" style={{ backgroundColor: t.card, color: t.text, borderColor: t.border }}>{m}</div>
+                  ))}
+                </div>
+                <div className="rounded-xl p-4 text-center mb-4" style={{ backgroundColor: `${brandColor}08` }}>
+                  <p className="text-3xl font-black" style={{ color: brandColor }}>{selectedPackage.price}</p>
+                  <p className="text-sm" style={{ color: t.muted }}>ر.س / شهرياً</p>
+                </div>
+                <Button
+                  onClick={handleTapPayment}
+                  disabled={tapLoading}
+                  className="w-full h-12 text-base gap-2 font-bold rounded-xl"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {tapLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                  {tapLoading ? "جاري التحويل..." : "ادفع الآن"}
+                </Button>
               </div>
 
               <p className="text-xs text-center flex items-center justify-center gap-1.5" style={{ color: t.muted }}>
                 <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
-                الدفع آمن ومشفر عبر Moyasar
+                الدفع آمن ومشفر عبر Tap Payments
               </p>
             </div>
           )}

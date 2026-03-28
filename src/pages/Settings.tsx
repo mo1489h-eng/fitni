@@ -734,13 +734,23 @@ const Settings = () => {
           </Button>
         </Card>
 
+        {/* ━━━ TAP PAYMENTS CONNECT ━━━ */}
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-bold text-card-foreground">ربط حساب Tap</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">اربط حساب Tap Payments لاستقبال المدفوعات مباشرة من العملاء</p>
+          <TapAccountConnect />
+        </Card>
+
         {/* ━━━ PAYMENT SETTINGS ━━━ */}
         <Card className="p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Banknote className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">إعدادات الدفع</h2>
+            <h2 className="text-lg font-bold text-card-foreground">بيانات الحساب البنكي</h2>
           </div>
-          <p className="text-sm text-muted-foreground">أضف بيانات حسابك البنكي لاستقبال المدفوعات من العملاء</p>
+          <p className="text-sm text-muted-foreground">أضف بيانات حسابك البنكي لطلبات التحويل</p>
 
           <div>
             <label className="text-sm font-medium text-foreground">اسم صاحب الحساب</label>

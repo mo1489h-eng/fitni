@@ -36,7 +36,7 @@ const SPECIALIZATIONS = [
 const Settings = () => {
   usePageTitle("الإعدادات");
   const { user, profile, signOut, refreshProfile } = useAuth();
-  const { hasFullAccess } = usePlanLimits();
+  const { plan, hasFullAccess } = usePlanLimits();
   const { toast } = useToast();
   const navigate = useNavigate();
 

@@ -480,7 +480,7 @@ const CopilotChat = () => {
       )}
 
       {/* Suggestions */}
-      {messages.length === 0 && (
+      {selectedClient && messages.length === 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {SUGGESTIONS.map(s => (
             <button

@@ -216,7 +216,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
           <div className="space-y-4">
              <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative">
                <img
-                 src={getProxiedImageUrl(ex.gifUrl)}
+                 src={getExerciseImageUrl(ex.id)}
                  alt={ex.name}
                  className="w-full h-full object-contain"
                  onError={(e) => {

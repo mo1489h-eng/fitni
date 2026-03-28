@@ -93,11 +93,11 @@ const ExerciseCard = ({
         )}
 
         {/* GIF Thumbnail */}
-        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!proxiedGif ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
-          {proxiedGif ? (
+        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!imageUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
+          {imageUrl ? (
             <>
               <img
-                src={proxiedGif}
+                src={imageUrl}
                 alt={ex.name}
                 className="w-full h-full object-cover"
                 loading="lazy"

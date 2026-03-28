@@ -61,7 +61,7 @@ interface PageConfig {
   limited_offer_packages?: string[];
 }
 
-const MOYASAR_PUBLISHABLE_KEY = "pk_test_Xbpeegf8sy7yZcqAH3tTwdAhzZmxpFXhzFPUioZf";
+
 
 const THEME_COLORS: Record<string, { bg: string; accent: string; text: string; muted: string; card: string; border: string }> = {
   dark: { bg: "#050505", accent: "#16a34a", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },
@@ -90,8 +90,6 @@ const TrainerPublicPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const moyasarRef = useRef<HTMLDivElement>(null);
-  const moyasarInitRef = useRef(false);
   const packagesRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
 
@@ -165,50 +163,42 @@ const TrainerPublicPage = () => {
   const handleSelectPackage = (pkg: TrainerPackage) => {
     setSelectedPackage(pkg);
     setStep(1);
-    moyasarInitRef.current = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  useEffect(() => {
-    if (step !== 1 || !selectedPackage || moyasarInitRef.current) return;
-    const loadMoyasar = () => {
-      if (!document.getElementById("moyasar-css")) {
-        const link = document.createElement("link");
-        link.id = "moyasar-css"; link.rel = "stylesheet";
-        link.href = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.css";
-        document.head.appendChild(link);
-      }
-      const initForm = () => {
-        if (moyasarInitRef.current || !moyasarRef.current) return;
-        moyasarInitRef.current = true;
-        (window as any).Moyasar.init({
-          element: moyasarRef.current,
-          amount: selectedPackage.price * 100,
+  const [tapLoading, setTapLoading] = useState(false);
+
+  const handleTapPayment = async () => {
+    if (!selectedPackage || !profile) return;
+    setTapLoading(true);
+    try {
+      sessionStorage.setItem("tap_payment_context", JSON.stringify({
+        type: "package_purchase",
+        package_id: selectedPackage.id,
+        trainer_id: profile.user_id,
+        return_url: window.location.href,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("create-tap-charge", {
+        body: {
+          amount: selectedPackage.price,
           currency: "SAR",
-          description: `اشتراك ${selectedPackage.name} — ${profile?.full_name}`,
-          publishable_api_key: MOYASAR_PUBLISHABLE_KEY,
-          callback_url: window.location.href,
-          methods: ["creditcard", "applepay"],
-          apple_pay: { country: "SA", label: "CoachBase", validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate" },
-          on_completed: (payment: any) => {
-            if (payment.status === "paid") {
-              setPaymentId(payment.id);
-              setStep(2);
-            }
-          },
-        });
-      };
-      if ((window as any).Moyasar) initForm();
-      else {
-        const script = document.createElement("script");
-        script.src = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.js";
-        script.onload = initForm;
-        document.head.appendChild(script);
+          description: `اشتراك ${selectedPackage.name} — ${profile.full_name}`,
+          redirect_url: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPackage.id}&trainer_id=${profile.user_id}&username=${username}`,
+          metadata: { type: "package_purchase", package_id: selectedPackage.id, trainer_id: profile.user_id },
+        },
+      });
+
+      if (error || !data?.redirect_url) {
+        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
       }
-    };
-    loadMoyasar();
-    return () => { moyasarInitRef.current = false; };
-  }, [step, selectedPackage]);
+
+      window.location.href = data.redirect_url;
+    } catch (err: any) {
+      setTapLoading(false);
+      alert(err.message || "حدث خطأ في الدفع");
+    }
+  };
 
   const handleRegisterSubmit = async () => {
     if (!clientForm.full_name.trim() || !clientForm.phone.trim()) return;
@@ -309,14 +299,31 @@ const TrainerPublicPage = () => {
               <div className="rounded-2xl p-5" style={{ backgroundColor: t.card, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 mb-4 text-sm" style={{ color: t.muted }}>
                   <CreditCard className="w-4 h-4" strokeWidth={1.5} />
-                  <span>معلومات الدفع</span>
+                  <span>اختر طريقة الدفع</span>
                 </div>
-                <div ref={moyasarRef} className="moyasar-form" />
+                <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
+                  {["Mada", "Visa", "MC", "Apple Pay", "STC Pay"].map((m) => (
+                    <div key={m} className="px-3 py-1.5 rounded-lg text-xs font-medium border" style={{ backgroundColor: t.card, color: t.text, borderColor: t.border }}>{m}</div>
+                  ))}
+                </div>
+                <div className="rounded-xl p-4 text-center mb-4" style={{ backgroundColor: `${brandColor}08` }}>
+                  <p className="text-3xl font-black" style={{ color: brandColor }}>{selectedPackage.price}</p>
+                  <p className="text-sm" style={{ color: t.muted }}>ر.س / شهرياً</p>
+                </div>
+                <Button
+                  onClick={handleTapPayment}
+                  disabled={tapLoading}
+                  className="w-full h-12 text-base gap-2 font-bold rounded-xl"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {tapLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+                  {tapLoading ? "جاري التحويل..." : "ادفع الآن"}
+                </Button>
               </div>
 
               <p className="text-xs text-center flex items-center justify-center gap-1.5" style={{ color: t.muted }}>
                 <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
-                الدفع آمن ومشفر عبر Moyasar
+                الدفع آمن ومشفر عبر Tap Payments
               </p>
             </div>
           )}

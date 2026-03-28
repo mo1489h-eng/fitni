@@ -89,6 +89,8 @@ const Settings = () => {
 
   const avatarRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   // Form state
   const [form, setForm] = useState({

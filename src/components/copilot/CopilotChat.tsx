@@ -104,8 +104,17 @@ const CopilotChat = () => {
     return () => clearInterval(interval);
   }, [undoTimer]);
 
+  const compressContent = (text: string) =>
+    text.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+
   const saveMessage = async (role: string, content: string) => {
-    await supabase.from("copilot_messages" as any).insert({ trainer_id: user!.id, role, content });
+    const compressed = compressContent(content);
+    if (!compressed) return;
+    await supabase.from("copilot_messages" as any).insert({
+      trainer_id: user!.id,
+      role,
+      content: compressed,
+    });
   };
 
   const clearChat = useMutation({

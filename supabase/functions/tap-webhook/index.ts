@@ -45,10 +45,62 @@ serve(async (req) => {
     // Charge is captured — handle based on metadata
     const metadata = charge.metadata || {};
     const type = metadata.type;
-
     console.log("Webhook processing type:", type, "charge:", chargeId);
 
-    // Webhook is a backup — primary verification happens on redirect callback
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    if (type === "trainer_subscription") {
+      const userId = metadata.user_id;
+      const plan = metadata.plan;
+
+      if (!userId || !plan) {
+        console.error("Missing user_id or plan in metadata");
+        return new Response(JSON.stringify({ received: true, error: "Missing metadata" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check for replay
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("last_payment_id", chargeId)
+        .maybeSingle();
+
+      if (existing) {
+        console.log("Payment already processed:", chargeId);
+        return new Response(JSON.stringify({ received: true, already_processed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const now = new Date();
+      const endDate = new Date(now);
+      endDate.setMonth(endDate.getMonth() + 1);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          subscription_plan: plan,
+          subscribed_at: now.toISOString(),
+          subscription_end_date: endDate.toISOString(),
+          payment_status: "active",
+          last_payment_id: chargeId,
+        })
+        .eq("user_id", userId);
+
+      if (updateError) {
+        console.error("Webhook profile update error:", updateError);
+        return new Response(JSON.stringify({ received: true, error: "Update failed" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log("Webhook: Subscription upgraded via webhook:", userId, plan);
+    }
+
     return new Response(JSON.stringify({ received: true, processed: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

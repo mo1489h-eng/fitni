@@ -163,50 +163,42 @@ const TrainerPublicPage = () => {
   const handleSelectPackage = (pkg: TrainerPackage) => {
     setSelectedPackage(pkg);
     setStep(1);
-    moyasarInitRef.current = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  useEffect(() => {
-    if (step !== 1 || !selectedPackage || moyasarInitRef.current) return;
-    const loadMoyasar = () => {
-      if (!document.getElementById("moyasar-css")) {
-        const link = document.createElement("link");
-        link.id = "moyasar-css"; link.rel = "stylesheet";
-        link.href = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.css";
-        document.head.appendChild(link);
-      }
-      const initForm = () => {
-        if (moyasarInitRef.current || !moyasarRef.current) return;
-        moyasarInitRef.current = true;
-        (window as any).Moyasar.init({
-          element: moyasarRef.current,
-          amount: selectedPackage.price * 100,
+  const [tapLoading, setTapLoading] = useState(false);
+
+  const handleTapPayment = async () => {
+    if (!selectedPackage || !profile) return;
+    setTapLoading(true);
+    try {
+      sessionStorage.setItem("tap_payment_context", JSON.stringify({
+        type: "package_purchase",
+        package_id: selectedPackage.id,
+        trainer_id: profile.user_id,
+        return_url: window.location.href,
+      }));
+
+      const { data, error } = await supabase.functions.invoke("create-tap-charge", {
+        body: {
+          amount: selectedPackage.price,
           currency: "SAR",
-          description: `اشتراك ${selectedPackage.name} — ${profile?.full_name}`,
-          publishable_api_key: MOYASAR_PUBLISHABLE_KEY,
-          callback_url: window.location.href,
-          methods: ["creditcard", "applepay"],
-          apple_pay: { country: "SA", label: "CoachBase", validate_merchant_url: "https://api.moyasar.com/v1/applepay/initiate" },
-          on_completed: (payment: any) => {
-            if (payment.status === "paid") {
-              setPaymentId(payment.id);
-              setStep(2);
-            }
-          },
-        });
-      };
-      if ((window as any).Moyasar) initForm();
-      else {
-        const script = document.createElement("script");
-        script.src = "https://cdn.moyasar.com/mpf/1.14.0/moyasar.js";
-        script.onload = initForm;
-        document.head.appendChild(script);
+          description: `اشتراك ${selectedPackage.name} — ${profile.full_name}`,
+          redirect_url: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPackage.id}&trainer_id=${profile.user_id}&username=${username}`,
+          metadata: { type: "package_purchase", package_id: selectedPackage.id, trainer_id: profile.user_id },
+        },
+      });
+
+      if (error || !data?.redirect_url) {
+        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
       }
-    };
-    loadMoyasar();
-    return () => { moyasarInitRef.current = false; };
-  }, [step, selectedPackage]);
+
+      window.location.href = data.redirect_url;
+    } catch (err: any) {
+      setTapLoading(false);
+      alert(err.message || "حدث خطأ في الدفع");
+    }
+  };
 
   const handleRegisterSubmit = async () => {
     if (!clientForm.full_name.trim() || !clientForm.phone.trim()) return;

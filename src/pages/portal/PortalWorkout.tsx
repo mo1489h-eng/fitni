@@ -91,6 +91,23 @@ const PortalWorkout = () => {
     enabled: !!token,
   });
 
+  const portalQueryClient = useQueryClient();
+
+  // Real-time sync: program updates from trainer
+  useEffect(() => {
+    if (!token) return;
+    const channel = supabase
+      .channel('portal-program-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_exercises' }, () => {
+        portalQueryClient.invalidateQueries({ queryKey: ["portal-program", token] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_days' }, () => {
+        portalQueryClient.invalidateQueries({ queryKey: ["portal-program", token] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [token, portalQueryClient]);
+
   const todayIndex = new Date().getDay();
   const weekNumber = clientData?.week_number || 1;
 

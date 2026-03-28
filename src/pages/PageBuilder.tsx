@@ -25,6 +25,7 @@ interface PageConfig {
   hero_style: string;
   hero_image_url?: string;
   hero_color?: string;
+  cover_image_url?: string;
   stats: PageStat[];
   specialties: string[];
   about_text: string;

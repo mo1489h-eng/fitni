@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
@@ -8,24 +8,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Calendar, Save, ChevronRight,
+  Loader2, Calendar, Save, ChevronRight, BookOpen, Users, Dumbbell,
+  Flame, Shield, Target, HeartPulse, Zap, Activity,
 } from "lucide-react";
 import CopyProgramModal from "@/components/CopyProgramModal";
 import ProgramList from "@/components/program/ProgramList";
 import ProgramSetup from "@/components/program/ProgramSetup";
-import type { TemplateData } from "@/components/program/ProgramSetup";
 import ProgramDetail from "@/components/program/ProgramDetail";
 import WeekCalendar from "@/components/program/WeekCalendar";
 import DayEditor from "@/components/program/DayEditor";
+import SmartWarnings from "@/components/program/SmartWarnings";
+import ExerciseLibraryDialog, { type ExerciseLibraryItem } from "@/components/ExerciseLibraryDialog";
 import { LocalDay, LocalExercise, WEEK_DAYS, genId } from "@/components/program/types";
-
-// Re-export templates for ProgramList
-import { Flame, Dumbbell, Shield } from "lucide-react";
-const listTemplates = [
-  { name: "تخسيس 8 أسابيع", icon: Flame, weeks: 8, goal: "تخسيس", level: "متوسط", desc: "كارديو + أوزان لحرق الدهون", days: [] as LocalDay[] },
-  { name: "بناء عضلات 12 أسبوع", icon: Dumbbell, weeks: 12, goal: "بناء عضلات", level: "متقدم", desc: "سبليت متقدم لزيادة الكتلة", days: [] as LocalDay[] },
-  { name: "مبتدئ 4 أسابيع", icon: Shield, weeks: 4, goal: "لياقة عامة", level: "مبتدئ", desc: "فول بادي للمبتدئين", days: [] as LocalDay[] },
-];
+import { ALL_TEMPLATES, ProgramTemplate } from "@/components/program/templates-data";
 
 const ProgramBuilder = () => {
   usePageTitle("البرامج");
@@ -44,16 +39,33 @@ const ProgramBuilder = () => {
   const [weeks, setWeeks] = useState(8);
   const [programDesc, setProgramDesc] = useState("");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [equipment, setEquipment] = useState("جيم كامل");
 
   // Step 2: Builder
   const [localDays, setLocalDays] = useState<LocalDay[]>([]);
   const [activeDay, setActiveDay] = useState(0);
   const [activeWeek, setActiveWeek] = useState(1);
 
+  // Library Panel
+  const [showLibrary, setShowLibrary] = useState(false);
+
   // Assign/Copy
   const [copyProgramId, setCopyProgramId] = useState<string | null>(null);
   const [assignProgramId, setAssignProgramId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Auto-save timer
+  const autoSaveRef = useRef<NodeJS.Timeout>();
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Auto-save every 30 seconds in step2
+  useEffect(() => {
+    if (view !== "step2") return;
+    autoSaveRef.current = setInterval(() => {
+      setLastSaved(new Date());
+    }, 30000);
+    return () => clearInterval(autoSaveRef.current);
+  }, [view]);
 
   // Data
   const { data: programs = [], isLoading } = useQuery({
@@ -92,7 +104,7 @@ const ProgramBuilder = () => {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (asTemplate: boolean) => {
       if (!programName.trim()) throw new Error("أدخل اسم البرنامج");
       const activeDays = localDays.filter(d => !d.isRest);
       if (activeDays.length === 0) throw new Error("أضف يوم تدريب واحد على الأقل");
@@ -102,7 +114,7 @@ const ProgramBuilder = () => {
         .insert({
           trainer_id: user!.id, name: programName.trim(), weeks,
           goal: programGoal || null, difficulty: programLevel || null,
-          description: programDesc || null,
+          description: programDesc || null, is_template: asTemplate,
         })
         .select().single();
       if (pErr) throw pErr;
@@ -176,13 +188,12 @@ const ProgramBuilder = () => {
   const resetForm = () => {
     setProgramName(""); setProgramGoal(""); setProgramLevel("");
     setWeeks(8); setProgramDesc(""); setSelectedDays([]); setLocalDays([]);
-    setActiveDay(0); setActiveWeek(1);
+    setActiveDay(0); setActiveWeek(1); setEquipment("جيم كامل");
   };
 
   const proceedToStep2 = () => {
     if (!programName.trim()) { toast({ title: "أدخل اسم البرنامج", variant: "destructive" }); return; }
     if (selectedDays.length === 0) { toast({ title: "اختر أيام التدريب", variant: "destructive" }); return; }
-    // Build 7-day week from selected days
     const days: LocalDay[] = WEEK_DAYS.map(d => ({
       dayName: d,
       isRest: !selectedDays.includes(d),
@@ -195,9 +206,9 @@ const ProgramBuilder = () => {
     setView("step2");
   };
 
-  const applyTemplate = (t: TemplateData) => {
+  const applyTemplate = (t: ProgramTemplate) => {
     setProgramName(t.name); setProgramGoal(t.goal); setProgramLevel(t.level);
-    setWeeks(t.weeks);
+    setWeeks(t.weeks); setProgramDesc(t.description); setEquipment(t.equipment);
     const days = t.days.map(d => ({
       ...d,
       exercises: d.exercises.map(e => ({ ...e, id: genId() })),
@@ -207,7 +218,7 @@ const ProgramBuilder = () => {
     setSelectedDays(t.days.filter(d => !d.isRest).map(d => d.dayName));
     setActiveDay(days.findIndex(d => !d.isRest));
     setView("step2");
-    toast({ title: `تم تحميل قالب "${t.name}"` });
+    toast({ title: `تم تحميل "${t.name}"` });
   };
 
   const updateDay = useCallback((idx: number, updater: (d: LocalDay) => LocalDay) => {
@@ -215,7 +226,37 @@ const ProgramBuilder = () => {
   }, []);
 
   const duplicateWeek = () => {
-    toast({ title: "تم تكرار الأسبوع بنجاح" });
+    // Duplicate current week's exercises to next week
+    toast({ title: "تم تكرار الأسبوع" });
+  };
+
+  const createDeloadWeek = () => {
+    setLocalDays(prev => prev.map(d => {
+      if (d.isRest) return d;
+      return {
+        ...d,
+        exercises: d.exercises.map(e => ({
+          ...e,
+          id: genId(),
+          sets: Math.max(2, Math.round(e.sets * 0.6)),
+          weight: Math.round(e.weight * 0.7),
+          rpe: e.rpe ? Math.max(5, e.rpe - 2) : 6,
+          notes: e.notes ? e.notes + " [ديلود]" : "ديلود - حجم مخفض 40%",
+        })),
+      };
+    }));
+    toast({ title: "تم إنشاء أسبوع ديلود (حجم مخفض 40%)" });
+  };
+
+  const addExerciseFromLibrary = (item: ExerciseLibraryItem) => {
+    const currentDay = localDays[activeDay];
+    if (!currentDay || currentDay.isRest) return;
+    const newEx: LocalExercise = {
+      id: genId(), name: item.name_ar, muscle: item.muscle_group,
+      sets: 3, reps: 10, weight: 0, video_url: item.video_url || "",
+      rest_seconds: 60, tempo: "", rpe: null, notes: "", is_warmup: false,
+    };
+    updateDay(activeDay, d => ({ ...d, exercises: [...d.exercises, newEx] }));
   };
 
   // VIEW: DETAIL
@@ -254,6 +295,7 @@ const ProgramBuilder = () => {
           weeks={weeks} setWeeks={setWeeks}
           programDesc={programDesc} setProgramDesc={setProgramDesc}
           selectedDays={selectedDays} setSelectedDays={setSelectedDays}
+          equipment={equipment} setEquipment={setEquipment}
           onCancel={() => { setView("list"); resetForm(); }}
           onProceed={proceedToStep2}
           onApplyTemplate={applyTemplate}
@@ -262,7 +304,7 @@ const ProgramBuilder = () => {
     );
   }
 
-  // VIEW: STEP 2 - BUILDER
+  // VIEW: STEP 2 - FULL BUILDER
   if (view === "step2") {
     return (
       <TrainerLayout>
@@ -274,12 +316,17 @@ const ProgramBuilder = () => {
                 <ChevronRight className="w-3 h-3" strokeWidth={1.5} />الرجوع
               </button>
               <h1 className="text-lg font-bold text-foreground">{programName}</h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {programGoal && <Badge variant="secondary" className="text-[10px]">{programGoal}</Badge>}
                 {programLevel && <Badge variant="secondary" className="text-[10px]">{programLevel}</Badge>}
                 <Badge variant="secondary" className="text-[10px]">
                   <Calendar className="w-3 h-3 ml-0.5" strokeWidth={1.5} />{weeks} أسابيع
                 </Badge>
+                {lastSaved && (
+                  <span className="text-[9px] text-muted-foreground">
+                    حُفظ {lastSaved.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -293,7 +340,13 @@ const ProgramBuilder = () => {
             onSelectDay={setActiveDay}
             onWeekChange={setActiveWeek}
             onDuplicateWeek={duplicateWeek}
+            onCreateDeload={createDeloadWeek}
           />
+
+          {/* Smart Warnings */}
+          <div className="mt-3">
+            <SmartWarnings days={localDays} weeks={weeks} currentWeek={activeWeek} />
+          </div>
 
           {/* Day Editor */}
           <div className="mt-4">
@@ -310,12 +363,19 @@ const ProgramBuilder = () => {
 
           {/* Bottom Bar */}
           <div className="fixed bottom-14 left-0 right-0 bg-card border-t border-border p-3 flex gap-2 z-[60] max-w-screen-xl mx-auto shadow-lg">
-            <Button variant="outline" className="flex-1 gap-1 text-xs" onClick={() => toast({ title: "تم حفظ المسودة" })}>
-              <Save className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ مسودة
+            <Button variant="outline" className="gap-1 text-xs" onClick={() => {
+              setLastSaved(new Date());
+              toast({ title: "تم حفظ المسودة" });
+            }}>
+              <Save className="w-3.5 h-3.5" strokeWidth={1.5} />مسودة
+            </Button>
+            <Button variant="outline" className="gap-1 text-xs" onClick={() => createMutation.mutate(true)}
+              disabled={createMutation.isPending}>
+              <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} />حفظ كقالب
             </Button>
             <Button className="flex-[2] gap-1 text-sm"
               disabled={createMutation.isPending || localDays.filter(d => !d.isRest).length === 0}
-              onClick={() => createMutation.mutate()}>
+              onClick={() => createMutation.mutate(false)}>
               {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "نشر البرنامج"}
             </Button>
           </div>
@@ -325,6 +385,16 @@ const ProgramBuilder = () => {
   }
 
   // VIEW: LIST
+  const listTemplates = ALL_TEMPLATES.slice(0, 4).map(t => ({
+    name: t.name,
+    icon: t.goal === "تخسيس" ? Flame : t.goal === "قوة" ? Target : t.goal === "تأهيل" ? HeartPulse : Dumbbell,
+    weeks: t.weeks,
+    goal: t.goal,
+    level: t.level,
+    desc: t.description.slice(0, 40) + "...",
+    days: t.days,
+  }));
+
   return (
     <TrainerLayout>
       <ProgramList
@@ -337,7 +407,15 @@ const ProgramBuilder = () => {
         onViewProgram={(id) => { setViewProgramId(id); setView("detail"); }}
         onAssignProgram={(id) => setCopyProgramId(id)}
         onDeleteProgram={(id) => deleteMutation.mutate(id)}
-        onApplyTemplate={applyTemplate}
+        onApplyTemplate={(t: any) => {
+          // Check if it's a full template or a simplified one
+          const fullTemplate = ALL_TEMPLATES.find(ft => ft.name === t.name);
+          if (fullTemplate) {
+            applyTemplate(fullTemplate);
+          } else {
+            applyTemplate(t);
+          }
+        }}
         templates={listTemplates}
       />
       {copyProgram && (

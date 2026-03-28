@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ChevronUp, ChevronDown, X, CopyPlus, Link2, GripVertical,
-  Plus, MoreHorizontal, FileText, Trash2,
+  Plus, MoreHorizontal, FileText, Trash2, Video, ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getArabicBodyPart, BODY_PART_CONFIG } from "@/lib/exercise-translations";
+import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
 import { LocalExercise, SetDetail } from "./types";
 
 interface Props {
@@ -25,14 +26,23 @@ interface Props {
   onSuperset?: () => void;
 }
 
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+  } catch {}
+  return null;
+}
+
 const ExerciseCard = ({
   ex, isWarmup, isSuperset,
   onUpdate, onRemove, onDuplicate, onMoveUp, onMoveDown, onSuperset,
 }: Props) => {
   const [showNotes, setShowNotes] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const bodyPartColor = BODY_PART_CONFIG[ex.muscle]?.color || "bg-muted text-muted-foreground";
 
-  // Initialize set details if not present
   const setDetails: SetDetail[] = ex.setDetails || Array.from({ length: ex.sets }, (_, i) => ({
     setNumber: i + 1,
     weight: ex.weight,
@@ -67,11 +77,13 @@ const ExerciseCard = ({
     onUpdate("sets", newDetails.length);
   };
 
+  const proxiedGif = getProxiedImageUrl(ex.gifUrl);
+  const youtubeId = ex.video_url ? extractYouTubeId(ex.video_url) : null;
+
   return (
     <Card className={`overflow-hidden transition-all ${isSuperset ? "border-primary/30 bg-primary/[0.02]" : ""}`}>
       {/* Exercise Header */}
       <div className="flex items-start gap-2.5 p-3">
-        {/* Reorder */}
         {!isWarmup && (
           <div className="flex flex-col gap-0.5 pt-1">
             {onMoveUp && <button onClick={onMoveUp} className="text-muted-foreground hover:text-foreground"><ChevronUp className="w-3 h-3" strokeWidth={1.5} /></button>}
@@ -81,16 +93,14 @@ const ExerciseCard = ({
         )}
 
         {/* GIF Thumbnail */}
-        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!ex.gifUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
-          {ex.gifUrl ? (
+        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!proxiedGif ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
+          {proxiedGif ? (
             <>
               <img
-                src={ex.gifUrl}
+                src={proxiedGif}
                 alt={ex.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
-                referrerPolicy="no-referrer"
-                crossOrigin="anonymous"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const sibling = e.currentTarget.nextElementSibling as HTMLElement;
@@ -152,7 +162,6 @@ const ExerciseCard = ({
 
       {/* Set Table */}
       <div className="border-t border-border">
-        {/* Table Header */}
         <div className="grid grid-cols-[40px_1fr_1fr_1fr_1fr_32px] gap-1 px-3 py-1.5 bg-muted/30 text-[9px] font-bold text-muted-foreground">
           <span className="text-center">Set</span>
           <span className="text-center">وزن (كجم)</span>
@@ -162,7 +171,6 @@ const ExerciseCard = ({
           <span></span>
         </div>
 
-        {/* Set Rows */}
         {setDetails.map((set, idx) => (
           <div key={idx} className="grid grid-cols-[40px_1fr_1fr_1fr_1fr_32px] gap-1 px-3 py-1 border-t border-border/50 items-center">
             <span className="text-center text-[10px] font-bold text-muted-foreground">{set.setNumber}</span>
@@ -196,13 +204,73 @@ const ExerciseCard = ({
           </div>
         ))}
 
-        {/* Add Set Button */}
         <button
           onClick={addSet}
           className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] text-primary font-medium hover:bg-primary/5 transition-colors border-t border-border/50"
         >
           <Plus className="w-3 h-3" strokeWidth={2} />إضافة سيت
         </button>
+      </div>
+
+      {/* Video Section */}
+      <div className="border-t border-border">
+        <button
+          onClick={() => setShowVideo(!showVideo)}
+          className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-1.5">
+            <Video className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={1.5} />
+            <span className="text-[11px] font-medium text-muted-foreground">فيديو التمرين</span>
+            {ex.video_url && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+          </div>
+          <ChevronRight className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${showVideo ? 'rotate-90' : ''}`} strokeWidth={1.5} />
+        </button>
+
+        {showVideo && (
+          <div className="px-3 pb-3 space-y-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="أضف رابط يوتيوب أو فيديو..."
+                value={ex.video_url || ""}
+                onChange={e => onUpdate("video_url", e.target.value)}
+                className="h-8 text-xs flex-1"
+                dir="ltr"
+              />
+              {ex.video_url && (
+                <button
+                  onClick={() => onUpdate("video_url", "")}
+                  className="text-muted-foreground hover:text-destructive p-1"
+                >
+                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
+              )}
+            </div>
+
+            {youtubeId && (
+              <div className="rounded-lg overflow-hidden bg-muted aspect-video">
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Exercise video"
+                />
+              </div>
+            )}
+
+            {ex.video_url && !youtubeId && (
+              <a
+                href={ex.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-[11px] text-primary hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" strokeWidth={1.5} />
+                فتح الرابط
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Notes */}

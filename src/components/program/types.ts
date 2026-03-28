@@ -12,6 +12,7 @@ export interface LocalExercise {
   name_en?: string;
   muscle: string;
   gifUrl?: string;
+  exerciseDbId?: string;
   sets: number;
   reps: number;
   weight: number;

@@ -11,7 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getArabicBodyPart, BODY_PART_CONFIG } from "@/lib/exercise-translations";
-import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
+import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import { LocalExercise, SetDetail } from "./types";
 
 interface Props {

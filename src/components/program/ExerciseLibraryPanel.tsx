@@ -10,7 +10,7 @@ import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
-import { getProxiedImageUrl } from "@/lib/exercise-image-proxy";
+import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 
 export interface SelectedExercise {
   id: string;

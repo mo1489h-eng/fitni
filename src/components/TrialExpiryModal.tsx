@@ -3,7 +3,7 @@ import { Check, Lock, Star, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import MoyasarPayment from "@/components/MoyasarPayment";
+import TapPayment from "@/components/TapPayment";
 
 interface TrialExpiryModalProps {
   open: boolean;
@@ -45,7 +45,7 @@ const TrialExpiryModal = ({ open, onDismiss, onSubscribe }: TrialExpiryModalProp
           {selectedPlan ? (
             <div>
               <h2 className="mb-4 text-center text-xl font-bold text-foreground">إتمام الدفع</h2>
-              <MoyasarPayment
+              <TapPayment
                 plan={selectedPlan}
                 onSuccess={() => {
                   onSubscribe();

@@ -48,6 +48,7 @@ import Templates from "./pages/Templates";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import ReferralRedirect from "./pages/ReferralRedirect";
+import PaymentCallback from "./pages/PaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
             {/* Public payment pages */}
             <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
             <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
 
             {/* Portal entry with token */}
             <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />

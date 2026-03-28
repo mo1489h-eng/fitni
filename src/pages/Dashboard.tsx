@@ -219,7 +219,7 @@ const Dashboard = () => {
       if (error) throw error;
       return count ?? 0;
     },
-    enabled: !!user && isPro,
+    enabled: !!user && hasCopilotAccess,
   });
 
   const isLoading = clientsLoading || measurementsLoading || sessionsLoading || paymentsLoading;

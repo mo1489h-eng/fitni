@@ -634,6 +634,26 @@ const ClientProfile = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Template Library Modal */}
+      <Dialog open={showTemplateLibrary} onOpenChange={setShowTemplateLibrary}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              إضافة برنامج من المكتبة
+            </DialogTitle>
+          </DialogHeader>
+          <TemplatesLibrary
+            forClientId={id}
+            onAssigned={() => {
+              setShowTemplateLibrary(false);
+              queryClient.invalidateQueries({ queryKey: ["assigned-program"] });
+              queryClient.invalidateQueries({ queryKey: ["client", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </TrainerLayout>
   );
 };

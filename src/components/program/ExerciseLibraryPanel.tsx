@@ -164,12 +164,10 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       >
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
           <img
-            src={ex.gifUrl}
+            src={getProxiedImageUrl(ex.gifUrl)}
             alt={ex.name}
             className="w-full h-full object-cover"
             loading="lazy"
-            referrerPolicy="no-referrer"
-            crossOrigin="anonymous"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
               const sibling = e.currentTarget.nextElementSibling as HTMLElement;

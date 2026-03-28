@@ -1965,6 +1965,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_copilot_messages: { Args: never; Returns: undefined }
       create_client_matches: {
         Args: { p_intake_id: string; p_matches: Json }
         Returns: number

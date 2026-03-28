@@ -18,7 +18,6 @@ import ProgramDetail from "@/components/program/ProgramDetail";
 import WeekCalendar from "@/components/program/WeekCalendar";
 import DayEditor from "@/components/program/DayEditor";
 import SmartWarnings from "@/components/program/SmartWarnings";
-import ExerciseLibraryDialog, { type ExerciseLibraryItem } from "@/components/ExerciseLibraryDialog";
 import { LocalDay, LocalExercise, WEEK_DAYS, genId } from "@/components/program/types";
 import { ALL_TEMPLATES, ProgramTemplate } from "@/components/program/templates-data";
 

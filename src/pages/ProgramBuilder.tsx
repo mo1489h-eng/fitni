@@ -104,7 +104,7 @@ const ProgramBuilder = () => {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: async (asTemplate = false) => {
+    mutationFn: async (asTemplate: boolean) => {
       if (!programName.trim()) throw new Error("أدخل اسم البرنامج");
       const activeDays = localDays.filter(d => !d.isRest);
       if (activeDays.length === 0) throw new Error("أضف يوم تدريب واحد على الأقل");

@@ -523,7 +523,7 @@ const CopilotChat = () => {
           size="icon"
           className="shrink-0 rounded-xl"
           onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isStreaming || isExecuting}
+          disabled={!input.trim() || isStreaming || isExecuting || !selectedClient}
         >
           {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" strokeWidth={1.5} />}
         </Button>

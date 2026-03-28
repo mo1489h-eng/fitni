@@ -529,11 +529,20 @@ const TrainerPublicPage = () => {
          ═══════════════════════════════════════════════ */}
       {!hiddenSections.includes("hero") && (
         <section className="relative min-h-screen flex items-center overflow-hidden">
-          {/* Ambient background effects */}
-          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 80% 60% at 75% 40%, ${brandColor}08 0%, transparent 70%)` }} />
-          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 50% 50% at 20% 80%, ${brandColor}06 0%, transparent 60%)` }} />
-          {/* Grid texture */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(${COLORS.text} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.text} 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
+          {/* Cover image background OR ambient effects */}
+          {pc.cover_image_url ? (
+            <>
+              <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${pc.cover_image_url})` }} />
+              <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, ${COLORS.bg}e0 0%, ${COLORS.bg}b0 40%, ${COLORS.bg}e8 100%)` }} />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 80% 60% at 75% 40%, ${brandColor}08 0%, transparent 70%)` }} />
+              <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 50% 50% at 20% 80%, ${brandColor}06 0%, transparent 60%)` }} />
+              {/* Grid texture */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `linear-gradient(${COLORS.text} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.text} 1px, transparent 1px)`, backgroundSize: "80px 80px" }} />
+            </>
+          )}
           {/* Bottom gradient */}
           <div className="absolute bottom-0 left-0 right-0 h-48" style={{ background: `linear-gradient(to top, ${COLORS.bg}, transparent)` }} />
 

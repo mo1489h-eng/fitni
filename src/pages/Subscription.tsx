@@ -8,6 +8,7 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import TrialBanner from "@/components/TrialBanner";
+import TapTestModeBanner from "@/components/TapTestModeBanner";
 import { TRAINER_PLAN_DETAILS } from "@/lib/plan-config";
 import {
   Crown, Users, CheckCircle, AlertTriangle,
@@ -79,6 +80,7 @@ const Subscription = () => {
   return (
     <TrainerLayout>
       <div className="space-y-5 pb-8" dir="rtl">
+        <TapTestModeBanner />
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" className="p-1 hover:bg-[hsl(0_0%_10%)]" onClick={() => navigate("/settings")}>

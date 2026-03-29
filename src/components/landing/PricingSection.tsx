@@ -16,7 +16,10 @@ const PricingSection = () => (
         <SectionHeading eyebrow="التسعير" title="سعر واحد. كل شيء مشمول" description="ابدأ مجاناً لفترة الإطلاق، ثم اختر الباقة المناسبة لنموك بدون تعقيد أو رسوم خفية." centered />
       </Reveal>
       <Reveal delay={100} className="mx-auto mt-8 max-w-3xl">
-        <div className="rounded-[2rem] border border-primary/20 bg-primary/10 px-6 py-4 text-center text-lg font-semibold text-primary">مجاني 6 شهور كاملة لأول المسجلين</div>
+        <div className="rounded-[2rem] border border-primary/20 bg-primary/10 px-6 py-5 text-center space-y-1">
+          <div className="text-lg font-bold text-primary">كل المدربين: مجاناً 6 شهور كاملة</div>
+          <div className="text-sm text-foreground/60">أول 500 مدرب: سعر المؤسسين بعدها &bull; من يأتي بعد 500: السعر العادي</div>
+        </div>
       </Reveal>
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
         <Reveal>

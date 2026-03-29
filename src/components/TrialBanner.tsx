@@ -129,6 +129,8 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
                   const isCurrent = isSubscribed && profile.subscription_plan === plan.key;
                   const showFounderPrice = plan.key === "pro" && founderDiscountAvailable;
                   const displayPrice = showFounderPrice ? 99 : plan.price;
+
+                  return (
                     <Card
                       key={plan.key}
                       className={`relative p-5 ${plan.popular ? "border-primary border-2 shadow-lg shadow-primary/10" : ""} ${isCurrent ? "border-success border-2" : ""}`}
@@ -136,7 +138,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
                       {plan.popular && !isCurrent ? (
                         <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
                           <Star className="h-3 w-3" strokeWidth={1.5} />
-                          الأكثر طلباً
+                          {showFounderPrice ? "عرض المؤسسين" : "الأكثر طلباً"}
                         </span>
                       ) : null}
 
@@ -152,10 +154,20 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
                         <h3 className="text-lg font-bold text-card-foreground">{plan.name}</h3>
                       </div>
 
-                      <div className="mb-3 flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-primary">{plan.price}</span>
+                      <div className="mb-1 flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-primary">{displayPrice}</span>
+                        {showFounderPrice && (
+                          <span className="text-lg font-bold text-muted-foreground line-through">{plan.price}</span>
+                        )}
                         <span className="text-sm text-muted-foreground">ر.س/شهر</span>
                       </div>
+                      {showFounderPrice && (
+                        <div className="mb-3 space-y-0.5">
+                          <p className="text-xs font-semibold text-primary">الشهر الأول فقط للمؤسسين</p>
+                          <p className="text-xs text-muted-foreground">ثم {plan.price} ر.س/شهر</p>
+                        </div>
+                      )}
+                      {!showFounderPrice && <div className="mb-3" />}
 
                       <ul className="mb-4 space-y-2">
                         {plan.features.map((feature) => (

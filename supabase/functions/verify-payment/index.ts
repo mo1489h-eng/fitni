@@ -147,6 +147,13 @@ serve(async (req) => {
     if (resendKey && userEmail) {
       const planName = plan === "basic" ? "أساسي" : "احترافي";
       const renewDate = endDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+      const founderNote = isFounderDiscount && Number(payment.amount) === 99
+        ? `<div style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin:16px 0;text-align:center;">
+            <p style="color:#16a34a;font-weight:bold;font-size:16px;margin:0;">🎉 تم تفعيل عرض المؤسسين</p>
+            <p style="color:#ccc;font-size:14px;margin:8px 0 0;">دفعت 99 ريال للباقة الاحترافية (بدلاً من 179)</p>
+            <p style="color:#999;font-size:12px;margin:4px 0 0;">من الشهر القادم: 179 ريال/شهر</p>
+          </div>`
+        : '';
       try {
         await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -154,10 +161,11 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "CoachBase <noreply@coachbase.health>",
             to: [userEmail],
-            subject: "شكراً لاشتراكك في CoachBase 🎉",
+            subject: isFounderDiscount ? "تم تفعيل عرض المؤسسين 🎉" : "شكراً لاشتراكك في CoachBase 🎉",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
               <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
               <h2>شكراً لاشتراكك 🎉</h2>
+              ${founderNote}
               <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
                 <p><strong style="color:#16a34a;">الخطة:</strong> ${planName}</p>
                 <p><strong style="color:#16a34a;">تاريخ التجديد:</strong> ${renewDate}</p>

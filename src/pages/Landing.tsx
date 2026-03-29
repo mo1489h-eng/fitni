@@ -15,7 +15,7 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { Gift, Users, CreditCard } from "lucide-react";
+import { Clock, Star, Shield, Users } from "lucide-react";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -81,44 +81,41 @@ const Landing = () => {
           </div>
 
           <div className="mx-auto max-w-4xl grid gap-4 md:grid-cols-3">
-            {/* Live trainer counter */}
             <Card className="border-primary/20 bg-background/70 backdrop-blur relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-primary md:text-4xl tabular-nums">
-                    {statsInView.visible ? <AnimatedCounter end={trainerCount} /> : "0"}
-                  </div>
-                  <div className="text-sm text-foreground/50 mt-1">مدرب انضم حتى الآن</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Free 6 months */}
-            <Card className="border-border bg-background/70 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Gift className="h-5 w-5 text-primary" />
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <div className="text-lg font-black text-foreground">مجاناً 6 شهور</div>
-                  <div className="text-sm text-foreground/50 mt-1">كاملة بدون أي رسوم</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">لجميع المدربين<br/>بدون أي التزام</div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* No credit card */}
-            <Card className="border-border bg-background/70 backdrop-blur">
+            <Card className="border-primary/20 bg-background/70 backdrop-blur relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-5 w-5 text-primary" />
+                  <Star className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-foreground">بدون بطاقة ائتمان</div>
-                  <div className="text-sm text-foreground/50 mt-1">سجّل وابدأ فوراً</div>
+                  <div className="text-lg font-black text-foreground">سعر المؤسسين</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">أول 500 مدرب فقط<br/>يحصلون على سعر خاص للأبد</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-background/70 backdrop-blur relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-lg font-black text-foreground">آمن وموثوق</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">بياناتك محمية<br/>ومشفرة بالكامل</div>
                 </div>
               </CardContent>
             </Card>

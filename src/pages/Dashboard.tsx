@@ -563,8 +563,8 @@ const Dashboard = () => {
               <Card className="border-border bg-card">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                    <Users className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                    تقدم العملاء
+                     <Users className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                    {t("dashboard.clientProgress")}
                   </div>
                   {clientProgressRows.length > 0 ? (
                     <div className="space-y-4">

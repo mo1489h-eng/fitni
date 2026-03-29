@@ -120,7 +120,7 @@ const Landing = () => {
               </CardContent>
             </Card>
           </div>
-          <p className="text-center text-sm text-foreground/50 mt-6">أول <span className="text-primary font-bold">100</span> مدرب يحصلون على 6 شهور مجاناً كاملة</p>
+          <p className="text-center text-sm text-foreground/50 mt-6">أول <span className="text-primary font-bold">100</span> مدرب يحصلون على: 6 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</p>
         </section>
 
         <ProblemSection />

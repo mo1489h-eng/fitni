@@ -47,17 +47,17 @@ const Register = () => {
   const { user, loading: authLoading } = useAuth();
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
-  if (!authLoading && user) return <Navigate to="/dashboard" replace />;
-
   // Fetch remaining founder spots
-  useState(() => {
+  useMemo(() => {
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
       .then(({ count }) => {
         setFounderSpots(Math.max(0, FOUNDER_LIMIT - (count ?? 0)));
       });
-  });
+  }, []);
+
+  if (!authLoading && user) return <Navigate to="/dashboard" replace />;
 
   const validateEmail = (value: string) => {
     setEmail(value);

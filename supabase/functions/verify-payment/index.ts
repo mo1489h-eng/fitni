@@ -78,10 +78,19 @@ serve(async (req) => {
       });
     }
 
-    const expectedAmount = plan === "basic" ? 99 : 179;
-    // Also accept 199 for legacy pricing
-    if (Number(payment.amount) !== expectedAmount && Number(payment.amount) !== 199) {
-      console.error("Amount mismatch: expected", expectedAmount, "got", payment.amount);
+    // Check if founder discount applies
+    const { data: trainerProfile } = await supabase
+      .from("profiles")
+      .select("is_founder, founder_discount_used")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const isFounderDiscount = plan === "pro" && trainerProfile?.is_founder === true && trainerProfile?.founder_discount_used === false;
+    
+    // Accept 99 for basic, 179 for pro, 99 for founder pro discount, 199 for legacy
+    const validAmounts = plan === "basic" ? [99] : (isFounderDiscount ? [99, 179, 199] : [179, 199]);
+    if (!validAmounts.includes(Number(payment.amount))) {
+      console.error("Amount mismatch: expected one of", validAmounts, "got", payment.amount);
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

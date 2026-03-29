@@ -51,7 +51,7 @@ const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
             email: user?.email || "",
           },
           redirect_url: `${window.location.origin}/payment/callback?type=trainer_subscription&plan=${plan}`,
-          metadata: { type: "trainer_subscription", plan, user_id: user?.id },
+          metadata: { type: "trainer_subscription", plan, user_id: user?.id, is_founder: isFounder },
         },
       });
 

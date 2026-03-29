@@ -78,18 +78,27 @@ serve(async (req) => {
       });
     }
 
-    const expectedAmount = plan === "basic" ? 99 : 179;
-    // Also accept 199 for legacy pricing
-    if (Number(payment.amount) !== expectedAmount && Number(payment.amount) !== 199) {
-      console.error("Amount mismatch: expected", expectedAmount, "got", payment.amount);
+    // Check for payment replay
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check if founder discount applies
+    const { data: trainerProfile } = await supabase
+      .from("profiles")
+      .select("is_founder, founder_discount_used")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const isFounderDiscount = plan === "pro" && trainerProfile?.is_founder === true && trainerProfile?.founder_discount_used === false;
+    
+    // Accept 99 for basic, 179 for pro, 99 for founder pro discount, 199 for legacy
+    const validAmounts = plan === "basic" ? [99] : (isFounderDiscount ? [99, 179, 199] : [179, 199]);
+    if (!validAmounts.includes(Number(payment.amount))) {
+      console.error("Amount mismatch: expected one of", validAmounts, "got", payment.amount);
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Check for payment replay
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: existingProfile } = await supabase
       .from("profiles")
@@ -107,6 +116,11 @@ serve(async (req) => {
     const endDate = new Date(now);
     endDate.setMonth(endDate.getMonth() + 1);
 
+    // If founder used discount, mark it
+    const founderUpdate = isFounderDiscount && Number(payment.amount) === 99
+      ? { founder_discount_used: true }
+      : {};
+
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -115,6 +129,7 @@ serve(async (req) => {
         subscription_end_date: endDate.toISOString(),
         payment_status: "active",
         last_payment_id: payment_id,
+        ...founderUpdate,
       })
       .eq("user_id", userId);
 
@@ -132,6 +147,13 @@ serve(async (req) => {
     if (resendKey && userEmail) {
       const planName = plan === "basic" ? "أساسي" : "احترافي";
       const renewDate = endDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
+      const founderNote = isFounderDiscount && Number(payment.amount) === 99
+        ? `<div style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:16px;margin:16px 0;text-align:center;">
+            <p style="color:#16a34a;font-weight:bold;font-size:16px;margin:0;">🎉 تم تفعيل عرض المؤسسين</p>
+            <p style="color:#ccc;font-size:14px;margin:8px 0 0;">دفعت 99 ريال للباقة الاحترافية (بدلاً من 179)</p>
+            <p style="color:#999;font-size:12px;margin:4px 0 0;">من الشهر القادم: 179 ريال/شهر</p>
+          </div>`
+        : '';
       try {
         await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -139,10 +161,11 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "CoachBase <noreply@coachbase.health>",
             to: [userEmail],
-            subject: "شكراً لاشتراكك في CoachBase 🎉",
+            subject: isFounderDiscount ? "تم تفعيل عرض المؤسسين 🎉" : "شكراً لاشتراكك في CoachBase 🎉",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">
               <h1 style="color:#16a34a;text-align:center;">CoachBase</h1>
               <h2>شكراً لاشتراكك 🎉</h2>
+              ${founderNote}
               <div style="background:rgba(34,197,94,0.1);border-radius:12px;padding:20px;margin:20px 0;">
                 <p><strong style="color:#16a34a;">الخطة:</strong> ${planName}</p>
                 <p><strong style="color:#16a34a;">تاريخ التجديد:</strong> ${renewDate}</p>

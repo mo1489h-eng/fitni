@@ -84,6 +84,10 @@ export function usePlanLimits() {
     description: "فعّل باقتك للاستمرار في استخدام هذه الميزة بعد انتهاء الفترة المجانية.",
   });
 
+  const isFounder = profile?.is_founder === true;
+  const founderDiscountUsed = profile?.founder_discount_used === true;
+  const founderDiscountAvailable = isFounder && !founderDiscountUsed;
+
   return {
     plan,
     clientCount,
@@ -102,6 +106,9 @@ export function usePlanLimits() {
     isFree,
     isBasic,
     isPro,
+    isFounder,
+    founderDiscountUsed,
+    founderDiscountAvailable,
     getAddClientBlockReason,
     getProFeatureBlockReason,
   };

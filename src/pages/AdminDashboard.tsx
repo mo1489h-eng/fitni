@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, UserCheck, DollarSign, TrendingUp, Lock, LogOut, Star, BarChart2, Download } from "lucide-react";
+import { Users, UserCheck, DollarSign, TrendingUp, Lock, LogOut, Star, BarChart2, Download, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -394,6 +394,33 @@ export default function AdminDashboard() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Founders Section */}
+        {data?.founders && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Gift className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                المؤسسون (أول 100 مدرب)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "عدد المؤسسين", value: `${data.founders.total} من ${data.founders.limit}`, color: "text-primary" },
+                  { label: "أماكن متبقية", value: data.founders.spots_remaining, color: data.founders.spots_remaining > 0 ? "text-primary" : "text-destructive" },
+                  { label: "استخدموا العرض", value: data.founders.discount_used, color: "text-foreground" },
+                  { label: "لم يستخدموا بعد", value: data.founders.discount_remaining, color: "text-amber-500" },
+                ].map((s, i) => (
+                  <div key={i} className="rounded-lg border border-border bg-background p-3 text-center">
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className={`mt-1 text-xl font-bold ${s.color}`}>{s.value}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* NPS Section */}
         {data?.nps && (

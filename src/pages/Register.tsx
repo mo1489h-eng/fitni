@@ -14,6 +14,8 @@ const benefits = [
   { icon: CheckCircle, text: "مجاني 6 شهور كاملة" },
 ];
 
+const FOUNDER_LIMIT = 100;
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getPasswordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
@@ -38,11 +40,22 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [founderSpots, setFounderSpots] = useState<number | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
+  // Fetch remaining founder spots
+  useMemo(() => {
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .then(({ count }) => {
+        setFounderSpots(Math.max(0, FOUNDER_LIMIT - (count ?? 0)));
+      });
+  }, []);
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
 
@@ -168,7 +181,11 @@ const Register = () => {
               </div>
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">كن من أوائل 100 مدرب</span>
+          <span className="text-sm text-muted-foreground">
+            {founderSpots !== null && founderSpots > 0
+              ? `تبقى ${founderSpots} مكان للمؤسسين`
+              : "كن من أوائل 100 مدرب"}
+          </span>
         </div>
       </div>
 

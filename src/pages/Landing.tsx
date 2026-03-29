@@ -14,12 +14,8 @@ import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-
-const socialProofStats = [
-  { value: 500, suffix: "+", label: "مدرب" },
-  { value: 10000, suffix: "+", label: "متدرب" },
-  { value: 1, prefix: "", suffix: "M+", label: "تمرين مكتمل" },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { Gift, Users, CreditCard } from "lucide-react";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -27,6 +23,7 @@ const Landing = () => {
   const [scrolled, setScrolled] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [copilotStep, setCopilotStep] = useState(0);
+  const [trainerCount, setTrainerCount] = useState<number>(0);
   const statsInView = useInView<HTMLDivElement>(0.35);
 
   useEffect(() => {
@@ -44,6 +41,16 @@ const Landing = () => {
     const interval = window.setInterval(() => setCopilotStep((c) => (c + 1) % 4), 1600);
     return () => window.clearInterval(interval);
   }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+      setTrainerCount(count ?? 0);
+    };
+    fetchCount();
+  }, []);
 
   const heroParallax = useMemo(() => (prefersReducedMotion ? 0 : Math.min(scrollY * 0.08, 30)), [prefersReducedMotion, scrollY]);
 
@@ -65,28 +72,56 @@ const Landing = () => {
       <main>
         <HeroSection heroParallax={heroParallax} />
 
-        <section ref={statsInView.ref} className="border-y border-border bg-card/60 px-4 py-5 backdrop-blur md:px-6">
-          <div className="mx-auto max-w-7xl overflow-hidden rounded-full border border-border bg-background/80 py-3">
-            <div className="landing-marquee flex min-w-max items-center gap-16 px-8 text-sm font-semibold text-foreground/55">
-              {Array.from({ length: 2 }).flatMap((_, i) =>
-                ["انضم لمئات المدربين في السعودية", "لوحة تحكم احترافية للمدربين", "تجربة متدرب premium من أول يوم"].map((t) => <span key={`${t}-${i}`}>{t}</span>),
-              )}
-            </div>
+        <section ref={statsInView.ref} className="border-y border-border bg-card/60 px-4 py-8 backdrop-blur md:px-6 md:py-12">
+          <div className="mx-auto max-w-4xl text-center mb-8">
+            <h2 className="text-2xl font-black text-foreground md:text-3xl">
+              كن من أوائل <span className="text-primary">500</span> مدرب على CoachBase
+            </h2>
+            <p className="mt-2 text-foreground/50 text-sm">انضم للمدربين الأوائل في السعودية</p>
           </div>
-          <div className="mx-auto mt-6 grid max-w-6xl gap-4 md:grid-cols-3">
-            {socialProofStats.map((stat) => (
-              <Card key={stat.label} className="border-border bg-background/70 backdrop-blur">
-                <CardContent className="flex items-end justify-between gap-4 p-6">
-                  <div>
-                    <div className="text-sm text-foreground/45">{stat.label}</div>
-                    <div className="mt-3 text-4xl font-black text-foreground md:text-5xl">
-                      {statsInView.visible ? <AnimatedCounter end={stat.value} prefix={stat.prefix} suffix={stat.suffix} /> : "0"}
-                    </div>
+
+          <div className="mx-auto max-w-4xl grid gap-4 md:grid-cols-3">
+            {/* Live trainer counter */}
+            <Card className="border-primary/20 bg-background/70 backdrop-blur relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-3xl font-black text-primary md:text-4xl tabular-nums">
+                    {statsInView.visible ? <AnimatedCounter end={trainerCount} /> : "0"}
                   </div>
-                  <div className="h-12 w-12 rounded-full bg-primary/10" />
-                </CardContent>
-              </Card>
-            ))}
+                  <div className="text-sm text-foreground/50 mt-1">مدرب انضم حتى الآن</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Free 6 months */}
+            <Card className="border-border bg-background/70 backdrop-blur">
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Gift className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-lg font-black text-foreground">مجاناً 6 شهور</div>
+                  <div className="text-sm text-foreground/50 mt-1">كاملة بدون أي رسوم</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* No credit card */}
+            <Card className="border-border bg-background/70 backdrop-blur">
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <div className="text-lg font-black text-foreground">بدون بطاقة ائتمان</div>
+                  <div className="text-sm text-foreground/50 mt-1">سجّل وابدأ فوراً</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 

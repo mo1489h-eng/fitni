@@ -543,8 +543,8 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                      <BarChart2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      الإيرادات
+                     <BarChart2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      {t("dashboard.revenue")}
                     </div>
                     <div className="grid h-56 grid-cols-6 items-end gap-3">
                       {monthlyRevenueSeries.map((month) => (

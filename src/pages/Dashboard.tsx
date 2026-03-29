@@ -626,7 +626,7 @@ const Dashboard = () => {
                   ) : (
                     <div className="rounded-xl border border-border bg-background px-5 py-10 text-center">
                       <CheckCircle2 className="mx-auto h-10 w-10 text-primary" strokeWidth={1.5} />
-                      <p className="mt-4 text-sm text-muted-foreground">لا توجد اشتراكات قريبة الانتهاء</p>
+                      <p className="mt-4 text-sm text-muted-foreground">{t("dashboard.noExpiring")}</p>
                     </div>
                   )}
                 </CardContent>

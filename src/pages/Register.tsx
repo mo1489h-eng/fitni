@@ -14,6 +14,8 @@ const benefits = [
   { icon: CheckCircle, text: "مجاني 6 شهور كاملة" },
 ];
 
+const FOUNDER_LIMIT = 100;
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getPasswordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {

@@ -523,8 +523,8 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-                      <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      توصيات الكوبايلت
+                     <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      {t("dashboard.copilotAlerts")}
                     </div>
                     <div className="rounded-r-none rounded-xl border-r-2 border-primary border border-border bg-background p-4">
                       <div className="flex items-start gap-3">

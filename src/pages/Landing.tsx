@@ -15,7 +15,7 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Zap, Shield, Users } from "lucide-react";
+import { Clock, Gift, Shield, Users } from "lucide-react";
 
 const Landing = () => {
   const { user, loading } = useAuth();

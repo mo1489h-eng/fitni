@@ -132,6 +132,13 @@ Deno.serve(async (req) => {
       supabase.from("nps_feedback").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
 
+    // Founder stats
+    const allProfiles = profiles || [];
+    const founderCount = allProfiles.filter((p: any) => p.is_founder === true).length;
+    const founderDiscountUsed = allProfiles.filter((p: any) => p.is_founder === true && p.founder_discount_used === true).length;
+    const founderDiscountRemaining = founderCount - founderDiscountUsed;
+    const spotsRemaining = Math.max(0, 100 - allProfiles.length);
+
     const trainerMap: Record<string, any> = {};
     for (const p of profiles || []) {
       trainerMap[p.user_id] = {

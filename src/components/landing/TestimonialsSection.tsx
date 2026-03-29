@@ -1,48 +1,78 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Clock, TrendingDown, TrendingUp } from "lucide-react";
 import { Reveal, SectionHeading } from "./LandingUtils";
 
-const testimonials = [
-  { name: "أحمد المطيري", role: "مدرب تحول جسماني", quote: "CoachBase نقلني من إدارة مشتتة بين الرسائل والجداول إلى نظام واضح يجعل العميل يشعر أن لدي فريقاً كاملاً خلفه." },
-  { name: "ريم الدوسري", role: "مدربة لياقة نسائية", quote: "أكثر شيء أحببته هو تجربة العميل نفسها. البورتال مرتب، والخطة الغذائية والبرنامج يظهران بشكل احترافي جداً." },
-  { name: "خالد العتيبي", role: "مدرب أداء رياضي", quote: "المدفوعات والمتابعة الأسبوعية كانت تستهلك وقتي. الآن أعرف من دفع ومن تأخر ومن يحتاج تواصل خلال ثوانٍ." },
+const facts = [
+  {
+    number: "3",
+    unit: "ساعات",
+    description: "يضيعها المدرب يومياً\nفي الإدارة بدل التدريب",
+    accent: "CoachBase تردها لك",
+    icon: Clock,
+    iconColor: "text-primary",
+  },
+  {
+    number: "80%",
+    unit: "",
+    description: "من المدربين يفقدون عملاء\nبسبب ضعف المتابعة والتنظيم",
+    accent: "CoachBase تتابع بدلاً عنك",
+    icon: TrendingDown,
+    iconColor: "text-destructive",
+  },
+  {
+    number: "40%",
+    unit: "",
+    description: "زيادة في الدخل للمدربين\nالذين ينظمون عملهم احترافياً",
+    accent: "CoachBase تنظم كل شيء",
+    icon: TrendingUp,
+    iconColor: "text-primary",
+  },
 ];
 
 const TestimonialsSection = () => (
   <section className="border-t border-border px-4 py-24 md:px-6 md:py-32">
     <div className="mx-auto max-w-7xl">
       <Reveal>
-        <SectionHeading eyebrow="آراء المدربين" title="قصص تبدو وكأنها حملة إعلانية… لأنها حقيقية" description="انطباع premium من أول نظرة وحتى آخر متابعة أسبوعية. هذا ما يشعر به المدرب والعميل معاً." centered />
+        <SectionHeading
+          eyebrow="أرقام حقيقية"
+          title="لماذا يحتاج كل مدرب CoachBase؟"
+          description="أرقام تتكلم عن نفسها"
+          centered
+        />
       </Reveal>
-      <Reveal delay={100} className="mt-14">
-        <Carousel opts={{ align: "start", loop: true }} className="px-4 md:px-14">
-          <CarouselContent>
-            {testimonials.map((t) => (
-              <CarouselItem key={t.name} className="md:basis-1/2 xl:basis-1/3">
-                <Card className="h-full border-border bg-card/85">
-                  <CardContent className="flex h-full flex-col p-8">
-                    <div className="text-6xl font-black leading-none text-primary/18">"</div>
-                    <p className="mt-4 flex-1 text-lg leading-8 text-foreground/72">{t.quote}</p>
-                    <div className="mt-8 flex items-center gap-4">
-                      <Avatar className="h-14 w-14 border border-border bg-primary/10">
-                        <AvatarFallback className="bg-primary/10 text-lg font-bold text-primary">{t.name.slice(0, 1)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-bold text-foreground">{t.name}</div>
-                        <div className="text-sm text-foreground/45">{t.role}</div>
-                        <div className="mt-2 text-sm tracking-[0.4em] text-primary">★★★★★</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="border-border bg-card text-foreground hover:bg-card" />
-          <CarouselNext className="border-border bg-card text-foreground hover:bg-card" />
-        </Carousel>
-      </Reveal>
+
+      <div className="mt-16 grid gap-6 md:grid-cols-3">
+        {facts.map((f, i) => (
+          <Reveal key={f.number} delay={i * 120}>
+            <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 transition-all duration-200 hover:border-primary/30"
+              style={{ borderTop: "2px solid hsl(142 71% 45%)" }}>
+              <div className="mb-6 flex items-center justify-between">
+                <f.icon className={`h-6 w-6 ${f.iconColor}`} />
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <span className="text-[64px] font-extrabold leading-none text-primary">
+                  {f.number}
+                </span>
+                {f.unit && (
+                  <span className="text-2xl font-bold text-foreground">
+                    {f.unit}
+                  </span>
+                )}
+              </div>
+
+              <p className="mt-4 whitespace-pre-line text-base leading-7 text-muted-foreground">
+                {f.description}
+              </p>
+
+              <div className="mt-6 border-t border-border pt-4">
+                <span className="text-sm font-semibold text-foreground">
+                  {f.accent}
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
     </div>
   </section>
 );

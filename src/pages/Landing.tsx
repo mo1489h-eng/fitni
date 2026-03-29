@@ -89,7 +89,7 @@ const Landing = () => {
                 </div>
                 <div>
                   <div className="text-lg font-black text-foreground">مجاناً 6 شهور</div>
-                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">لجميع المدربين<br/>بدون أي التزام</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">جرّب كل الميزات<br/>بدون بطاقة ائتمان</div>
                 </div>
               </CardContent>
             </Card>
@@ -98,11 +98,11 @@ const Landing = () => {
               <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Star className="h-5 w-5 text-primary" />
+                  <Zap className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-foreground">سعر المؤسسين</div>
-                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">أول 500 مدرب فقط<br/>يحصلون على سعر خاص للأبد</div>
+                  <div className="text-lg font-black text-foreground">جاهز في دقائق</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">سجّل وابدأ فوراً<br/>بدون إعداد معقد</div>
                 </div>
               </CardContent>
             </Card>
@@ -119,6 +119,8 @@ const Landing = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+          <p className="text-center text-sm text-foreground/50 mt-6">أول <span className="text-primary font-bold">100</span> مدرب يحصلون على 6 شهور مجاناً كاملة</p>
           </div>
         </section>
 

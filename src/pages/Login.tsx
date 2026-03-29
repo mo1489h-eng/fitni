@@ -71,7 +71,7 @@ const Login = () => {
               </div>
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">+500 مدرب انضموا بالفعل</span>
+          <span className="text-sm text-muted-foreground">كن من أوائل 100 مدرب</span>
         </div>
       </div>
 

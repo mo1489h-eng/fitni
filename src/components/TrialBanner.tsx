@@ -127,8 +127,8 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
               <div className="space-y-4">
                 {plans.map((plan) => {
                   const isCurrent = isSubscribed && profile.subscription_plan === plan.key;
-
-                  return (
+                  const showFounderPrice = plan.key === "pro" && founderDiscountAvailable;
+                  const displayPrice = showFounderPrice ? 99 : plan.price;
                     <Card
                       key={plan.key}
                       className={`relative p-5 ${plan.popular ? "border-primary border-2 shadow-lg shadow-primary/10" : ""} ${isCurrent ? "border-success border-2" : ""}`}

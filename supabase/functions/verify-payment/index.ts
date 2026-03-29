@@ -78,6 +78,10 @@ serve(async (req) => {
       });
     }
 
+    // Check for payment replay
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
     // Check if founder discount applies
     const { data: trainerProfile } = await supabase
       .from("profiles")
@@ -96,10 +100,6 @@ serve(async (req) => {
       });
     }
 
-    // Check for payment replay
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("id")
@@ -116,6 +116,11 @@ serve(async (req) => {
     const endDate = new Date(now);
     endDate.setMonth(endDate.getMonth() + 1);
 
+    // If founder used discount, mark it
+    const founderUpdate = isFounderDiscount && Number(payment.amount) === 99
+      ? { founder_discount_used: true }
+      : {};
+
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -124,6 +129,7 @@ serve(async (req) => {
         subscription_end_date: endDate.toISOString(),
         payment_status: "active",
         last_payment_id: payment_id,
+        ...founderUpdate,
       })
       .eq("user_id", userId);
 

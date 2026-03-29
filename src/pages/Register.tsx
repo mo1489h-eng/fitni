@@ -49,6 +49,16 @@ const Register = () => {
 
   if (!authLoading && user) return <Navigate to="/dashboard" replace />;
 
+  // Fetch remaining founder spots
+  useState(() => {
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .then(({ count }) => {
+        setFounderSpots(Math.max(0, FOUNDER_LIMIT - (count ?? 0)));
+      });
+  });
+
   const validateEmail = (value: string) => {
     setEmail(value);
     if (value && !emailRegex.test(value)) {

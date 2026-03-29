@@ -12,8 +12,25 @@ import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-import { supabase } from "@/integrations/supabase/client";
-import { Gift, Users, CreditCard } from "lucide-react";
+import { Clock, Users, Shield } from "lucide-react";
+
+const valueProps = [
+  {
+    icon: Clock,
+    title: "مجاناً 6 شهور",
+    subtitle: "بدون بطاقة ائتمان\nبدون أي التزام",
+  },
+  {
+    icon: Users,
+    title: "لأول 500 مدرب فقط",
+    subtitle: "أماكن محدودة\nسجّل الحين",
+  },
+  {
+    icon: Shield,
+    title: "آمن وموثوق",
+    subtitle: "بياناتك محمية\nومشفرة بالكامل",
+  },
+];
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -21,8 +38,6 @@ const Landing = () => {
   const [scrolled, setScrolled] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [copilotStep, setCopilotStep] = useState(0);
-  const [trainerCount, setTrainerCount] = useState<number>(0);
-  const statsInView = useInView<HTMLDivElement>(0.35);
 
   useEffect(() => {
     const onScroll = () => {
@@ -39,16 +54,6 @@ const Landing = () => {
     const interval = window.setInterval(() => setCopilotStep((c) => (c + 1) % 4), 1600);
     return () => window.clearInterval(interval);
   }, [prefersReducedMotion]);
-
-  useEffect(() => {
-    const fetchCount = async () => {
-      const { count } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-      setTrainerCount(count ?? 0);
-    };
-    fetchCount();
-  }, []);
 
   const heroParallax = useMemo(() => (prefersReducedMotion ? 0 : Math.min(scrollY * 0.08, 30)), [prefersReducedMotion, scrollY]);
 
@@ -70,56 +75,20 @@ const Landing = () => {
       <main>
         <HeroSection heroParallax={heroParallax} />
 
-        <section ref={statsInView.ref} className="border-y border-border bg-card/60 px-4 py-8 backdrop-blur md:px-6 md:py-12">
-          <div className="mx-auto max-w-4xl text-center mb-8">
-            <h2 className="text-2xl font-black text-foreground md:text-3xl">
-              كن من أوائل <span className="text-primary">500</span> مدرب على CoachBase
-            </h2>
-            <p className="mt-2 text-foreground/50 text-sm">انضم للمدربين الأوائل في السعودية</p>
-          </div>
-
+        <section className="border-y border-border bg-card/60 px-4 py-8 backdrop-blur md:px-6 md:py-12">
           <div className="mx-auto max-w-4xl grid gap-4 md:grid-cols-3">
-            {/* Live trainer counter */}
-            <Card className="border-primary/20 bg-background/70 backdrop-blur relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+            {valueProps.map((prop) => (
+              <div
+                key={prop.title}
+                className="rounded-xl border border-[hsl(0_0%_13%)] bg-[hsl(0_0%_7%)] p-6"
+              >
+                <prop.icon className="h-7 w-7 text-primary mb-4" strokeWidth={1.5} />
+                <div className="text-lg font-bold text-foreground">{prop.title}</div>
+                <div className="mt-2 text-sm text-foreground/45 whitespace-pre-line leading-relaxed">
+                  {prop.subtitle}
                 </div>
-                <div>
-                  <div className="text-3xl font-black text-primary md:text-4xl tabular-nums">
-                    {statsInView.visible ? <AnimatedCounter end={trainerCount} /> : "0"}
-                  </div>
-                  <div className="text-sm text-foreground/50 mt-1">مدرب انضم حتى الآن</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Free 6 months */}
-            <Card className="border-border bg-background/70 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Gift className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-lg font-black text-foreground">مجاناً 6 شهور</div>
-                  <div className="text-sm text-foreground/50 mt-1">كاملة بدون أي رسوم</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* No credit card */}
-            <Card className="border-border bg-background/70 backdrop-blur">
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-lg font-black text-foreground">بدون بطاقة ائتمان</div>
-                  <div className="text-sm text-foreground/50 mt-1">سجّل وابدأ فوراً</div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            ))}
           </div>
         </section>
 

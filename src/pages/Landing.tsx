@@ -14,12 +14,8 @@ import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-
-const socialProofStats = [
-  { value: 500, suffix: "+", label: "مدرب" },
-  { value: 10000, suffix: "+", label: "متدرب" },
-  { value: 1, prefix: "", suffix: "M+", label: "تمرين مكتمل" },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { Gift, Users, CreditCard } from "lucide-react";
 
 const Landing = () => {
   const { user, loading } = useAuth();

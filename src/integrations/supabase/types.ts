@@ -1151,9 +1151,11 @@ export type Database = {
           bio: string | null
           brand_color: string | null
           created_at: string
+          founder_discount_used: boolean
           full_name: string
           gallery_images: string[] | null
           id: string
+          is_founder: boolean
           last_payment_id: string | null
           logo_url: string | null
           notify_inactive: boolean | null
@@ -1183,9 +1185,11 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
           id?: string
+          is_founder?: boolean
           last_payment_id?: string | null
           logo_url?: string | null
           notify_inactive?: boolean | null
@@ -1215,9 +1219,11 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
           id?: string
+          is_founder?: boolean
           last_payment_id?: string | null
           logo_url?: string | null
           notify_inactive?: boolean | null
@@ -2010,6 +2016,7 @@ export type Database = {
           week_number: number
         }[]
       }
+      get_founder_stats: { Args: never; Returns: Json }
       get_my_client_profile: {
         Args: never
         Returns: {

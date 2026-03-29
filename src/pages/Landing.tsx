@@ -19,11 +19,7 @@ import { Gift, Users, CreditCard } from "lucide-react";
 
 const Landing = () => {
   const { user, loading } = useAuth();
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const [scrolled, setScrolled] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [copilotStep, setCopilotStep] = useState(0);
-  const statsInView = useInView<HTMLDivElement>(0.35);
+  const [trainerCount, setTrainerCount] = useState<number | null>(null);
 
   useEffect(() => {
     const onScroll = () => {

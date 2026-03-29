@@ -49,7 +49,7 @@ interface TrialBannerProps {
 
 const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansChange }: TrialBannerProps) => {
   const { profile } = useAuth();
-  const { isOnTrial, trialEndDate, isTrialExpired } = usePlanLimits();
+  const { isOnTrial, trialEndDate, isTrialExpired, founderDiscountAvailable } = usePlanLimits();
   const [internalShowPlans, setInternalShowPlans] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "pro" | null>(null);
   const [dismissed, setDismissed] = useState(false);

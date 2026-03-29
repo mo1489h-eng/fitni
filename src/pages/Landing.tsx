@@ -75,7 +75,7 @@ const Landing = () => {
         <section ref={statsInView.ref} className="border-y border-border bg-card/60 px-4 py-8 backdrop-blur md:px-6 md:py-12">
           <div className="mx-auto max-w-4xl text-center mb-8">
             <h2 className="text-2xl font-black text-foreground md:text-3xl">
-              كن من أوائل <span className="text-primary">500</span> مدرب على CoachBase
+              كن من أوائل <span className="text-primary">100</span> مدرب على CoachBase
             </h2>
             <p className="mt-2 text-foreground/50 text-sm">انضم للمدربين الأوائل في السعودية</p>
           </div>

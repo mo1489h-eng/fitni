@@ -181,7 +181,11 @@ const Register = () => {
               </div>
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">كن من أوائل 100 مدرب</span>
+          <span className="text-sm text-muted-foreground">
+            {founderSpots !== null && founderSpots > 0
+              ? `تبقى ${founderSpots} مكان للمؤسسين`
+              : "كن من أوائل 100 مدرب"}
+          </span>
         </div>
       </div>
 

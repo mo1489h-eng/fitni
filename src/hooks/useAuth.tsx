@@ -21,6 +21,8 @@ interface Profile {
   welcome_message: string;
   onboarding_completed: boolean;
   username: string | null;
+  is_founder: boolean;
+  founder_discount_used: boolean;
 }
 
 interface AuthContextType {

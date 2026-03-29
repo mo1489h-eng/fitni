@@ -611,7 +611,7 @@ const Dashboard = () => {
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <p className="font-semibold text-foreground">{client.name}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">متبقي {remainingDays === 0 ? "اليوم" : `${remainingDays} يوم`}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">{remainingDays === 0 ? t("dashboard.remainingToday") : t("dashboard.remaining", { days: remainingDays })}</p>
                               </div>
                               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border text-muted-foreground hover:text-primary" asChild>
                                 <a href={formatWhatsApp(client.phone)} target="_blank" rel="noreferrer" aria-label="تذكير واتساب">

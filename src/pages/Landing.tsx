@@ -98,11 +98,11 @@ const Landing = () => {
               <div className="absolute top-0 inset-x-0 h-px bg-primary/40" />
               <CardContent className="flex items-center gap-4 p-6">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Zap className="h-5 w-5 text-primary" />
+                  <Gift className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-foreground">جاهز في دقائق</div>
-                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">سجّل وابدأ فوراً<br/>بدون إعداد معقد</div>
+                  <div className="text-lg font-black text-foreground">هدية المؤسسين</div>
+                  <div className="text-sm text-foreground/50 mt-1 leading-relaxed">الباقة الاحترافية<br/>بسعر الأساسية لأول شهر</div>
                 </div>
               </CardContent>
             </Card>

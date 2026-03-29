@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import AnimatedCounter from "@/components/AnimatedCounter";
-import { Card, CardContent } from "@/components/ui/card";
-import { useInView, usePrefersReducedMotion } from "@/components/landing/LandingUtils";
+import { usePrefersReducedMotion } from "@/components/landing/LandingUtils";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import ProblemSection from "@/components/landing/ProblemSection";

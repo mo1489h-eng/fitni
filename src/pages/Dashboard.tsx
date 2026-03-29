@@ -486,7 +486,7 @@ const Dashboard = () => {
                         })}
                       </div>
                     ) : (
-                      <EmptyPanel icon={CalendarDays} title="لا توجد جلسات اليوم" cta="إضافة جلسة" onClick={() => navigate("/calendar")} />
+                      <EmptyPanel icon={CalendarDays} title={t("dashboard.noSessions")} cta={t("dashboard.addSession")} onClick={() => navigate("/calendar")} />
                     )}
                   </CardContent>
                 </Card>

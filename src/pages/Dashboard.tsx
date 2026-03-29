@@ -496,15 +496,15 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                      <Zap className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      إجراءات سريعة
+                     <Zap className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      {t("dashboard.quickActions")}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { label: "إضافة عميل", icon: UserPlus, action: () => navigate("/clients") },
-                        { label: "برنامج جديد", icon: ClipboardList, action: () => navigate("/programs") },
-                        { label: "جلسة جديدة", icon: CalendarDays, action: () => navigate("/calendar") },
-                        { label: "AI كوبايلت", icon: Sparkles, action: handleCopilot },
+                        { label: t("dashboard.addClient"), icon: UserPlus, action: () => navigate("/clients") },
+                        { label: t("dashboard.newProgram"), icon: ClipboardList, action: () => navigate("/programs") },
+                        { label: t("dashboard.newSession"), icon: CalendarDays, action: () => navigate("/calendar") },
+                        { label: t("nav.copilot"), icon: Sparkles, action: handleCopilot },
                       ].map((actionItem) => (
                         <button
                           key={actionItem.label}

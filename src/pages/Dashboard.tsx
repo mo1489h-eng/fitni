@@ -140,7 +140,7 @@ const StatCard = ({
       {ring ? (
         <div className="flex items-center justify-between">
           <CircularProgress value={value} />
-          <div className="max-w-[8rem] text-sm leading-7 text-muted-foreground">نسبة العملاء الذين سجّلوا نشاطاً حديثاً.</div>
+          <div className="max-w-[8rem] text-sm leading-7 text-muted-foreground">{t("dashboard.adherenceNote")}</div>
         </div>
       ) : null}
     </CardContent>

@@ -23,10 +23,11 @@ const PAYMENT_ICONS = [
 const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
 
-  const amount = plan === "basic" ? 99 : 199;
+  const isFounder = profile?.is_founder === true && !profile?.founder_discount_used;
+  const amount = plan === "basic" ? 99 : (isFounder ? 99 : 179);
   const planName = plan === "basic" ? "أساسي" : "احترافي";
 
   const handlePay = async () => {

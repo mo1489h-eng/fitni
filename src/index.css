@@ -61,8 +61,12 @@
 
   body {
     @apply bg-background text-foreground font-tajawal antialiased;
-    direction: rtl;
     scroll-behavior: smooth;
+  }
+
+  [dir="ltr"] body,
+  html[dir="ltr"] body {
+    font-family: system-ui, -apple-system, sans-serif;
   }
 
   html {

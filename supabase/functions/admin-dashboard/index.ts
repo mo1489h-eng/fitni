@@ -246,10 +246,17 @@ Deno.serve(async (req) => {
       trainers,
       payouts,
       stats: {
-        total_trainers: (profiles || []).length,
+        total_trainers: allProfiles.length,
         total_clients: (clients || []).length,
         month_revenue: monthRevenue,
         total_revenue: totalRevenue,
+      },
+      founders: {
+        total: founderCount,
+        discount_used: founderDiscountUsed,
+        discount_remaining: founderDiscountRemaining,
+        spots_remaining: spotsRemaining,
+        limit: 100,
       },
       charts: {
         monthly_revenue: monthlyRevenue,

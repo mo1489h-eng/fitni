@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,

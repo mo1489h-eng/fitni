@@ -412,10 +412,10 @@ const Dashboard = () => {
         ) : (
           <>
             <section className="grid gap-5 xl:grid-cols-4 md:grid-cols-2">
-              <StatCard title="العملاء النشطون" icon={Users} value={clients.length} trend={`+${Math.max(1, Math.ceil(clients.length / 6))} هذا الشهر`} />
-              <StatCard title="إيرادات الشهر" icon={TrendingUp} value={monthlyRevenue} suffix=" ر.س" trend={`${revenueChange >= 0 ? "+" : ""}${revenueChange}% مقارنة بالشهر الماضي`} />
-              <StatCard title="جلسات هذا الأسبوع" icon={CalendarDays} value={weeklySessions.length} trend={`${upcomingSessions} جلسة قادمة`} />
-              <StatCard title="معدل الالتزام" icon={Activity} value={adherenceRate} trend="مبني على آخر نشاط مسجل" ring />
+              <StatCard title={t("dashboard.activeClients")} icon={Users} value={clients.length} trend={t("dashboard.thisMonth", { count: Math.max(1, Math.ceil(clients.length / 6)) })} />
+              <StatCard title={t("dashboard.monthlyRevenue")} icon={TrendingUp} value={monthlyRevenue} suffix={` ${t("common.sar")}`} trend={t("dashboard.vsLastMonth", { change: `${revenueChange >= 0 ? "+" : ""}${revenueChange}` })} />
+              <StatCard title={t("dashboard.weeklySessions")} icon={CalendarDays} value={weeklySessions.length} trend={t("dashboard.upcomingSessions", { count: upcomingSessions })} />
+              <StatCard title={t("dashboard.adherenceRate")} icon={Activity} value={adherenceRate} trend={t("dashboard.adherenceDesc")} ring />
             </section>
 
             <section className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">

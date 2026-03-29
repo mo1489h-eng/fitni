@@ -642,8 +642,8 @@ const Dashboard = () => {
         onOpenChange={setShowUpgrade}
         title={getProFeatureBlockReason().title}
         description={getProFeatureBlockReason().description}
-        ctaText="ترقية للاحترافي"
-        secondaryText="لاحقاً"
+        ctaText={t("dashboard.upgradeTitle")}
+        secondaryText={t("dashboard.later")}
         onUpgrade={() => {
           setShowUpgrade(false);
           setShowPlans(true);

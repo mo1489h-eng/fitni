@@ -166,7 +166,8 @@ EmptyPanel.displayName = "EmptyPanel";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
-  usePageTitle("لوحة التحكم");
+  const { t } = useTranslation();
+  usePageTitle(t("nav.dashboard"));
   const { hasCopilotAccess, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);

@@ -530,9 +530,9 @@ const Dashboard = () => {
                       <div className="flex items-start gap-3">
                         <AlertCircle className="mt-0.5 h-5 w-5 text-primary" strokeWidth={1.5} />
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{pendingCopilotCount || 0} توصيات تنتظر مراجعتك</p>
+                          <p className="font-medium text-foreground">{t("dashboard.pendingRecs", { count: pendingCopilotCount || 0 })}</p>
                           <button type="button" className="mt-2 text-sm font-medium text-primary" onClick={handleCopilot}>
-                            راجع الآن
+                            {t("dashboard.reviewNow")}
                           </button>
                         </div>
                       </div>

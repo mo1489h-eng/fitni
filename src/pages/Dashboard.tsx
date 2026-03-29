@@ -1,7 +1,6 @@
 import { forwardRef, useEffect, useMemo, useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -140,7 +139,7 @@ const StatCard = ({
       {ring ? (
         <div className="flex items-center justify-between">
           <CircularProgress value={value} />
-          <div className="max-w-[8rem] text-sm leading-7 text-muted-foreground">{ring ? title : ""}</div>
+          <div className="max-w-[8rem] text-sm leading-7 text-muted-foreground">نسبة العملاء الذين سجّلوا نشاطاً حديثاً.</div>
         </div>
       ) : null}
     </CardContent>
@@ -166,8 +165,7 @@ EmptyPanel.displayName = "EmptyPanel";
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
-  const { t } = useTranslation();
-  usePageTitle(t("nav.dashboard"));
+  usePageTitle("لوحة التحكم");
   const { hasCopilotAccess, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);
@@ -412,10 +410,10 @@ const Dashboard = () => {
         ) : (
           <>
             <section className="grid gap-5 xl:grid-cols-4 md:grid-cols-2">
-              <StatCard title={t("dashboard.activeClients")} icon={Users} value={clients.length} trend={t("dashboard.thisMonth", { count: Math.max(1, Math.ceil(clients.length / 6)) })} />
-              <StatCard title={t("dashboard.monthlyRevenue")} icon={TrendingUp} value={monthlyRevenue} suffix={` ${t("common.sar")}`} trend={t("dashboard.vsLastMonth", { change: `${revenueChange >= 0 ? "+" : ""}${revenueChange}` })} />
-              <StatCard title={t("dashboard.weeklySessions")} icon={CalendarDays} value={weeklySessions.length} trend={t("dashboard.upcomingSessions", { count: upcomingSessions })} />
-              <StatCard title={t("dashboard.adherenceRate")} icon={Activity} value={adherenceRate} trend={t("dashboard.adherenceDesc")} ring />
+              <StatCard title="العملاء النشطون" icon={Users} value={clients.length} trend={`+${Math.max(1, Math.ceil(clients.length / 6))} هذا الشهر`} />
+              <StatCard title="إيرادات الشهر" icon={TrendingUp} value={monthlyRevenue} suffix=" ر.س" trend={`${revenueChange >= 0 ? "+" : ""}${revenueChange}% مقارنة بالشهر الماضي`} />
+              <StatCard title="جلسات هذا الأسبوع" icon={CalendarDays} value={weeklySessions.length} trend={`${upcomingSessions} جلسة قادمة`} />
+              <StatCard title="معدل الالتزام" icon={Activity} value={adherenceRate} trend="مبني على آخر نشاط مسجل" ring />
             </section>
 
             <section className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
@@ -423,8 +421,8 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <Activity className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      {t("dashboard.recentActivity")}
+                      <Activity className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      النشاط الأخير
                     </div>
                     <div className="space-y-1">
                       {activityFeed.length > 0 ? (
@@ -440,7 +438,7 @@ const Dashboard = () => {
                           </div>
                         ))
                       ) : (
-                        <EmptyPanel icon={Activity} title={t("dashboard.noActivity")} cta={t("dashboard.addClient")} onClick={() => navigate("/clients")} />
+                        <EmptyPanel icon={Activity} title="لا يوجد نشاط حديث لعرضه" cta="إضافة عميل" onClick={() => navigate("/clients")} />
                       )}
                     </div>
                   </CardContent>
@@ -449,8 +447,8 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <CalendarDays className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      {t("dashboard.todaySessions")}
+                      <CalendarDays className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      جلسات اليوم
                     </div>
 
                     {todaySessions.length > 0 ? (
@@ -464,7 +462,7 @@ const Dashboard = () => {
                               <div className="text-sm tabular-nums text-muted-foreground">{session.start_time.slice(0, 5)}</div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-foreground">{client?.name || t("dashboard.client")}</p>
+                                  <p className="font-semibold text-foreground">{client?.name || "عميل"}</p>
                                   <span className={`h-2.5 w-2.5 rounded-full ${upcoming ? "bg-primary" : "bg-muted-foreground"}`} />
                                 </div>
                                 <p className="mt-1 text-sm text-muted-foreground">{session.session_type}</p>
@@ -486,7 +484,7 @@ const Dashboard = () => {
                         })}
                       </div>
                     ) : (
-                      <EmptyPanel icon={CalendarDays} title={t("dashboard.noSessions")} cta={t("dashboard.addSession")} onClick={() => navigate("/calendar")} />
+                      <EmptyPanel icon={CalendarDays} title="لا توجد جلسات اليوم" cta="إضافة جلسة" onClick={() => navigate("/calendar")} />
                     )}
                   </CardContent>
                 </Card>
@@ -496,15 +494,15 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <Zap className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      {t("dashboard.quickActions")}
+                      <Zap className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      إجراءات سريعة
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { label: t("dashboard.addClient"), icon: UserPlus, action: () => navigate("/clients") },
-                        { label: t("dashboard.newProgram"), icon: ClipboardList, action: () => navigate("/programs") },
-                        { label: t("dashboard.newSession"), icon: CalendarDays, action: () => navigate("/calendar") },
-                        { label: t("nav.copilot"), icon: Sparkles, action: handleCopilot },
+                        { label: "إضافة عميل", icon: UserPlus, action: () => navigate("/clients") },
+                        { label: "برنامج جديد", icon: ClipboardList, action: () => navigate("/programs") },
+                        { label: "جلسة جديدة", icon: CalendarDays, action: () => navigate("/calendar") },
+                        { label: "AI كوبايلت", icon: Sparkles, action: handleCopilot },
                       ].map((actionItem) => (
                         <button
                           key={actionItem.label}
@@ -523,16 +521,16 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      {t("dashboard.copilotAlerts")}
+                      <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      توصيات الكوبايلت
                     </div>
                     <div className="rounded-r-none rounded-xl border-r-2 border-primary border border-border bg-background p-4">
                       <div className="flex items-start gap-3">
                         <AlertCircle className="mt-0.5 h-5 w-5 text-primary" strokeWidth={1.5} />
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{t("dashboard.pendingRecs", { count: pendingCopilotCount || 0 })}</p>
+                          <p className="font-medium text-foreground">{pendingCopilotCount || 0} توصيات تنتظر مراجعتك</p>
                           <button type="button" className="mt-2 text-sm font-medium text-primary" onClick={handleCopilot}>
-                            {t("dashboard.reviewNow")}
+                            راجع الآن
                           </button>
                         </div>
                       </div>
@@ -543,8 +541,8 @@ const Dashboard = () => {
                 <Card className="border-border bg-card">
                   <CardContent className="p-6">
                     <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <BarChart2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      {t("dashboard.revenue")}
+                      <BarChart2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                      الإيرادات
                     </div>
                     <div className="grid h-56 grid-cols-6 items-end gap-3">
                       {monthlyRevenueSeries.map((month) => (
@@ -563,8 +561,8 @@ const Dashboard = () => {
               <Card className="border-border bg-card">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <Users className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                    {t("dashboard.clientProgress")}
+                    <Users className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                    تقدم العملاء
                   </div>
                   {clientProgressRows.length > 0 ? (
                     <div className="space-y-4">
@@ -591,7 +589,7 @@ const Dashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    <EmptyPanel icon={UserPlus} title={t("clients.noClientsYet")} cta={t("dashboard.addClient")} onClick={() => navigate("/clients")} />
+                    <EmptyPanel icon={UserPlus} title="لم تضف أي عملاء بعد" cta="إضافة عميل" onClick={() => navigate("/clients")} />
                   )}
                 </CardContent>
               </Card>
@@ -599,8 +597,8 @@ const Dashboard = () => {
               <Card className="border-border bg-card">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                     <AlertCircle className="h-5 w-5 text-warning" strokeWidth={1.5} />
-                    {t("dashboard.expiringTitle")}
+                    <AlertCircle className="h-5 w-5 text-warning" strokeWidth={1.5} />
+                    تنتهي قريباً
                   </div>
                   {expiringClients.length > 0 ? (
                     <div className="space-y-4">
@@ -611,7 +609,7 @@ const Dashboard = () => {
                             <div className="flex items-center justify-between gap-3">
                               <div>
                                 <p className="font-semibold text-foreground">{client.name}</p>
-                                <p className="mt-1 text-sm text-muted-foreground">{remainingDays === 0 ? t("dashboard.remainingToday") : t("dashboard.remaining", { days: remainingDays })}</p>
+                                <p className="mt-1 text-sm text-muted-foreground">متبقي {remainingDays === 0 ? "اليوم" : `${remainingDays} يوم`}</p>
                               </div>
                               <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border text-muted-foreground hover:text-primary" asChild>
                                 <a href={formatWhatsApp(client.phone)} target="_blank" rel="noreferrer" aria-label="تذكير واتساب">
@@ -626,7 +624,7 @@ const Dashboard = () => {
                   ) : (
                     <div className="rounded-xl border border-border bg-background px-5 py-10 text-center">
                       <CheckCircle2 className="mx-auto h-10 w-10 text-primary" strokeWidth={1.5} />
-                      <p className="mt-4 text-sm text-muted-foreground">{t("dashboard.noExpiring")}</p>
+                      <p className="mt-4 text-sm text-muted-foreground">لا توجد اشتراكات قريبة الانتهاء</p>
                     </div>
                   )}
                 </CardContent>
@@ -642,8 +640,8 @@ const Dashboard = () => {
         onOpenChange={setShowUpgrade}
         title={getProFeatureBlockReason().title}
         description={getProFeatureBlockReason().description}
-        ctaText={t("dashboard.upgradeTitle")}
-        secondaryText={t("dashboard.later")}
+        ctaText="ترقية للاحترافي"
+        secondaryText="لاحقاً"
         onUpgrade={() => {
           setShowUpgrade(false);
           setShowPlans(true);

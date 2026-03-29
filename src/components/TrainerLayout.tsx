@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import {
   Bell,
   BookOpen,
@@ -20,10 +19,31 @@ import {
 
 import TrainerNotifications from "@/components/TrainerNotifications";
 import GlobalSearch from "@/components/GlobalSearch";
-import LanguageToggle from "@/components/LanguageToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+
+const desktopNavItems = [
+  { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
+  { label: "العملاء", href: "/clients", icon: Users },
+  { label: "البرامج", href: "/programs", icon: ClipboardList },
+  { label: "القوالب", href: "/templates", icon: BookOpen },
+  { label: "التغذية", href: "/nutrition", icon: Utensils },
+  { label: "التقويم", href: "/calendar", icon: CalendarDays },
+  { label: "الاشتراكات", href: "/payments", icon: CreditCard },
+  { label: "AI كوبايلت", href: "/copilot", icon: Sparkles },
+  { label: "الإعدادات", href: "/settings", icon: Settings2 },
+];
+
+const mobileNavItems = [
+  { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
+  { label: "العملاء", href: "/clients", icon: Users },
+  { label: "إضافة", href: "/clients", icon: Plus },
+  { label: "التقويم", href: "/calendar", icon: CalendarDays },
+  { label: "الإعدادات", href: "/settings", icon: Settings2 },
+];
+
+
 
 const TrainerLayout = ({
   children,
@@ -34,40 +54,17 @@ const TrainerLayout = ({
   title?: string;
   onQuickAdd?: () => void;
 }) => {
-  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const isAr = i18n.language === "ar";
-
-  const desktopNavItems = useMemo(() => [
-    { label: t("nav.home"), href: "/dashboard", icon: LayoutDashboard },
-    { label: t("nav.clients"), href: "/clients", icon: Users },
-    { label: t("nav.programs"), href: "/programs", icon: ClipboardList },
-    { label: t("nav.templates"), href: "/templates", icon: BookOpen },
-    { label: t("nav.nutrition"), href: "/nutrition", icon: Utensils },
-    { label: t("nav.calendar"), href: "/calendar", icon: CalendarDays },
-    { label: t("nav.payments"), href: "/payments", icon: CreditCard },
-    { label: t("nav.copilot"), href: "/copilot", icon: Sparkles },
-    { label: t("nav.settings"), href: "/settings", icon: Settings2 },
-  ], [t]);
-
-  const mobileNavItems = useMemo(() => [
-    { label: t("nav.home"), href: "/dashboard", icon: LayoutDashboard },
-    { label: t("nav.clients"), href: "/clients", icon: Users },
-    { label: t("nav.addNew"), href: "/clients", icon: Plus },
-    { label: t("nav.calendar"), href: "/calendar", icon: CalendarDays },
-    { label: t("nav.settings"), href: "/settings", icon: Settings2 },
-  ], [t]);
-
   const currentPlanLabel = profile?.subscription_plan === "pro"
-    ? t("plans.pro")
+    ? "الخطة الاحترافية"
     : profile?.subscription_plan === "basic"
-      ? t("plans.basic")
-      : t("plans.free");
+      ? "الخطة الأساسية"
+      : "الفترة المجانية";
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const trainerName = profile?.full_name?.trim() || (isAr ? "المدرب" : "Trainer");
+  const trainerName = profile?.full_name?.trim() || "المدرب";
   const firstName = trainerName.split(" ")[0];
   const avatarFallback = trainerName
     .split(" ")
@@ -78,10 +75,10 @@ const TrainerLayout = ({
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return t("dashboard.greeting.morning", { name: firstName });
-    if (hour < 17) return t("dashboard.greeting.afternoon", { name: firstName });
-    return t("dashboard.greeting.evening", { name: firstName });
-  }, [firstName, t]);
+    if (hour < 12) return `صباح الخير، ${firstName}`;
+    if (hour < 17) return `مساء الخير، ${firstName}`;
+    return `أهلاً، ${firstName}`;
+  }, [firstName]);
 
   const handleLogout = async () => {
     await signOut();
@@ -94,10 +91,10 @@ const TrainerLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background text-foreground">
       <GlobalSearch externalOpen={searchOpen} onExternalClose={() => setSearchOpen(false)} />
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-        <aside className={`hidden w-[290px] shrink-0 ${isAr ? "border-l" : "border-r"} border-border bg-sidebar md:flex md:flex-col`}>
+        <aside className="hidden w-[290px] shrink-0 border-l border-border bg-sidebar md:flex md:flex-col">
           <div className="border-b border-border px-6 py-7">
             <Link to="/dashboard" className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 shadow-[0_0_28px_hsl(var(--primary)/0.18)]">
@@ -105,7 +102,7 @@ const TrainerLayout = ({
               </div>
               <div>
                 <div className="text-2xl font-black tracking-tight text-primary">CoachBase</div>
-                <div className="text-xs text-muted-foreground">{t("nav.trainerPanel")}</div>
+                <div className="text-xs text-muted-foreground">لوحة تشغيل المدرب</div>
               </div>
             </Link>
           </div>
@@ -120,7 +117,7 @@ const TrainerLayout = ({
                 <div className="font-semibold text-foreground">{trainerName}</div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-primary">
                   <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                  {t("common.active")}
+                  نشط
                 </div>
               </div>
             </div>
@@ -139,7 +136,7 @@ const TrainerLayout = ({
                       : "text-muted-foreground hover:bg-card hover:text-foreground"
                   }`}
                 >
-                  <span className={`absolute inset-y-2 ${isAr ? "right-0" : "left-0"} w-[3px] rounded-full transition-colors ${active ? "bg-primary" : "bg-transparent"}`} />
+                  <span className={`absolute inset-y-2 right-0 w-[3px] rounded-full transition-colors ${active ? "bg-primary" : "bg-transparent"}`} />
                   <item.icon className={`h-5 w-5 shrink-0 ${active ? "text-primary" : "text-muted-foreground group-hover:text-primary/80"}`} strokeWidth={1.5} />
                   <span className={`text-sm ${active ? "font-semibold text-primary" : "font-medium text-muted-foreground group-hover:text-foreground/80"}`}>
                     {item.label}
@@ -159,7 +156,7 @@ const TrainerLayout = ({
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
             >
               <LogOut className="h-5 w-5" strokeWidth={1.5} />
-              {t("nav.logout")}
+              تسجيل الخروج
             </button>
           </div>
         </aside>
@@ -171,14 +168,13 @@ const TrainerLayout = ({
                 <div className="text-2xl font-bold tracking-tight text-foreground">{title || greeting}</div>
               </div>
               <div className="flex items-center gap-3">
-                <LanguageToggle />
                 <button
                   type="button"
                   onClick={() => setSearchOpen(true)}
                   className="hidden md:flex h-11 items-center gap-2 rounded-full border border-border bg-card/70 px-4 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:text-foreground"
                 >
                   <Search className="h-4 w-4" strokeWidth={1.5} />
-                  <span>{t("common.search")}</span>
+                  <span>بحث...</span>
                   <kbd className="hidden lg:inline text-[10px] border border-border rounded px-1.5 py-0.5 text-muted-foreground/60">⌘K</kbd>
                 </button>
                 <TrainerNotifications />
@@ -186,7 +182,7 @@ const TrainerLayout = ({
                   type="button"
                   onClick={onQuickAdd ?? (() => navigate("/clients"))}
                   className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/70 text-foreground transition-all duration-200 hover:border-primary/30 hover:text-primary"
-                  aria-label={t("nav.addNew")}
+                  aria-label="إضافة"
                 >
                   <Plus className="h-5 w-5" strokeWidth={1.5} />
                 </button>

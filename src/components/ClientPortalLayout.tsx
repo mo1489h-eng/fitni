@@ -1,31 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
-import LanguageToggle from "@/components/LanguageToggle";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { t, i18n } = useTranslation();
-  const isAr = i18n.language === "ar";
 
   const navItems = [
-    { label: t("portal.home"), href: `/portal`, icon: LayoutDashboard },
-    { label: t("portal.workout"), href: `/portal/workout`, icon: Dumbbell },
-    { label: t("portal.nutrition"), href: `/portal/nutrition`, icon: Utensils },
-    { label: t("portal.progress"), href: `/portal/progress`, icon: TrendingUp },
-    { label: t("portal.account"), href: `/portal/account`, icon: User },
+    { label: "الرئيسية", href: `/portal`, icon: LayoutDashboard },
+    { label: "تمريني", href: `/portal/workout`, icon: Dumbbell },
+    { label: "تغذيتي", href: `/portal/nutrition`, icon: Utensils },
+    { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
+    { label: "حسابي", href: `/portal/account`, icon: User },
   ];
 
   return (
-    <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">
       <header className="sticky top-0 z-40 border-b border-[hsl(0_0%_8%)] bg-[hsl(0_0%_3%)]/80 backdrop-blur-xl">
         <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <span className="text-sm font-bold text-white">CoachBase</span>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <ClientPortalNotifications />
-          </div>
+          <ClientPortalNotifications />
         </div>
       </header>
       <main className="flex-1 max-w-lg mx-auto w-full p-4 pb-24">{children}</main>

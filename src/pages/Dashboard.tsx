@@ -464,7 +464,7 @@ const Dashboard = () => {
                               <div className="text-sm tabular-nums text-muted-foreground">{session.start_time.slice(0, 5)}</div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <p className="font-semibold text-foreground">{client?.name || "عميل"}</p>
+                                  <p className="font-semibold text-foreground">{client?.name || t("dashboard.client")}</p>
                                   <span className={`h-2.5 w-2.5 rounded-full ${upcoming ? "bg-primary" : "bg-muted-foreground"}`} />
                                 </div>
                                 <p className="mt-1 text-sm text-muted-foreground">{session.session_type}</p>

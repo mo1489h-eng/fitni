@@ -591,7 +591,7 @@ const Dashboard = () => {
                       ))}
                     </div>
                   ) : (
-                    <EmptyPanel icon={UserPlus} title="لم تضف أي عملاء بعد" cta="إضافة عميل" onClick={() => navigate("/clients")} />
+                    <EmptyPanel icon={UserPlus} title={t("clients.noClientsYet")} cta={t("dashboard.addClient")} onClick={() => navigate("/clients")} />
                   )}
                 </CardContent>
               </Card>

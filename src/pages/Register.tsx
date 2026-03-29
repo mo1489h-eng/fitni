@@ -40,6 +40,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [founderSpots, setFounderSpots] = useState<number | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();

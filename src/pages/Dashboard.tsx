@@ -440,7 +440,7 @@ const Dashboard = () => {
                           </div>
                         ))
                       ) : (
-                        <EmptyPanel icon={Activity} title="لا يوجد نشاط حديث لعرضه" cta="إضافة عميل" onClick={() => navigate("/clients")} />
+                        <EmptyPanel icon={Activity} title={t("dashboard.noActivity")} cta={t("dashboard.addClient")} onClick={() => navigate("/clients")} />
                       )}
                     </div>
                   </CardContent>

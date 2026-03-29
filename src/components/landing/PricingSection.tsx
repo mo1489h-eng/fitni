@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Reveal, SectionHeading } from "./LandingUtils";
 
 const planFeatures = {
@@ -18,7 +19,7 @@ const PricingSection = () => (
       <Reveal delay={100} className="mx-auto mt-8 max-w-3xl">
         <div className="rounded-[2rem] border border-primary/20 bg-primary/10 px-6 py-5 text-center space-y-1">
           <div className="text-lg font-bold text-primary">كل المدربين: مجاناً 6 شهور كاملة</div>
-          <div className="text-sm text-foreground/60">أول 100 مدرب يحصلون على 6 شهور مجاناً &bull; بعدها السعر العادي</div>
+          <div className="text-sm text-foreground/60">أول 100 مدرب يحصلون على 6 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</div>
         </div>
       </Reveal>
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -42,10 +43,21 @@ const PricingSection = () => (
         </Reveal>
         <Reveal delay={120}>
           <Card className="relative h-full overflow-hidden border-primary/30 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.15),transparent_45%),hsl(var(--card))] shadow-[0_24px_90px_hsl(var(--primary)/0.18)]">
-            <div className="absolute right-6 top-6 rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">الأكثر شعبية</div>
+            <div className="absolute right-6 top-6 flex flex-col items-end gap-2">
+              <Badge className="rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">الأكثر شعبية</Badge>
+              <Badge className="rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary">لأول 100 مدرب</Badge>
+            </div>
             <CardContent className="p-8 pt-20">
               <div className="text-sm text-foreground/55">احترافي</div>
-              <div className="mt-2 text-5xl font-black text-foreground">179 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
+              <div className="mt-2 flex items-baseline gap-3">
+                <span className="text-5xl font-black text-primary">99</span>
+                <span className="text-2xl font-bold text-foreground/30 line-through">179</span>
+                <span className="text-xl text-foreground/45">ريال/شهر</span>
+              </div>
+              <div className="mt-2 space-y-0.5">
+                <p className="text-sm font-semibold text-primary">الشهر الأول فقط للمؤسسين</p>
+                <p className="text-xs text-foreground/50">ثم 179 ريال/شهر</p>
+              </div>
               <p className="mt-4 text-lg text-foreground/70">عملاء غير محدودين</p>
               <div className="mt-8 space-y-4">
                 {planFeatures.pro.map((item) => (

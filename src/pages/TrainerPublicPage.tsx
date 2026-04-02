@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import TrainerAchievements from "@/components/TrainerAchievements";
+import TrainerAchievementStats from "@/components/TrainerAchievementStats";
+import TrainerPageSEO from "@/components/TrainerPageSEO";
 import {
   Dumbbell, Loader2, CheckCircle, ArrowLeft, ArrowDown,
   CreditCard, Eye, EyeOff, Star, Flame, Activity,

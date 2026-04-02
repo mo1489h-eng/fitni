@@ -60,6 +60,7 @@ const PortalPrivacySettings = () => {
     { key: "privacy_weight", label: "السماح للمدرب برؤية وزني", icon: Scale, value: settings.privacy_weight },
     { key: "privacy_photos", label: "السماح للمدرب برؤية صوري", icon: Camera, value: settings.privacy_photos },
     { key: "privacy_scans", label: "السماح للمدرب برؤية سكاناتي", icon: ScanLine, value: settings.privacy_scans },
+    { key: "privacy_achievements", label: "عرض إنجازاتي في صفحة مدربي", icon: Trophy, value: settings.privacy_achievements },
   ];
 
   return (

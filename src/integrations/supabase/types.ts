@@ -237,6 +237,53 @@ export type Database = {
         }
         Relationships: []
       }
+      client_achievements: {
+        Row: {
+          achievement_detail: string | null
+          achievement_type: string
+          achievement_value: string
+          client_id: string
+          created_at: string
+          display_name_mode: string
+          id: string
+          is_approved: boolean
+          is_visible_on_page: boolean
+          trainer_id: string
+        }
+        Insert: {
+          achievement_detail?: string | null
+          achievement_type?: string
+          achievement_value?: string
+          client_id: string
+          created_at?: string
+          display_name_mode?: string
+          id?: string
+          is_approved?: boolean
+          is_visible_on_page?: boolean
+          trainer_id: string
+        }
+        Update: {
+          achievement_detail?: string | null
+          achievement_type?: string
+          achievement_value?: string
+          client_id?: string
+          created_at?: string
+          display_name_mode?: string
+          id?: string
+          is_approved?: boolean
+          is_visible_on_page?: boolean
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_achievements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_intakes: {
         Row: {
           budget_max: number
@@ -467,6 +514,7 @@ export type Database = {
           portal_token: string | null
           portal_token_expires_at: string | null
           preferred_equipment: string | null
+          privacy_achievements: boolean
           privacy_photos: boolean
           privacy_scans: boolean
           privacy_weight: boolean
@@ -499,6 +547,7 @@ export type Database = {
           portal_token?: string | null
           portal_token_expires_at?: string | null
           preferred_equipment?: string | null
+          privacy_achievements?: boolean
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -531,6 +580,7 @@ export type Database = {
           portal_token?: string | null
           portal_token_expires_at?: string | null
           preferred_equipment?: string | null
+          privacy_achievements?: boolean
           privacy_photos?: boolean
           privacy_scans?: boolean
           privacy_weight?: boolean
@@ -2199,15 +2249,26 @@ export type Database = {
         Returns: boolean
       }
       update_portal_activity: { Args: { p_token: string }; Returns: undefined }
-      update_portal_privacy: {
-        Args: {
-          p_privacy_photos: boolean
-          p_privacy_scans: boolean
-          p_privacy_weight: boolean
-          p_token: string
-        }
-        Returns: boolean
-      }
+      update_portal_privacy:
+        | {
+            Args: {
+              p_privacy_photos: boolean
+              p_privacy_scans: boolean
+              p_privacy_weight: boolean
+              p_token: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_privacy_achievements?: boolean
+              p_privacy_photos: boolean
+              p_privacy_scans: boolean
+              p_privacy_weight: boolean
+              p_token: string
+            }
+            Returns: undefined
+          }
       validate_and_redeem_promo: {
         Args: { p_code: string; p_email: string; p_trainer_id: string }
         Returns: Json

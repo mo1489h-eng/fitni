@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Scale, Camera, ScanLine } from "lucide-react";
+import { Shield, Eye, EyeOff, Scale, Camera, ScanLine, Trophy } from "lucide-react";
 
 const PortalPrivacySettings = () => {
   const { token } = usePortalToken();
@@ -13,6 +13,7 @@ const PortalPrivacySettings = () => {
     privacy_weight: true,
     privacy_photos: true,
     privacy_scans: true,
+    privacy_achievements: true,
   });
   const [loading, setLoading] = useState(true);
 
@@ -26,6 +27,7 @@ const PortalPrivacySettings = () => {
           privacy_weight: c.privacy_weight ?? true,
           privacy_photos: c.privacy_photos ?? true,
           privacy_scans: c.privacy_scans ?? true,
+          privacy_achievements: c.privacy_achievements ?? true,
         });
       }
       setLoading(false);
@@ -42,7 +44,8 @@ const PortalPrivacySettings = () => {
       p_privacy_weight: newSettings.privacy_weight,
       p_privacy_photos: newSettings.privacy_photos,
       p_privacy_scans: newSettings.privacy_scans,
-    });
+      p_privacy_achievements: newSettings.privacy_achievements,
+    } as any);
 
     if (error) {
       setSettings(settings);
@@ -58,6 +61,7 @@ const PortalPrivacySettings = () => {
     { key: "privacy_weight", label: "السماح للمدرب برؤية وزني", icon: Scale, value: settings.privacy_weight },
     { key: "privacy_photos", label: "السماح للمدرب برؤية صوري", icon: Camera, value: settings.privacy_photos },
     { key: "privacy_scans", label: "السماح للمدرب برؤية سكاناتي", icon: ScanLine, value: settings.privacy_scans },
+    { key: "privacy_achievements", label: "عرض إنجازاتي في صفحة مدربي", icon: Trophy, value: settings.privacy_achievements },
   ];
 
   return (

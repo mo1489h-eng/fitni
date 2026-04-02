@@ -4,6 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import TrainerAchievements from "@/components/TrainerAchievements";
+import TrainerAchievementStats from "@/components/TrainerAchievementStats";
+import TrainerPageSEO from "@/components/TrainerPageSEO";
 import {
   Dumbbell, Loader2, CheckCircle, ArrowLeft, ArrowDown,
   CreditCard, Eye, EyeOff, Star, Flame, Activity,
@@ -473,9 +476,19 @@ const TrainerPublicPage = () => {
 
   const initials = profile.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "";
 
+  const clientCount = 0; // Will be populated from achievements stats
+
   return (
     <div className="min-h-screen" dir="rtl" style={{ backgroundColor: COLORS.bg, fontFamily: "Tajawal, sans-serif" }}>
-      <title>{profile.full_name} — مدرب شخصي | CoachBase</title>
+      <TrainerPageSEO
+        fullName={profile.full_name}
+        city={city}
+        specialization={profile.specialization}
+        bio={profile.bio}
+        avatarUrl={profile.avatar_url}
+        username={username || ""}
+        clientCount={clientCount}
+      />
 
       <style>{`
         html { scroll-behavior: smooth; }
@@ -749,6 +762,16 @@ const TrainerPublicPage = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════
+         SECTION: CLIENT ACHIEVEMENTS
+         ═══════════════════════════════════════════════ */}
+      {!hiddenSections.includes("achievements") && (
+        <>
+          <TrainerAchievements trainerId={profile.user_id} brandColor={brandColor} />
+          <TrainerAchievementStats trainerId={profile.user_id} brandColor={brandColor} />
+        </>
       )}
 
       {/* ═══════════════════════════════════════════════

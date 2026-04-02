@@ -44,7 +44,8 @@ const PortalPrivacySettings = () => {
       p_privacy_weight: newSettings.privacy_weight,
       p_privacy_photos: newSettings.privacy_photos,
       p_privacy_scans: newSettings.privacy_scans,
-    });
+      p_privacy_achievements: newSettings.privacy_achievements,
+    } as any);
 
     if (error) {
       setSettings(settings);

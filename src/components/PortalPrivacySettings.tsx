@@ -13,6 +13,7 @@ const PortalPrivacySettings = () => {
     privacy_weight: true,
     privacy_photos: true,
     privacy_scans: true,
+    privacy_achievements: true,
   });
   const [loading, setLoading] = useState(true);
 

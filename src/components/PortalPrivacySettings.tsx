@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Scale, Camera, ScanLine } from "lucide-react";
+import { Shield, Eye, EyeOff, Scale, Camera, ScanLine, Trophy } from "lucide-react";
 
 const PortalPrivacySettings = () => {
   const { token } = usePortalToken();

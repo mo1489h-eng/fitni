@@ -765,6 +765,16 @@ const TrainerPublicPage = () => {
       )}
 
       {/* ═══════════════════════════════════════════════
+         SECTION: CLIENT ACHIEVEMENTS
+         ═══════════════════════════════════════════════ */}
+      {!hiddenSections.includes("achievements") && (
+        <>
+          <TrainerAchievements trainerId={profile.user_id} brandColor={brandColor} />
+          <TrainerAchievementStats trainerId={profile.user_id} brandColor={brandColor} />
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════
          SECTION 6: PACKAGES
          ═══════════════════════════════════════════════ */}
       {!hiddenSections.includes("packages") && packages.length > 0 && (

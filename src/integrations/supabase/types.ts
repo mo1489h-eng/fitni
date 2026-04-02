@@ -2249,15 +2249,26 @@ export type Database = {
         Returns: boolean
       }
       update_portal_activity: { Args: { p_token: string }; Returns: undefined }
-      update_portal_privacy: {
-        Args: {
-          p_privacy_photos: boolean
-          p_privacy_scans: boolean
-          p_privacy_weight: boolean
-          p_token: string
-        }
-        Returns: boolean
-      }
+      update_portal_privacy:
+        | {
+            Args: {
+              p_privacy_photos: boolean
+              p_privacy_scans: boolean
+              p_privacy_weight: boolean
+              p_token: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_privacy_achievements?: boolean
+              p_privacy_photos: boolean
+              p_privacy_scans: boolean
+              p_privacy_weight: boolean
+              p_token: string
+            }
+            Returns: undefined
+          }
       validate_and_redeem_promo: {
         Args: { p_code: string; p_email: string; p_trainer_id: string }
         Returns: Json

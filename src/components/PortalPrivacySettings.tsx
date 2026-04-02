@@ -27,6 +27,7 @@ const PortalPrivacySettings = () => {
           privacy_weight: c.privacy_weight ?? true,
           privacy_photos: c.privacy_photos ?? true,
           privacy_scans: c.privacy_scans ?? true,
+          privacy_achievements: c.privacy_achievements ?? true,
         });
       }
       setLoading(false);

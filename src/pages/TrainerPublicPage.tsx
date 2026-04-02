@@ -476,9 +476,19 @@ const TrainerPublicPage = () => {
 
   const initials = profile.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2) || "";
 
+  const clientCount = 0; // Will be populated from achievements stats
+
   return (
     <div className="min-h-screen" dir="rtl" style={{ backgroundColor: COLORS.bg, fontFamily: "Tajawal, sans-serif" }}>
-      <title>{profile.full_name} — مدرب شخصي | CoachBase</title>
+      <TrainerPageSEO
+        fullName={profile.full_name}
+        city={city}
+        specialization={profile.specialization}
+        bio={profile.bio}
+        avatarUrl={profile.avatar_url}
+        username={username || ""}
+        clientCount={clientCount}
+      />
 
       <style>{`
         html { scroll-behavior: smooth; }

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User, ScanLine, Megaphone } from "lucide-react";
+import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {

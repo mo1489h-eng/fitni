@@ -2,7 +2,10 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
-import { AlertCircle, Dumbbell, Flame, Play, Loader2, CheckCircle, Calendar, Moon } from "lucide-react";
+import {
+  AlertCircle, Dumbbell, Flame, Play, Loader2, CheckCircle, Calendar, Moon,
+  CalendarClock, Clock, ScanLine, Megaphone, ChevronLeft,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -45,6 +48,26 @@ const PortalHome = () => {
     enabled: !!token,
   });
 
+  const { data: workoutStats } = useQuery({
+    queryKey: ["portal-workout-stats", token],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_portal_workout_stats" as any, { p_token: token! });
+      if (error) return { total_workouts: 0, current_streak: 0 };
+      return data as any;
+    },
+    enabled: !!token,
+  });
+
+  const { data: upcomingSessions = [] } = useQuery({
+    queryKey: ["portal-upcoming-sessions", token],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_portal_upcoming_sessions" as any, { p_token: token! });
+      if (error) return [];
+      return (typeof data === 'string' ? JSON.parse(data) : data) || [];
+    },
+    enabled: !!token,
+  });
+
   const getGreeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "صباح الخير";
@@ -78,6 +101,9 @@ const PortalHome = () => {
 
   const weekNumber = client.week_number || 1;
   const hasWorkoutToday = !!program?.todayDay;
+  const totalWorkouts = (workoutStats as any)?.total_workouts || 0;
+  const currentStreak = (workoutStats as any)?.current_streak || 0;
+  const sessions = Array.isArray(upcomingSessions) ? upcomingSessions : [];
 
   return (
     <ClientPortalLayout>
@@ -104,7 +130,7 @@ const PortalHome = () => {
                 </div>
               </div>
               <p className="text-sm text-[hsl(0_0%_40%)] mb-4">
-                {program?.exerciseCount} تمرين • ~{(program?.exerciseCount || 0) * 6} دقيقة
+                {program?.exerciseCount} تمرين
               </p>
               <Button className="w-full h-12 text-base gap-2" onClick={() => navigate("/portal/workout")}>
                 <Play className="w-5 h-5" strokeWidth={1.5} />
@@ -120,12 +146,12 @@ const PortalHome = () => {
           )}
         </div>
 
-        {/* Stats Row */}
+        {/* Stats Row - Real Data */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Flame, value: "5", label: "يوم", sub: "سلسلة" },
-            { icon: CheckCircle, value: "12", label: "تمرين", sub: "مكتمل" },
-            { icon: Calendar, value: `${weekNumber}`, label: `أسبوع`, sub: "الحالي" },
+            { icon: Flame, value: String(currentStreak), label: "يوم", sub: "سلسلة" },
+            { icon: CheckCircle, value: String(totalWorkouts), label: "تمرين", sub: "مكتمل" },
+            { icon: Calendar, value: `${weekNumber}`, label: "أسبوع", sub: "الحالي" },
           ].map((s, i) => (
             <div key={i} className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-center">
               <s.icon className="w-5 h-5 text-primary mx-auto mb-2" strokeWidth={1.5} />
@@ -133,6 +159,58 @@ const PortalHome = () => {
               <p className="text-[10px] text-[hsl(0_0%_40%)]">{s.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Upcoming Sessions */}
+        {sessions.length > 0 && (
+          <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarClock className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              <h3 className="font-bold text-white text-sm">الجلسات القادمة</h3>
+            </div>
+            <div className="space-y-2">
+              {sessions.map((session: any) => (
+                <div key={session.id} className="flex items-center gap-3 bg-[hsl(0_0%_4%)] rounded-lg p-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Dumbbell className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white">{session.session_type}</p>
+                    <p className="text-xs text-[hsl(0_0%_40%)]">
+                      {new Date(session.session_date).toLocaleDateString("ar-SA", { weekday: "long", day: "numeric", month: "long" })}
+                    </p>
+                  </div>
+                  <div className="text-left shrink-0">
+                    <div className="flex items-center gap-1 text-xs text-[hsl(0_0%_50%)]">
+                      <Clock className="w-3 h-3" strokeWidth={1.5} />
+                      <span dir="ltr">{session.start_time?.slice(0, 5)}</span>
+                    </div>
+                    <p className="text-[10px] text-[hsl(0_0%_35%)]">{session.duration_minutes} دقيقة</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => navigate("/portal/body-scan")}
+            className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
+          >
+            <ScanLine className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
+            <p className="text-sm font-bold text-white">سكان جسمي</p>
+            <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">فحص وتتبع بيانات الجسم</p>
+          </button>
+          <button
+            onClick={() => navigate("/portal/content")}
+            className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
+          >
+            <Megaphone className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
+            <p className="text-sm font-bold text-white">محتوى مدربك</p>
+            <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">نصائح ومنشورات المدرب</p>
+          </button>
         </div>
       </div>
     </ClientPortalLayout>

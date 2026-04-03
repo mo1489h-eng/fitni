@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User } from "lucide-react";
+import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User, ScanLine, Megaphone } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
@@ -11,6 +11,11 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "تغذيتي", href: `/portal/nutrition`, icon: Utensils },
     { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
     { label: "حسابي", href: `/portal/account`, icon: User },
+  ];
+
+  const secondaryNavItems = [
+    { label: "سكان جسمي", href: `/portal/body-scan`, icon: ScanLine },
+    { label: "المحتوى", href: `/portal/content`, icon: Megaphone },
   ];
 
   return (

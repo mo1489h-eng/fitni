@@ -122,6 +122,9 @@ const PortalProgress = () => {
           </div>
         )}
 
+        {/* Achievements */}
+        <PortalAchievements />
+
         {/* Progress Photos */}
         {client && (
           <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">

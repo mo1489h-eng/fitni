@@ -299,9 +299,10 @@ const Challenges = () => {
                 {selected.prize_description && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />{selected.prize_description}</span>}
               </div>
 
-              {/* End challenge button */}
-              {selected.status === "active" && (
-                <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => endChallenge(selected.id)}>
+              {/* Challenge actions */}
+              <div className="flex gap-2 flex-wrap">
+                {selected.status === "active" && (
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => endChallenge(selected.id)}>
                   <Crown className="w-4 h-4" strokeWidth={1.5} /> إنهاء التحدي وإعلان الفائز
                 </Button>
               )}

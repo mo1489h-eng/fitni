@@ -2076,6 +2076,7 @@ export type Database = {
           trainer_id: string
         }[]
       }
+      get_portal_achievements: { Args: { p_token: string }; Returns: Json }
       get_portal_body_scans: {
         Args: { p_token: string }
         Returns: {
@@ -2140,6 +2141,11 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_portal_upcoming_sessions: {
+        Args: { p_limit?: number; p_token: string }
+        Returns: Json
+      }
+      get_portal_workout_stats: { Args: { p_token: string }; Returns: Json }
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {

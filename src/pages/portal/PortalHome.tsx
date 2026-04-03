@@ -194,22 +194,27 @@ const PortalHome = () => {
         )}
 
         {/* Quick Access Cards */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             onClick={() => navigate("/portal/body-scan")}
             className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
           >
             <ScanLine className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
-            <p className="text-sm font-bold text-white">سكان جسمي</p>
-            <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">فحص وتتبع بيانات الجسم</p>
+            <p className="text-xs font-bold text-white">سكان جسمي</p>
           </button>
           <button
             onClick={() => navigate("/portal/content")}
             className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
           >
             <Megaphone className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
-            <p className="text-sm font-bold text-white">محتوى مدربك</p>
-            <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">نصائح ومنشورات المدرب</p>
+            <p className="text-xs font-bold text-white">محتوى مدربك</p>
+          </button>
+          <button
+            onClick={() => navigate("/portal/challenges")}
+            className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
+          >
+            <Trophy className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
+            <p className="text-xs font-bold text-white">تحدياتي</p>
           </button>
         </div>
       </div>

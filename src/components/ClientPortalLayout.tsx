@@ -13,10 +13,6 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "حسابي", href: `/portal/account`, icon: User },
   ];
 
-  const secondaryNavItems = [
-    { label: "سكان جسمي", href: `/portal/body-scan`, icon: ScanLine },
-    { label: "المحتوى", href: `/portal/content`, icon: Megaphone },
-  ];
 
   return (
     <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">

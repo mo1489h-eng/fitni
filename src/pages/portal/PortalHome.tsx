@@ -4,7 +4,7 @@ import { usePortalToken } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import {
   AlertCircle, Dumbbell, Flame, Play, Loader2, CheckCircle, Calendar, Moon,
-  CalendarClock, Clock, ScanLine, Megaphone, ChevronLeft,
+  CalendarClock, Clock, ScanLine, Megaphone, ChevronLeft, Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

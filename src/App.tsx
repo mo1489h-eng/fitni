@@ -32,6 +32,7 @@ import PortalContent from "./pages/portal/PortalContent";
 import PortalBodyScan from "./pages/portal/PortalBodyScan";
 import PortalSubscription from "./pages/portal/PortalSubscription";
 import PortalAccount from "./pages/portal/PortalAccount";
+import PortalChallenges from "./pages/portal/PortalChallenges";
 import NotFound from "./pages/NotFound";
 import Marketplace from "./pages/Marketplace";
 import Challenges from "./pages/Challenges";

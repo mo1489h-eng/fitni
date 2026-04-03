@@ -13,6 +13,7 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
     { label: "حسابي", href: `/portal/account`, icon: User },
   ];
 
+
   return (
     <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">
       <header className="sticky top-0 z-40 border-b border-[hsl(0_0%_8%)] bg-[hsl(0_0%_3%)]/80 backdrop-blur-xl">

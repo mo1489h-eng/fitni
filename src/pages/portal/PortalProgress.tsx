@@ -12,6 +12,7 @@ import {
   Plus, Scale, Activity, Heart, ScanLine
 } from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";
+import PortalAchievements from "@/components/PortalAchievements";
 import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {
@@ -120,6 +121,9 @@ const PortalProgress = () => {
             </div>
           </div>
         )}
+
+        {/* Achievements */}
+        <PortalAchievements />
 
         {/* Progress Photos */}
         {client && (

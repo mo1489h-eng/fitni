@@ -299,12 +299,28 @@ const Challenges = () => {
                 {selected.prize_description && <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-primary" strokeWidth={1.5} />{selected.prize_description}</span>}
               </div>
 
-              {/* End challenge button */}
-              {selected.status === "active" && (
-                <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => endChallenge(selected.id)}>
-                  <Crown className="w-4 h-4" strokeWidth={1.5} /> إنهاء التحدي وإعلان الفائز
+              {/* Challenge actions */}
+              <div className="flex gap-2 flex-wrap">
+                {selected.status === "active" && (
+                  <Button variant="outline" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => endChallenge(selected.id)}>
+                    <Crown className="w-4 h-4" strokeWidth={1.5} /> إنهاء التحدي وإعلان الفائز
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_50%)] hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
+                  onClick={async () => {
+                    if (!confirm("هل أنت متأكد من حذف هذا التحدي؟")) return;
+                    await supabase.from("challenge_participants").delete().eq("challenge_id", selected.id);
+                    await supabase.from("challenges").delete().eq("id", selected.id);
+                    toast({ title: "تم حذف التحدي" });
+                    setSelected(null);
+                    fetchChallenges();
+                  }}
+                >
+                  حذف التحدي
                 </Button>
-              )}
+              </div>
 
               <div className="border-t border-[hsl(0_0%_10%)] pt-4">
                 <div className="flex justify-between items-center mb-4">

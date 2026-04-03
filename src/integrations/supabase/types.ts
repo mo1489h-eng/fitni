@@ -2111,6 +2111,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_portal_challenges: { Args: { p_token: string }; Returns: Json }
       get_portal_meal_logs: {
         Args: { p_date?: string; p_token: string }
         Returns: {

@@ -12,7 +12,7 @@ import {
   CreditCard, Eye, EyeOff, Star, Flame, Activity,
   ChevronLeft, ShieldCheck, User, Phone, Mail, Lock,
   MessageCircle, Award, Instagram, Twitter, ChevronDown,
-  Globe, Check,
+  Globe, Check, Youtube, Camera,
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════

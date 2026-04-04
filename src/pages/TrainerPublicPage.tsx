@@ -940,18 +940,33 @@ const TrainerPublicPage = () => {
           {profile.social_links && (
             <div className="flex items-center gap-4">
               {profile.social_links.instagram && (
-                <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" rel="noopener noreferrer" className="transition-colors hover:opacity-80" style={{ color: COLORS.dim }}>
-                  <Instagram className="w-4.5 h-4.5" strokeWidth={1.5} />
+                <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Instagram className="w-5 h-5" strokeWidth={1.5} />
                 </a>
               )}
               {profile.social_links.twitter && (
-                <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" rel="noopener noreferrer" className="transition-colors hover:opacity-80" style={{ color: COLORS.dim }}>
-                  <Twitter className="w-4.5 h-4.5" strokeWidth={1.5} />
+                <a href={`https://twitter.com/${profile.social_links.twitter}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Twitter className="w-5 h-5" strokeWidth={1.5} />
+                </a>
+              )}
+              {profile.social_links.snapchat && (
+                <a href={`https://snapchat.com/add/${profile.social_links.snapchat}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Camera className="w-5 h-5" strokeWidth={1.5} />
+                </a>
+              )}
+              {profile.social_links.tiktok && (
+                <a href={`https://tiktok.com/@${profile.social_links.tiktok}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Activity className="w-5 h-5" strokeWidth={1.5} />
+                </a>
+              )}
+              {profile.social_links.youtube && (
+                <a href={profile.social_links.youtube.startsWith("http") ? profile.social_links.youtube : `https://youtube.com/${profile.social_links.youtube}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Youtube className="w-5 h-5" strokeWidth={1.5} />
                 </a>
               )}
               {profile.social_links.website && (
-                <a href={profile.social_links.website} target="_blank" rel="noopener noreferrer" className="transition-colors hover:opacity-80" style={{ color: COLORS.dim }}>
-                  <Globe className="w-4.5 h-4.5" strokeWidth={1.5} />
+                <a href={profile.social_links.website} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                  <Globe className="w-5 h-5" strokeWidth={1.5} />
                 </a>
               )}
             </div>

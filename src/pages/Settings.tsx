@@ -1018,7 +1018,7 @@ const Settings = () => {
           <Separator />
 
           <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">روابط سوشيال ميديا</label>
+            <label className="text-sm font-medium text-foreground mb-2 block">روابط التواصل الاجتماعي</label>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Instagram className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -1034,7 +1034,43 @@ const Settings = () => {
                 <Input
                   value={personalPageForm.social_twitter}
                   onChange={(e) => setPersonalPageForm({...personalPageForm, social_twitter: e.target.value})}
-                  placeholder="اسم المستخدم في تويتر"
+                  placeholder="اسم المستخدم في تويتر/X"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_snapchat}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_snapchat: e.target.value})}
+                  placeholder="اسم المستخدم في سناب شات"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_tiktok}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_tiktok: e.target.value})}
+                  placeholder="اسم المستخدم في تيك توك"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_whatsapp}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_whatsapp: e.target.value})}
+                  placeholder="رقم الواتساب (مع رمز الدولة)"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  value={personalPageForm.social_youtube}
+                  onChange={(e) => setPersonalPageForm({...personalPageForm, social_youtube: e.target.value})}
+                  placeholder="رابط قناة يوتيوب"
                   dir="ltr"
                 />
               </div>

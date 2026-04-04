@@ -48,6 +48,7 @@ import Store from "./pages/Store";
 import Templates from "./pages/Templates";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
 

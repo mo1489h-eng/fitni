@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { label: "المميزات", href: "#features" },
   { label: "التسعير", href: "#pricing" },
+  { label: "تواصل معنا", href: "/contact", isRoute: true },
   { label: "تسجيل الدخول", href: "/login", isRoute: true },
 ];
 

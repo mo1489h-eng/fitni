@@ -115,6 +115,7 @@ const App = () => (
             <Route path="/ref/:code" element={<ReferralRedirect />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/contact" element={<Contact />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

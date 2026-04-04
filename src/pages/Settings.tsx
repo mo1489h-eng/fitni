@@ -1106,6 +1106,9 @@ const Settings = () => {
                 if (personalPageForm.social_instagram) socialLinks.instagram = personalPageForm.social_instagram;
                 if (personalPageForm.social_twitter) socialLinks.twitter = personalPageForm.social_twitter;
                 if (personalPageForm.social_tiktok) socialLinks.tiktok = personalPageForm.social_tiktok;
+                if (personalPageForm.social_snapchat) socialLinks.snapchat = personalPageForm.social_snapchat;
+                if (personalPageForm.social_whatsapp) socialLinks.whatsapp = personalPageForm.social_whatsapp;
+                if (personalPageForm.social_youtube) socialLinks.youtube = personalPageForm.social_youtube;
 
                 const { error } = await supabase
                   .from("profiles")

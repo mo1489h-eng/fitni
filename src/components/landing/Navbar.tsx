@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { label: "المميزات", href: "#features" },
   { label: "التسعير", href: "#pricing" },
+  { label: "تواصل معنا", href: "/contact", isRoute: true },
   { label: "تسجيل الدخول", href: "/login", isRoute: true },
 ];
 
@@ -64,6 +65,7 @@ const Navbar = ({ scrolled }: { scrolled: boolean }) => {
           <div className="flex flex-col gap-3">
             <a href="#features" className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-foreground/80" onClick={() => setMobileMenuOpen(false)}>المميزات</a>
             <a href="#pricing" className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-foreground/80" onClick={() => setMobileMenuOpen(false)}>التسعير</a>
+            <Link to="/contact" className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-foreground/80" onClick={() => setMobileMenuOpen(false)}>تواصل معنا</Link>
             <Link to="/login" className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-foreground/80" onClick={() => setMobileMenuOpen(false)}>تسجيل الدخول</Link>
             <Button asChild className="h-12 rounded-2xl text-base font-bold">
               <Link to="/register" onClick={() => setMobileMenuOpen(false)}>ابدأ مجاناً</Link>

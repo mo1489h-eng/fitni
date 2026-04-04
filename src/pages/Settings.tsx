@@ -64,6 +64,9 @@ const Settings = () => {
     social_instagram: "",
     social_twitter: "",
     social_tiktok: "",
+    social_snapchat: "",
+    social_whatsapp: "",
+    social_youtube: "",
   });
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [uploadingGallery, setUploadingGallery] = useState(false);

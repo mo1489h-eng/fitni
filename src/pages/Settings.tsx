@@ -177,6 +177,9 @@ const Settings = () => {
           social_instagram: links.instagram || "",
           social_twitter: links.twitter || "",
           social_tiktok: links.tiktok || "",
+          social_snapchat: links.snapchat || "",
+          social_whatsapp: links.whatsapp || "",
+          social_youtube: links.youtube || "",
         });
         setGalleryImages((data as any).gallery_images || []);
         const pc = (data as any).page_config;

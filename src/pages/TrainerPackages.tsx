@@ -143,6 +143,7 @@ const TrainerPackages = () => {
     monthly: "شهرياً",
     quarterly: "كل 3 شهور",
     yearly: "سنوياً",
+    sessions: "عدد جلسات",
   };
 
   return (

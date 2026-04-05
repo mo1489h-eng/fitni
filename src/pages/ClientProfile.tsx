@@ -81,6 +81,7 @@ function ClientPaymentsTab({ client, status, clientId, queryClient: qc }: { clie
                 <SelectItem value="monthly">شهري</SelectItem>
                 <SelectItem value="quarterly">ربع سنوي (3 شهور)</SelectItem>
                 <SelectItem value="yearly">سنوي</SelectItem>
+                <SelectItem value="sessions">عدد جلسات</SelectItem>
               </SelectContent>
             </Select>
           </div>

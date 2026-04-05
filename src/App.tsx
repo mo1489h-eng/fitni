@@ -52,6 +52,8 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
+import Vault from "./pages/Vault";
+import PortalVault from "./pages/portal/PortalVault";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +86,7 @@ const App = () => (
             <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
             <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
             <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
+            <Route path="/vault" element={<AuthGuard><Vault /></AuthGuard>} />
             <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
 
             {/* Public payment pages */}
@@ -104,6 +107,7 @@ const App = () => (
             <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
             <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
             <Route path="/portal/challenges" element={<PortalTokenProvider><PortalChallenges /></PortalTokenProvider>} />
+            <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
 
             <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
             <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />

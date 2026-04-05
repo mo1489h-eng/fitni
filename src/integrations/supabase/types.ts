@@ -1940,6 +1940,113 @@ export type Database = {
           },
         ]
       }
+      vault_lessons: {
+        Row: {
+          content_text: string | null
+          content_type: string
+          content_url: string | null
+          created_at: string
+          id: string
+          lesson_order: number
+          title: string
+          unit_id: string
+        }
+        Insert: {
+          content_text?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string
+          id?: string
+          lesson_order?: number
+          title: string
+          unit_id: string
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string
+          id?: string
+          lesson_order?: number
+          title?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_lessons_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "vault_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_progress: {
+        Row: {
+          client_id: string
+          completed_at: string
+          id: string
+          lesson_id: string
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string
+          id?: string
+          lesson_id: string
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string
+          id?: string
+          lesson_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_progress_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "vault_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_units: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          trainer_id: string
+          unit_order: number
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          trainer_id: string
+          unit_order?: number
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          trainer_id?: string
+          unit_order?: number
+          visibility?: string
+        }
+        Relationships: []
+      }
       workout_logs: {
         Row: {
           actual_reps: number | null
@@ -2234,6 +2341,7 @@ export type Database = {
         Args: { p_limit?: number; p_token: string }
         Returns: Json
       }
+      get_portal_vault: { Args: { p_token: string }; Returns: Json }
       get_portal_workout_stats: { Args: { p_token: string }; Returns: Json }
       get_public_profile: {
         Args: { p_user_id: string }
@@ -2345,6 +2453,10 @@ export type Database = {
       }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }
+        Returns: boolean
+      }
+      toggle_portal_vault_progress: {
+        Args: { p_lesson_id: string; p_token: string }
         Returns: boolean
       }
       update_portal_activity: { Args: { p_token: string }; Returns: undefined }

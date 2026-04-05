@@ -309,14 +309,28 @@ const TrainerPackages = () => {
                   </Select>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground">عدد الجلسات الأسبوعية</label>
-                <Input
-                  type="number"
-                  value={form.sessions_per_week}
-                  onChange={(e) => setForm({ ...form, sessions_per_week: +e.target.value })}
-                />
-              </div>
+              {form.billing_cycle === "sessions" ? (
+                <div>
+                  <label className="text-sm font-medium text-foreground">إجمالي عدد الجلسات</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.sessions_total}
+                    onChange={(e) => setForm({ ...form, sessions_total: +e.target.value })}
+                    placeholder="مثال: 8, 12, 20"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">عدد الجلسات الإجمالي المشمول في هذه الباقة</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium text-foreground">عدد الجلسات الأسبوعية</label>
+                  <Input
+                    type="number"
+                    value={form.sessions_per_week}
+                    onChange={(e) => setForm({ ...form, sessions_per_week: +e.target.value })}
+                  />
+                </div>
+              )}
 
               <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground">ما تشمل الباقة</label>

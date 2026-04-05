@@ -45,6 +45,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PageBuilder from "./pages/PageBuilder";
 import Copilot from "./pages/Copilot";
 import Store from "./pages/Store";
+import ListingSalesPage from "./pages/ListingSalesPage";
 import Templates from "./pages/Templates";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";

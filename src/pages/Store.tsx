@@ -52,7 +52,17 @@ const Store = () => {
     setPurchasing(true);
     try {
       if (listing.price > 0) {
-        // Create Tap charge and redirect to payment
+        // Fetch trainer's tap_destination_id for split payment (90% to trainer)
+        const { data: trainerProfile } = await supabase
+          .from("profiles")
+          .select("tap_destination_id")
+          .eq("user_id", listing.trainer_id)
+          .single();
+
+        const destinations = trainerProfile?.tap_destination_id
+          ? [{ id: trainerProfile.tap_destination_id, amount: Math.round(listing.price * 0.9 * 100) / 100, currency: listing.currency || "SAR" }]
+          : undefined;
+
         const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
           body: {
             amount: listing.price,
@@ -64,9 +74,10 @@ const Store = () => {
             },
             redirect_url: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
             metadata: { type: "marketplace", listing_id: listing.id, user_id: user.id },
+            destinations,
           },
         });
-        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل إنشاء عملية الدفع");
+        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل انشاء عملية الدفع");
         window.location.href = data.redirect_url;
         return;
       }

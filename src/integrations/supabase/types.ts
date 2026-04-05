@@ -2019,33 +2019,53 @@ export type Database = {
       }
       vault_units: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           description: string | null
           id: string
+          lock_after_unit_id: string | null
+          lock_days: number
+          lock_type: string
           title: string
           trainer_id: string
           unit_order: number
           visibility: string
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lock_after_unit_id?: string | null
+          lock_days?: number
+          lock_type?: string
           title: string
           trainer_id: string
           unit_order?: number
           visibility?: string
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lock_after_unit_id?: string | null
+          lock_days?: number
+          lock_type?: string
           title?: string
           trainer_id?: string
           unit_order?: number
           visibility?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vault_units_lock_after_unit_id_fkey"
+            columns: ["lock_after_unit_id"]
+            isOneToOne: false
+            referencedRelation: "vault_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_logs: {
         Row: {

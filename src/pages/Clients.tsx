@@ -116,6 +116,7 @@ const Clients = () => {
         age: form.age ? parseInt(form.age) : null, weight: form.weight ? parseFloat(form.weight) : null,
         height: form.height ? parseFloat(form.height) : null, experience: form.experience || "مبتدئ",
         days_per_week: parseInt(form.daysPerWeek) || 4, injuries: form.injuries || null, preferred_equipment: form.equipment || null,
+        client_type: form.clientType, sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
       } as any).select("id, invite_token").single();
       if (error) throw error;
       if (form.email && newClient?.invite_token) {

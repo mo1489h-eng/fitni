@@ -127,6 +127,32 @@ const CalendarPage = () => {
     },
   });
 
+  const completeMutation = useMutation({
+    mutationFn: async (session: Session) => {
+      // Mark session as completed
+      const { error } = await supabase.from("trainer_sessions")
+        .update({ is_completed: true } as any)
+        .eq("id", session.id);
+      if (error) throw error;
+      // Increment sessions_used for the client
+      const { data: clientData } = await supabase.from("clients")
+        .select("sessions_used, client_type")
+        .eq("id", session.client_id)
+        .single();
+      if (clientData && (clientData as any).client_type === "in_person") {
+        await supabase.from("clients")
+          .update({ sessions_used: ((clientData as any).sessions_used || 0) + 1 } as any)
+          .eq("id", session.client_id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trainer-sessions"] });
+      setViewSession(null);
+      toast({ title: "تم تسجيل إكمال الجلسة بنجاح" });
+    },
+    onError: (e: Error) => toast({ title: "خطأ", description: e.message, variant: "destructive" }),
+  });
+
   // ─── NAVIGATION ───
   const goToday = useCallback(() => {
     setCurrentDate(new Date());

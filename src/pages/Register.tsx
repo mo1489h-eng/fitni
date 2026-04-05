@@ -48,7 +48,7 @@ const Register = () => {
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   // Fetch remaining founder spots
-  useMemo(() => {
+  useEffect(() => {
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })

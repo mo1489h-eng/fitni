@@ -100,22 +100,87 @@ const Marketplace = () => {
     setPrograms(data || []);
   };
 
+  const resetForm = () => {
+    setPubForm({ program_id: "", title: "", description: "", price: 0, difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: "", category: "general_fitness" });
+    setEditingId(null);
+    setCoverPreview(null);
+    setCoverFile(null);
+  };
+
+  const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const err = validateImageFile(file);
+    if (err) { toast({ title: "خطأ", description: err, variant: "destructive" }); return; }
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
   const handlePublish = async () => {
     if (!hasMarketplaceAccess) { setShowUpgrade(true); return; }
     if (!user || !pubForm.title) return;
-    const { error } = await supabase.from("marketplace_listings").insert({
+
+    let previewImages: string[] = [];
+
+    // Upload cover image if selected
+    if (coverFile) {
+      setUploadingCover(true);
+      try {
+        const path = `marketplace/${user.id}/${Date.now()}_${coverFile.name}`;
+        const result = await uploadImage(coverFile, "fitproject", path);
+        previewImages = [result.signedUrl];
+      } catch (e: any) {
+        toast({ title: "خطأ في رفع الصورة", description: e.message, variant: "destructive" });
+        setUploadingCover(false);
+        return;
+      }
+      setUploadingCover(false);
+    }
+
+    const payload: any = {
       trainer_id: user.id, program_id: pubForm.program_id || null,
       title: pubForm.title, description: pubForm.description, price: pubForm.price,
       difficulty: pubForm.difficulty, duration_weeks: pubForm.duration_weeks,
+      category: pubForm.category,
       tags: pubForm.tags.split(",").map(t => t.trim()).filter(Boolean),
       equipment: pubForm.equipment.split(",").map(t => t.trim()).filter(Boolean),
       status: "published"
-    } as any);
+    };
+
+    if (previewImages.length > 0) payload.preview_images = previewImages;
+
+    let error;
+    if (editingId) {
+      const { error: e } = await supabase.from("marketplace_listings").update(payload).eq("id", editingId);
+      error = e;
+    } else {
+      const { error: e } = await supabase.from("marketplace_listings").insert(payload);
+      error = e;
+    }
+
     if (error) { toast({ title: "خطأ", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "تم النشر بنجاح" });
+    toast({ title: editingId ? "تم التحديث بنجاح" : "تم النشر بنجاح" });
     setShowPublish(false);
-    setPubForm({ program_id: "", title: "", description: "", price: 0, difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: "" });
+    resetForm();
     fetchListings(); fetchMyListings();
+  };
+
+  const openEditListing = (listing: any) => {
+    setEditingId(listing.id);
+    setPubForm({
+      program_id: listing.program_id || "",
+      title: listing.title || "",
+      description: listing.description || "",
+      price: listing.price || 0,
+      difficulty: listing.difficulty || "متوسط",
+      duration_weeks: listing.duration_weeks || 8,
+      tags: (listing.tags || []).join(", "),
+      equipment: (listing.equipment || []).join(", "),
+      category: listing.category || "general_fitness",
+    });
+    setCoverPreview(listing.preview_images?.[0] || null);
+    setCoverFile(null);
+    setShowPublish(true);
   };
 
   const handlePurchase = async (listing: any) => {

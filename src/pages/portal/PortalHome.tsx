@@ -212,7 +212,7 @@ const PortalHome = () => {
                           variant="outline"
                           className="h-9 gap-1.5 border-[hsl(0_0%_15%)] text-[hsl(0_0%_50%)] hover:text-red-400 hover:border-red-500/30 text-xs"
                           onClick={async () => {
-                            await supabase.from("trainer_sessions").update({ confirmation_status: "declined" } as any).eq("id", session.id);
+                            await supabase.rpc("update_session_confirmation" as any, { p_token: token, p_session_id: session.id, p_status: "declined" });
                             queryClient.invalidateQueries({ queryKey: ["portal-upcoming-sessions"] });
                           }}
                         >

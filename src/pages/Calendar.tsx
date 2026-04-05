@@ -129,21 +129,9 @@ const CalendarPage = () => {
 
   const completeMutation = useMutation({
     mutationFn: async (session: Session) => {
-      // Mark session as completed
-      const { error } = await supabase.from("trainer_sessions")
-        .update({ is_completed: true } as any)
-        .eq("id", session.id);
+      const { data, error } = await supabase.rpc("complete_trainer_session" as any, { p_session_id: session.id });
       if (error) throw error;
-      // Increment sessions_used for the client
-      const { data: clientData } = await supabase.from("clients")
-        .select("sessions_used, client_type")
-        .eq("id", session.client_id)
-        .single();
-      if (clientData && (clientData as any).client_type === "in_person") {
-        await supabase.from("clients")
-          .update({ sessions_used: ((clientData as any).sessions_used || 0) + 1 } as any)
-          .eq("id", session.client_id);
-      }
+      if (!data) throw new Error("لم يتم العثور على الجلسة أو تم إكمالها مسبقاً");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["trainer-sessions"] });

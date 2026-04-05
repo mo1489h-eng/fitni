@@ -854,6 +854,7 @@ export type Database = {
       }
       marketplace_listings: {
         Row: {
+          category: string
           created_at: string
           currency: string
           description: string
@@ -875,6 +876,7 @@ export type Database = {
           trainer_id: string
         }
         Insert: {
+          category?: string
           created_at?: string
           currency?: string
           description?: string
@@ -896,6 +898,7 @@ export type Database = {
           trainer_id: string
         }
         Update: {
+          category?: string
           created_at?: string
           currency?: string
           description?: string
@@ -963,6 +966,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketplace_purchases_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reviews_listing_id_fkey"
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "marketplace_listings"

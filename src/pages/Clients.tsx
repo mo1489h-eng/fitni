@@ -363,6 +363,22 @@ const Clients = () => {
                 <Input required value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} placeholder="مثال: خسارة وزن" />
               </div>
               <div>
+                <label className="text-sm font-medium text-foreground">نوع التدريب</label>
+                <Select value={form.clientType} onValueChange={(v) => setForm({ ...form, clientType: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">أونلاين</SelectItem>
+                    <SelectItem value="in_person">حضوري</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.clientType === "in_person" && (
+                <div>
+                  <label className="text-sm font-medium text-foreground">عدد الجلسات / الشهر</label>
+                  <Input value={form.sessionsPerMonth} onChange={(e) => setForm({ ...form, sessionsPerMonth: e.target.value })} type="number" dir="ltr" placeholder="12" />
+                </div>
+              )}
+              <div>
                 <label className="text-sm font-medium text-foreground">سعر الاشتراك (ر.س)</label>
                 <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number" dir="ltr" placeholder="800" />
               </div>

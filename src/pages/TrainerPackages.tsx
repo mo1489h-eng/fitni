@@ -22,6 +22,7 @@ interface PackageForm {
   price: number;
   billing_cycle: string;
   sessions_per_week: number;
+  sessions_total: number;
   includes_program: boolean;
   includes_nutrition: boolean;
   includes_followup: boolean;
@@ -34,6 +35,7 @@ const defaultForm: PackageForm = {
   price: 0,
   billing_cycle: "monthly",
   sessions_per_week: 3,
+  sessions_total: 12,
   includes_program: true,
   includes_nutrition: true,
   includes_followup: true,

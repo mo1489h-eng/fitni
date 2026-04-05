@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import TrainerLayout from "@/components/TrainerLayout";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
@@ -17,9 +17,19 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Plus, ShoppingCart, Star, Clock, Users, Filter, TrendingUp, CheckCircle2,
-  Loader2, Lock, Package, Banknote, ExternalLink
+  Loader2, Lock, Package, Banknote, ExternalLink, ImagePlus, Pencil, X
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { uploadImage, validateImageFile } from "@/lib/image-upload";
+
+const CATEGORIES = [
+  { value: "weight_loss", label: "انقاص الوزن" },
+  { value: "muscle_building", label: "بناء العضل" },
+  { value: "general_fitness", label: "لياقة عامة" },
+  { value: "nutrition", label: "تغذية" },
+  { value: "rehab", label: "تاهيل" },
+  { value: "sport_specific", label: "رياضات محددة" },
+];
 
 const Marketplace = () => {
   usePageTitle("سوق البرامج");
@@ -44,9 +54,15 @@ const Marketplace = () => {
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [selectedListing, setSelectedListing] = useState<any>(null);
   const [tab, setTab] = useState("browse");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pubForm, setPubForm] = useState({
     program_id: "", title: "", description: "", price: 0,
-    difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: ""
+    difficulty: "متوسط", duration_weeks: 8, tags: "", equipment: "",
+    category: "general_fitness"
   });
 
   useEffect(() => { fetchListings(); fetchPrograms(); if (user) { fetchMyListings(); fetchMySales(); } }, [user]);

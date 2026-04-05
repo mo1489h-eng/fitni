@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();

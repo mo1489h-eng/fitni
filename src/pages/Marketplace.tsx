@@ -184,21 +184,39 @@ const Marketplace = () => {
   };
 
   const handlePurchase = async (listing: any) => {
-    if (!user) { toast({ title: "يجب تسجيل الدخول أولاً", variant: "destructive" }); return; }
+    if (!user) { toast({ title: "يجب تسجيل الدخول اولا", variant: "destructive" }); return; }
     setPurchasing(listing.id);
     try {
+      if (listing.price > 0) {
+        // Fetch trainer's tap_destination_id for split payment
+        const { data: trainerProfile } = await supabase
+          .from("profiles").select("tap_destination_id").eq("user_id", listing.trainer_id).single();
+
+        const destinations = trainerProfile?.tap_destination_id
+          ? [{ id: trainerProfile.tap_destination_id, amount: Math.round(listing.price * 0.9 * 100) / 100, currency: listing.currency || "SAR" }]
+          : undefined;
+
+        const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
+          body: {
+            amount: listing.price, currency: listing.currency || "SAR",
+            description: `شراء برنامج: ${listing.title}`,
+            customer: { name: user.user_metadata?.full_name || "Customer", email: user.email || "" },
+            redirect_url: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
+            metadata: { type: "marketplace", listing_id: listing.id, user_id: user.id },
+            destinations,
+          },
+        });
+        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل انشاء عملية الدفع");
+        window.location.href = data.redirect_url;
+        return;
+      }
+      // Free program
       const { data, error } = await supabase.functions.invoke("public-purchase", { body: { listing_id: listing.id } });
-      if (error || !data?.success) throw new Error(data?.error || error?.message || "تعذر إتمام الشراء");
-      toast({ title: "تم الشراء بنجاح", description: data.program_cloned ? "تم نسخ البرنامج إلى مكتبتك" : "يمكنك الآن استخدام البرنامج" });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "تعذر اتمام الشراء");
+      toast({ title: "تم الشراء بنجاح", description: data.program_cloned ? "تم نسخ البرنامج الى مكتبتك" : "يمكنك الان استخدام البرنامج" });
       setSelectedListing(null); fetchListings();
     } catch (error: any) {
-      toast({
-        title: "خطأ",
-        description: listing.price > 0 && error?.message?.includes("payment_id")
-          ? "البرامج المدفوعة تحتاج إلى تأكيد دفع."
-          : error?.message || "تعذر إتمام الشراء",
-        variant: "destructive",
-      });
+      toast({ title: "خطأ", description: error?.message || "تعذر اتمام الشراء", variant: "destructive" });
     } finally { setPurchasing(null); }
   };
 

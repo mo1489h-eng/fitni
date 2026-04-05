@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import {
   TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2,
-  Plus, Scale, Activity, Heart, ScanLine
+  Plus, Scale, Activity, Heart, ScanLine, Upload, ArrowLeft,
+  ChevronLeft
 } from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import PortalAchievements from "@/components/PortalAchievements";
@@ -17,9 +19,51 @@ import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {
   const { token } = usePortalToken();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [newWeight, setNewWeight] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
+
+  const handleOcrUpload = async (file: File) => {
+    setIsOcrLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        try {
+          const { data, error } = await supabase.functions.invoke("ocr-body-scan", { body: { image_base64: base64 } });
+          if (error) throw error;
+          if (data?.error) {
+            toast({ title: "تعذر قراءة التقرير", description: data.error, variant: "destructive" });
+          } else {
+            toast({ title: "تم قراءة التقرير بنجاح" });
+            navigate("/portal/body-scan");
+          }
+        } catch (err: any) {
+          toast({ title: "خطأ", description: err.message, variant: "destructive" });
+        } finally {
+          setIsOcrLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setIsOcrLoading(false);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
+      handleOcrUpload(file);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback(() => setIsDragging(false), []);
 
   const { data: client } = useQuery({
     queryKey: ["portal-client", token],
@@ -121,6 +165,69 @@ const PortalProgress = () => {
             </div>
           </div>
         )}
+
+        {/* InBody Upload + Body Scan CTA */}
+        <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ScanLine className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              <h3 className="font-bold text-white text-sm">سكان الجسم</h3>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 text-xs"
+              onClick={() => navigate("/portal/body-scan")}
+            >
+              عرض الكل
+              <ChevronLeft className="w-3 h-3" strokeWidth={1.5} />
+            </Button>
+          </div>
+
+          {/* Drop zone for InBody */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`relative rounded-xl border-2 border-dashed p-5 text-center transition-all cursor-pointer ${
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-[hsl(0_0%_15%)] hover:border-primary/30"
+            }`}
+            onClick={() => {
+              const inp = document.createElement("input");
+              inp.type = "file";
+              inp.accept = "image/*,.pdf";
+              inp.onchange = (e: any) => {
+                const f = e.target.files?.[0];
+                if (f) handleOcrUpload(f);
+              };
+              inp.click();
+            }}
+          >
+            {isOcrLoading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-6 h-6 text-primary animate-spin mb-2" strokeWidth={1.5} />
+                <p className="text-xs text-[hsl(0_0%_45%)]">جاري قراءة التقرير...</p>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-6 h-6 text-primary/60 mx-auto mb-1.5" strokeWidth={1.5} />
+                <p className="text-xs font-medium text-white">ارفع تقرير InBody</p>
+                <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">JPG, PNG, PDF</p>
+              </>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 hover:text-white"
+            onClick={() => navigate("/portal/body-scan")}
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            إدخال بيانات يدوياً
+          </Button>
+        </div>
 
         {/* Achievements */}
         <PortalAchievements />

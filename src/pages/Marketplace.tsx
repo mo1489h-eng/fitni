@@ -249,11 +249,33 @@ const Marketplace = () => {
             <Button variant="outline" className="gap-1.5 text-xs bg-transparent border-[hsl(0_0%_10%)]" onClick={() => window.open("/store", "_blank")}>
               <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.5} />المتجر العام
             </Button>
-            <Dialog open={showPublish} onOpenChange={o => hasMarketplaceAccess ? setShowPublish(o) : setShowUpgrade(true)}>
+            <Dialog open={showPublish} onOpenChange={o => {
+              if (hasMarketplaceAccess) { setShowPublish(o); if (!o) resetForm(); }
+              else setShowUpgrade(true);
+            }}>
               <DialogTrigger asChild><Button className="gap-1.5"><Plus className="w-4 h-4" strokeWidth={1.5} />نشر برنامج</Button></DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">
-                <DialogHeader><DialogTitle className="text-foreground">نشر برنامج في المتجر</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle className="text-foreground">{editingId ? "تعديل البرنامج" : "نشر برنامج في المتجر"}</DialogTitle></DialogHeader>
                 <div className="space-y-4">
+                  {/* Cover Image Upload */}
+                  <div>
+                    <Label>صورة الغلاف</Label>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleCoverSelect} />
+                    {coverPreview ? (
+                      <div className="relative mt-2 rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] aspect-video">
+                        <img src={coverPreview} className="w-full h-full object-cover" alt="" />
+                        <button onClick={() => { setCoverPreview(null); setCoverFile(null); }} className="absolute top-2 left-2 w-7 h-7 rounded-full bg-black/60 flex items-center justify-center">
+                          <X className="w-4 h-4 text-white" strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => fileInputRef.current?.click()} className="mt-2 w-full aspect-video rounded-xl border-2 border-dashed border-[hsl(0_0%_15%)] bg-[hsl(0_0%_4%)] flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary/40 transition-colors">
+                        <ImagePlus className="w-8 h-8" strokeWidth={1.5} />
+                        <span className="text-xs">اضغط لاختيار صورة الغلاف</span>
+                      </button>
+                    )}
+                  </div>
+
                   <div>
                     <Label>اختر برنامج موجود (اختياري)</Label>
                     <Select value={pubForm.program_id} onValueChange={v => {
@@ -267,8 +289,17 @@ const Marketplace = () => {
                   <div><Label>اسم البرنامج</Label><Input value={pubForm.title} onChange={e => setPubForm(f => ({ ...f, title: e.target.value }))} className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
                   <div><Label>الوصف التسويقي</Label><Textarea value={pubForm.description} onChange={e => setPubForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="وصف تفصيلي للبرنامج..." className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><Label>السعر (ر.س)</Label><Input type="number" value={pubForm.price} onChange={e => setPubForm(f => ({ ...f, price: +e.target.value }))} className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
-                    <div><Label>المدة (أسابيع)</Label><Input type="number" value={pubForm.duration_weeks} onChange={e => setPubForm(f => ({ ...f, duration_weeks: +e.target.value }))} className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
+                    <div><Label>السعر (ر.س)</Label><Input type="number" min={0} value={pubForm.price} onChange={e => setPubForm(f => ({ ...f, price: Math.max(0, +e.target.value) }))} className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
+                    <div><Label>المدة (اسابيع)</Label><Input type="number" min={1} value={pubForm.duration_weeks} onChange={e => setPubForm(f => ({ ...f, duration_weeks: Math.max(1, +e.target.value) }))} className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
+                  </div>
+                  <div>
+                    <Label>التصنيف</Label>
+                    <Select value={pubForm.category} onValueChange={v => setPubForm(f => ({ ...f, category: v }))}>
+                      <SelectTrigger className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>المستوى</Label>
@@ -282,8 +313,11 @@ const Marketplace = () => {
                     </Select>
                   </div>
                   <div><Label>الوسوم (مفصولة بفاصلة)</Label><Input value={pubForm.tags} onChange={e => setPubForm(f => ({ ...f, tags: e.target.value }))} placeholder="تضخيم, تنشيف, مبتدئ" className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
-                  <div><Label>الأدوات المطلوبة (مفصولة بفاصلة)</Label><Input value={pubForm.equipment} onChange={e => setPubForm(f => ({ ...f, equipment: e.target.value }))} placeholder="دمبلز, بار, أجهزة" className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
-                  <Button onClick={handlePublish} className="w-full gap-2"><Package className="w-4 h-4" strokeWidth={1.5} />نشر في المتجر</Button>
+                  <div><Label>الادوات المطلوبة (مفصولة بفاصلة)</Label><Input value={pubForm.equipment} onChange={e => setPubForm(f => ({ ...f, equipment: e.target.value }))} placeholder="دمبلز, بار, اجهزة" className="bg-[hsl(0_0%_4%)] border-[hsl(0_0%_10%)]" /></div>
+                  <Button onClick={handlePublish} className="w-full gap-2" disabled={uploadingCover || !pubForm.title}>
+                    {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" strokeWidth={1.5} />}
+                    {editingId ? "حفظ التعديلات" : "نشر في المتجر"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

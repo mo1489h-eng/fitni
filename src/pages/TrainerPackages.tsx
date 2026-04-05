@@ -304,6 +304,7 @@ const TrainerPackages = () => {
                       <SelectItem value="monthly">شهرياً</SelectItem>
                       <SelectItem value="quarterly">كل 3 شهور</SelectItem>
                       <SelectItem value="yearly">سنوياً</SelectItem>
+                      <SelectItem value="sessions">عدد جلسات</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

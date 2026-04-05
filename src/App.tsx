@@ -112,6 +112,7 @@ const App = () => (
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
             <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
             <Route path="/store" element={<Store />} />
+            <Route path="/store/:listingId" element={<ListingSalesPage />} />
             <Route path="/templates" element={<AuthGuard><Templates /></AuthGuard>} />
             <Route path="/ref/:code" element={<ReferralRedirect />} />
             <Route path="/privacy" element={<Privacy />} />

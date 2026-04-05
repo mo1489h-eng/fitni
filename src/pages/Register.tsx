@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ const Register = () => {
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   // Fetch remaining founder spots
-  useMemo(() => {
+  useEffect(() => {
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })

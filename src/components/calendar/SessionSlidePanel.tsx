@@ -269,7 +269,7 @@ export default function SessionSlidePanel({
           <div className="p-5 border-t border-border space-y-3">
             <Button
               className="w-full gap-2"
-              disabled={!clientId || !date || saving}
+              disabled={!clientId || !date || saving || !!conflict}
               onClick={handleSubmit}
             >
               {saving ? (

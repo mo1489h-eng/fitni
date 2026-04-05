@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { usePortalToken } from "@/hooks/usePortalToken";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import {
   TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2,
-  Plus, Scale, Activity, Heart, ScanLine
+  Plus, Scale, Activity, Heart, ScanLine, Upload, ArrowLeft,
+  ChevronLeft
 } from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import PortalAchievements from "@/components/PortalAchievements";

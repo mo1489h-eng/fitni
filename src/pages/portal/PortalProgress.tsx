@@ -19,9 +19,51 @@ import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {
   const { token } = usePortalToken();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [newWeight, setNewWeight] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
+
+  const handleOcrUpload = async (file: File) => {
+    setIsOcrLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        try {
+          const { data, error } = await supabase.functions.invoke("ocr-body-scan", { body: { image_base64: base64 } });
+          if (error) throw error;
+          if (data?.error) {
+            toast({ title: "تعذر قراءة التقرير", description: data.error, variant: "destructive" });
+          } else {
+            toast({ title: "تم قراءة التقرير بنجاح" });
+            navigate("/portal/body-scan");
+          }
+        } catch (err: any) {
+          toast({ title: "خطأ", description: err.message, variant: "destructive" });
+        } finally {
+          setIsOcrLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setIsOcrLoading(false);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type.startsWith("image/") || file.type === "application/pdf")) {
+      handleOcrUpload(file);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback(() => setIsDragging(false), []);
 
   const { data: client } = useQuery({
     queryKey: ["portal-client", token],

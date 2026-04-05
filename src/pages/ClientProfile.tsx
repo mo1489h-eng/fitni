@@ -160,6 +160,7 @@ function getPaymentStatus(endDate: string) {
 
 const ClientProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [showProgramModal, setShowProgramModal] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);

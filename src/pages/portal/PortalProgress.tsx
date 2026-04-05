@@ -166,6 +166,69 @@ const PortalProgress = () => {
           </div>
         )}
 
+        {/* InBody Upload + Body Scan CTA */}
+        <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ScanLine className="w-4 h-4 text-primary" strokeWidth={1.5} />
+              <h3 className="font-bold text-white text-sm">سكان الجسم</h3>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 text-xs"
+              onClick={() => navigate("/portal/body-scan")}
+            >
+              عرض الكل
+              <ChevronLeft className="w-3 h-3" strokeWidth={1.5} />
+            </Button>
+          </div>
+
+          {/* Drop zone for InBody */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`relative rounded-xl border-2 border-dashed p-5 text-center transition-all cursor-pointer ${
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-[hsl(0_0%_15%)] hover:border-primary/30"
+            }`}
+            onClick={() => {
+              const inp = document.createElement("input");
+              inp.type = "file";
+              inp.accept = "image/*,.pdf";
+              inp.onchange = (e: any) => {
+                const f = e.target.files?.[0];
+                if (f) handleOcrUpload(f);
+              };
+              inp.click();
+            }}
+          >
+            {isOcrLoading ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="w-6 h-6 text-primary animate-spin mb-2" strokeWidth={1.5} />
+                <p className="text-xs text-[hsl(0_0%_45%)]">جاري قراءة التقرير...</p>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-6 h-6 text-primary/60 mx-auto mb-1.5" strokeWidth={1.5} />
+                <p className="text-xs font-medium text-white">ارفع تقرير InBody</p>
+                <p className="text-[10px] text-[hsl(0_0%_40%)] mt-0.5">JPG, PNG, PDF</p>
+              </>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 hover:text-white"
+            onClick={() => navigate("/portal/body-scan")}
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            إدخال بيانات يدوياً
+          </Button>
+        </div>
+
         {/* Achievements */}
         <PortalAchievements />
 

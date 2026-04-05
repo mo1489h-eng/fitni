@@ -487,9 +487,14 @@ const Marketplace = () => {
                         <span>{l.difficulty}</span>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="text-xs bg-transparent border-[hsl(0_0%_10%)]" onClick={() => toggleListingStatus(l.id, l.status)}>
-                      {l.status === "published" ? "سحب" : "نشر"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="text-xs bg-transparent border-[hsl(0_0%_10%)] gap-1" onClick={() => openEditListing(l)}>
+                        <Pencil className="w-3 h-3" strokeWidth={1.5} />تعديل
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-xs bg-transparent border-[hsl(0_0%_10%)]" onClick={() => toggleListingStatus(l.id, l.status)}>
+                        {l.status === "published" ? "سحب" : "نشر"}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

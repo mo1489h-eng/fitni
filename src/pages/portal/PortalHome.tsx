@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 const PortalHome = () => {
   const navigate = useNavigate();
   const { token } = usePortalToken();
+  const queryClient = useQueryClient();
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["portal-client", token],

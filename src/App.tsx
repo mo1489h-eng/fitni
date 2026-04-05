@@ -89,6 +89,7 @@ const App = () => (
             <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
             <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
             <Route path="/vault" element={<AuthGuard><Vault /></AuthGuard>} />
+            <Route path="/vault/:unitId" element={<AuthGuard><VaultUnit /></AuthGuard>} />
             <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
 
             {/* Public payment pages */}
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
             <Route path="/portal/challenges" element={<PortalTokenProvider><PortalChallenges /></PortalTokenProvider>} />
             <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
+            <Route path="/portal/vault/:unitId/:lessonId" element={<PortalTokenProvider><PortalLessonPlayer /></PortalTokenProvider>} />
 
             <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
             <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />

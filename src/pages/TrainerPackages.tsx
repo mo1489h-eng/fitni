@@ -22,6 +22,7 @@ interface PackageForm {
   price: number;
   billing_cycle: string;
   sessions_per_week: number;
+  sessions_total: number;
   includes_program: boolean;
   includes_nutrition: boolean;
   includes_followup: boolean;
@@ -34,6 +35,7 @@ const defaultForm: PackageForm = {
   price: 0,
   billing_cycle: "monthly",
   sessions_per_week: 3,
+  sessions_total: 12,
   includes_program: true,
   includes_nutrition: true,
   includes_followup: true,
@@ -72,12 +74,13 @@ const TrainerPackages = () => {
         description: form.description.trim(),
         price: form.price,
         billing_cycle: form.billing_cycle,
-        sessions_per_week: form.sessions_per_week,
+        sessions_per_week: form.billing_cycle === "sessions" ? 0 : form.sessions_per_week,
+        sessions_total: form.billing_cycle === "sessions" ? form.sessions_total : 0,
         includes_program: form.includes_program,
         includes_nutrition: form.includes_nutrition,
         includes_followup: form.includes_followup,
         custom_features: form.custom_features,
-      };
+      } as any;
       if (editingId) {
         const { error } = await supabase.from("trainer_packages").update(payload).eq("id", editingId);
         if (error) throw error;
@@ -114,6 +117,7 @@ const TrainerPackages = () => {
       price: pkg.price,
       billing_cycle: pkg.billing_cycle,
       sessions_per_week: pkg.sessions_per_week,
+      sessions_total: (pkg as any).sessions_total || 12,
       includes_program: pkg.includes_program,
       includes_nutrition: pkg.includes_nutrition,
       includes_followup: pkg.includes_followup,
@@ -139,6 +143,7 @@ const TrainerPackages = () => {
     monthly: "شهرياً",
     quarterly: "كل 3 شهور",
     yearly: "سنوياً",
+    sessions: "عدد جلسات",
   };
 
   return (
@@ -209,11 +214,19 @@ const TrainerPackages = () => {
 
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-primary">{pkg.price}</span>
-                  <span className="text-sm text-muted-foreground">ر.س / {cycleLabel[pkg.billing_cycle] || "شهرياً"}</span>
+                  <span className="text-sm text-muted-foreground">
+                    ر.س {pkg.billing_cycle === "sessions" ? `/ ${(pkg as any).sessions_total || 0} جلسة` : `/ ${cycleLabel[pkg.billing_cycle] || "شهرياً"}`}
+                  </span>
                 </div>
 
                 <div className="space-y-2">
-                  {pkg.sessions_per_week > 0 && (
+                  {pkg.billing_cycle === "sessions" && (pkg as any).sessions_total > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-card-foreground">
+                      <Dumbbell className="w-4 h-4 text-primary" />
+                      <span>{(pkg as any).sessions_total} جلسة إجمالاً</span>
+                    </div>
+                  )}
+                  {pkg.billing_cycle !== "sessions" && pkg.sessions_per_week > 0 && (
                     <div className="flex items-center gap-2 text-sm text-card-foreground">
                       <Dumbbell className="w-4 h-4 text-primary" />
                       <span>{pkg.sessions_per_week} جلسات أسبوعياً</span>
@@ -297,18 +310,33 @@ const TrainerPackages = () => {
                       <SelectItem value="monthly">شهرياً</SelectItem>
                       <SelectItem value="quarterly">كل 3 شهور</SelectItem>
                       <SelectItem value="yearly">سنوياً</SelectItem>
+                      <SelectItem value="sessions">عدد جلسات</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground">عدد الجلسات الأسبوعية</label>
-                <Input
-                  type="number"
-                  value={form.sessions_per_week}
-                  onChange={(e) => setForm({ ...form, sessions_per_week: +e.target.value })}
-                />
-              </div>
+              {form.billing_cycle === "sessions" ? (
+                <div>
+                  <label className="text-sm font-medium text-foreground">إجمالي عدد الجلسات</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.sessions_total}
+                    onChange={(e) => setForm({ ...form, sessions_total: +e.target.value })}
+                    placeholder="مثال: 8, 12, 20"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">عدد الجلسات الإجمالي المشمول في هذه الباقة</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm font-medium text-foreground">عدد الجلسات الأسبوعية</label>
+                  <Input
+                    type="number"
+                    value={form.sessions_per_week}
+                    onChange={(e) => setForm({ ...form, sessions_per_week: +e.target.value })}
+                  />
+                </div>
+              )}
 
               <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground">ما تشمل الباقة</label>

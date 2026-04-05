@@ -1741,6 +1741,7 @@ export type Database = {
           name: string
           price: number
           sessions_per_week: number
+          sessions_total: number
           trainer_id: string
         }
         Insert: {
@@ -1757,6 +1758,7 @@ export type Database = {
           name?: string
           price?: number
           sessions_per_week?: number
+          sessions_total?: number
           trainer_id: string
         }
         Update: {
@@ -1773,6 +1775,7 @@ export type Database = {
           name?: string
           price?: number
           sessions_per_week?: number
+          sessions_total?: number
           trainer_id?: string
         }
         Relationships: []

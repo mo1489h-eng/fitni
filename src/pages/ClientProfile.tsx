@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import TrainerBodyScans from "@/components/TrainerBodyScans";
 import ClientPaymentModal from "@/components/ClientPaymentModal";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
 import ClientPdfReport from "@/components/ClientPdfReport";
 import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import CopilotPanel from "@/components/CopilotPanel";
+import { startImpersonation } from "@/components/ImpersonationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -159,6 +160,7 @@ function getPaymentStatus(endDate: string) {
 
 const ClientProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [showProgramModal, setShowProgramModal] = useState(false);
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
@@ -289,6 +291,19 @@ const ClientProfile = () => {
             العملاء <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           </Link>
           <div className="flex items-center gap-2">
+            {client.portal_token && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                startImpersonation({
+                  clientName: client.name,
+                  clientId: id!,
+                  returnPath: `/clients/${id}`,
+                });
+                sessionStorage.setItem("portal_token", client.portal_token!);
+                navigate("/portal");
+              }}>
+                <Eye className="w-4 h-4" strokeWidth={1.5} /> دخول كالمتدرب
+              </Button>
+            )}
             <ClientPdfReport client={client} measurements={measurements || []} />
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1">

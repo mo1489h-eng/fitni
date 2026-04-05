@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -16,6 +17,7 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">
+      <ImpersonationBanner />
       <header className="sticky top-0 z-40 border-b border-[hsl(0_0%_8%)] bg-[hsl(0_0%_3%)]/80 backdrop-blur-xl">
         <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-3">
           <span className="text-sm font-bold text-white">CoachBase</span>

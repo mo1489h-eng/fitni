@@ -51,6 +51,8 @@ Deno.serve(async (req) => {
 
     if (existingPurchase) return jsonResponse({ error: "Already purchased" }, 409);
 
+    // Verify payment for paid listings
+    let verifiedAmount = 0;
     if (listing.price > 0) {
       if (!paymentId) return jsonResponse({ error: "payment_id required for paid listings" }, 400);
 
@@ -66,11 +68,17 @@ Deno.serve(async (req) => {
       const tapPayment = await tapRes.json();
       if (tapPayment.status !== "CAPTURED") return jsonResponse({ error: "Payment not completed" }, 402);
       if (Number(tapPayment.amount) !== Number(listing.price)) return jsonResponse({ error: "Payment amount mismatch" }, 402);
+      verifiedAmount = Number(tapPayment.amount);
     }
 
+    // Calculate commission
+    const commissionRate = 0.10;
+
+    // Record the purchase
     const { error: purchaseError } = await supabase.from("marketplace_purchases").insert({
       listing_id: listingId, buyer_id: userId, trainer_id: listing.trainer_id,
       amount: listing.price, currency: listing.currency, status: "completed",
+      commission_rate: commissionRate,
     });
 
     if (purchaseError) {
@@ -82,6 +90,7 @@ Deno.serve(async (req) => {
     await supabase.from("marketplace_listings")
       .update({ purchase_count: (listing.purchase_count || 0) + 1 }).eq("id", listingId);
 
+    // Clone program to buyer
     let programCloned = false;
     if (listing.program_id) {
       const { data: sourceProgram } = await supabase
@@ -96,13 +105,13 @@ Deno.serve(async (req) => {
         const sourceDayIds = (sourceDays || []).map(d => d.id);
         const { data: sourceExercises } = sourceDayIds.length
           ? await supabase.from("program_exercises")
-              .select("day_id, name, reps, sets, video_url, weight, exercise_order")
+              .select("day_id, name, reps, sets, video_url, weight, exercise_order, rest_seconds, tempo, rpe, notes, is_warmup, superset_group")
               .in("day_id", sourceDayIds).order("exercise_order", { ascending: true })
           : { data: [], error: null };
 
         const { data: newProgram, error: newProgramError } = await supabase
           .from("programs").insert({
-            name: `${sourceProgram.name} (من السوق)`, trainer_id: userId, weeks: sourceProgram.weeks,
+            name: sourceProgram.name, trainer_id: userId, weeks: sourceProgram.weeks,
           }).select("id").single();
 
         if (!newProgramError && newProgram) {
@@ -126,11 +135,43 @@ Deno.serve(async (req) => {
                   reps: e.reps as number, weight: e.weight as number,
                   video_url: (e.video_url as string | null) ?? null,
                   exercise_order: e.exercise_order as number,
+                  rest_seconds: (e.rest_seconds as number) || 60,
+                  tempo: (e.tempo as string | null) ?? null,
+                  rpe: (e.rpe as number | null) ?? null,
+                  notes: (e.notes as string | null) ?? null,
+                  is_warmup: (e.is_warmup as boolean) || false,
+                  superset_group: (e.superset_group as string | null) ?? null,
                 }))
               );
             }
           }
           programCloned = true;
+
+          // Check if buyer is already a client of this trainer - if not, create lightweight client
+          const { data: existingClient } = await supabase
+            .from("clients").select("id")
+            .eq("auth_user_id", userId).eq("trainer_id", listing.trainer_id).maybeSingle();
+
+          if (!existingClient) {
+            // Get buyer info
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            const buyerName = authUser?.user?.user_metadata?.full_name || authUser?.user?.email?.split("@")[0] || "مشتري";
+
+            await supabase.from("clients").insert({
+              name: buyerName,
+              auth_user_id: userId,
+              trainer_id: listing.trainer_id,
+              program_id: newProgram.id,
+              goal: "برنامج من المتجر",
+              client_type: "online",
+              email: authUser?.user?.email || null,
+            });
+          } else {
+            // Assign the cloned program to existing client
+            await supabase.from("clients")
+              .update({ program_id: newProgram.id })
+              .eq("id", existingClient.id);
+          }
         }
       }
     }

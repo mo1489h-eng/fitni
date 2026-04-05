@@ -52,7 +52,17 @@ const Store = () => {
     setPurchasing(true);
     try {
       if (listing.price > 0) {
-        // Create Tap charge and redirect to payment
+        // Fetch trainer's tap_destination_id for split payment (90% to trainer)
+        const { data: trainerProfile } = await supabase
+          .from("profiles")
+          .select("tap_destination_id")
+          .eq("user_id", listing.trainer_id)
+          .single();
+
+        const destinations = trainerProfile?.tap_destination_id
+          ? [{ id: trainerProfile.tap_destination_id, amount: Math.round(listing.price * 0.9 * 100) / 100, currency: listing.currency || "SAR" }]
+          : undefined;
+
         const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
           body: {
             amount: listing.price,
@@ -64,9 +74,10 @@ const Store = () => {
             },
             redirect_url: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
             metadata: { type: "marketplace", listing_id: listing.id, user_id: user.id },
+            destinations,
           },
         });
-        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل إنشاء عملية الدفع");
+        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل انشاء عملية الدفع");
         window.location.href = data.redirect_url;
         return;
       }
@@ -196,10 +207,10 @@ const Store = () => {
             {filtered.map(l => {
               const trainer = trainerProfiles[l.trainer_id];
               return (
-                <div
+                 <div
                   key={l.id}
                   className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] overflow-hidden hover:border-primary/40 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
-                  onClick={() => setSelectedListing(l)}
+                  onClick={() => navigate(`/store/${l.id}`)}
                 >
                   <div className="h-1 bg-gradient-to-r from-primary to-primary/50" />
                   <div className="p-5 space-y-3">
@@ -238,8 +249,8 @@ const Store = () => {
 
                     <div className="flex items-center justify-between pt-3 border-t border-[hsl(0_0%_10%)]">
                       <span className="text-lg font-black text-primary">{l.price === 0 ? "مجاني" : `${l.price} ر.س`}</span>
-                      <Button size="sm" className="gap-1.5 text-xs" onClick={e => { e.stopPropagation(); setSelectedListing(l); }}>
-                        <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.5} />معاينة
+                      <Button size="sm" className="gap-1.5 text-xs" onClick={e => { e.stopPropagation(); navigate(`/store/${l.id}`); }}>
+                        <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.5} />التفاصيل
                       </Button>
                     </div>
                   </div>

@@ -45,6 +45,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PageBuilder from "./pages/PageBuilder";
 import Copilot from "./pages/Copilot";
 import Store from "./pages/Store";
+import ListingSalesPage from "./pages/ListingSalesPage";
 import Templates from "./pages/Templates";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
             <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
             <Route path="/store" element={<Store />} />
+            <Route path="/store/:listingId" element={<ListingSalesPage />} />
             <Route path="/templates" element={<AuthGuard><Templates /></AuthGuard>} />
             <Route path="/ref/:code" element={<ReferralRedirect />} />
             <Route path="/privacy" element={<Privacy />} />

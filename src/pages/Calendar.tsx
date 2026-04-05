@@ -445,6 +445,7 @@ const CalendarPage = () => {
             onEdit={openEditPanel}
             onDelete={(id) => deleteMutation.mutate(id)}
             onWhatsApp={sendWhatsApp}
+            onComplete={(s) => completeMutation.mutate(s)}
             deleting={deleteMutation.isPending}
           />
         )}

@@ -171,26 +171,71 @@ const PortalHome = () => {
               <h3 className="font-bold text-white text-sm">الجلسات القادمة</h3>
             </div>
             <div className="space-y-2">
-              {sessions.map((session: any) => (
-                <div key={session.id} className="flex items-center gap-3 bg-[hsl(0_0%_4%)] rounded-lg p-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Dumbbell className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white">{session.session_type}</p>
-                    <p className="text-xs text-[hsl(0_0%_40%)]">
-                      {new Date(session.session_date).toLocaleDateString("ar-SA", { weekday: "long", day: "numeric", month: "long" })}
-                    </p>
-                  </div>
-                  <div className="text-left shrink-0">
-                    <div className="flex items-center gap-1 text-xs text-[hsl(0_0%_50%)]">
-                      <Clock className="w-3 h-3" strokeWidth={1.5} />
-                      <span dir="ltr">{session.start_time?.slice(0, 5)}</span>
+              {sessions.map((session: any) => {
+                const confirmStatus = session.confirmation_status || "pending";
+                return (
+                  <div key={session.id} className="bg-[hsl(0_0%_4%)] rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Dumbbell className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white">{session.session_type}</p>
+                        <p className="text-xs text-[hsl(0_0%_40%)]">
+                          {new Date(session.session_date).toLocaleDateString("ar-SA", { weekday: "long", day: "numeric", month: "long" })}
+                        </p>
+                      </div>
+                      <div className="text-left shrink-0">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(0_0%_50%)]">
+                          <Clock className="w-3 h-3" strokeWidth={1.5} />
+                          <span dir="ltr">{session.start_time?.slice(0, 5)}</span>
+                        </div>
+                        <p className="text-[10px] text-[hsl(0_0%_35%)]">{session.duration_minutes} دقيقة</p>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-[hsl(0_0%_35%)]">{session.duration_minutes} دقيقة</p>
+                    {/* Confirmation buttons */}
+                    {confirmStatus === "pending" && (
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[hsl(0_0%_8%)]">
+                        <Button
+                          size="sm"
+                          className="flex-1 h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                          onClick={async () => {
+                            await supabase.from("trainer_sessions").update({ confirmation_status: "confirmed" } as any).eq("id", session.id);
+                            queryClient.invalidateQueries({ queryKey: ["portal-upcoming-sessions"] });
+                          }}
+                        >
+                          <Check className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          سأحضر
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-9 gap-1.5 border-[hsl(0_0%_15%)] text-[hsl(0_0%_50%)] hover:text-red-400 hover:border-red-500/30 text-xs"
+                          onClick={async () => {
+                            await supabase.from("trainer_sessions").update({ confirmation_status: "declined" } as any).eq("id", session.id);
+                            queryClient.invalidateQueries({ queryKey: ["portal-upcoming-sessions"] });
+                          }}
+                        >
+                          <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          لا أستطيع
+                        </Button>
+                      </div>
+                    )}
+                    {confirmStatus === "confirmed" && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                        <CheckCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        <span>تم التأكيد</span>
+                      </div>
+                    )}
+                    {confirmStatus === "declined" && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-red-400">
+                        <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        <span>تم الاعتذار</span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

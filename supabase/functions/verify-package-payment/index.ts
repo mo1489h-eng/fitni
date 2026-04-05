@@ -128,11 +128,15 @@ serve(async (req) => {
       body: `تم إضافة ${client_name} تلقائيا كعميل جديد`,
     });
 
-    // Handle referral
-    if (referral_code) {
+    // Handle referral - validate referral_code server-side
+    const sanitizedReferralCode = typeof referral_code === "string" && /^[a-f0-9]{1,24}$/i.test(referral_code.trim())
+      ? referral_code.trim()
+      : null;
+
+    if (sanitizedReferralCode) {
       const { data: referrer } = await supabase
         .from("clients").select("id, name, trainer_id")
-        .eq("referral_code", referral_code).eq("trainer_id", trainer_id).maybeSingle();
+        .eq("referral_code", sanitizedReferralCode).eq("trainer_id", trainer_id).maybeSingle();
       if (referrer) {
         await supabase.from("referrals").insert({
           referrer_client_id: referrer.id, referred_client_id: newClient.id,

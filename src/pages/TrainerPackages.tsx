@@ -214,7 +214,9 @@ const TrainerPackages = () => {
 
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-primary">{pkg.price}</span>
-                  <span className="text-sm text-muted-foreground">ر.س / {cycleLabel[pkg.billing_cycle] || "شهرياً"}</span>
+                  <span className="text-sm text-muted-foreground">
+                    ر.س {pkg.billing_cycle === "sessions" ? `/ ${(pkg as any).sessions_total || 0} جلسة` : `/ ${cycleLabel[pkg.billing_cycle] || "شهرياً"}`}
+                  </span>
                 </div>
 
                 <div className="space-y-2">

@@ -67,7 +67,7 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -116,6 +116,7 @@ const Clients = () => {
         age: form.age ? parseInt(form.age) : null, weight: form.weight ? parseFloat(form.weight) : null,
         height: form.height ? parseFloat(form.height) : null, experience: form.experience || "مبتدئ",
         days_per_week: parseInt(form.daysPerWeek) || 4, injuries: form.injuries || null, preferred_equipment: form.equipment || null,
+        client_type: form.clientType, sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
       } as any).select("id, invite_token").single();
       if (error) throw error;
       if (form.email && newClient?.invite_token) {
@@ -141,7 +142,7 @@ const Clients = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
-      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
       setShowAdvanced(false);
       if (!form.email) toast({ title: "تمت إضافة العميل بنجاح" });
     },
@@ -273,11 +274,23 @@ const Clients = () => {
                         </span>
                       </div>
 
-                      {/* Goal badge */}
-                      <div className="flex items-center gap-2 mb-2">
+                      {/* Goal & type badges */}
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                           {client.goal}
                         </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                          (client as any).client_type === "in_person"
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                        }`}>
+                          {(client as any).client_type === "in_person" ? "حضوري" : "أونلاين"}
+                        </span>
+                        {(client as any).client_type === "in_person" && (client as any).sessions_per_month > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {(client as any).sessions_used || 0}/{(client as any).sessions_per_month} جلسة
+                          </span>
+                        )}
                         {activityText && (
                           <span className="text-[10px] text-muted-foreground">{activityText}</span>
                         )}
@@ -361,6 +374,22 @@ const Clients = () => {
                 <label className="text-sm font-medium text-foreground">الهدف</label>
                 <Input required value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} placeholder="مثال: خسارة وزن" />
               </div>
+              <div>
+                <label className="text-sm font-medium text-foreground">نوع التدريب</label>
+                <Select value={form.clientType} onValueChange={(v) => setForm({ ...form, clientType: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">أونلاين</SelectItem>
+                    <SelectItem value="in_person">حضوري</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.clientType === "in_person" && (
+                <div>
+                  <label className="text-sm font-medium text-foreground">عدد الجلسات / الشهر</label>
+                  <Input value={form.sessionsPerMonth} onChange={(e) => setForm({ ...form, sessionsPerMonth: e.target.value })} type="number" dir="ltr" placeholder="12" />
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium text-foreground">سعر الاشتراك (ر.س)</label>
                 <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number" dir="ltr" placeholder="800" />

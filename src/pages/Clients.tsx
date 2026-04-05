@@ -274,11 +274,23 @@ const Clients = () => {
                         </span>
                       </div>
 
-                      {/* Goal badge */}
-                      <div className="flex items-center gap-2 mb-2">
+                      {/* Goal & type badges */}
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                           {client.goal}
                         </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                          (client as any).client_type === "in_person"
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                        }`}>
+                          {(client as any).client_type === "in_person" ? "حضوري" : "أونلاين"}
+                        </span>
+                        {(client as any).client_type === "in_person" && (client as any).sessions_per_month > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {(client as any).sessions_used || 0}/{(client as any).sessions_per_month} جلسة
+                          </span>
+                        )}
                         {activityText && (
                           <span className="text-[10px] text-muted-foreground">{activityText}</span>
                         )}

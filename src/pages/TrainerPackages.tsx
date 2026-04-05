@@ -117,6 +117,7 @@ const TrainerPackages = () => {
       price: pkg.price,
       billing_cycle: pkg.billing_cycle,
       sessions_per_week: pkg.sessions_per_week,
+      sessions_total: (pkg as any).sessions_total || 12,
       includes_program: pkg.includes_program,
       includes_nutrition: pkg.includes_nutrition,
       includes_followup: pkg.includes_followup,

@@ -2084,6 +2084,7 @@ export type Database = {
           token: string
         }[]
       }
+      create_session_reminders: { Args: never; Returns: number }
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {

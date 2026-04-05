@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.tap-webhook]
 verify_jwt = false
+
+[functions.receive-email]
+verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import TrainerBodyScans from "@/components/TrainerBodyScans";
 import ClientPaymentModal from "@/components/ClientPaymentModal";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";

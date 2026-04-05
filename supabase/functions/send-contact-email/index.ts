@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     }
 
     // Send email via Resend
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY_1") || Deno.env.get("RESEND_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!RESEND_API_KEY) {

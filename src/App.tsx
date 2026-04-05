@@ -52,6 +52,8 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
+import Vault from "./pages/Vault";
+import PortalVault from "./pages/portal/PortalVault";
 
 const queryClient = new QueryClient();
 

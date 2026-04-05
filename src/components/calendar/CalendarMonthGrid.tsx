@@ -110,9 +110,12 @@ export default function CalendarMonthGrid({
                   return (
                     <div
                       key={s.id}
-                      className="text-[10px] leading-tight truncate px-1.5 py-0.5 rounded"
+                      className="text-[10px] leading-tight truncate px-1.5 py-0.5 rounded flex items-center gap-0.5"
                       style={{ backgroundColor: style.bg, color: style.text }}
                     >
+                      {(s as any).is_completed && <span className="text-emerald-400">✓</span>}
+                      {(s as any).confirmation_status === "confirmed" && !(s as any).is_completed && <span className="text-emerald-400 opacity-60">●</span>}
+                      {(s as any).confirmation_status === "declined" && <span className="text-red-400 opacity-60">●</span>}
                       <span className="font-medium">{clientMap[s.client_id]?.split(" ")[0]}</span>
                       <span className="opacity-60 mr-1">{formatTimeShort(s.start_time)}</span>
                     </div>

@@ -70,7 +70,7 @@ const VaultUnit = () => {
       supabase.from("vault_lessons").select("*").eq("unit_id", unitId).order("lesson_order"),
     ]);
     if (unitData) setUnit(unitData);
-    setLessons(lessonsData || []);
+    setLessons((lessonsData || []) as VaultLesson[]);
     setLoading(false);
   };
 

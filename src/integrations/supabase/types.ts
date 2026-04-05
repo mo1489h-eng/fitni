@@ -498,6 +498,7 @@ export type Database = {
           age: number | null
           auth_user_id: string | null
           billing_cycle: string
+          client_type: string
           created_at: string
           days_per_week: number | null
           email: string | null
@@ -521,6 +522,8 @@ export type Database = {
           program_id: string | null
           referral_code: string | null
           referred_by_client_id: string | null
+          sessions_per_month: number
+          sessions_used: number
           subscription_end_date: string
           subscription_price: number
           trainer_id: string | null
@@ -531,6 +534,7 @@ export type Database = {
           age?: number | null
           auth_user_id?: string | null
           billing_cycle?: string
+          client_type?: string
           created_at?: string
           days_per_week?: number | null
           email?: string | null
@@ -554,6 +558,8 @@ export type Database = {
           program_id?: string | null
           referral_code?: string | null
           referred_by_client_id?: string | null
+          sessions_per_month?: number
+          sessions_used?: number
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
@@ -564,6 +570,7 @@ export type Database = {
           age?: number | null
           auth_user_id?: string | null
           billing_cycle?: string
+          client_type?: string
           created_at?: string
           days_per_week?: number | null
           email?: string | null
@@ -587,6 +594,8 @@ export type Database = {
           program_id?: string | null
           referral_code?: string | null
           referred_by_client_id?: string | null
+          sessions_per_month?: number
+          sessions_used?: number
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
@@ -1843,9 +1852,11 @@ export type Database = {
       trainer_sessions: {
         Row: {
           client_id: string
+          confirmation_status: string
           created_at: string
           duration_minutes: number
           id: string
+          is_completed: boolean
           notes: string | null
           session_date: string
           session_type: string
@@ -1854,9 +1865,11 @@ export type Database = {
         }
         Insert: {
           client_id: string
+          confirmation_status?: string
           created_at?: string
           duration_minutes?: number
           id?: string
+          is_completed?: boolean
           notes?: string | null
           session_date: string
           session_type?: string
@@ -1865,9 +1878,11 @@ export type Database = {
         }
         Update: {
           client_id?: string
+          confirmation_status?: string
           created_at?: string
           duration_minutes?: number
           id?: string
+          is_completed?: boolean
           notes?: string | null
           session_date?: string
           session_type?: string

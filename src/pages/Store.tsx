@@ -49,12 +49,28 @@ const Store = () => {
 
   const handlePurchase = async (listing: any) => {
     if (!user) { navigate("/login"); return; }
-    if (listing.price > 0) {
-      toast({ title: "البرامج المدفوعة تتطلب الدفع عبر بوابة الدفع", variant: "destructive" });
-      return;
-    }
     setPurchasing(true);
     try {
+      if (listing.price > 0) {
+        // Create Tap charge and redirect to payment
+        const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
+          body: {
+            amount: listing.price,
+            currency: listing.currency || "SAR",
+            description: `شراء برنامج: ${listing.title}`,
+            customer: {
+              name: user.user_metadata?.full_name || "Customer",
+              email: user.email || "",
+            },
+            redirect_url: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
+            metadata: { type: "marketplace", listing_id: listing.id, user_id: user.id },
+          },
+        });
+        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل إنشاء عملية الدفع");
+        window.location.href = data.redirect_url;
+        return;
+      }
+      // Free program — clone directly
       const { data, error } = await supabase.functions.invoke("public-purchase", { body: { listing_id: listing.id } });
       if (error || !data?.success) throw new Error(data?.error || "فشل الشراء");
       toast({ title: "تم الشراء بنجاح", description: "تم نسخ البرنامج إلى مكتبتك" });

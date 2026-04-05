@@ -80,11 +80,13 @@ const PaymentCallback = () => {
       } else if (type === "package_purchase") {
         const packageId = searchParams.get("package_id");
         const checkoutToken = searchParams.get("checkout_token");
-        const referralCode = sessionStorage.getItem("referral_code");
+        const rawReferralCode = sessionStorage.getItem("referral_code");
+        // Sanitize: only allow alphanumeric hex codes (max 24 chars)
+        const referralCode = rawReferralCode && /^[a-f0-9]{1,24}$/i.test(rawReferralCode.trim()) ? rawReferralCode.trim() : null;
         const { data, error } = await supabase.functions.invoke("verify-package-payment", {
-          body: { payment_id: tapId, package_id: packageId, checkout_token: checkoutToken, referral_code: referralCode || null },
+          body: { payment_id: tapId, package_id: packageId, checkout_token: checkoutToken, referral_code: referralCode },
         });
-        if (referralCode) sessionStorage.removeItem("referral_code");
+        if (rawReferralCode) sessionStorage.removeItem("referral_code");
         if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
         setStatus("success");
         toast({ title: "تم الدفع بنجاح" });

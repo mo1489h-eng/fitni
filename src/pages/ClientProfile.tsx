@@ -347,11 +347,17 @@ const ClientProfile = () => {
             <Progress value={progressPercent} className="h-2" />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className={`grid ${(client as any).client_type === 'in_person' ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
             {[
               { label: "آخر تمرين", value: lastWorkoutDays === 0 ? "اليوم" : `${lastWorkoutDays}`, unit: lastWorkoutDays === 0 ? "" : "يوم", icon: CalendarDays },
               { label: "الاشتراك", value: `${client.subscription_price}`, unit: "ر.س", icon: CreditCard },
               { label: "ينتهي خلال", value: daysUntilEnd < 0 ? "منتهي" : `${daysUntilEnd}`, unit: daysUntilEnd < 0 ? "" : "يوم", icon: UserCheck },
+              ...((client as any).client_type === 'in_person' && (client as any).sessions_per_month > 0 ? [{
+                label: "الجلسات المتبقية",
+                value: `${Math.max(0, (client as any).sessions_per_month - ((client as any).sessions_used || 0))}`,
+                unit: `/ ${(client as any).sessions_per_month}`,
+                icon: Dumbbell,
+              }] : []),
             ].map((stat) => (
               <div key={stat.label} className="text-center bg-[hsl(0_0%_5%)] border border-[hsl(0_0%_10%)] rounded-lg p-2.5">
                 <stat.icon className="w-4 h-4 mx-auto text-primary mb-1" strokeWidth={1.5} />

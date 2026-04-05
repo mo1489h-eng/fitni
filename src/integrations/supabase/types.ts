@@ -2284,6 +2284,10 @@ export type Database = {
             }
             Returns: string
           }
+      insert_portal_measurement: {
+        Args: { p_fat_percentage?: number; p_token: string; p_weight: number }
+        Returns: string
+      }
       insert_portal_progress_photo: {
         Args: { p_photo_type: string; p_photo_url: string; p_token: string }
         Returns: string

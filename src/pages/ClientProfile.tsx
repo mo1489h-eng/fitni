@@ -19,6 +19,7 @@ import {
 import ClientPdfReport from "@/components/ClientPdfReport";
 import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import CopilotPanel from "@/components/CopilotPanel";
+import { startImpersonation } from "@/components/ImpersonationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

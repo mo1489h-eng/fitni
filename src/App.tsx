@@ -107,6 +107,7 @@ const App = () => (
             <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
             <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
             <Route path="/portal/challenges" element={<PortalTokenProvider><PortalChallenges /></PortalTokenProvider>} />
+            <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
 
             <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
             <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />

@@ -291,6 +291,19 @@ const ClientProfile = () => {
             العملاء <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           </Link>
           <div className="flex items-center gap-2">
+            {client.portal_token && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                startImpersonation({
+                  clientName: client.name,
+                  clientId: id!,
+                  returnPath: `/clients/${id}`,
+                });
+                sessionStorage.setItem("portal_token", client.portal_token!);
+                navigate("/portal");
+              }}>
+                <Eye className="w-4 h-4" strokeWidth={1.5} /> دخول كالمتدرب
+              </Button>
+            )}
             <ClientPdfReport client={client} measurements={measurements || []} />
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1">

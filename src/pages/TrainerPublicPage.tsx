@@ -940,7 +940,7 @@ const TrainerPublicPage = () => {
           {profile.social_links && (
             <div className="flex items-center gap-4">
               {profile.social_links.instagram && (
-                <a href={`https://instagram.com/${profile.social_links.instagram}`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
+                <a href={`https://www.instagram.com/${profile.social_links.instagram}/`} target="_blank" rel="noopener noreferrer" className="transition-colors duration-200 hover:opacity-80" style={{ color: COLORS.dim }}>
                   <Instagram className="w-5 h-5" strokeWidth={1.5} />
                 </a>
               )}

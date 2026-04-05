@@ -53,7 +53,9 @@ import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
 import Vault from "./pages/Vault";
+import VaultUnit from "./pages/VaultUnit";
 import PortalVault from "./pages/portal/PortalVault";
+import PortalLessonPlayer from "./pages/portal/PortalLessonPlayer";
 
 const queryClient = new QueryClient();
 

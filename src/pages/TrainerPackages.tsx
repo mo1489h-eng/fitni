@@ -74,12 +74,13 @@ const TrainerPackages = () => {
         description: form.description.trim(),
         price: form.price,
         billing_cycle: form.billing_cycle,
-        sessions_per_week: form.sessions_per_week,
+        sessions_per_week: form.billing_cycle === "sessions" ? 0 : form.sessions_per_week,
+        sessions_total: form.billing_cycle === "sessions" ? form.sessions_total : 0,
         includes_program: form.includes_program,
         includes_nutrition: form.includes_nutrition,
         includes_followup: form.includes_followup,
         custom_features: form.custom_features,
-      };
+      } as any;
       if (editingId) {
         const { error } = await supabase.from("trainer_packages").update(payload).eq("id", editingId);
         if (error) throw error;

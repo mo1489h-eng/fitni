@@ -220,7 +220,13 @@ const TrainerPackages = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {pkg.sessions_per_week > 0 && (
+                  {pkg.billing_cycle === "sessions" && (pkg as any).sessions_total > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-card-foreground">
+                      <Dumbbell className="w-4 h-4 text-primary" />
+                      <span>{(pkg as any).sessions_total} جلسة إجمالاً</span>
+                    </div>
+                  )}
+                  {pkg.billing_cycle !== "sessions" && pkg.sessions_per_week > 0 && (
                     <div className="flex items-center gap-2 text-sm text-card-foreground">
                       <Dumbbell className="w-4 h-4 text-primary" />
                       <span>{pkg.sessions_per_week} جلسات أسبوعياً</span>

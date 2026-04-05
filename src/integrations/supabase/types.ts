@@ -2064,6 +2064,10 @@ export type Database = {
     }
     Functions: {
       cleanup_copilot_messages: { Args: never; Returns: undefined }
+      complete_trainer_session: {
+        Args: { p_session_id: string }
+        Returns: boolean
+      }
       create_client_matches: {
         Args: { p_intake_id: string; p_matches: Json }
         Returns: number
@@ -2318,6 +2322,10 @@ export type Database = {
             }
             Returns: undefined
           }
+      update_session_confirmation: {
+        Args: { p_session_id: string; p_status: string; p_token: string }
+        Returns: boolean
+      }
       validate_and_redeem_promo: {
         Args: { p_code: string; p_email: string; p_trainer_id: string }
         Returns: Json

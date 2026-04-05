@@ -212,7 +212,6 @@ const Store = () => {
                   className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] overflow-hidden hover:border-primary/40 transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                   onClick={() => navigate(`/store/${l.id}`)}
                 >
-                >
                   <div className="h-1 bg-gradient-to-r from-primary to-primary/50" />
                   <div className="p-5 space-y-3">
                     <div className="flex items-start justify-between gap-2">

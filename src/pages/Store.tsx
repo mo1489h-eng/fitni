@@ -249,8 +249,8 @@ const Store = () => {
 
                     <div className="flex items-center justify-between pt-3 border-t border-[hsl(0_0%_10%)]">
                       <span className="text-lg font-black text-primary">{l.price === 0 ? "مجاني" : `${l.price} ر.س`}</span>
-                      <Button size="sm" className="gap-1.5 text-xs" onClick={e => { e.stopPropagation(); setSelectedListing(l); }}>
-                        <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.5} />معاينة
+                      <Button size="sm" className="gap-1.5 text-xs" onClick={e => { e.stopPropagation(); navigate(`/store/${l.id}`); }}>
+                        <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.5} />التفاصيل
                       </Button>
                     </div>
                   </div>

@@ -67,7 +67,7 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showPlans, setShowPlans] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+  const [form, setForm] = useState({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();

@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ClipboardList,
   CreditCard,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Plus,

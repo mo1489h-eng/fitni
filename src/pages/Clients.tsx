@@ -142,7 +142,7 @@ const Clients = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
-      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "" });
+      setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
       setShowAdvanced(false);
       if (!form.email) toast({ title: "تمت إضافة العميل بنجاح" });
     },

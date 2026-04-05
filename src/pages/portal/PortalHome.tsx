@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import {
   AlertCircle, Dumbbell, Flame, Play, Loader2, CheckCircle, Calendar, Moon,
-  CalendarClock, Clock, ScanLine, Megaphone, ChevronLeft, Trophy,
+  CalendarClock, Clock, ScanLine, Megaphone, ChevronLeft, Trophy, Check, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

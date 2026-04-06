@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import {
-  TrendingUp, Calendar, Dumbbell, Flame, Trophy, Loader2,
-  Plus, Scale, Activity, Heart, ScanLine, Upload, ArrowLeft,
+  TrendingUp, Dumbbell, Flame, Trophy, Loader2,
+  Plus, Scale, Activity, Heart, ScanLine, Upload,
   ChevronLeft
 } from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";

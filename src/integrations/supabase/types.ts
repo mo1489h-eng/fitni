@@ -2292,6 +2292,13 @@ export type Database = {
         }[]
       }
       get_portal_achievements: { Args: { p_token: string }; Returns: Json }
+      get_portal_attendance: {
+        Args: { p_days?: number; p_token: string }
+        Returns: {
+          day_name: string
+          workout_date: string
+        }[]
+      }
       get_portal_body_scans: {
         Args: { p_token: string }
         Returns: {

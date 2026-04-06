@@ -364,13 +364,6 @@ const Dashboard = () => {
   return (
     <TrainerLayout onQuickAdd={() => setShowImport(true)}>
       <div className="space-y-8 page-enter">
-        {/* Sentry Test Button — remove after verifying */}
-        <button
-          onClick={() => { throw new Error("This is your first error!"); }}
-          className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors"
-        >
-          Sentry Test — Break the world
-        </button>
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         <OnboardingChecklist />
 

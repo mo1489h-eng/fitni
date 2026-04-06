@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import * as Sentry from "@sentry/react";
 
 interface Profile {
   full_name: string;
@@ -57,8 +58,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        Sentry.setUser({ id: session.user.id, email: session.user.email });
         setTimeout(() => fetchProfile(session.user.id), 0);
       } else {
+        Sentry.setUser(null);
         setProfile(null);
       }
     });
@@ -90,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    Sentry.setUser(null);
     queryClient.clear();
     setSession(null);
     setUser(null);

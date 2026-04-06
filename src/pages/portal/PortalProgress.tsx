@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ProgressPhotos from "@/components/ProgressPhotos";
 import PortalAchievements from "@/components/PortalAchievements";
+import AttendanceGrid from "@/components/AttendanceGrid";
 import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {

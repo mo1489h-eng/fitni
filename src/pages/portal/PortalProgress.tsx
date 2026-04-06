@@ -240,41 +240,8 @@ const PortalProgress = () => {
           </div>
         )}
 
-        {/* Attendance Calendar */}
-        <div className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-4 h-4 text-primary" strokeWidth={1.5} />
-            <h3 className="font-bold text-white text-sm">سجل الحضور</h3>
-          </div>
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"].map(d => (
-              <div key={d} className="text-[10px] text-[hsl(0_0%_30%)] text-center">{d}</div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {(() => {
-              const now = new Date();
-              const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-              const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-              const workoutDays = new Set([1, 2, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 19, 20, 22, 23, 24, 26, 27]);
-              return (
-                <>
-                  {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const day = i + 1;
-                    const isWorkout = workoutDays.has(day);
-                    const isToday = day === now.getDate();
-                    return (
-                      <div key={day} className={`aspect-square rounded-full flex items-center justify-center text-xs font-medium ${
-                        isWorkout ? "bg-primary text-white" : isToday ? "border border-primary text-primary" : "text-[hsl(0_0%_30%)]"
-                      }`}>{day}</div>
-                    );
-                  })}
-                </>
-              );
-            })()}
-          </div>
-        </div>
+        {/* Attendance Grid */}
+        <AttendanceGrid />
 
         {/* Weight Modal */}
         <Dialog open={showWeightModal} onOpenChange={setShowWeightModal}>

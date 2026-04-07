@@ -50,7 +50,7 @@ const FoodSearch = ({ onSelect, onCustomAdd, placeholder = "ابحث عن طعا
       .select("*")
       .or(`name_ar.ilike.%${q}%,name_en.ilike.%${q}%`)
       .limit(15);
-    setResults((data || []) as FoodItem[]);
+    setResults((data || []) as unknown as FoodItem[]);
     setLoading(false);
   }, []);
 

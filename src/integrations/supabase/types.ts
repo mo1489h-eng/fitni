@@ -804,6 +804,66 @@ export type Database = {
         }
         Relationships: []
       }
+      food_database: {
+        Row: {
+          barcode: string | null
+          calories_per_100g: number
+          carbs_per_100g: number
+          category: string
+          created_at: string
+          fat_per_100g: number
+          fiber_per_100g: number
+          id: string
+          image_url: string | null
+          name_ar: string
+          name_en: string
+          protein_per_100g: number
+          serving_size_default: number
+          serving_unit: string
+          source: string
+          trainer_id: string | null
+          verified: boolean
+        }
+        Insert: {
+          barcode?: string | null
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          image_url?: string | null
+          name_ar: string
+          name_en?: string
+          protein_per_100g?: number
+          serving_size_default?: number
+          serving_unit?: string
+          source?: string
+          trainer_id?: string | null
+          verified?: boolean
+        }
+        Update: {
+          barcode?: string | null
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          image_url?: string | null
+          name_ar?: string
+          name_en?: string
+          protein_per_100g?: number
+          serving_size_default?: number
+          serving_unit?: string
+          source?: string
+          trainer_id?: string | null
+          verified?: boolean
+        }
+        Relationships: []
+      }
       gulf_foods: {
         Row: {
           added_by_trainer_id: string | null
@@ -1193,6 +1253,125 @@ export type Database = {
           trigger_type?: string
         }
         Relationships: []
+      }
+      nutrition_logs: {
+        Row: {
+          calories: number
+          carbs: number
+          client_id: string
+          created_at: string
+          fat: number
+          fiber: number
+          food_id: string | null
+          food_name_ar: string
+          food_name_en: string
+          id: string
+          image_url: string | null
+          is_custom: boolean
+          logged_date: string
+          meal_type: string
+          notes: string | null
+          protein: number
+          quantity_grams: number
+          trainer_id: string | null
+        }
+        Insert: {
+          calories?: number
+          carbs?: number
+          client_id: string
+          created_at?: string
+          fat?: number
+          fiber?: number
+          food_id?: string | null
+          food_name_ar: string
+          food_name_en?: string
+          id?: string
+          image_url?: string | null
+          is_custom?: boolean
+          logged_date?: string
+          meal_type?: string
+          notes?: string | null
+          protein?: number
+          quantity_grams?: number
+          trainer_id?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          client_id?: string
+          created_at?: string
+          fat?: number
+          fiber?: number
+          food_id?: string | null
+          food_name_ar?: string
+          food_name_en?: string
+          id?: string
+          image_url?: string | null
+          is_custom?: boolean
+          logged_date?: string
+          meal_type?: string
+          notes?: string | null
+          protein?: number
+          quantity_grams?: number
+          trainer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrition_logs_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "food_database"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_targets: {
+        Row: {
+          calories_target: number
+          carbs_target: number
+          client_id: string
+          fat_target: number
+          id: string
+          protein_target: number
+          set_by_trainer: boolean
+          updated_at: string
+        }
+        Insert: {
+          calories_target?: number
+          carbs_target?: number
+          client_id: string
+          fat_target?: number
+          id?: string
+          protein_target?: number
+          set_by_trainer?: boolean
+          updated_at?: string
+        }
+        Update: {
+          calories_target?: number
+          carbs_target?: number
+          client_id?: string
+          fat_target?: number
+          id?: string
+          protein_target?: number
+          set_by_trainer?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_targets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       package_checkout_sessions: {
         Row: {
@@ -2345,6 +2524,12 @@ export type Database = {
         Args: { p_limit?: number; p_token: string }
         Returns: Json
       }
+      get_portal_nutrition_logs: {
+        Args: { p_date?: string; p_token: string }
+        Returns: Json
+      }
+      get_portal_nutrition_targets: { Args: { p_token: string }; Returns: Json }
+      get_portal_nutrition_weekly: { Args: { p_token: string }; Returns: Json }
       get_portal_program: { Args: { p_token: string }; Returns: Json }
       get_portal_progress_photos: {
         Args: { p_token: string }
@@ -2477,6 +2662,27 @@ export type Database = {
       mark_portal_notifications_read: {
         Args: { p_token: string }
         Returns: boolean
+      }
+      portal_delete_food_log: {
+        Args: { p_log_id: string; p_token: string }
+        Returns: boolean
+      }
+      portal_log_food: {
+        Args: {
+          p_calories?: number
+          p_carbs?: number
+          p_fat?: number
+          p_fiber?: number
+          p_food_id?: string
+          p_food_name_ar: string
+          p_food_name_en?: string
+          p_is_custom?: boolean
+          p_meal_type: string
+          p_protein?: number
+          p_quantity_grams?: number
+          p_token: string
+        }
+        Returns: string
       }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }

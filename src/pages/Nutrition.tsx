@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,75 +9,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, UtensilsCrossed, Apple, ChevronDown, ChevronUp, UserCircle, Copy, Zap } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, ChevronDown, ChevronUp, UserCircle, Copy, Target, Search, Flame, Beef, Wheat, Droplets, Settings2, TrendingUp, Calendar as CalendarIcon, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import FoodSearch, { FoodItem } from "@/components/nutrition/FoodSearch";
+import MacroRing from "@/components/nutrition/MacroRing";
+import NutritionDayChart from "@/components/nutrition/NutritionDayChart";
 
 interface Client { id: string; name: string; }
-
 interface MealItem {
-  id?: string;
-  meal_name: string;
-  food_name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-  quantity: string;
-  item_order: number;
+  id?: string; meal_name: string; food_name: string; calories: number;
+  protein: number; carbs: number; fats: number; quantity: string; item_order: number;
 }
-
 interface MealPlan {
-  id: string;
-  name: string;
-  notes: string;
-  client_id: string | null;
-  created_at: string;
-  client?: Client;
-  items?: MealItem[];
+  id: string; name: string; notes: string; client_id: string | null;
+  created_at: string; client?: Client; items?: MealItem[];
 }
 
-const MEAL_NAMES = ["فطور", "وجبة خفيفة صباحية", "غداء", "وجبة خفيفة مسائية", "عشاء", "وجبة قبل التمرين", "وجبة بعد التمرين"];
+const MEAL_TYPES = ["فطور", "غداء", "عشاء", "سناك"];
 
 const emptyItem = (order: number, mealName = "فطور"): MealItem => ({
   meal_name: mealName, food_name: "", calories: 0, protein: 0, carbs: 0, fats: 0, quantity: "", item_order: order,
 });
-
-// Meal templates
-const MEAL_TEMPLATES = [
-  {
-    name: "فطور صحي",
-    items: [
-      { meal_name: "فطور", food_name: "بيض مسلوق", calories: 155, protein: 13, carbs: 1, fats: 11, quantity: "3 حبات" },
-      { meal_name: "فطور", food_name: "خبز أسمر", calories: 140, protein: 5, carbs: 26, fats: 2, quantity: "2 شريحة" },
-      { meal_name: "فطور", food_name: "أفوكادو", calories: 120, protein: 2, carbs: 6, fats: 11, quantity: "نصف حبة" },
-    ],
-  },
-  {
-    name: "غداء رياضي",
-    items: [
-      { meal_name: "غداء", food_name: "صدر دجاج مشوي", calories: 280, protein: 52, carbs: 0, fats: 6, quantity: "200g" },
-      { meal_name: "غداء", food_name: "أرز بني", calories: 215, protein: 5, carbs: 45, fats: 2, quantity: "كوب" },
-      { meal_name: "غداء", food_name: "سلطة خضار", calories: 50, protein: 2, carbs: 10, fats: 0, quantity: "طبق" },
-    ],
-  },
-  {
-    name: "عشاء خفيف",
-    items: [
-      { meal_name: "عشاء", food_name: "سمك مشوي", calories: 200, protein: 40, carbs: 0, fats: 4, quantity: "150g" },
-      { meal_name: "عشاء", food_name: "خضار مشوية", calories: 80, protein: 3, carbs: 15, fats: 1, quantity: "كوب" },
-    ],
-  },
-  {
-    name: "سناك بروتين",
-    items: [
-      { meal_name: "وجبة خفيفة مسائية", food_name: "زبادي يوناني", calories: 130, protein: 15, carbs: 8, fats: 4, quantity: "كوب" },
-      { meal_name: "وجبة خفيفة مسائية", food_name: "لوز", calories: 160, protein: 6, carbs: 6, fats: 14, quantity: "30g" },
-    ],
-  },
-];
 
 const Nutrition = () => {
   usePageTitle("التغذية");
@@ -93,16 +50,28 @@ const Nutrition = () => {
   const [selectedCopyClients, setSelectedCopyClients] = useState<string[]>([]);
   const [copying, setCopying] = useState(false);
 
+  // Targets sheet
+  const [showTargets, setShowTargets] = useState(false);
+  const [targetClient, setTargetClient] = useState<string>("");
+  const [targetCalories, setTargetCalories] = useState(2000);
+  const [targetProtein, setTargetProtein] = useState(150);
+  const [targetCarbs, setTargetCarbs] = useState(200);
+  const [targetFat, setTargetFat] = useState(65);
+  const [savingTargets, setSavingTargets] = useState(false);
+
+  // Client nutrition dashboard
+  const [selectedDashClient, setSelectedDashClient] = useState<string>("");
+  const [clientLogs, setClientLogs] = useState<any[]>([]);
+  const [clientWeekly, setClientWeekly] = useState<any[]>([]);
+  const [clientTargets, setClientTargets] = useState<any>(null);
+  const [dashTab, setDashTab] = useState("plans");
+
   // Form state
   const [planName, setPlanName] = useState("");
   const [planNotes, setPlanNotes] = useState("");
-  const [selectedClient, setSelectedClient] = useState<string>("");
+  const [selectedClient, setSelectedClient] = useState("");
   const [items, setItems] = useState<MealItem[]>([emptyItem(0)]);
   const [saving, setSaving] = useState(false);
-  const [targetCalories, setTargetCalories] = useState(2000);
-  const [proteinPct, setProteinPct] = useState(30);
-  const [carbsPct, setCarbsPct] = useState(40);
-  const [fatsPct, setFatsPct] = useState(30);
 
   useEffect(() => { if (user) { fetchPlans(); fetchClients(); } }, [user]);
 
@@ -129,11 +98,39 @@ const Nutrition = () => {
     setLoading(false);
   };
 
+  // Fetch client nutrition data
+  useEffect(() => {
+    if (!selectedDashClient || !user) return;
+    const fetchClientData = async () => {
+      const [logsRes, targetsRes] = await Promise.all([
+        supabase.from("nutrition_logs" as any).select("*").eq("client_id", selectedDashClient).gte("logged_date", new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0]).order("created_at", { ascending: false }),
+        supabase.from("nutrition_targets" as any).select("*").eq("client_id", selectedDashClient).maybeSingle(),
+      ]);
+      setClientLogs((logsRes.data || []) as any[]);
+      setClientTargets(targetsRes.data as any);
+
+      // Build weekly data
+      const weekData: Record<string, any> = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
+        weekData[d] = { day: d, calories: 0, protein: 0, carbs: 0, fat: 0 };
+      }
+      (logsRes.data || []).forEach((log: any) => {
+        if (weekData[log.logged_date]) {
+          weekData[log.logged_date].calories += Number(log.calories) || 0;
+          weekData[log.logged_date].protein += Number(log.protein) || 0;
+          weekData[log.logged_date].carbs += Number(log.carbs) || 0;
+          weekData[log.logged_date].fat += Number(log.fat) || 0;
+        }
+      });
+      setClientWeekly(Object.values(weekData));
+    };
+    fetchClientData();
+  }, [selectedDashClient, user]);
+
   const openNewPlan = () => {
     setEditingPlan(null); setPlanName(""); setPlanNotes(""); setSelectedClient("");
-    setItems([emptyItem(0)]); setTargetCalories(2000);
-    setProteinPct(30); setCarbsPct(40); setFatsPct(30);
-    setShowDialog(true);
+    setItems([emptyItem(0)]); setShowDialog(true);
   };
 
   const openEditPlan = (plan: MealPlan) => {
@@ -143,12 +140,20 @@ const Nutrition = () => {
     setShowDialog(true);
   };
 
-  const applyTemplate = (template: typeof MEAL_TEMPLATES[0]) => {
-    const newItems = template.items.map((t, idx) => ({
-      ...t, item_order: items.length + idx,
-    }));
-    setItems([...items.filter(i => i.food_name.trim()), ...newItems]);
-    toast({ title: `تم إضافة قالب "${template.name}"` });
+  const handleFoodSelect = (food: FoodItem, mealName: string) => {
+    const qty = food.serving_size_default || 100;
+    const factor = qty / 100;
+    const newItem: MealItem = {
+      meal_name: mealName,
+      food_name: food.name_ar,
+      calories: Math.round(food.calories_per_100g * factor),
+      protein: Math.round(food.protein_per_100g * factor),
+      carbs: Math.round(food.carbs_per_100g * factor),
+      fats: Math.round(food.fat_per_100g * factor),
+      quantity: `${qty}${food.serving_unit}`,
+      item_order: items.length,
+    };
+    setItems(prev => [...prev.filter(i => i.food_name.trim()), newItem]);
   };
 
   const addItem = (mealName = "فطور") => setItems([...items, emptyItem(items.length, mealName)]);
@@ -177,15 +182,11 @@ const Nutrition = () => {
       const validItems = items.filter(i => i.food_name.trim());
       if (validItems.length > 0) {
         await supabase.from("meal_items").insert(validItems.map((item, idx) => ({
-          meal_plan_id: planId,
-          meal_name: (item.meal_name || "وجبة").slice(0, 200),
+          meal_plan_id: planId, meal_name: item.meal_name.slice(0, 200),
           food_name: item.food_name.trim().slice(0, 200),
-          calories: Math.max(0, Number(item.calories) || 0),
-          protein: Math.max(0, Number(item.protein) || 0),
-          carbs: Math.max(0, Number(item.carbs) || 0),
-          fats: Math.max(0, Number(item.fats) || 0),
-          quantity: item.quantity,
-          item_order: idx,
+          calories: Math.max(0, Number(item.calories) || 0), protein: Math.max(0, Number(item.protein) || 0),
+          carbs: Math.max(0, Number(item.carbs) || 0), fats: Math.max(0, Number(item.fats) || 0),
+          quantity: item.quantity, item_order: idx,
         })));
       }
       toast({ title: editingPlan ? "تم تحديث الخطة" : "تم إنشاء الخطة بنجاح" });
@@ -223,11 +224,26 @@ const Nutrition = () => {
         }
       }
       toast({ title: `تم نسخ الخطة لـ ${selectedCopyClients.length} عميل` });
-      setShowCopyDialog(false);
-      fetchPlans();
+      setShowCopyDialog(false); fetchPlans();
     } catch (err: any) {
       toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
     } finally { setCopying(false); }
+  };
+
+  const handleSaveTargets = async () => {
+    if (!targetClient) { toast({ title: "اختر عميل", variant: "destructive" }); return; }
+    setSavingTargets(true);
+    try {
+      const { error } = await supabase.from("nutrition_targets" as any).upsert({
+        client_id: targetClient, calories_target: targetCalories, protein_target: targetProtein,
+        carbs_target: targetCarbs, fat_target: targetFat, set_by_trainer: true, updated_at: new Date().toISOString(),
+      } as any, { onConflict: "client_id" });
+      if (error) throw error;
+      toast({ title: "تم حفظ الأهداف" });
+      setShowTargets(false);
+    } catch (err: any) {
+      toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
+    } finally { setSavingTargets(false); }
   };
 
   const totalMacros = (planItems: MealItem[]) =>
@@ -239,98 +255,203 @@ const Nutrition = () => {
     return groups;
   };
 
-  const macroTargets = {
-    protein: Math.round((targetCalories * proteinPct / 100) / 4),
-    carbs: Math.round((targetCalories * carbsPct / 100) / 4),
-    fats: Math.round((targetCalories * fatsPct / 100) / 9),
-  };
+  // Today's data for selected dashboard client
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayLogs = clientLogs.filter(l => l.logged_date === todayStr);
+  const todayTotals = todayLogs.reduce((acc, l) => ({
+    calories: acc.calories + (Number(l.calories) || 0),
+    protein: acc.protein + (Number(l.protein) || 0),
+    carbs: acc.carbs + (Number(l.carbs) || 0),
+    fat: acc.fat + (Number(l.fat) || 0),
+  }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+  const daysLogged = clientWeekly.filter(d => d.calories > 0).length;
 
   return (
     <TrainerLayout>
       <div className="space-y-6" dir="rtl">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">الخطط الغذائية</h1>
-            <p className="text-muted-foreground text-sm">أنشئ وخصص خطط غذائية لعملائك</p>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <UtensilsCrossed className="w-6 h-6 text-primary" />
+              التغذية
+            </h1>
+            <p className="text-muted-foreground text-sm">أدِر خطط التغذية وتابع أداء العملاء</p>
           </div>
-          <Button data-tour="create-plan" onClick={openNewPlan} className="gap-2">
-            <Plus className="w-4 h-4" />
-            خطة جديدة
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowTargets(true)} className="gap-2">
+              <Target className="w-4 h-4" /> أهداف التغذية
+            </Button>
+            <Button onClick={openNewPlan} className="gap-2">
+              <Plus className="w-4 h-4" /> خطة جديدة
+            </Button>
+          </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">جاري التحميل...</div>
-        ) : plans.length === 0 ? (
-          <Card className="p-12 text-center">
-            <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد خطط غذائية بعد</h3>
-            <p className="text-muted-foreground text-sm mb-4">ابدأ بإنشاء أول خطة غذائية لعملائك</p>
-            <Button onClick={openNewPlan} variant="outline" className="gap-2"><Plus className="w-4 h-4" />إنشاء خطة</Button>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {plans.map(plan => {
-              const totals = totalMacros(plan.items || []);
-              const isExpanded = expandedPlan === plan.id;
-              return (
-                <Card key={plan.id} className="overflow-hidden">
-                  <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Apple className="w-4 h-4 text-primary" />
-                        <h3 className="font-semibold text-foreground">{plan.name}</h3>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {plan.client && <span className="flex items-center gap-1"><UserCircle className="w-3 h-3" />{plan.client.name}</span>}
-                        <span>{totals.calories} سعرة</span>
-                        <span>بروتين {totals.protein}g</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="ghost" onClick={e => { e.stopPropagation(); openCopyDialog(plan.id); }} title="نسخ للعملاء"><Copy className="w-4 h-4" /></Button>
-                      <Button size="sm" variant="ghost" onClick={e => { e.stopPropagation(); openEditPlan(plan); }}>تعديل</Button>
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={e => { e.stopPropagation(); deletePlan(plan.id); }}><Trash2 className="w-4 h-4" /></Button>
-                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </div>
-                  </div>
-                  {isExpanded && plan.items && plan.items.length > 0 && (
-                    <div className="border-t border-border px-4 py-3 bg-muted/30 space-y-3">
-                      {Object.entries(groupByMeal(plan.items)).map(([mealName, mealItems]) => (
-                        <div key={mealName}>
-                          <h4 className="text-sm font-semibold text-primary mb-1">{mealName}</h4>
-                          {mealItems.map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-sm py-1 border-b border-border/50 last:border-0">
-                              <span className="text-foreground">{item.food_name} {item.quantity && `(${item.quantity})`}</span>
-                              <div className="flex gap-3 text-xs text-muted-foreground">
-                                <span>{item.calories} سعرة</span>
-                                <span>P:{item.protein}</span>
-                                <span>C:{item.carbs}</span>
-                                <span>F:{item.fats}</span>
-                              </div>
+        {/* Tabs: Plans / Client Dashboard */}
+        <Tabs value={dashTab} onValueChange={setDashTab}>
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="plans" className="gap-2"><UtensilsCrossed className="w-4 h-4" />الخطط الغذائية</TabsTrigger>
+            <TabsTrigger value="dashboard" className="gap-2"><BarChart3 className="w-4 h-4" />لوحة العميل</TabsTrigger>
+          </TabsList>
+
+          {/* Plans Tab */}
+          <TabsContent value="plans" className="space-y-4 mt-4">
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">جاري التحميل...</div>
+            ) : plans.length === 0 ? (
+              <Card className="p-12 text-center">
+                <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد خطط غذائية بعد</h3>
+                <p className="text-muted-foreground text-sm mb-4">ابدأ بإنشاء أول خطة غذائية لعملائك</p>
+                <Button onClick={openNewPlan} variant="outline" className="gap-2"><Plus className="w-4 h-4" />إنشاء خطة</Button>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {plans.map(plan => {
+                  const totals = totalMacros(plan.items || []);
+                  const isExpanded = expandedPlan === plan.id;
+                  return (
+                    <Card key={plan.id} className="overflow-hidden">
+                      <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <UtensilsCrossed className="w-4 h-4 text-primary" />
                             </div>
-                          ))}
+                            <div>
+                              <h3 className="font-semibold text-foreground">{plan.name}</h3>
+                              {plan.client && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <UserCircle className="w-3 h-3" />{plan.client.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="text-xs">{totals.calories} سعرة</Badge>
+                            <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400">P:{totals.protein}g</Badge>
+                            <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">C:{totals.carbs}g</Badge>
+                            <Badge variant="outline" className="text-xs border-rose-500/30 text-rose-400">F:{totals.fats}g</Badge>
+                          </div>
                         </div>
-                      ))}
-                      {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">{plan.notes}</p>}
-                    </div>
-                  )}
+                        <div className="flex items-center gap-1">
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openCopyDialog(plan.id); }} title="نسخ"><Copy className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); openEditPlan(plan); }}><Settings2 className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" className="text-destructive" onClick={e => { e.stopPropagation(); deletePlan(plan.id); }}><Trash2 className="w-4 h-4" /></Button>
+                          {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </div>
+                      {isExpanded && plan.items && plan.items.length > 0 && (
+                        <div className="border-t border-border px-4 py-3 bg-muted/20 space-y-3">
+                          {Object.entries(groupByMeal(plan.items)).map(([mealName, mealItems]) => {
+                            const mealTotal = totalMacros(mealItems);
+                            return (
+                              <div key={mealName}>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <h4 className="text-sm font-bold text-primary">{mealName}</h4>
+                                  <span className="text-xs text-muted-foreground">{mealTotal.calories} سعرة</span>
+                                </div>
+                                {mealItems.map((item, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-sm py-1.5 border-b border-border/30 last:border-0">
+                                    <span className="text-foreground">{item.food_name} {item.quantity && <span className="text-muted-foreground text-xs">({item.quantity})</span>}</span>
+                                    <div className="flex gap-2 text-xs text-muted-foreground">
+                                      <span>{item.calories} سعرة</span>
+                                      <span className="text-blue-400">P:{item.protein}</span>
+                                      <span className="text-amber-400">C:{item.carbs}</span>
+                                      <span className="text-rose-400">F:{item.fats}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
+                          {plan.notes && <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">{plan.notes}</p>}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Client Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-4 mt-4">
+            <Select value={selectedDashClient} onValueChange={setSelectedDashClient}>
+              <SelectTrigger><SelectValue placeholder="اختر عميل لعرض بياناته" /></SelectTrigger>
+              <SelectContent>
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            {selectedDashClient && (
+              <div className="space-y-4">
+                {/* Today Summary */}
+                <Card className="p-5">
+                  <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4 text-primary" /> اليوم
+                  </h3>
+                  <div className="grid grid-cols-4 gap-4 justify-items-center">
+                    <MacroRing value={todayTotals.calories} target={clientTargets?.calories_target || 2000} color="hsl(142 76% 36%)" label="سعرات" size={72} />
+                    <MacroRing value={todayTotals.protein} target={clientTargets?.protein_target || 150} color="hsl(220 70% 55%)" label="بروتين" size={72} />
+                    <MacroRing value={todayTotals.carbs} target={clientTargets?.carbs_target || 200} color="hsl(35 90% 55%)" label="كارب" size={72} />
+                    <MacroRing value={todayTotals.fat} target={clientTargets?.fat_target || 65} color="hsl(340 70% 55%)" label="دهون" size={72} />
+                  </div>
                 </Card>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Today's meals */}
+                {todayLogs.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3">ما أكله اليوم</h3>
+                    <div className="space-y-2">
+                      {MEAL_TYPES.map(mt => {
+                        const logs = todayLogs.filter(l => l.meal_type === mt);
+                        if (logs.length === 0) return null;
+                        return (
+                          <div key={mt}>
+                            <p className="text-xs font-semibold text-primary mb-1">{mt}</p>
+                            {logs.map((l: any) => (
+                              <div key={l.id} className="flex items-center justify-between text-sm py-1 border-b border-border/30 last:border-0">
+                                <span className="text-foreground">{l.food_name_ar} <span className="text-muted-foreground text-xs">({l.quantity_grams}g)</span></span>
+                                <span className="text-muted-foreground text-xs">{l.calories} سعرة</span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Weekly chart */}
+                <Card className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-primary" /> آخر 7 أيام
+                    </h3>
+                    <Badge variant="secondary">{daysLogged}/7 أيام مسجلة</Badge>
+                  </div>
+                  <NutritionDayChart data={clientWeekly} target={clientTargets?.calories_target} />
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Plan Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
-            <DialogTitle>{editingPlan ? "تعديل الخطة الغذائية" : "خطة غذائية جديدة"}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <UtensilsCrossed className="w-5 h-5 text-primary" />
+              {editingPlan ? "تعديل الخطة الغذائية" : "خطة غذائية جديدة"}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Basic Info */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">اسم الخطة</label>
@@ -340,114 +461,77 @@ const Nutrition = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">تعيين لعميل</label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger><SelectValue placeholder="اختر عميل (اختياري)" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Macro Targets */}
-            <Card className="p-4 bg-primary/5 border-primary/20">
-              <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" />
-                أهداف الماكروز اليومية
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">إجمالي السعرات: {targetCalories}</label>
-                  <Slider value={[targetCalories]} onValueChange={v => setTargetCalories(v[0])} min={800} max={5000} step={50} className="mt-1" />
-                </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <label className="text-xs text-muted-foreground">بروتين {proteinPct}%</label>
-                    <p className="text-sm font-bold text-foreground">{macroTargets.protein}g</p>
-                    <Slider value={[proteinPct]} onValueChange={v => { setProteinPct(v[0]); setFatsPct(100 - v[0] - carbsPct); }} min={10} max={60} step={5} className="mt-1" />
+            {/* Food Search per meal */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground text-sm">أضف أطعمة من قاعدة البيانات</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {MEAL_TYPES.map(mt => (
+                  <div key={mt}>
+                    <label className="text-xs text-muted-foreground mb-1 block">{mt}</label>
+                    <FoodSearch
+                      onSelect={food => handleFoodSelect(food, mt)}
+                      placeholder={`ابحث لـ ${mt}...`}
+                    />
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">كارب {carbsPct}%</label>
-                    <p className="text-sm font-bold text-foreground">{macroTargets.carbs}g</p>
-                    <Slider value={[carbsPct]} onValueChange={v => { setCarbsPct(v[0]); setFatsPct(100 - proteinPct - v[0]); }} min={10} max={60} step={5} className="mt-1" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">دهون {fatsPct}%</label>
-                    <p className="text-sm font-bold text-foreground">{macroTargets.fats}g</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Meal Templates */}
-            <div>
-              <h4 className="text-sm font-bold text-foreground mb-2">قوالب سريعة</h4>
-              <div className="flex gap-2 flex-wrap">
-                {MEAL_TEMPLATES.map(t => (
-                  <Button key={t.name} size="sm" variant="outline" className="gap-1 text-xs" onClick={() => applyTemplate(t)}>
-                    <Plus className="w-3 h-3" /> {t.name}
-                  </Button>
                 ))}
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">ملاحظات</label>
-              <Textarea value={planNotes} onChange={e => setPlanNotes(e.target.value)} placeholder="تعليمات إضافية..." rows={2} />
-            </div>
+            <Textarea value={planNotes} onChange={e => setPlanNotes(e.target.value)} placeholder="ملاحظات..." rows={2} />
 
-            {/* Meal Items */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-foreground">الوجبات</h3>
+            {/* Items list */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm">الوجبات ({items.filter(i => i.food_name.trim()).length})</h3>
+                <Button size="sm" variant="outline" onClick={() => addItem()} className="gap-1 text-xs">
+                  <Plus className="w-3 h-3" /> يدوي
+                </Button>
+              </div>
               {items.map((item, index) => (
                 <Card key={index} className="p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <Select value={item.meal_name} onValueChange={v => updateItem(index, "meal_name", v)}>
-                      <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {MEAL_NAMES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                      </SelectContent>
+                      <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>{MEAL_TYPES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
                     </Select>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeItem(index)}>
-                      <Trash2 className="w-4 h-4" />
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeItem(index)}>
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <Input placeholder="اسم الطعام" value={item.food_name} onChange={e => updateItem(index, "food_name", e.target.value)} />
-                    <Input placeholder="الكمية (مثال: 200g)" value={item.quantity} onChange={e => updateItem(index, "quantity", e.target.value)} />
+                    <Input placeholder="اسم الطعام" value={item.food_name} onChange={e => updateItem(index, "food_name", e.target.value)} className="h-9 text-sm" />
+                    <Input placeholder="الكمية" value={item.quantity} onChange={e => updateItem(index, "quantity", e.target.value)} className="h-9 text-sm" />
                   </div>
                   <div className="grid grid-cols-4 gap-2">
-                    <div>
-                      <label className="text-xs text-muted-foreground">سعرات</label>
-                      <Input type="number" value={item.calories || ""} onChange={e => updateItem(index, "calories", Number(e.target.value))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">بروتين</label>
-                      <Input type="number" value={item.protein || ""} onChange={e => updateItem(index, "protein", Number(e.target.value))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">كربوهيدرات</label>
-                      <Input type="number" value={item.carbs || ""} onChange={e => updateItem(index, "carbs", Number(e.target.value))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">دهون</label>
-                      <Input type="number" value={item.fats || ""} onChange={e => updateItem(index, "fats", Number(e.target.value))} />
-                    </div>
+                    {[
+                      { key: "calories", label: "سعرات" },
+                      { key: "protein", label: "بروتين" },
+                      { key: "carbs", label: "كارب" },
+                      { key: "fats", label: "دهون" },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="text-[10px] text-muted-foreground">{f.label}</label>
+                        <Input type="number" value={(item as any)[f.key] || ""} onChange={e => updateItem(index, f.key as keyof MealItem, Number(e.target.value))} className="h-8 text-xs" />
+                      </div>
+                    ))}
                   </div>
                 </Card>
               ))}
-              <Button variant="outline" className="w-full gap-2" onClick={() => addItem()}>
-                <Plus className="w-4 h-4" />إضافة عنصر
-              </Button>
             </div>
 
             {/* Totals */}
             {items.some(i => i.food_name.trim()) && (
               <Card className="p-3 bg-primary/5 border-primary/20">
-                <h4 className="text-sm font-semibold text-foreground mb-2">إجمالي اليوم</h4>
                 <div className="grid grid-cols-4 gap-2 text-center text-sm">
-                  <div><div className="font-bold text-foreground">{items.reduce((s, i) => s + (i.calories || 0), 0)}</div><div className="text-xs text-muted-foreground">سعرة</div></div>
-                  <div><div className="font-bold text-foreground">{items.reduce((s, i) => s + (i.protein || 0), 0)}g</div><div className="text-xs text-muted-foreground">بروتين</div></div>
-                  <div><div className="font-bold text-foreground">{items.reduce((s, i) => s + (i.carbs || 0), 0)}g</div><div className="text-xs text-muted-foreground">كربوهيدرات</div></div>
-                  <div><div className="font-bold text-foreground">{items.reduce((s, i) => s + (i.fats || 0), 0)}g</div><div className="text-xs text-muted-foreground">دهون</div></div>
+                  <div><div className="font-bold text-foreground">{items.reduce((s, i) => s + (i.calories || 0), 0)}</div><div className="text-[10px] text-muted-foreground">سعرة</div></div>
+                  <div><div className="font-bold text-blue-400">{items.reduce((s, i) => s + (i.protein || 0), 0)}g</div><div className="text-[10px] text-muted-foreground">بروتين</div></div>
+                  <div><div className="font-bold text-amber-400">{items.reduce((s, i) => s + (i.carbs || 0), 0)}g</div><div className="text-[10px] text-muted-foreground">كارب</div></div>
+                  <div><div className="font-bold text-rose-400">{items.reduce((s, i) => s + (i.fats || 0), 0)}g</div><div className="text-[10px] text-muted-foreground">دهون</div></div>
                 </div>
               </Card>
             )}
@@ -463,7 +547,6 @@ const Nutrition = () => {
       <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>
         <DialogContent dir="rtl">
           <DialogHeader><DialogTitle>نسخ الخطة للعملاء</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground mb-3">اختر العملاء لنسخ الخطة الغذائية لهم</p>
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {clients.map(c => (
               <label key={c.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
@@ -477,6 +560,46 @@ const Nutrition = () => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Targets Sheet */}
+      <Sheet open={showTargets} onOpenChange={setShowTargets}>
+        <SheetContent side="right" className="w-full sm:max-w-md" dir="rtl">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              أهداف التغذية اليومية
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-5 mt-6">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">اختر العميل</label>
+              <Select value={targetClient} onValueChange={setTargetClient}>
+                <SelectTrigger><SelectValue placeholder="اختر عميل" /></SelectTrigger>
+                <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-4">
+              {[
+                { label: "السعرات اليومية", val: targetCalories, set: setTargetCalories, min: 800, max: 5000, step: 50, unit: "سعرة", color: "text-primary" },
+                { label: "البروتين", val: targetProtein, set: setTargetProtein, min: 30, max: 400, step: 5, unit: "g", color: "text-blue-400" },
+                { label: "الكربوهيدرات", val: targetCarbs, set: setTargetCarbs, min: 30, max: 600, step: 5, unit: "g", color: "text-amber-400" },
+                { label: "الدهون", val: targetFat, set: setTargetFat, min: 10, max: 200, step: 5, unit: "g", color: "text-rose-400" },
+              ].map(t => (
+                <div key={t.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm text-foreground">{t.label}</label>
+                    <span className={`text-sm font-bold ${t.color}`}>{t.val} {t.unit}</span>
+                  </div>
+                  <Slider value={[t.val]} onValueChange={v => t.set(v[0])} min={t.min} max={t.max} step={t.step} />
+                </div>
+              ))}
+            </div>
+            <Button className="w-full" disabled={savingTargets || !targetClient} onClick={handleSaveTargets}>
+              {savingTargets ? "جاري الحفظ..." : "حفظ الأهداف"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </TrainerLayout>
   );
 };

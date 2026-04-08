@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, UtensilsCrossed, ChevronDown, ChevronUp, UserCircle, Copy, Target, Search, Flame, Beef, Wheat, Droplets, Settings2, TrendingUp, Calendar as CalendarIcon, BarChart3 } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, ChevronDown, ChevronUp, UserCircle, Copy, Target, Search, Flame, Beef, Wheat, Droplets, Settings2, TrendingUp, Calendar as CalendarIcon, BarChart3, FileText, CheckCircle, Pencil, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -401,18 +401,116 @@ const Nutrition = () => {
                   </div>
                 </Card>
 
-                {/* Today's meals */}
+                {/* Plan Compliance */}
+                {(() => {
+                  const clientPlan = plans.find(p => p.client_id === selectedDashClient);
+                  if (!clientPlan || !clientPlan.items?.length) return null;
+
+                  const planItems = clientPlan.items || [];
+                  let logged = 0, modified = 0, missed = 0;
+
+                  const complianceItems = planItems.map((item: MealItem) => {
+                    const exactMatch = todayLogs.find((l: any) =>
+                      l.meal_type === item.meal_name &&
+                      l.food_name_ar === item.food_name &&
+                      Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) < 5
+                    );
+                    const modifiedMatch = todayLogs.find((l: any) =>
+                      l.meal_type === item.meal_name &&
+                      l.food_name_ar === item.food_name &&
+                      Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) >= 5
+                    );
+
+                    if (exactMatch) { logged++; return { ...item, status: "logged" as const, log: exactMatch }; }
+                    if (modifiedMatch) { modified++; return { ...item, status: "modified" as const, log: modifiedMatch }; }
+                    missed++;
+                    return { ...item, status: "missed" as const, log: null };
+                  });
+
+                  const total = planItems.length;
+                  const complianceScore = total > 0 ? Math.round((logged / total) * 100) : 0;
+
+                  return (
+                    <Card className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-primary" /> التزام الخطة
+                        </h3>
+                        <Badge variant={complianceScore >= 80 ? "default" : complianceScore >= 50 ? "secondary" : "destructive"}>
+                          {complianceScore}% التزام بالخطة اليوم
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center gap-4 mb-4 text-xs">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                          <span className="text-muted-foreground">كما مخطط ({logged})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                          <span className="text-muted-foreground">معدّل ({modified})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
+                          <span className="text-muted-foreground">لم يأكل ({missed})</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        {MEAL_TYPES.map(mt => {
+                          const mealItems = complianceItems.filter(i => i.meal_name === mt);
+                          if (mealItems.length === 0) return null;
+                          return (
+                            <div key={mt}>
+                              <p className="text-xs font-semibold text-primary mb-1 mt-2">{mt}</p>
+                              {mealItems.map((item, idx) => (
+                                <div key={idx} className={`flex items-center justify-between py-2 px-2 rounded-lg mb-1 ${
+                                  item.status === "logged" ? "bg-primary/5 border border-primary/20" :
+                                  item.status === "modified" ? "bg-yellow-500/5 border border-yellow-500/20" :
+                                  "bg-muted/30 border border-border"
+                                }`}>
+                                  <div className="flex items-center gap-2 flex-1">
+                                    {item.status === "logged" && <CheckCircle className="w-4 h-4 text-primary shrink-0" />}
+                                    {item.status === "modified" && <Pencil className="w-4 h-4 text-yellow-500 shrink-0" />}
+                                    {item.status === "missed" && <Square className="w-4 h-4 text-muted-foreground shrink-0" />}
+                                    <div>
+                                      <p className="text-sm text-foreground">{item.food_name}</p>
+                                      {item.status === "modified" && item.log && (
+                                        <p className="text-xs text-yellow-500">
+                                          {item.quantity || "100g"} → {item.log.quantity_grams}g ({item.log.calories} سعرة)
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className={`text-[10px] ${
+                                    item.status === "logged" ? "border-primary/30 text-primary" :
+                                    item.status === "modified" ? "border-yellow-500/30 text-yellow-500" :
+                                    "border-border text-muted-foreground"
+                                  }`}>
+                                    {item.status === "logged" ? "كما مخطط" : item.status === "modified" ? "معدّل" : "لم يأكل"}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </Card>
+                  );
+                })()}
+
+                {/* Today's extra meals (not in plan) */}
                 {todayLogs.length > 0 && (
                   <Card className="p-4">
                     <h3 className="text-sm font-bold text-foreground mb-3">ما أكله اليوم</h3>
                     <div className="space-y-2">
                       {MEAL_TYPES.map(mt => {
-                        const logs = todayLogs.filter(l => l.meal_type === mt);
-                        if (logs.length === 0) return null;
+                        const mtLogs = todayLogs.filter((l: any) => l.meal_type === mt);
+                        if (mtLogs.length === 0) return null;
                         return (
                           <div key={mt}>
                             <p className="text-xs font-semibold text-primary mb-1">{mt}</p>
-                            {logs.map((l: any) => (
+                            {mtLogs.map((l: any) => (
                               <div key={l.id} className="flex items-center justify-between text-sm py-1 border-b border-border/30 last:border-0">
                                 <span className="text-foreground">{l.food_name_ar} <span className="text-muted-foreground text-xs">({l.quantity_grams}g)</span></span>
                                 <span className="text-muted-foreground text-xs">{l.calories} سعرة</span>

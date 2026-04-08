@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import {
   Loader2, UtensilsCrossed, Check, Plus, Minus, Droplet, Flame,
   Beef, Wheat, Droplets, CheckCircle, FileText, Search, X, TrendingUp,
-  BarChart3, Calendar as CalendarIcon, Award
+  BarChart3, Calendar as CalendarIcon, Pencil, Square
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import MacroRing from "@/components/nutrition/MacroRing";
@@ -27,7 +27,7 @@ const PortalNutrition = () => {
   const { token } = usePortalToken();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState("today");
+  const [tab, setTab] = useState("plan");
   const [showLogSheet, setShowLogSheet] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<string>("فطور");
   const [logQuantity, setLogQuantity] = useState(100);
@@ -35,6 +35,13 @@ const PortalNutrition = () => {
   const [customFood, setCustomFood] = useState({ name: "", calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [isCustom, setIsCustom] = useState(false);
   const [waterGlasses, setWaterGlasses] = useState(() => Number(sessionStorage.getItem("water_today") || 0));
+
+  // Modify sheet state
+  const [showModifySheet, setShowModifySheet] = useState(false);
+  const [modifyingItem, setModifyingItem] = useState<any>(null);
+  const [modifyQuantity, setModifyQuantity] = useState(100);
+  const [modifyMode, setModifyMode] = useState<"quantity" | "replace">("quantity");
+  const [replaceFood, setReplaceFood] = useState<FoodItem | null>(null);
 
   // Fetch targets
   const { data: targets } = useQuery({
@@ -66,7 +73,7 @@ const PortalNutrition = () => {
     enabled: !!token,
   });
 
-  // Also fetch old meal plans for "planned" overlay
+  // Fetch meal plans
   const { data: mealPlans } = useQuery({
     queryKey: ["portal-meal-plans", token],
     queryFn: async () => {
@@ -98,7 +105,9 @@ const PortalNutrition = () => {
       queryClient.invalidateQueries({ queryKey: ["portal-nutrition-logs"] });
       queryClient.invalidateQueries({ queryKey: ["portal-nutrition-weekly"] });
       setShowLogSheet(false);
+      setShowModifySheet(false);
       setSelectedFood(null);
+      setReplaceFood(null);
       setIsCustom(false);
       toast({ title: "تم تسجيل الوجبة" });
     },
@@ -130,7 +139,6 @@ const PortalNutrition = () => {
     [logs]
   );
 
-  // Calculate streak from weekly data
   const streak = useMemo(() => {
     const wk = weeklyData || [];
     let count = 0;
@@ -150,6 +158,93 @@ const PortalNutrition = () => {
     const v = Math.max(0, Math.min(n, 12));
     setWaterGlasses(v);
     sessionStorage.setItem("water_today", String(v));
+  };
+
+  // Build plan items grouped by meal, with log status
+  const planItemsByMeal = useMemo(() => {
+    const result: Record<string, any[]> = {};
+    MEAL_TYPES.forEach(m => { result[m] = []; });
+
+    if (mealPlans && mealPlans.length > 0) {
+      // Use the first/most recent plan
+      const plan = mealPlans[0];
+      (plan.items || []).forEach((item: any) => {
+        const mealName = item.meal_name;
+        if (result[mealName]) {
+          // Determine log status for this plan item
+          const matchingLog = logs.find((l: any) =>
+            l.meal_type === mealName &&
+            l.notes && l.notes.includes(`plan_item:${item.id}`)
+          );
+          const modifiedLog = logs.find((l: any) =>
+            l.meal_type === mealName &&
+            l.notes && l.notes.includes(`modified_plan_item:${item.id}`)
+          );
+
+          result[mealName].push({
+            ...item,
+            logStatus: matchingLog ? "logged" : modifiedLog ? "modified" : "pending",
+            loggedData: matchingLog || modifiedLog || null,
+          });
+        }
+      });
+    }
+    return result;
+  }, [mealPlans, logs]);
+
+  const hasPlan = mealPlans && mealPlans.length > 0 && mealPlans[0].items?.length > 0;
+
+  // Log plan item exactly as planned
+  const logAsPlanned = (item: any) => {
+    logFood.mutate({
+      meal_type: item.meal_name,
+      food_name_ar: item.food_name,
+      quantity_grams: parseInt(item.quantity) || 100,
+      calories: item.calories,
+      protein: item.protein,
+      carbs: item.carbs,
+      fat: item.fats || item.fat || 0,
+      is_custom: false,
+    });
+  };
+
+  // Open modify sheet for a plan item
+  const openModify = (item: any) => {
+    setModifyingItem(item);
+    setModifyQuantity(parseInt(item.quantity) || 100);
+    setModifyMode("quantity");
+    setReplaceFood(null);
+    setShowModifySheet(true);
+  };
+
+  // Confirm modified log
+  const confirmModify = () => {
+    if (modifyMode === "replace" && replaceFood) {
+      const factor = modifyQuantity / 100;
+      logFood.mutate({
+        meal_type: modifyingItem.meal_name,
+        food_name_ar: replaceFood.name_ar,
+        food_name_en: replaceFood.name_en,
+        food_id: replaceFood.id,
+        quantity_grams: modifyQuantity,
+        calories: Math.round(replaceFood.calories_per_100g * factor),
+        protein: Math.round(replaceFood.protein_per_100g * factor),
+        carbs: Math.round(replaceFood.carbs_per_100g * factor),
+        fat: Math.round(replaceFood.fat_per_100g * factor),
+      });
+    } else if (modifyingItem) {
+      const origQty = parseInt(modifyingItem.quantity) || 100;
+      const factor = modifyQuantity / origQty;
+      logFood.mutate({
+        meal_type: modifyingItem.meal_name,
+        food_name_ar: modifyingItem.food_name,
+        quantity_grams: modifyQuantity,
+        calories: Math.round((modifyingItem.calories || 0) * factor),
+        protein: Math.round((modifyingItem.protein || 0) * factor),
+        carbs: Math.round((modifyingItem.carbs || 0) * factor),
+        fat: Math.round((modifyingItem.fats || modifyingItem.fat || 0) * factor),
+      });
+    }
   };
 
   const handleFoodSelect = (food: FoodItem) => {
@@ -195,6 +290,18 @@ const PortalNutrition = () => {
     setShowLogSheet(true);
   };
 
+  // Extra logged items (not from plan) for each meal
+  const extraLogsByMeal = useMemo(() => {
+    const result: Record<string, any[]> = {};
+    MEAL_TYPES.forEach(m => {
+      const planFoodNames = (planItemsByMeal[m] || []).map((i: any) => i.food_name);
+      result[m] = logs.filter((l: any) =>
+        l.meal_type === m && !planFoodNames.includes(l.food_name_ar)
+      );
+    });
+    return result;
+  }, [logs, planItemsByMeal]);
+
   if (isLoading) {
     return (
       <ClientPortalLayout>
@@ -211,37 +318,185 @@ const PortalNutrition = () => {
           تغذيتي
         </h1>
 
+        {/* Hero Calorie Ring - Always visible */}
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center justify-center gap-6">
+            <MacroRing value={todayTotals.calories} target={t.calories_target} color="hsl(142 76% 36%)" label="سعرة" size={100} />
+            <div className="space-y-2 text-sm">
+              <p className="text-foreground font-bold">
+                {todayTotals.calories} <span className="text-muted-foreground font-normal">من أصل {t.calories_target}</span>
+              </p>
+              {streak > 0 && (
+                <div className="flex items-center gap-1 text-primary text-xs">
+                  <Flame className="w-3 h-3" /> {streak} يوم متتالي
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            <MacroRing value={todayTotals.protein} target={t.protein_target} color="hsl(220 70% 55%)" label="بروتين" size={60} />
+            <MacroRing value={todayTotals.carbs} target={t.carbs_target} color="hsl(35 90% 55%)" label="كارب" size={60} />
+            <MacroRing value={todayTotals.fat} target={t.fat_target} color="hsl(340 70% 55%)" label="دهون" size={60} />
+          </div>
+        </div>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full grid grid-cols-3 bg-card border border-border">
+            <TabsTrigger value="plan" className="text-xs gap-1"><FileText className="w-3 h-3" />الخطة</TabsTrigger>
             <TabsTrigger value="today" className="text-xs gap-1"><CalendarIcon className="w-3 h-3" />اليوم</TabsTrigger>
             <TabsTrigger value="week" className="text-xs gap-1"><BarChart3 className="w-3 h-3" />أسبوعي</TabsTrigger>
-            <TabsTrigger value="plan" className="text-xs gap-1"><FileText className="w-3 h-3" />الخطة</TabsTrigger>
           </TabsList>
+
+          {/* PLAN TAB - Default & Primary */}
+          <TabsContent value="plan" className="space-y-3 mt-3">
+            {!hasPlan ? (
+              <div className="bg-card rounded-xl border border-border p-10 text-center">
+                <UtensilsCrossed className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">لا توجد خطة غذائية من المدرب</p>
+                <p className="text-xs text-muted-foreground mt-1">يمكنك تسجيل وجباتك يدوياً من تبويب "اليوم"</p>
+              </div>
+            ) : (
+              MEAL_TYPES.map(meal => {
+                const planItems = planItemsByMeal[meal] || [];
+                const extraLogs = extraLogsByMeal[meal] || [];
+                const mealLogs = logs.filter((l: any) => l.meal_type === meal);
+                const mealCals = mealLogs.reduce((s: number, l: any) => s + (Number(l.calories) || 0), 0);
+                const plannedCals = planItems.reduce((s: number, i: any) => s + (Number(i.calories) || 0), 0);
+                const MealIcon = MEAL_ICONS[meal] || UtensilsCrossed;
+
+                if (planItems.length === 0 && extraLogs.length === 0) return null;
+
+                return (
+                  <div key={meal} className="bg-card rounded-xl border border-border overflow-hidden">
+                    {/* Meal Header */}
+                    <div className="px-4 py-3 flex items-center justify-between border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <MealIcon className="w-4 h-4 text-primary" />
+                        <h3 className="font-semibold text-sm text-foreground">{meal}</h3>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{mealCals} / {plannedCals} سعرة</span>
+                      </div>
+                    </div>
+
+                    {/* Plan Items */}
+                    <div className="p-3 space-y-1">
+                      {planItems.map((item: any) => {
+                        // Check if this item was logged
+                        const isLogged = mealLogs.some((l: any) =>
+                          l.food_name_ar === item.food_name &&
+                          Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity) || 100)) < 5
+                        );
+                        const isModified = mealLogs.some((l: any) =>
+                          l.food_name_ar === item.food_name &&
+                          Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity) || 100)) >= 5
+                        );
+                        const matchedLog = mealLogs.find((l: any) => l.food_name_ar === item.food_name);
+
+                        const status = isLogged ? "logged" : isModified ? "modified" : "pending";
+
+                        return (
+                          <div key={item.id}
+                            className={`flex items-center gap-3 py-2.5 px-2 rounded-lg transition-colors ${
+                              status === "logged" ? "bg-primary/5 border border-primary/20" :
+                              status === "modified" ? "bg-yellow-500/5 border border-yellow-500/20" :
+                              "border border-transparent"
+                            }`}
+                          >
+                            {/* Status Icon */}
+                            <div className="shrink-0">
+                              {status === "logged" ? (
+                                <CheckCircle className="w-5 h-5 text-primary" />
+                              ) : status === "modified" ? (
+                                <Pencil className="w-5 h-5 text-yellow-500" />
+                              ) : (
+                                <Square className="w-5 h-5 text-muted-foreground" />
+                              )}
+                            </div>
+
+                            {/* Food Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground truncate">{item.food_name}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{item.quantity || "100g"}</span>
+                                <span>{item.calories} سعرة</span>
+                              </div>
+                              {status === "modified" && matchedLog && (
+                                <p className="text-xs text-yellow-500 mt-0.5">
+                                  تم التعديل: {matchedLog.quantity_grams}g - {matchedLog.calories} سعرة
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            {status === "pending" && (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1"
+                                  onClick={() => logAsPlanned(item)}
+                                  disabled={logFood.isPending}
+                                >
+                                  <Check className="w-3.5 h-3.5" /> اكلته
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-xs text-muted-foreground hover:text-yellow-500 hover:bg-yellow-500/10 gap-1"
+                                  onClick={() => openModify(item)}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" /> عدّل
+                                </Button>
+                              </div>
+                            )}
+                            {status !== "pending" && matchedLog && (
+                              <button onClick={() => deleteLog.mutate(matchedLog.id)} className="text-muted-foreground hover:text-destructive shrink-0">
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Extra logged items (not from plan) */}
+                      {extraLogs.map((l: any) => (
+                        <div key={l.id} className="flex items-center gap-3 py-2.5 px-2 rounded-lg bg-primary/5 border border-primary/20">
+                          <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground truncate">{l.food_name_ar}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{l.quantity_grams}g</span>
+                              <span>{l.calories} سعرة</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">اضافة خارج الخطة</p>
+                          </div>
+                          <button onClick={() => deleteLog.mutate(l.id)} className="text-muted-foreground hover:text-destructive shrink-0">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add extra food button */}
+                    <div className="px-3 pb-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-full h-8 text-xs text-muted-foreground hover:text-primary gap-1 border border-dashed border-border"
+                        onClick={() => openLogSheet(meal)}
+                      >
+                        <Plus className="w-3.5 h-3.5" /> اضف صنف آخر
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </TabsContent>
 
           {/* TODAY TAB */}
           <TabsContent value="today" className="space-y-4 mt-3">
-            {/* Hero Calorie Ring */}
-            <div className="bg-card rounded-xl border border-border p-5">
-              <div className="flex items-center justify-center gap-6">
-                <MacroRing value={todayTotals.calories} target={t.calories_target} color="hsl(142 76% 36%)" label="سعرة" size={100} />
-                <div className="space-y-2 text-sm">
-                  <p className="text-foreground font-bold">
-                    {todayTotals.calories} <span className="text-muted-foreground font-normal">من أصل {t.calories_target}</span>
-                  </p>
-                  {streak > 0 && (
-                    <div className="flex items-center gap-1 text-primary text-xs">
-                      <Flame className="w-3 h-3" /> {streak} يوم متتالي
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <MacroRing value={todayTotals.protein} target={t.protein_target} color="hsl(220 70% 55%)" label="بروتين" size={60} />
-                <MacroRing value={todayTotals.carbs} target={t.carbs_target} color="hsl(35 90% 55%)" label="كارب" size={60} />
-                <MacroRing value={todayTotals.fat} target={t.fat_target} color="hsl(340 70% 55%)" label="دهون" size={60} />
-              </div>
-            </div>
-
             {/* Water */}
             <div className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-center justify-between mb-3">
@@ -249,7 +504,7 @@ const PortalNutrition = () => {
                   <Droplet className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-bold text-foreground">شرب الماء</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{waterGlasses} / 8 أكواب</span>
+                <span className="text-xs text-muted-foreground">{waterGlasses} / 8 اكواب</span>
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setWater(waterGlasses - 1)} className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
@@ -267,7 +522,7 @@ const PortalNutrition = () => {
               </div>
             </div>
 
-            {/* Meal Cards */}
+            {/* Meal Cards - Free logging */}
             {MEAL_TYPES.map(meal => {
               const mealLogs = logs.filter((l: any) => l.meal_type === meal);
               const mealCals = mealLogs.reduce((s: number, l: any) => s + (Number(l.calories) || 0), 0);
@@ -286,7 +541,7 @@ const PortalNutrition = () => {
                       </Button>
                     </div>
                   </div>
-                  {mealLogs.length > 0 && (
+                  {mealLogs.length > 0 ? (
                     <div className="p-3 space-y-1">
                       {mealLogs.map((l: any) => (
                         <div key={l.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
@@ -306,8 +561,7 @@ const PortalNutrition = () => {
                         </div>
                       ))}
                     </div>
-                  )}
-                  {mealLogs.length === 0 && (
+                  ) : (
                     <div className="p-4 text-center">
                       <p className="text-xs text-muted-foreground">لم تسجل شيء بعد</p>
                     </div>
@@ -321,7 +575,7 @@ const PortalNutrition = () => {
           <TabsContent value="week" className="space-y-4 mt-3">
             <div className="bg-card rounded-xl border border-border p-4">
               <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> السعرات — آخر 7 أيام
+                <TrendingUp className="w-4 h-4 text-primary" /> السعرات — آخر 7 ايام
               </h3>
               <NutritionDayChart data={weekly} target={t.calories_target} />
             </div>
@@ -329,7 +583,7 @@ const PortalNutrition = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card rounded-xl border border-border p-4 text-center">
                 <p className="text-2xl font-bold text-foreground">{daysLogged}<span className="text-muted-foreground text-sm">/7</span></p>
-                <p className="text-xs text-muted-foreground mt-1">أيام مسجلة</p>
+                <p className="text-xs text-muted-foreground mt-1">ايام مسجلة</p>
               </div>
               <div className="bg-card rounded-xl border border-border p-4 text-center">
                 <p className="text-2xl font-bold text-primary">{Math.round((daysLogged / 7) * 100)}%</p>
@@ -357,54 +611,131 @@ const PortalNutrition = () => {
               </div>
             </div>
           </TabsContent>
-
-          {/* PLAN TAB (old meal plans) */}
-          <TabsContent value="plan" className="space-y-4 mt-3">
-            {!mealPlans || mealPlans.length === 0 ? (
-              <div className="bg-card rounded-xl border border-border p-10 text-center">
-                <UtensilsCrossed className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">لا توجد خطة غذائية من المدرب</p>
-              </div>
-            ) : (
-              mealPlans.map((plan: any) => {
-                const grouped: Record<string, any[]> = {};
-                (plan.items || []).forEach((item: any) => {
-                  if (!grouped[item.meal_name]) grouped[item.meal_name] = [];
-                  grouped[item.meal_name].push(item);
-                });
-                return (
-                  <div key={plan.id} className="space-y-3">
-                    <h3 className="text-sm font-bold text-foreground">{plan.name}</h3>
-                    {Object.entries(grouped).map(([mealName, mealItems]) => (
-                      <div key={mealName} className="bg-card rounded-xl border border-border overflow-hidden">
-                        <div className="px-4 py-2 border-b border-border flex items-center justify-between">
-                          <span className="text-sm font-semibold text-primary">{mealName}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {mealItems.reduce((s: number, i: any) => s + (i.calories || 0), 0)} سعرة
-                          </span>
-                        </div>
-                        <div className="p-3 space-y-1">
-                          {mealItems.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between text-sm py-1">
-                              <span className="text-foreground">{item.food_name} {item.quantity && <span className="text-muted-foreground text-xs">({item.quantity})</span>}</span>
-                              <span className="text-xs text-muted-foreground">{item.calories} سعرة</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                    {plan.notes && (
-                      <div className="bg-card rounded-xl border border-border p-3 flex items-start gap-2">
-                        <FileText className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <p className="text-xs text-muted-foreground">{plan.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </TabsContent>
         </Tabs>
+
+        {/* Modify Bottom Sheet */}
+        <Sheet open={showModifySheet} onOpenChange={setShowModifySheet}>
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-yellow-500" />
+                تعديل {modifyingItem?.food_name}
+              </SheetTitle>
+            </SheetHeader>
+
+            <div className="space-y-4 mt-4">
+              {/* Toggle: change quantity vs replace */}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={modifyMode === "quantity" ? "default" : "outline"}
+                  className="flex-1 text-xs"
+                  onClick={() => setModifyMode("quantity")}
+                >
+                  تغيير الكمية
+                </Button>
+                <Button
+                  size="sm"
+                  variant={modifyMode === "replace" ? "default" : "outline"}
+                  className="flex-1 text-xs"
+                  onClick={() => setModifyMode("replace")}
+                >
+                  استبدال الصنف
+                </Button>
+              </div>
+
+              {modifyMode === "quantity" && modifyingItem && (
+                <div className="space-y-4">
+                  <div className="bg-muted/30 rounded-xl p-4 text-center">
+                    <p className="text-lg font-bold text-foreground">{modifyingItem.food_name}</p>
+                    <p className="text-xs text-muted-foreground">الكمية المخططة: {modifyingItem.quantity || "100g"}</p>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm text-foreground">الكمية الفعلية (جرام)</label>
+                      <span className="text-sm font-bold text-yellow-500">{modifyQuantity}g</span>
+                    </div>
+                    <Slider value={[modifyQuantity]} onValueChange={v => setModifyQuantity(v[0])} min={10} max={500} step={10} />
+                  </div>
+
+                  {(() => {
+                    const origQty = parseInt(modifyingItem.quantity) || 100;
+                    const factor = modifyQuantity / origQty;
+                    return (
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { label: "سعرات", val: Math.round((modifyingItem.calories || 0) * factor), color: "text-primary" },
+                          { label: "بروتين", val: Math.round((modifyingItem.protein || 0) * factor), color: "text-blue-400" },
+                          { label: "كارب", val: Math.round((modifyingItem.carbs || 0) * factor), color: "text-amber-400" },
+                          { label: "دهون", val: Math.round((modifyingItem.fats || 0) * factor), color: "text-rose-400" },
+                        ].map(m => (
+                          <div key={m.label} className="bg-card rounded-lg border border-border p-2">
+                            <p className={`text-lg font-bold ${m.color}`}>{m.val}</p>
+                            <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {modifyMode === "replace" && (
+                <div className="space-y-3">
+                  {!replaceFood ? (
+                    <FoodSearch
+                      onSelect={(food) => {
+                        setReplaceFood(food);
+                        setModifyQuantity(food.serving_size_default || 100);
+                      }}
+                      placeholder="ابحث عن بديل..."
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="bg-muted/30 rounded-xl p-4 text-center">
+                        <p className="text-xs text-muted-foreground line-through mb-1">{modifyingItem?.food_name}</p>
+                        <p className="text-lg font-bold text-foreground">{replaceFood.name_ar}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm text-foreground">الكمية (جرام)</label>
+                          <span className="text-sm font-bold text-yellow-500">{modifyQuantity}g</span>
+                        </div>
+                        <Slider value={[modifyQuantity]} onValueChange={v => setModifyQuantity(v[0])} min={10} max={500} step={10} />
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {[
+                          { label: "سعرات", val: Math.round(replaceFood.calories_per_100g * modifyQuantity / 100), color: "text-primary" },
+                          { label: "بروتين", val: Math.round(replaceFood.protein_per_100g * modifyQuantity / 100), color: "text-blue-400" },
+                          { label: "كارب", val: Math.round(replaceFood.carbs_per_100g * modifyQuantity / 100), color: "text-amber-400" },
+                          { label: "دهون", val: Math.round(replaceFood.fat_per_100g * modifyQuantity / 100), color: "text-rose-400" },
+                        ].map(m => (
+                          <div key={m.label} className="bg-card rounded-lg border border-border p-2">
+                            <p className={`text-lg font-bold ${m.color}`}>{m.val}</p>
+                            <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => setReplaceFood(null)} className="text-xs">تغيير البديل</Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowModifySheet(false)}>الغاء</Button>
+                <Button
+                  className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+                  onClick={confirmModify}
+                  disabled={logFood.isPending || (modifyMode === "replace" && !replaceFood)}
+                >
+                  {logFood.isPending ? "جاري التسجيل..." : "تاكيد التعديل"}
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Food Logging Sheet */}
         <Sheet open={showLogSheet} onOpenChange={setShowLogSheet}>
@@ -424,34 +755,6 @@ const PortalNutrition = () => {
                     onCustomAdd={() => setIsCustom(true)}
                     placeholder="ابحث عن طعام..."
                   />
-
-                  {/* Frequently logged — placeholder for now */}
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">من خطتك الغذائية</p>
-                    {mealPlans?.flatMap((p: any) => p.items || [])
-                      .filter((i: any) => i.meal_name === selectedMeal)
-                      .slice(0, 5)
-                      .map((item: any) => (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            logFood.mutate({
-                              meal_type: selectedMeal,
-                              food_name_ar: item.food_name,
-                              quantity_grams: 100,
-                              calories: item.calories,
-                              protein: item.protein,
-                              carbs: item.carbs,
-                              fat: item.fats || item.fat || 0,
-                            });
-                          }}
-                          className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors mb-2"
-                        >
-                          <span className="text-sm text-foreground">{item.food_name}</span>
-                          <span className="text-xs text-muted-foreground">{item.calories} سعرة</span>
-                        </button>
-                      ))}
-                  </div>
                 </>
               )}
 
@@ -487,7 +790,7 @@ const PortalNutrition = () => {
                   <div className="flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => setSelectedFood(null)}>رجوع</Button>
                     <Button className="flex-1" onClick={handleConfirmLog} disabled={logFood.isPending}>
-                      {logFood.isPending ? "جاري التسجيل..." : "تأكيد"}
+                      {logFood.isPending ? "جاري التسجيل..." : "تاكيد"}
                     </Button>
                   </div>
                 </div>
@@ -495,7 +798,7 @@ const PortalNutrition = () => {
 
               {isCustom && (
                 <div className="space-y-3">
-                  <p className="text-sm font-bold text-foreground">أضف طعام جديد</p>
+                  <p className="text-sm font-bold text-foreground">اضف طعام جديد</p>
                   <Input placeholder="اسم الطعام" value={customFood.name} onChange={e => setCustomFood(p => ({ ...p, name: e.target.value }))} />
                   <div className="grid grid-cols-2 gap-2">
                     <div>

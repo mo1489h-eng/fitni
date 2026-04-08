@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, UtensilsCrossed, ChevronDown, ChevronUp, UserCircle, Copy, Target, Search, Flame, Beef, Wheat, Droplets, Settings2, TrendingUp, Calendar as CalendarIcon, BarChart3 } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, ChevronDown, ChevronUp, UserCircle, Copy, Target, Search, Flame, Beef, Wheat, Droplets, Settings2, TrendingUp, Calendar as CalendarIcon, BarChart3, FileText, CheckCircle, Pencil, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

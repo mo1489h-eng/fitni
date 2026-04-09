@@ -32,6 +32,19 @@ interface MealPlan {
 
 const MEAL_TYPES = ["فطور", "غداء", "عشاء", "سناك"];
 
+// Normalize trainer meal names to standard types for matching with nutrition_logs
+const normalizeMealName = (name: string): string => {
+  const n = name.trim();
+  if (/فطور|الفطور|إفطار|الإفطار/i.test(n)) return "فطور";
+  if (/غداء|الغداء/i.test(n)) return "غداء";
+  if (/عشاء|العشاء/i.test(n)) return "عشاء";
+  if (/سناك|وجبة خفيفة|خفيفة|snack/i.test(n)) return "سناك";
+  for (const mt of MEAL_TYPES) {
+    if (n.includes(mt)) return mt;
+  }
+  return "سناك";
+};
+
 const emptyItem = (order: number, mealName = "فطور"): MealItem => ({
   meal_name: mealName, food_name: "", calories: 0, protein: 0, carbs: 0, fats: 0, quantity: "", item_order: order,
 });

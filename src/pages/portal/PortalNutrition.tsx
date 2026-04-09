@@ -539,6 +539,7 @@ const PortalNutrition = () => {
               const mealLogs = logs.filter((l: any) => l.meal_type === meal);
               const mealCals = mealLogs.reduce((s: number, l: any) => s + (Number(l.calories) || 0), 0);
               const MealIcon = MEAL_ICONS[meal] || UtensilsCrossed;
+              const planItems = planItemsByMeal[meal] || [];
               return (
                 <div key={meal} className="bg-card rounded-xl border border-border overflow-hidden">
                   <div className="px-4 py-3 flex items-center justify-between border-b border-border">
@@ -553,9 +554,39 @@ const PortalNutrition = () => {
                       </Button>
                     </div>
                   </div>
-                  {mealLogs.length > 0 ? (
+                  {/* Show plan items with status in today tab too */}
+                  {planItems.length > 0 && (
+                    <div className="p-3 space-y-1 border-b border-border/30">
+                      {planItems.map((item: any) => {
+                        const isLogged = mealLogs.some((l: any) =>
+                          l.food_name_ar === item.food_name &&
+                          Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity) || 100)) < 10
+                        );
+                        return (
+                          <div key={item.id} className={`flex items-center gap-2 py-1.5 rounded-lg px-2 ${isLogged ? "bg-primary/5" : ""}`}>
+                            {isLogged ? (
+                              <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                            ) : (
+                              <Square className="w-4 h-4 text-muted-foreground shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground truncate">{item.food_name}</p>
+                              <p className="text-xs text-muted-foreground">{item.quantity} - {item.calories} سعرة</p>
+                            </div>
+                            {!isLogged && (
+                              <Button size="sm" variant="ghost" className="h-6 text-xs text-primary px-2" onClick={() => logAsPlanned(item)}>
+                                <Check className="w-3 h-3" /> اكلته
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* Extra logged items not from plan */}
+                  {mealLogs.filter((l: any) => !planItems.some((p: any) => p.food_name === l.food_name_ar)).length > 0 && (
                     <div className="p-3 space-y-1">
-                      {mealLogs.map((l: any) => (
+                      {mealLogs.filter((l: any) => !planItems.some((p: any) => p.food_name === l.food_name_ar)).map((l: any) => (
                         <div key={l.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
                           <div className="flex items-center gap-2 flex-1">
                             <CheckCircle className="w-4 h-4 text-primary shrink-0" />
@@ -573,7 +604,8 @@ const PortalNutrition = () => {
                         </div>
                       ))}
                     </div>
-                  ) : (
+                  )}
+                  {planItems.length === 0 && mealLogs.length === 0 && (
                     <div className="p-4 text-center">
                       <p className="text-xs text-muted-foreground">لم تسجل شيء بعد</p>
                     </div>

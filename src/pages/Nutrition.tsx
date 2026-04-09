@@ -32,6 +32,19 @@ interface MealPlan {
 
 const MEAL_TYPES = ["فطور", "غداء", "عشاء", "سناك"];
 
+// Normalize trainer meal names to standard types for matching with nutrition_logs
+const normalizeMealName = (name: string): string => {
+  const n = name.trim();
+  if (/فطور|الفطور|إفطار|الإفطار/i.test(n)) return "فطور";
+  if (/غداء|الغداء/i.test(n)) return "غداء";
+  if (/عشاء|العشاء/i.test(n)) return "عشاء";
+  if (/سناك|وجبة خفيفة|خفيفة|snack/i.test(n)) return "سناك";
+  for (const mt of MEAL_TYPES) {
+    if (n.includes(mt)) return mt;
+  }
+  return "سناك";
+};
+
 const emptyItem = (order: number, mealName = "فطور"): MealItem => ({
   meal_name: mealName, food_name: "", calories: 0, protein: 0, carbs: 0, fats: 0, quantity: "", item_order: order,
 });
@@ -410,13 +423,14 @@ const Nutrition = () => {
                   let logged = 0, modified = 0, missed = 0;
 
                   const complianceItems = planItems.map((item: MealItem) => {
+                    const normalizedMeal = normalizeMealName(item.meal_name);
                     const exactMatch = todayLogs.find((l: any) =>
-                      l.meal_type === item.meal_name &&
+                      l.meal_type === normalizedMeal &&
                       l.food_name_ar === item.food_name &&
                       Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) < 5
                     );
                     const modifiedMatch = todayLogs.find((l: any) =>
-                      l.meal_type === item.meal_name &&
+                      l.meal_type === normalizedMeal &&
                       l.food_name_ar === item.food_name &&
                       Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) >= 5
                     );
@@ -458,7 +472,7 @@ const Nutrition = () => {
 
                       <div className="space-y-1">
                         {MEAL_TYPES.map(mt => {
-                          const mealItems = complianceItems.filter(i => i.meal_name === mt);
+                          const mealItems = complianceItems.filter(i => normalizeMealName(i.meal_name) === mt);
                           if (mealItems.length === 0) return null;
                           return (
                             <div key={mt}>

@@ -423,13 +423,14 @@ const Nutrition = () => {
                   let logged = 0, modified = 0, missed = 0;
 
                   const complianceItems = planItems.map((item: MealItem) => {
+                    const normalizedMeal = normalizeMealName(item.meal_name);
                     const exactMatch = todayLogs.find((l: any) =>
-                      l.meal_type === item.meal_name &&
+                      l.meal_type === normalizedMeal &&
                       l.food_name_ar === item.food_name &&
                       Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) < 5
                     );
                     const modifiedMatch = todayLogs.find((l: any) =>
-                      l.meal_type === item.meal_name &&
+                      l.meal_type === normalizedMeal &&
                       l.food_name_ar === item.food_name &&
                       Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity || "100") || 100)) >= 5
                     );

@@ -472,7 +472,7 @@ const Nutrition = () => {
 
                       <div className="space-y-1">
                         {MEAL_TYPES.map(mt => {
-                          const mealItems = complianceItems.filter(i => i.meal_name === mt);
+                          const mealItems = complianceItems.filter(i => normalizeMealName(i.meal_name) === mt);
                           if (mealItems.length === 0) return null;
                           return (
                             <div key={mt}>

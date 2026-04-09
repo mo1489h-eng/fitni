@@ -180,27 +180,25 @@ const PortalNutrition = () => {
     MEAL_TYPES.forEach(m => { result[m] = []; });
 
     if (mealPlans && mealPlans.length > 0) {
-      // Use the first/most recent plan
       const plan = mealPlans[0];
       (plan.items || []).forEach((item: any) => {
-        const mealName = item.meal_name;
-        if (result[mealName]) {
-          // Determine log status for this plan item
-          const matchingLog = logs.find((l: any) =>
-            l.meal_type === mealName &&
-            l.notes && l.notes.includes(`plan_item:${item.id}`)
-          );
-          const modifiedLog = logs.find((l: any) =>
-            l.meal_type === mealName &&
-            l.notes && l.notes.includes(`modified_plan_item:${item.id}`)
-          );
+        const normalizedMeal = normalizeMealName(item.meal_name);
+        // Check log status by matching food name in logs for that normalized meal
+        const mealLogs = logs.filter((l: any) => l.meal_type === normalizedMeal);
+        const exactLog = mealLogs.find((l: any) =>
+          l.food_name_ar === item.food_name &&
+          Math.abs(Number(l.quantity_grams) - (parseInt(item.quantity) || 100)) < 10
+        );
+        const modifiedLog = !exactLog ? mealLogs.find((l: any) =>
+          l.food_name_ar === item.food_name
+        ) : null;
 
-          result[mealName].push({
-            ...item,
-            logStatus: matchingLog ? "logged" : modifiedLog ? "modified" : "pending",
-            loggedData: matchingLog || modifiedLog || null,
-          });
-        }
+        result[normalizedMeal].push({
+          ...item,
+          meal_name_normalized: normalizedMeal,
+          logStatus: exactLog ? "logged" : modifiedLog ? "modified" : "pending",
+          loggedData: exactLog || modifiedLog || null,
+        });
       });
     }
     return result;

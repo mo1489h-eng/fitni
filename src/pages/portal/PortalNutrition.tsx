@@ -209,7 +209,7 @@ const PortalNutrition = () => {
   // Log plan item exactly as planned
   const logAsPlanned = (item: any) => {
     logFood.mutate({
-      meal_type: item.meal_name,
+      meal_type: item.meal_name_normalized || normalizeMealName(item.meal_name),
       food_name_ar: item.food_name,
       quantity_grams: parseInt(item.quantity) || 100,
       calories: item.calories,

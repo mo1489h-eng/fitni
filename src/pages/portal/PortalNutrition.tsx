@@ -234,7 +234,7 @@ const PortalNutrition = () => {
     if (modifyMode === "replace" && replaceFood) {
       const factor = modifyQuantity / 100;
       logFood.mutate({
-        meal_type: modifyingItem.meal_name,
+        meal_type: modifyingItem.meal_name_normalized || normalizeMealName(modifyingItem.meal_name),
         food_name_ar: replaceFood.name_ar,
         food_name_en: replaceFood.name_en,
         food_id: replaceFood.id,
@@ -248,7 +248,7 @@ const PortalNutrition = () => {
       const origQty = parseInt(modifyingItem.quantity) || 100;
       const factor = modifyQuantity / origQty;
       logFood.mutate({
-        meal_type: modifyingItem.meal_name,
+        meal_type: modifyingItem.meal_name_normalized || normalizeMealName(modifyingItem.meal_name),
         food_name_ar: modifyingItem.food_name,
         quantity_grams: modifyQuantity,
         calories: Math.round((modifyingItem.calories || 0) * factor),

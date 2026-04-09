@@ -23,6 +23,20 @@ const MEAL_ICONS: Record<string, typeof Flame> = {
   "فطور": Flame, "غداء": UtensilsCrossed, "عشاء": UtensilsCrossed, "سناك": Beef,
 };
 
+// Normalize trainer meal names to portal meal types
+const normalizeMealName = (name: string): string => {
+  const n = name.trim();
+  if (/فطور|الفطور|إفطار|الإفطار/i.test(n)) return "فطور";
+  if (/غداء|الغداء/i.test(n)) return "غداء";
+  if (/عشاء|العشاء/i.test(n)) return "عشاء";
+  if (/سناك|وجبة خفيفة|خفيفة|snack/i.test(n)) return "سناك";
+  // Fallback: try partial match
+  for (const mt of MEAL_TYPES) {
+    if (n.includes(mt)) return mt;
+  }
+  return "سناك"; // default to snack for unrecognized
+};
+
 const PortalNutrition = () => {
   const { token } = usePortalToken();
   const { toast } = useToast();

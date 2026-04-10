@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FREE_TRIAL_DAYS = 183;
+const FREE_TRIAL_DAYS = 91; // 3 months
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -69,9 +69,9 @@ serve(async (req) => {
       if (!email) continue;
 
       if (daysUntilExpiry === 30) {
-        await sendEmail(email, "فترتك المجانية تنتهي خلال شهر", `
+        await sendEmail(email, "تبقى شهر في فترتك المجانية", `
           <h2 style="color:#fff;font-size:18px;">مرحبا ${name}،</h2>
-          <p style="color:#ccc;line-height:1.8;">فترتك المجانية تنتهي خلال 30 يوما.</p>
+          <p style="color:#ccc;line-height:1.8;">تبقى شهر في فترتك المجانية.</p>
           <p style="color:#ccc;line-height:1.8;">اشترك الآن واستمر بنفس السعر - سعرك لن يتغير طالما اشتراكك مستمر.</p>
         `);
         processed++;
@@ -86,7 +86,7 @@ serve(async (req) => {
         await sendEmail(email, "آخر يوم في فترتك المجانية", `
           <h2 style="color:#fff;font-size:18px;">مرحبا ${name}،</h2>
           <p style="color:#ccc;line-height:1.8;">هذا آخر يوم في فترتك المجانية.</p>
-          <p style="color:#ccc;line-height:1.8;">اشترك اليوم لتبقى متصلا بعملائك.</p>
+          <p style="color:#ccc;line-height:1.8;">اشترك اليوم لتستمر بإدارة عملائك.</p>
         `);
         processed++;
       } else if (daysUntilExpiry === 0) {

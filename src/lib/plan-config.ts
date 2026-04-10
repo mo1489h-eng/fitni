@@ -14,7 +14,7 @@ export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
     name: "مجاني (تجريبي)",
     price: 0,
     clientLimit: Number.POSITIVE_INFINITY,
-    durationLabel: "6 أشهر - كل الميزات متاحة",
+    durationLabel: "3 أشهر - كل الميزات متاحة",
     includedFeatures: [
       "عملاء غير محدودين",
       "إدارة العملاء",

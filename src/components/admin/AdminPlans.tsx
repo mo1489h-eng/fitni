@@ -94,7 +94,7 @@ export function AdminPlans({ data }: AdminPageProps) {
           <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
             <div>
               <p className="font-medium">مدة التجربة المجانية</p>
-              <p className="text-sm text-muted-foreground">6 شهور (183 يوم)</p>
+              <p className="text-sm text-muted-foreground">3 شهور (91 يوم)</p>
             </div>
           </div>
           <div className="mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 flex items-start gap-2">

@@ -10,7 +10,7 @@ import NpsFeedbackModal from "@/components/NpsFeedbackModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const FREE_TRIAL_DAYS = 183;
+const FREE_TRIAL_DAYS = 91; // 3 months
 
 const EmailConfirmBanner = () => {
   const [sending, setSending] = useState(false);

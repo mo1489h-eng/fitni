@@ -18,8 +18,8 @@ const PricingSection = () => (
       </Reveal>
       <Reveal delay={100} className="mx-auto mt-8 max-w-3xl">
         <div className="rounded-[2rem] border border-primary/20 bg-primary/10 px-6 py-5 text-center space-y-1">
-          <div className="text-lg font-bold text-primary">كل المدربين: مجاناً 6 شهور كاملة</div>
-          <div className="text-sm text-foreground/60">أول 100 مدرب يحصلون على 6 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</div>
+          <div className="text-lg font-bold text-primary">كل المدربين: مجاناً 3 شهور كاملة</div>
+          <div className="text-sm text-foreground/60">أول 100 مدرب يحصلون على 3 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</div>
         </div>
       </Reveal>
       <div className="mt-12 grid gap-6 lg:grid-cols-2">

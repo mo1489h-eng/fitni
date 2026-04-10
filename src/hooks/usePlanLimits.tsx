@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type PlanType = "free" | "basic" | "pro" | null;
 
-const FREE_TRIAL_DAYS = 183; // 6 months
+const FREE_TRIAL_DAYS = 91; // 3 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
   free: { maxClients: 0 },

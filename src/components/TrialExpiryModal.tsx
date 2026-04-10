@@ -60,7 +60,7 @@ const TrialExpiryModal = ({ open, onDismiss, onSubscribe }: TrialExpiryModalProp
                   <Lock className="h-8 w-8 text-destructive" strokeWidth={1.5} />
                 </div>
                 <h2 className="text-xl font-bold text-foreground">انتهت فترتك المجانية</h2>
-                <p className="mt-1 text-sm text-muted-foreground">6 شهور من التجربة الكاملة</p>
+                <p className="mt-1 text-sm text-muted-foreground">3 شهور من التجربة الكاملة</p>
                 <p className="mt-2 text-sm text-foreground/70">اختر باقتك للاستمرار</p>
               </div>
 

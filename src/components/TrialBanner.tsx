@@ -91,7 +91,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
           <Gift className="h-5 w-5" strokeWidth={1.5} />
           <div>
             <p className="text-sm font-semibold">فترة الإطلاق المجانية فعالة</p>
-            <p className="text-xs text-primary/80">مجاني لأول 6 أشهر وينتهي في {formattedTrialEnd}</p>
+            <p className="text-xs text-primary/80">مجاني لأول 3 أشهر وينتهي في {formattedTrialEnd}</p>
           </div>
         </div>
         <button type="button" className="rounded-full p-1 text-primary/75 transition-colors hover:bg-primary/10 hover:text-primary" onClick={() => setDismissed(true)} aria-label="إغلاق">
@@ -122,7 +122,7 @@ const TrialBanner = ({ onSubscribe, showPlans: externalShowPlans, onShowPlansCha
             />
           ) : (
             <>
-              <p className="mb-1 text-center text-sm text-muted-foreground">مجاني لأول 6 أشهر، بدون بطاقة ائتمان، وتفعيل سريع خلال دقائق</p>
+              <p className="mb-1 text-center text-sm text-muted-foreground">مجاني لأول 3 أشهر، بدون بطاقة ائتمان، وتفعيل سريع خلال دقائق</p>
 
               <div className="space-y-4">
                 {plans.map((plan) => {

@@ -88,7 +88,7 @@ const Landing = () => {
                   <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="text-lg font-black text-foreground">مجاناً 6 شهور</div>
+                  <div className="text-lg font-black text-foreground">مجاناً 3 شهور</div>
                   <div className="text-sm text-foreground/50 mt-1 leading-relaxed">جرّب كل الميزات<br/>بدون بطاقة ائتمان</div>
                 </div>
               </CardContent>
@@ -120,7 +120,7 @@ const Landing = () => {
               </CardContent>
             </Card>
           </div>
-          <p className="text-center text-sm text-foreground/50 mt-6">أول <span className="text-primary font-bold">100</span> مدرب يحصلون على: 6 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</p>
+          <p className="text-center text-sm text-foreground/50 mt-6">أول <span className="text-primary font-bold">100</span> مدرب يحصلون على: 3 شهور مجاناً + الشهر الأول بالباقة الاحترافية بسعر الأساسية</p>
         </section>
 
         <ProblemSection />

@@ -32,7 +32,7 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
   // Trial conversion
   const trialExpired = trainers.filter((t: any) => {
     const created = new Date(t.subscribed_at || t.created_at || Date.now());
-    const trialEnd = new Date(created.getTime() + 183 * 86400000);
+    const trialEnd = new Date(created.getTime() + 91 * 86400000);
     return trialEnd < new Date();
   });
   const converted = trialExpired.filter((t: any) => t.plan === "pro" || t.plan === "basic");

@@ -50,7 +50,7 @@ const HeroSection = ({ heroParallax }: { heroParallax: number }) => (
             </a>
           </Button>
         </div>
-        <p className="mt-4 text-sm font-semibold text-primary">مجاناً 6 شهور — بدون بطاقة ائتمان</p>
+        <p className="mt-4 text-sm font-semibold text-primary">مجاناً 3 شهور — بدون بطاقة ائتمان</p>
       </Reveal>
 
       {/* Hero trainer image */}

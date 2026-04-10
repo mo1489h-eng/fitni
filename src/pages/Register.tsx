@@ -11,7 +11,7 @@ const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
   { icon: ClipboardList, text: "برامج تدريب ذكية" },
   { icon: CreditCard, text: "مدفوعات أونلاين آمنة" },
-  { icon: CheckCircle, text: "مجاني 6 شهور كاملة" },
+  { icon: CheckCircle, text: "مجاني 3 شهور كاملة" },
 ];
 
 const FOUNDER_LIMIT = 100;

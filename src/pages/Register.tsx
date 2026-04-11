@@ -103,7 +103,7 @@ const Register = () => {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: "https://coachbase.health/dashboard",
       },
     });
 

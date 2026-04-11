@@ -56,7 +56,7 @@ const ClientRegister = () => {
         password: form.password,
         options: {
           data: { full_name: form.name, is_client: true },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: "https://coachbase.health",
         },
       });
 

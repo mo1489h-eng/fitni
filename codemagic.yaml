@@ -22,7 +22,7 @@ workflows:
             -derivedDataPath build
     artifacts:
       - build/**/*.app
-android-workflow:
+  android-workflow:
     name: Android Build
     max_build_duration: 60
     environment:

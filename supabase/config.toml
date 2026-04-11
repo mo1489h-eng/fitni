@@ -1,4 +1,5 @@
-project_id = "rxhjjpaxnntdrdjvvtml"
+# Must match Dashboard → Settings → General → Reference ID (for Supabase CLI)
+project_id = "oyxagifjstcrrvlounlw"
 
 [functions.copilot-generate]
 verify_jwt = false

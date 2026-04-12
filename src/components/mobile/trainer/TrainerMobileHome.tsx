@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, CalendarDays, TrendingUp, Activity } from "lucide-react";
+import CopilotAlerts from "../copilot/CopilotAlerts";
 
 const TrainerMobileHome = () => {
   const { profile, user } = useAuth();
@@ -45,6 +46,8 @@ const TrainerMobileHome = () => {
         <p className="text-sm" style={{ color: "#666" }}>{greeting}</p>
         <h1 className="text-2xl font-bold text-white">{firstName} 👋</h1>
       </div>
+
+      <CopilotAlerts />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">

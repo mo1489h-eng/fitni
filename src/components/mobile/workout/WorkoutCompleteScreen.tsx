@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Home, Share2, Save } from "lucide-react";
 import { useWorkoutSession, setKey } from "./WorkoutSessionContext";
 import { totalSetsInPlan } from "@/lib/workoutDayPlan";
+import { useCopilot } from "../copilot/useCopilot";
 import { CB } from "./designTokens";
 
 function formatMmSs(ms: number): string {
@@ -26,6 +27,9 @@ export default function WorkoutCompleteScreen() {
     finalizeWorkout,
     finalizeAndExit,
   } = useWorkoutSession();
+
+  const { openCopilot } = useCopilot();
+  const copilotAutoSent = useRef(false);
 
   const [persisted, setPersisted] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -85,6 +89,25 @@ export default function WorkoutCompleteScreen() {
 
   const prSummary =
     prList.length > 0 ? prList.map((p) => `${p.name}: ${p.weight} كجم`).join("، ") : "لا يوجد سجلات سابقة للمقارنة";
+
+  const { data: clientNameRow } = useQuery({
+    queryKey: ["workout-complete-client-name", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data } = await supabase.from("clients").select("name").eq("id", clientId).maybeSingle();
+      return data?.name ?? null;
+    },
+    enabled: !!clientId && persisted,
+  });
+
+  useEffect(() => {
+    if (!persisted || copilotAutoSent.current || !clientId) return;
+    copilotAutoSent.current = true;
+    const nm = clientNameRow ?? "المتدرب";
+    const prs = prList.map((p) => `${p.name} (${p.weight} كجم)`);
+    const autoMessage = `حلل أداء ${nm} في تمرين ${programName || "اليوم"} للتو. الحجم: ${Math.round(totalVolume)} كجم. ${prs.length > 0 ? "سجل رقماً قياسياً جديداً في: " + prs.join("، ") : ""}`;
+    openCopilot({ context: "post_workout", autoMessage });
+  }, [persisted, clientId, clientNameRow, programName, totalVolume, prList, openCopilot]);
 
   const { data: insight } = useQuery({
     queryKey: ["workout-insight", sessionId, persisted, prSummary],

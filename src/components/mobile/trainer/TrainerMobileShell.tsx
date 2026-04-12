@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { LayoutDashboard, Users, CalendarDays, Dumbbell, User } from "lucide-react";
 import MobileTabBar from "../MobileTabBar";
+import { CopilotProvider } from "../copilot/useCopilot";
+import CopilotButton from "../copilot/CopilotButton";
+import CopilotChat from "../copilot/CopilotChat";
 import TrainerMobileHome from "./TrainerMobileHome";
 import TrainerMobileClients from "./TrainerMobileClients";
 import TrainerMobileSchedule from "./TrainerMobileSchedule";
@@ -23,24 +26,28 @@ const TrainerMobileShell = ({ onLogout }: TrainerMobileShellProps) => {
   const [activeTab, setActiveTab] = useState("home");
 
   return (
-    <div
-      className="min-h-screen"
-      dir="rtl"
-      style={{
-        background: "#0A0A0A",
-        paddingTop: "env(safe-area-inset-top, 0px)",
-      }}
-    >
-      <div className="px-5 pt-4 pb-28">
-        {activeTab === "home" && <TrainerMobileHome />}
-        {activeTab === "clients" && <TrainerMobileClients />}
-        {activeTab === "schedule" && <TrainerMobileSchedule />}
-        {activeTab === "workouts" && <TrainerMobileWorkouts />}
-        {activeTab === "profile" && <TrainerMobileProfile onLogout={onLogout} />}
-      </div>
+    <CopilotProvider role="trainer">
+      <div
+        className="min-h-screen"
+        dir="rtl"
+        style={{
+          background: "#0A0A0A",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
+      >
+        <div className="px-5 pt-4 pb-28">
+          {activeTab === "home" && <TrainerMobileHome />}
+          {activeTab === "clients" && <TrainerMobileClients />}
+          {activeTab === "schedule" && <TrainerMobileSchedule />}
+          {activeTab === "workouts" && <TrainerMobileWorkouts />}
+          {activeTab === "profile" && <TrainerMobileProfile onLogout={onLogout} />}
+        </div>
 
-      <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+        <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <CopilotButton />
+        <CopilotChat />
+      </div>
+    </CopilotProvider>
   );
 };
 

@@ -685,6 +685,44 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_conversations: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          messages: Json
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_messages: {
         Row: {
           content: string

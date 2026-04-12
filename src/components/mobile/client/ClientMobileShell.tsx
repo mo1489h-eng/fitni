@@ -4,6 +4,9 @@ import { LayoutDashboard, Dumbbell, TrendingUp, MessageCircle } from "lucide-rea
 import { useMobilePortalToken } from "@/hooks/useMobilePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import MobileTabBar from "../MobileTabBar";
+import { CopilotProvider } from "../copilot/useCopilot";
+import CopilotButton from "../copilot/CopilotButton";
+import CopilotChat from "../copilot/CopilotChat";
 import ClientMobileHome from "./ClientMobileHome";
 import ClientMobileProgram from "./ClientMobileProgram";
 import ClientMobileProgress from "./ClientMobileProgress";
@@ -35,36 +38,44 @@ const ClientMobileShell = () => {
   });
 
   return (
-    <div
-      className="min-h-screen"
-      dir="rtl"
-      style={{
-        background: "#0A0A0A",
-        paddingTop: "env(safe-area-inset-top, 0px)",
-      }}
-    >
-      <div className="px-5 pt-4 pb-28">
-        {activeTab === "home" && (
-          <ClientMobileHome
-            onStartWorkout={() => setWorkoutOpen(true)}
-            canStartWorkout={!!clientRow?.id && !!token}
+    <CopilotProvider role="client" clientId={clientRow?.id ?? null} clientReady={!!clientRow?.id}>
+      <div
+        className="min-h-screen"
+        dir="rtl"
+        style={{
+          background: "#0A0A0A",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
+      >
+        <div className="px-5 pt-4 pb-28">
+          {activeTab === "home" && (
+            <ClientMobileHome
+              onStartWorkout={() => setWorkoutOpen(true)}
+              canStartWorkout={!!clientRow?.id && !!token}
+            />
+          )}
+          {activeTab === "program" && <ClientMobileProgram />}
+          {activeTab === "progress" && <ClientMobileProgress />}
+          {activeTab === "chat" && <ClientMobileChat />}
+        </div>
+
+        <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        {clientRow?.id && (
+          <>
+            <CopilotButton />
+            <CopilotChat />
+          </>
+        )}
+
+        {workoutOpen && clientRow?.id && token && (
+          <WorkoutSessionFlow
+            clientId={clientRow.id}
+            portalToken={token}
+            onClose={() => setWorkoutOpen(false)}
           />
         )}
-        {activeTab === "program" && <ClientMobileProgram />}
-        {activeTab === "progress" && <ClientMobileProgress />}
-        {activeTab === "chat" && <ClientMobileChat />}
       </div>
-
-      <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {workoutOpen && clientRow?.id && token && (
-        <WorkoutSessionFlow
-          clientId={clientRow.id}
-          portalToken={token}
-          onClose={() => setWorkoutOpen(false)}
-        />
-      )}
-    </div>
+    </CopilotProvider>
   );
 };
 

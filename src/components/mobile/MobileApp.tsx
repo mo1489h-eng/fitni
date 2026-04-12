@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
@@ -24,12 +24,10 @@ const MobileAppContent = () => {
       return;
     }
 
-    // If profile exists, user is a trainer
     if (profile) {
       setRole("trainer");
       setReady(true);
     } else {
-      // Will be resolved on login callback
       setReady(true);
     }
   }, [session, user, profile, loading]);
@@ -56,19 +54,17 @@ const MobileAppContent = () => {
     return <TrainerMobileShell onLogout={() => setRole(null)} />;
   }
 
-  return (
-    <PortalTokenProvider>
-      <ClientMobileShell />
-    </PortalTokenProvider>
-  );
+  return <ClientMobileShell />;
 };
 
 const MobileApp = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <MobileAppContent />
-      </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <MobileAppContent />
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

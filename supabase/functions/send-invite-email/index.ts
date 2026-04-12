@@ -78,7 +78,7 @@ serve(async (req) => {
     });
 
     if (error) {
-      console.log("Auth invite failed (user may exist), using Resend:", error.message);
+      console.log("Auth invite failed (user may exist), using Resend:", (error as Error).message);
       
       const resendKey = Deno.env.get("RESEND_API_KEY");
       
@@ -136,7 +136,7 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

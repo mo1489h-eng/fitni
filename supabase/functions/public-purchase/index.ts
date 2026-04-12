@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
           ? await supabase.from("program_exercises")
               .select("day_id, name, reps, sets, video_url, weight, exercise_order, rest_seconds, tempo, rpe, notes, is_warmup, superset_group")
               .in("day_id", sourceDayIds).order("exercise_order", { ascending: true })
-          : { data: [], error: null };
+          : { data: [] as any[] };
 
         const { data: newProgram, error: newProgramError } = await supabase
           .from("programs").insert({

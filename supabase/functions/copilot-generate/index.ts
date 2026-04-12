@@ -74,7 +74,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const clientProfile = buildClientProfile(client, scan, measurements);
+    const clientProfile = buildClientProfile(client, scan, measurements || []);
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -82,7 +82,7 @@ serve(async (req) => {
     if (action === "generate_program") {
       ({ systemPrompt, userPrompt } = buildProgramPrompt(clientProfile, existingProgram));
     } else if (action === "weekly_evaluation") {
-      ({ systemPrompt, userPrompt } = buildEvaluationPrompt(clientProfile, client, existingProgram, existingMealPlan, measurements));
+      ({ systemPrompt, userPrompt } = buildEvaluationPrompt(clientProfile, client, existingProgram, existingMealPlan, measurements || []));
     } else {
       throw new Error("Invalid action. Use 'generate_program' or 'weekly_evaluation'");
     }

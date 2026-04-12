@@ -1,6 +1,6 @@
 /**
- * Creates auth user with email already confirmed (no client-side email confirmation wait),
- * then links clients.auth_user_id. Called from /client-register only with a valid invite_token.
+ * Creates or reuses an auth user, sets the password from the registration form via admin API,
+ * then links clients.auth_user_id. Called from /client-register with a valid invite_token.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -14,6 +14,64 @@ const corsHeaders = {
 function isDuplicateUserError(err: { message?: string }): boolean {
   const m = (err.message ?? "").toLowerCase();
   return m.includes("already") || m.includes("registered") || m.includes("exists") || m.includes("duplicate");
+}
+
+/** Find auth user id by email (pagination). */
+async function findUserIdByEmail(
+  supabase: ReturnType<typeof createClient>,
+  email: string
+): Promise<string | null> {
+  const target = email.toLowerCase();
+  let page = 1;
+  const perPage = 1000;
+  const maxPages = 50;
+  while (page <= maxPages) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) {
+      console.error("[register-client-account] listUsers:", error.message);
+      return null;
+    }
+    const users = data?.users ?? [];
+    const hit = users.find((u) => u.email?.toLowerCase() === target);
+    if (hit?.id) return hit.id;
+    if (users.length < perPage) return null;
+    page += 1;
+  }
+  return null;
+}
+
+/** Apply the exact password from the form so signInWithPassword works immediately. */
+async function setUserPasswordAndMetadata(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  password: string,
+  name: string
+): Promise<{ error: { message: string } | null }> {
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: name, is_client: true },
+  });
+  return { error };
+}
+
+async function linkClientRow(
+  supabase: ReturnType<typeof createClient>,
+  clientId: string,
+  userId: string,
+  phone: string | undefined
+): Promise<{ error: { message: string } | null }> {
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      auth_user_id: userId,
+      invite_token: null,
+      ...(phone ? { phone } : {}),
+    })
+    .eq("id", clientId)
+    .is("auth_user_id", null);
+
+  return { error };
 }
 
 serve(async (req) => {
@@ -75,6 +133,8 @@ serve(async (req) => {
       );
     }
 
+    let userId: string | null = null;
+
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -83,7 +143,16 @@ serve(async (req) => {
     });
 
     if (createErr) {
-      if (isDuplicateUserError(createErr)) {
+      if (!isDuplicateUserError(createErr)) {
+        console.error("[register-client-account] createUser:", createErr);
+        return new Response(
+          JSON.stringify({ success: false, code: "AUTH_CREATE_FAILED", message: createErr.message }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const existingId = await findUserIdByEmail(supabase, email);
+      if (!existingId) {
         return new Response(
           JSON.stringify({
             success: false,
@@ -93,35 +162,52 @@ serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      console.error("[register-client-account] createUser:", createErr);
+      userId = existingId;
+    } else {
+      userId = created.user?.id ?? null;
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ success: false, code: "NO_USER_ID", message: "Auth did not return user id" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    const pwdRes = await setUserPasswordAndMetadata(supabase, userId, password, name);
+    if (pwdRes.error) {
+      console.error("[register-client-account] updateUserById (password):", pwdRes.error);
       return new Response(
-        JSON.stringify({ success: false, code: "AUTH_CREATE_FAILED", message: createErr.message }),
+        JSON.stringify({
+          success: false,
+          code: "PASSWORD_SET_FAILED",
+          message: pwdRes.error.message ?? "Could not set password",
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = created.user?.id;
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ success: false, code: "NO_USER_ID", message: "Auth did not return user id" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const { error: updateErr } = await supabase
+    const { data: otherClient } = await supabase
       .from("clients")
-      .update({
-        auth_user_id: userId,
-        invite_token: null,
-        ...(phone ? { phone } : {}),
-      })
-      .eq("id", client.id)
-      .is("auth_user_id", null);
+      .select("id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
 
-    if (updateErr) {
-      console.error("[register-client-account] link client:", updateErr);
+    if (otherClient && otherClient.id !== client.id) {
       return new Response(
-        JSON.stringify({ success: false, code: "LINK_FAILED", message: updateErr.message }),
+        JSON.stringify({
+          success: false,
+          code: "AUTH_LINKED_ELSEWHERE",
+          message: "هذا البريد مرتبط بحساب عميل آخر. سجّل الدخول أو استخدم بريداً آخر.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const linkRes = await linkClientRow(supabase, client.id, userId, phone);
+    if (linkRes.error) {
+      console.error("[register-client-account] link client:", linkRes.error);
+      return new Response(
+        JSON.stringify({ success: false, code: "LINK_FAILED", message: linkRes.error.message }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

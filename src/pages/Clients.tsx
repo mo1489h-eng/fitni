@@ -14,12 +14,35 @@ import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
 import {
   Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users,
-  UserPlus, MoreVertical, Phone, CalendarDays, MessageCircle, Eye, ClipboardList, Filter,
+  UserPlus, MoreVertical, Phone, CalendarDays, MessageCircle, Eye, ClipboardList, Filter, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
+
+type ClientListRow = {
+  id: string;
+  name: string;
+  goal: string | null;
+  subscription_end_date: string;
+  week_number: number;
+  program_id: string | null;
+  phone: string | null;
+  client_type?: string | null;
+  sessions_per_month?: number | null;
+  sessions_used?: number | null;
+  last_active_at?: string | null;
+};
 
 function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "expiring" {
   const end = new Date(subscriptionEndDate);
@@ -74,6 +97,7 @@ const Clients = () => {
   const { user } = useAuth();
   const { canAddClient, getAddClientBlockReason } = usePlanLimits();
   const [blockReason, setBlockReason] = useState<{ title: string; description: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ClientListRow | null>(null);
 
   const handleAddClick = () => {
     const reason = getAddClientBlockReason();
@@ -85,15 +109,59 @@ const Clients = () => {
     }
   };
 
+  const clientsQueryKey = ["clients", user?.id] as const;
+
   const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["clients", user?.id],
+    queryKey: clientsQueryKey,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data ?? []) as ClientListRow[];
     },
     enabled: !!user,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (clientId: string) => {
+      const { data, error } = await supabase.functions.invoke<{ success?: boolean; error?: string }>(
+        "trainer-delete-client",
+        { body: { client_id: clientId } }
+      );
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (!data?.success) throw new Error("فشل الحذف");
+    },
+    onMutate: async (clientId: string) => {
+      await queryClient.cancelQueries({ queryKey: clientsQueryKey });
+      const previous = queryClient.getQueryData<ClientListRow[]>(clientsQueryKey);
+      queryClient.setQueryData<ClientListRow[]>(clientsQueryKey, (old) => (old ?? []).filter((c) => c.id !== clientId));
+      return { previous };
+    },
+    onError: (err: Error, _clientId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(clientsQueryKey, context.previous);
+      }
+      toast({
+        title: "تعذّر الحذف",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "تم حذف العميل بنجاح" });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: clientsQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["copilot-trainer-clients"] });
+    },
+  });
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    setDeleteTarget(null);
+    deleteMutation.mutate(id);
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["trainer-profile"],
@@ -140,7 +208,7 @@ const Clients = () => {
       return newClient;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: clientsQueryKey });
       setOpen(false);
       setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
       setShowAdvanced(false);
@@ -314,17 +382,32 @@ const Clients = () => {
                             <PhoneRevealButton phone={client.phone} />
                           )}
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {client.phone && (
-                            <a href={`https://wa.me/966${client.phone.replace(/^0/, "")}`} target="_blank" rel="noopener noreferrer"
+                        <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {client.phone && (
+                              <a href={`https://wa.me/966${client.phone.replace(/^0/, "")}`} target="_blank" rel="noopener noreferrer"
+                                className="p-1.5 rounded-md hover:bg-[hsl(0_0%_10%)] text-muted-foreground hover:text-primary transition-colors">
+                                <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                              </a>
+                            )}
+                            <Link to={`/clients/${client.id}`}
                               className="p-1.5 rounded-md hover:bg-[hsl(0_0%_10%)] text-muted-foreground hover:text-primary transition-colors">
-                              <MessageCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            </a>
-                          )}
-                          <Link to={`/clients/${client.id}`}
-                            className="p-1.5 rounded-md hover:bg-[hsl(0_0%_10%)] text-muted-foreground hover:text-primary transition-colors">
-                            <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
-                          </Link>
+                              <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            </Link>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="حذف العميل"
+                            disabled={deleteMutation.isPending}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeleteTarget(client);
+                            }}
+                            className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -334,6 +417,28 @@ const Clients = () => {
             })}
           </div>
         )}
+
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent className="border-[hsl(0_0%_10%)] bg-[hsl(0_0%_6%)] text-right" dir="rtl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                هل أنت متأكد من حذف هذا العميل؟ لا يمكن التراجع عن هذا الإجراء
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2 sm:justify-start">
+              <AlertDialogCancel className="border-[hsl(0_0%_10%)] bg-[hsl(0_0%_8%)]">إلغاء</AlertDialogCancel>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={deleteMutation.isPending}
+                onClick={() => confirmDelete()}
+              >
+                حذف
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* FAB */}
         <button
@@ -357,11 +462,21 @@ const Clients = () => {
 
         {/* Add Client Dialog */}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">
-            <DialogHeader>
+          <DialogContent
+            dir="rtl"
+            className="flex min-h-0 max-h-[90vh] w-full max-w-lg flex-col gap-0 overflow-hidden border-[hsl(0_0%_10%)] bg-[hsl(0_0%_6%)] p-0"
+          >
+            <DialogHeader className="shrink-0 space-y-1.5 px-6 pb-2 pt-6 pr-14 text-right">
               <DialogTitle>إضافة عميل جديد</DialogTitle>
             </DialogHeader>
-            <form onSubmit={(e) => { e.preventDefault(); addMutation.mutate(); }} className="space-y-3">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                addMutation.mutate();
+              }}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-6 pb-2">
               <div>
                 <label className="text-sm font-medium text-foreground">الاسم</label>
                 <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="اسم العميل" />
@@ -458,10 +573,13 @@ const Clients = () => {
                   <p className="text-[10px] text-muted-foreground text-center">تعبئة هذه البيانات تمكن المساعد الذكي من إنشاء برنامج تدريب وتغذية مخصص تلقائيا</p>
                 </div>
               )}
+              </div>
 
-              <Button type="submit" className="w-full" disabled={addMutation.isPending}>
-                {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ"}
-              </Button>
+              <div className="shrink-0 border-t border-[hsl(0_0%_10%)] bg-[hsl(0_0%_6%)] px-6 py-4">
+                <Button type="submit" className="w-full" disabled={addMutation.isPending}>
+                  {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ"}
+                </Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>

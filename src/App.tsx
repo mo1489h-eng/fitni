@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PortalTokenProvider } from "@/hooks/usePortalToken";
+import { useIsNativePlatform } from "@/hooks/useNativePlatform";
 import AuthGuard from "@/components/AuthGuard";
+import MobileApp from "@/components/mobile/MobileApp";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ConfirmEmail from "./pages/ConfirmEmail";
@@ -59,81 +61,89 @@ import PortalLessonPlayer from "./pages/portal/PortalLessonPlayer";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
+const App = () => {
+  const isNative = useIsNativePlatform();
+
+  // When running inside Capacitor native app, render mobile-only UI
+  if (isNative) {
+    return <MobileApp />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
             <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/confirm-email" element={<ConfirmEmail />} />
-            <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
-            <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
-            <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />
-            <Route path="/programs" element={<AuthGuard><ProgramBuilder /></AuthGuard>} />
-            <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
-            <Route path="/reports" element={<AuthGuard><Reports /></AuthGuard>} />
-            <Route path="/nutrition" element={<AuthGuard><Nutrition /></AuthGuard>} />
-            <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
-            <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
-            <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
-            <Route path="/t/:username" element={<TrainerPublicPage />} />
-            <Route path="/client-login" element={<ClientLogin />} />
-            <Route path="/client-register/:token" element={<ClientRegister />} />
-            <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-            <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
-            <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
-            <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
-            <Route path="/vault" element={<AuthGuard><Vault /></AuthGuard>} />
-            <Route path="/vault/:unitId" element={<AuthGuard><VaultUnit /></AuthGuard>} />
-            <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
+              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+              <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
+              <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />
+              <Route path="/programs" element={<AuthGuard><ProgramBuilder /></AuthGuard>} />
+              <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
+              <Route path="/reports" element={<AuthGuard><Reports /></AuthGuard>} />
+              <Route path="/nutrition" element={<AuthGuard><Nutrition /></AuthGuard>} />
+              <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
+              <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
+              <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
+              <Route path="/t/:username" element={<TrainerPublicPage />} />
+              <Route path="/client-login" element={<ClientLogin />} />
+              <Route path="/client-register/:token" element={<ClientRegister />} />
+              <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+              <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
+              <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
+              <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
+              <Route path="/vault" element={<AuthGuard><Vault /></AuthGuard>} />
+              <Route path="/vault/:unitId" element={<AuthGuard><VaultUnit /></AuthGuard>} />
+              <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
 
-            {/* Public payment pages */}
-            <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
-            <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />
-            <Route path="/payment/callback" element={<PaymentCallback />} />
+              {/* Public payment pages */}
+              <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
+              <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />
+              <Route path="/payment/callback" element={<PaymentCallback />} />
 
-            {/* Portal entry with token */}
-            <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
+              {/* Portal entry with token */}
+              <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
 
-            {/* Clean portal routes */}
-            <Route path="/portal" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
-            <Route path="/portal/workout" element={<PortalTokenProvider><PortalWorkout /></PortalTokenProvider>} />
-            <Route path="/portal/progress" element={<PortalTokenProvider><PortalProgress /></PortalTokenProvider>} />
-            <Route path="/portal/nutrition" element={<PortalTokenProvider><PortalNutrition /></PortalTokenProvider>} />
-            <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
-            <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
-            <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
-            <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
-            <Route path="/portal/challenges" element={<PortalTokenProvider><PortalChallenges /></PortalTokenProvider>} />
-            <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
-            <Route path="/portal/vault/:unitId/:lessonId" element={<PortalTokenProvider><PortalLessonPlayer /></PortalTokenProvider>} />
+              {/* Clean portal routes */}
+              <Route path="/portal" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />
+              <Route path="/portal/workout" element={<PortalTokenProvider><PortalWorkout /></PortalTokenProvider>} />
+              <Route path="/portal/progress" element={<PortalTokenProvider><PortalProgress /></PortalTokenProvider>} />
+              <Route path="/portal/nutrition" element={<PortalTokenProvider><PortalNutrition /></PortalTokenProvider>} />
+              <Route path="/portal/body-scan" element={<PortalTokenProvider><PortalBodyScan /></PortalTokenProvider>} />
+              <Route path="/portal/content" element={<PortalTokenProvider><PortalContent /></PortalTokenProvider>} />
+              <Route path="/portal/subscription" element={<PortalTokenProvider><PortalSubscription /></PortalTokenProvider>} />
+              <Route path="/portal/account" element={<PortalTokenProvider><PortalAccount /></PortalTokenProvider>} />
+              <Route path="/portal/challenges" element={<PortalTokenProvider><PortalChallenges /></PortalTokenProvider>} />
+              <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
+              <Route path="/portal/vault/:unitId/:lessonId" element={<PortalTokenProvider><PortalLessonPlayer /></PortalTokenProvider>} />
 
-            <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
-            <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />
-            <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
-            <Route path="/discover" element={<Discover />} />
-            <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
-            <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/store/:listingId" element={<ListingSalesPage />} />
-            <Route path="/templates" element={<AuthGuard><Templates /></AuthGuard>} />
-            <Route path="/ref/:code" element={<ReferralRedirect />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/contact" element={<Contact />} />
+              <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
+              <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />
+              <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
+              <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/store/:listingId" element={<ListingSalesPage />} />
+              <Route path="/templates" element={<AuthGuard><Templates /></AuthGuard>} />
+              <Route path="/ref/:code" element={<ReferralRedirect />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/contact" element={<Contact />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

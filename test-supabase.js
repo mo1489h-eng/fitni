@@ -1,4 +1,4 @@
-/**
+n/**
  * Quick connection check: loads .env and fetches one row from a table.
  * Edit TABLE below (or set env TEST_SUPABASE_TABLE) to match your table name.
  */

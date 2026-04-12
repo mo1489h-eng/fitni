@@ -10,7 +10,7 @@ const ClientMobileHome = () => {
   useEffect(() => {
     if (!token) return;
     const fetch = async () => {
-      const { data } = await supabase.rpc("get_portal_home", { p_token: token });
+      const { data } = await supabase.rpc("get_portal_workout_stats" as any, { p_token: token });
       if (data) setClientData(data);
     };
     fetch();

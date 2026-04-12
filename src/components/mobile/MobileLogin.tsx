@@ -92,10 +92,7 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border-0 px-4 py-4 text-sm text-white placeholder-gray-500 outline-none transition-all focus:ring-2"
-              style={{
-                background: "#161616",
-                focusRing: "#22C55E",
-              }}
+              style={{ background: "#161616" }}
               dir="ltr"
             />
           </div>

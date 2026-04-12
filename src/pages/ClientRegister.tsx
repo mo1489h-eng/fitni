@@ -23,8 +23,14 @@ const ClientRegister = () => {
 
   useEffect(() => {
     const fetchClient = async () => {
-      if (!token) return;
+      console.log("[ClientRegister] useParams token:", token, "type:", typeof token, "length:", token?.length);
+      if (!token) {
+        console.warn("[ClientRegister] No token in URL — expected /client-register/:token");
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.rpc("get_client_by_invite_token", { p_token: token });
+      console.log("[ClientRegister] get_client_by_invite_token", { data, error });
       if (error || !data || data.length === 0) {
         setLoading(false);
         return;
@@ -56,55 +62,136 @@ const ClientRegister = () => {
 
     setSubmitting(true);
     try {
-      const redirectTo = `${window.location.origin}/client-login`;
+      console.log("[ClientRegister] submit — invite token:", token, "email:", email);
 
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password: form.password,
-        options: {
-          data: { full_name: form.name, is_client: true },
-          emailRedirectTo: redirectTo,
+      const { data: fnData, error: fnError } = await supabase.functions.invoke<{
+        success?: boolean;
+        code?: string;
+        message?: string;
+        userId?: string;
+      }>("register-client-account", {
+        body: {
+          invite_token: token,
+          email,
+          password: form.password,
+          name: form.name,
+          phone: form.phone || undefined,
         },
       });
 
-      let userId: string | null = signUpData.user?.id ?? null;
-      let session = signUpData.session ?? null;
+      console.log("[ClientRegister] register-client-account raw:", { fnData, fnError });
 
-      if (signUpError) {
-        const msg = (signUpError.message ?? "").toLowerCase();
-        const duplicate =
-          msg.includes("already") ||
-          msg.includes("registered") ||
-          msg.includes("exists") ||
-          (signUpError as { code?: string }).code === "user_already_exists";
+      if (fnError) {
+        console.error("[ClientRegister] Edge Function invoke error (full):", fnError);
+        console.error(
+          "[ClientRegister] invoke error serialized:",
+          JSON.stringify(fnError, Object.getOwnPropertyNames(fnError))
+        );
+      }
 
-        if (duplicate) {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password: form.password,
-          });
-          if (signInError) throw signInError;
-          userId = signInData.user?.id ?? null;
-          session = signInData.session ?? null;
-        } else {
-          throw signUpError;
+      let userId: string | null = null;
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
+
+      if (!fnError && fnData?.success && fnData.userId) {
+        console.log("[ClientRegister] Server created confirmed user; signing in…", fnData.userId);
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: form.password,
+        });
+        console.log("[ClientRegister] signIn after server create:", { signInData, signInError });
+        if (signInError) {
+          console.error("[ClientRegister] signIn error (full):", signInError);
+          throw signInError;
         }
+        userId = signInData.user?.id ?? null;
+        session = signInData.session ?? null;
+      } else if (!fnError && fnData?.code === "USER_EXISTS") {
+        console.log("[ClientRegister] USER_EXISTS — signIn + link_client_account");
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password: form.password,
+        });
+        console.log("[ClientRegister] signIn (existing user):", { signInData, signInError });
+        if (signInError) throw signInError;
+        userId = signInData.user?.id ?? null;
+        session = signInData.session ?? null;
+        const { error: linkError } = await supabase.rpc("link_client_account", {
+          p_invite_token: token!,
+          p_auth_user_id: userId!,
+        });
+        console.log("[ClientRegister] link_client_account:", { linkError });
+        if (linkError) throw linkError;
+      } else if (!fnError && fnData && !fnData.success) {
+        console.warn("[ClientRegister] register-client-account declined:", fnData);
+        throw new Error(fnData.message || fnData.code || "Registration failed");
+      } else if (fnError || !fnData?.success) {
+        console.warn("[ClientRegister] Falling back to supabase.auth.signUp (Edge Function unavailable or failed)");
+        const redirectTo = `${window.location.origin}/client-login`;
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: form.password,
+          options: {
+            data: { full_name: form.name, is_client: true },
+            emailRedirectTo: redirectTo,
+          },
+        });
+        console.log("[ClientRegister] signUp fallback result:", { signUpData, signUpError });
+        if (signUpError) {
+          console.error("[ClientRegister] signUp error (full):", signUpError);
+          console.error(
+            "[ClientRegister] signUp error serialized:",
+            JSON.stringify(signUpError, Object.getOwnPropertyNames(signUpError))
+          );
+        }
+
+        userId = signUpData.user?.id ?? null;
+        session = signUpData.session ?? null;
+
+        if (signUpError) {
+          const msg = (signUpError.message ?? "").toLowerCase();
+          const duplicate =
+            msg.includes("already") ||
+            msg.includes("registered") ||
+            msg.includes("exists") ||
+            (signUpError as { code?: string }).code === "user_already_exists";
+
+          if (duplicate) {
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password: form.password,
+            });
+            console.log("[ClientRegister] signIn after duplicate signUp:", { signInData, signInError });
+            if (signInError) throw signInError;
+            userId = signInData.user?.id ?? null;
+            session = signInData.session ?? null;
+          } else {
+            throw signUpError;
+          }
+        }
+
+        if (!userId) {
+          console.error("[ClientRegister] No user id after signUp — often means email confirmation required (user not active until confirm).");
+          throw new Error(
+            "تعذر إنشاء الحساب. إن كان تأكيد البريد مفعّلاً في Supabase، عطّله أو انشر دالة register-client-account."
+          );
+        }
+
+        const { error: linkError } = await supabase.rpc("link_client_account", {
+          p_invite_token: token!,
+          p_auth_user_id: userId,
+        });
+        console.log("[ClientRegister] link_client_account (fallback):", { linkError });
+        if (linkError) throw linkError;
       }
 
       if (!userId) {
-        throw new Error("تعذر إنشاء الحساب. حاول مرة أخرى أو تحقق من تأكيد البريد.");
+        throw new Error("تعذر إنشاء الحساب.");
       }
-
-      const { error: linkError } = await supabase.rpc("link_client_account", {
-        p_invite_token: token!,
-        p_auth_user_id: userId,
-      });
-
-      if (linkError) throw linkError;
 
       toast({ title: "تم إنشاء حسابك وربطه بملفك بنجاح" });
 
       const activeSession = session ?? (await supabase.auth.getSession()).data.session;
+      console.log("[ClientRegister] active session after flow:", !!activeSession);
 
       if (activeSession) {
         const { data: profile } = await supabase.rpc("get_my_client_profile");

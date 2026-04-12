@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.invite-client-on-insert]
 verify_jwt = false
+
+[functions.register-client-account]
+verify_jwt = false

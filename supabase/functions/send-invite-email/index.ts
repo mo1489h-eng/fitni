@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { inviteClientAuth } from "../_shared/inviteClientAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Auth check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -46,13 +46,12 @@ serve(async (req) => {
       });
     }
 
-    // Verify the caller is the trainer for this invite token
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: client } = await supabase
       .from("clients")
-      .select("trainer_id")
+      .select("id, trainer_id")
       .eq("invite_token", inviteToken)
       .single();
 
@@ -63,77 +62,31 @@ serve(async (req) => {
       });
     }
 
-    // Build the registration link
-    const setupLink = `https://coachbase.health/client-register/${inviteToken}`;
-
-    // Send email via Supabase Auth admin API
-    const { error } = await supabase.auth.admin.inviteUserByEmail(clientEmail, {
-      redirectTo: setupLink,
-      data: {
-        is_client_invite: true,
-        invite_token: inviteToken,
-        client_name: clientName,
-        trainer_name: trainerName,
-      },
+    const result = await inviteClientAuth(supabase, {
+      clientId: client.id,
+      email: clientEmail,
+      clientName,
+      trainerName: trainerName || "مدربك",
+      inviteToken,
     });
 
-    if (error) {
-      console.log("Auth invite failed (user may exist), using Resend:", (error as Error).message);
-      
-      const resendKey = Deno.env.get("RESEND_API_KEY");
-      
-      if (resendKey) {
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${resendKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: "CoachBase <noreply@coachbase.health>",
-            to: [clientEmail],
-            subject: `مرحباً ${clientName} 👋 - دعوة من ${trainerName}`,
-            html: `
-              <div dir="rtl" style="font-family: 'Tajawal', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background: #1a1a2e; color: #ffffff; border-radius: 16px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h1 style="color: #16a34a; font-size: 28px; margin: 0;">CoachBase</h1>
-                </div>
-                <h2 style="font-size: 22px; margin-bottom: 8px;">مرحباً ${clientName} 👋</h2>
-                <p style="color: #a0a0a0; font-size: 16px; line-height: 1.8;">
-                  مدربك <strong style="color: #16a34a;">${trainerName}</strong> أضافك على منصة CoachBase
-                </p>
-                <p style="color: #a0a0a0; font-size: 16px;">أنشئ حسابك المجاني الآن:</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${setupLink}" style="display: inline-block; background: #16a34a; color: #000; font-weight: bold; padding: 14px 40px; border-radius: 12px; text-decoration: none; font-size: 18px;">
-                    أنشئ حسابي 💪
-                  </a>
-                </div>
-                <p style="color: #666; font-size: 12px; text-align: center;">
-                  إذا لم تطلب هذا الرابط، يمكنك تجاهل هذا الإيميل
-                </p>
-              </div>
-            `,
-          }),
-        });
-        
-        if (!emailRes.ok) {
-          const errText = await emailRes.text();
-          console.error("Resend error:", errText);
-          return new Response(JSON.stringify({ success: false, error: "Failed to send email", fallback: setupLink }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      } else {
-        console.log("No RESEND_API_KEY configured. Registration link:", setupLink);
-        return new Response(JSON.stringify({ success: true, setupLink, emailSent: false, message: "لم يتم إعداد خدمة الإيميل. شارك الرابط يدوياً" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!result.success) {
+      return new Response(JSON.stringify({ success: false, error: result.error }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify({ success: true, setupLink, emailSent: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        setupLink: result.setupLink,
+        emailSent: result.emailSent ?? false,
+        message: result.message,
+        skipped: result.skipped,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
     console.error("Error:", err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {

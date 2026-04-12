@@ -7,6 +7,69 @@ import { Card } from "@/components/ui/card";
 import { Dumbbell, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+/** Must match the deployed Edge Function name exactly (Dashboard → Edge Functions). */
+const REGISTER_CLIENT_ACCOUNT_FN = "register-client-account" as const;
+
+function logFunctionInvokeResult(
+  fnName: string,
+  result: {
+    data: unknown;
+    error: Error | null;
+  }
+) {
+  const { data, error } = result;
+  const err = error as Error & {
+    context?: Response;
+    status?: number;
+    message?: string;
+  };
+
+  let httpStatus: number | undefined;
+  let httpStatusText: string | undefined;
+  if (err?.context instanceof Response) {
+    httpStatus = err.context.status;
+    httpStatusText = err.context.statusText;
+  } else if (typeof err?.status === "number") {
+    httpStatus = err.status;
+  }
+
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const invokedUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/functions/v1/${fnName}` : "(VITE_SUPABASE_URL missing)";
+
+  console.log("[ClientRegister] supabase.functions.invoke result", {
+    functionName: fnName,
+    matchesExpected: fnName === REGISTER_CLIENT_ACCOUNT_FN,
+    invokedUrl,
+    httpStatus: httpStatus ?? "(not available — e.g. network/CORS failure before response)",
+    httpStatusText,
+    data,
+    error: error ?? null,
+    errorMessage: err?.message,
+    errorStack: err && "stack" in err ? (err as Error).stack : undefined,
+  });
+
+  if (error) {
+    try {
+      console.error(
+        "[ClientRegister] invoke error (JSON):",
+        JSON.stringify(error, Object.getOwnPropertyNames(Object(error)))
+      );
+    } catch {
+      console.error("[ClientRegister] invoke error (string):", String(error));
+    }
+    if (err?.context && !(err.context instanceof Response)) {
+      console.error("[ClientRegister] invoke error.context:", err.context);
+    }
+  }
+
+  if (!error && !data) {
+    console.warn(
+      "[ClientRegister] Both data and error are empty — function may not exist (404) or returned empty body. Check Network tab for",
+      invokedUrl
+    );
+  }
+}
+
 const ClientRegister = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -64,12 +127,12 @@ const ClientRegister = () => {
     try {
       console.log("[ClientRegister] submit — invite token:", token, "email:", email);
 
-      const { data: fnData, error: fnError } = await supabase.functions.invoke<{
+      const invokeResult = await supabase.functions.invoke<{
         success?: boolean;
         code?: string;
         message?: string;
         userId?: string;
-      }>("register-client-account", {
+      }>(REGISTER_CLIENT_ACCOUNT_FN, {
         body: {
           invite_token: token,
           email,
@@ -79,15 +142,8 @@ const ClientRegister = () => {
         },
       });
 
-      console.log("[ClientRegister] register-client-account raw:", { fnData, fnError });
-
-      if (fnError) {
-        console.error("[ClientRegister] Edge Function invoke error (full):", fnError);
-        console.error(
-          "[ClientRegister] invoke error serialized:",
-          JSON.stringify(fnError, Object.getOwnPropertyNames(fnError))
-        );
-      }
+      const { data: fnData, error: fnError } = invokeResult;
+      logFunctionInvokeResult(REGISTER_CLIENT_ACCOUNT_FN, { data: fnData, error: fnError });
 
       let userId: string | null = null;
       let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;

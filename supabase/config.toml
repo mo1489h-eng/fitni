@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.register-client-account]
 verify_jwt = false
+
+[functions.trainer-delete-client]
+verify_jwt = false

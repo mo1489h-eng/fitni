@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -123,13 +124,7 @@ const Clients = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (clientId: string) => {
-      const { data, error } = await supabase.functions.invoke<{ success?: boolean; error?: string }>(
-        "trainer-delete-client",
-        { body: { client_id: clientId } }
-      );
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      if (!data?.success) throw new Error("فشل الحذف");
+      await deleteTrainerClient(clientId);
     },
     onMutate: async (clientId: string) => {
       await queryClient.cancelQueries({ queryKey: clientsQueryKey });

@@ -48,34 +48,65 @@ const ClientRegister = () => {
       return;
     }
 
+    const email = form.email.trim().toLowerCase();
+    if (!email) {
+      toast({ title: "أدخل البريد الإلكتروني", variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email,
+      const redirectTo = `${window.location.origin}/client-login`;
+
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
         password: form.password,
         options: {
           data: { full_name: form.name, is_client: true },
-          emailRedirectTo: "https://coachbase.health",
+          emailRedirectTo: redirectTo,
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Registration failed");
+      let userId: string | null = signUpData.user?.id ?? null;
+      let session = signUpData.session ?? null;
 
-      // Link client account
+      if (signUpError) {
+        const msg = (signUpError.message ?? "").toLowerCase();
+        const duplicate =
+          msg.includes("already") ||
+          msg.includes("registered") ||
+          msg.includes("exists") ||
+          (signUpError as { code?: string }).code === "user_already_exists";
+
+        if (duplicate) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: form.password,
+          });
+          if (signInError) throw signInError;
+          userId = signInData.user?.id ?? null;
+          session = signInData.session ?? null;
+        } else {
+          throw signUpError;
+        }
+      }
+
+      if (!userId) {
+        throw new Error("تعذر إنشاء الحساب. حاول مرة أخرى أو تحقق من تأكيد البريد.");
+      }
+
       const { error: linkError } = await supabase.rpc("link_client_account", {
         p_invite_token: token!,
-        p_auth_user_id: authData.user.id,
+        p_auth_user_id: userId,
       });
 
       if (linkError) throw linkError;
 
-      toast({ title: "تم إنشاء حسابك بنجاح" });
-      
-      // Check if email confirmation is required
-      if (authData.session) {
-        // Auto-confirmed, redirect to portal
+      toast({ title: "تم إنشاء حسابك وربطه بملفك بنجاح" });
+
+      const activeSession = session ?? (await supabase.auth.getSession()).data.session;
+
+      if (activeSession) {
         const { data: profile } = await supabase.rpc("get_my_client_profile");
         if (profile && profile.length > 0 && profile[0].portal_token) {
           navigate(`/client-portal/${profile[0].portal_token}`);
@@ -83,13 +114,23 @@ const ClientRegister = () => {
           navigate("/client-login");
         }
       } else {
-        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل حسابك" });
+        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل الحساب ثم سجّل الدخول" });
         navigate("/client-login");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      const lower = message.toLowerCase();
+      let description = message;
+      if (lower.includes("already registered") || lower.includes("user already")) {
+        description = "هذا البريد مسجل مسبقاً. جرّب تسجيل الدخول.";
+      } else if (lower.includes("invalid or already used invite")) {
+        description = "رابط الدعوة غير صالح أو تم استخدامه. اطلب من مدربك رابطاً جديداً.";
+      } else if (lower.includes("invalid login") || lower.includes("invalid credentials")) {
+        description = "البريد مسجل مسبقاً وكلمة المرور غير صحيحة. استخدم نفس كلمة المرور أو استعدها من تسجيل الدخول.";
+      }
       toast({
         title: "حدث خطأ",
-        description: err.message?.includes("already registered") ? "هذا البريد مسجل مسبقاً" : err.message,
+        description,
         variant: "destructive",
       });
     } finally {

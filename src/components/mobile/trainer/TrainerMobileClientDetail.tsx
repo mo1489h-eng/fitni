@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import {
   ChevronRight,
   Phone,
@@ -11,7 +12,10 @@ import {
   Loader2,
   Check,
   X,
+  Play,
 } from "lucide-react";
+import TrainerLiveSession from "../workout/TrainerLiveSession";
+import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
 
 type Props = {
   clientId: string;
@@ -20,6 +24,7 @@ type Props = {
 
 const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   const { user } = useAuth();
+  const [liveSessionOpen, setLiveSessionOpen] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["trainer-client-detail", clientId, user?.id],
@@ -67,6 +72,22 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
     enabled: !!clientId,
   });
 
+  const { data: lastWorkouts = [] } = useQuery({
+    queryKey: ["trainer-client-last-workouts", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("workout_sessions")
+        .select("id, completed_at, total_volume, duration_minutes, started_at")
+        .eq("client_id", clientId)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!clientId,
+  });
+
   const openWhatsApp = () => {
     if (!client?.phone) return;
     const n = client.phone.replace(/\D/g, "");
@@ -88,6 +109,17 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
+
+  if (liveSessionOpen) {
+    return (
+      <TrainerLiveSession
+        clientId={client.id}
+        clientName={client.name}
+        programId={client.program_id}
+        onClose={() => setLiveSessionOpen(false)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -151,6 +183,21 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         </div>
       </div>
 
+      <MuscleRecoveryMap clientId={client.id} />
+
+      <button
+        type="button"
+        onClick={() => setLiveSessionOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-black transition active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, #22C55E, #16A34A)",
+          boxShadow: "0 8px 24px rgba(34,197,94,0.25)",
+        }}
+      >
+        <Play className="h-4 w-4" strokeWidth={2.5} />
+        جلسة مباشرة
+      </button>
+
       <button
         type="button"
         onClick={client.phone ? openWhatsApp : openEmail}
@@ -166,7 +213,33 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
       </button>
 
       <div>
-        <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-white">
+        <h2 className="mb-3 flex items-center gap-2 text-[16px] font-bold text-white">
+          <Dumbbell className="h-4 w-4" style={{ color: "#22C55E" }} />
+          آخر التمارين
+        </h2>
+        {lastWorkouts.length === 0 ? (
+          <div className="rounded-[12px] p-4 text-center text-[14px]" style={{ background: "#111111", color: "#666" }}>
+            لا توجد تمارين مكتملة بعد
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {lastWorkouts.map((w) => (
+              <div key={w.id} className="rounded-[12px] px-4 py-3" style={{ background: "#111111" }}>
+                <p className="text-[14px] font-medium text-white">
+                  {w.completed_at ? new Date(w.completed_at).toLocaleString("ar-SA", { dateStyle: "medium" }) : "—"}
+                </p>
+                <p className="text-[12px]" style={{ color: "#666" }}>
+                  {Math.round(Number(w.total_volume) || 0)} كجم
+                  {w.duration_minutes != null ? ` · ${w.duration_minutes} د` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 className="mb-3 flex items-center gap-2 text-[16px] font-bold text-white">
           <CalendarDays className="h-4 w-4" style={{ color: "#22C55E" }} />
           سجل الحضور
         </h2>

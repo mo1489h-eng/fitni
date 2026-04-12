@@ -1,12 +1,18 @@
 import { useMemo } from "react";
 import { useMobilePortalToken } from "@/hooks/useMobilePortalToken";
 import { supabase } from "@/integrations/supabase/client";
-import { Dumbbell, TrendingUp, Flame, Target } from "lucide-react";
+import { Dumbbell, TrendingUp, Flame, Target, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
 
 const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 
-const ClientMobileHome = () => {
+type HomeProps = {
+  onStartWorkout?: () => void;
+  canStartWorkout?: boolean;
+};
+
+const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
   const token = useMobilePortalToken();
 
   const { data: clientRow } = useQuery({
@@ -178,7 +184,41 @@ const ClientMobileHome = () => {
             البرنامج: {programSummary.programName}
           </p>
         )}
+        {onStartWorkout && (
+          <button
+            type="button"
+            disabled={!canStartWorkout}
+            onClick={onStartWorkout}
+            className="mt-4 w-full rounded-[12px] py-4 text-[16px] font-black text-black transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            style={{
+              background: "linear-gradient(135deg, #22C55E, #16A34A)",
+              boxShadow: "0 8px 28px rgba(34,197,94,0.35)",
+            }}
+          >
+            ابدأ تمرين اليوم
+          </button>
+        )}
       </div>
+
+      {lastWorkout && (
+        <div className="rounded-[16px] p-4" style={{ background: "#111111", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
+          <div className="mb-2 flex items-center gap-2">
+            <Clock className="h-4 w-4" style={{ color: "#22C55E" }} />
+            <h3 className="text-[16px] font-bold text-white">آخر تمرين</h3>
+          </div>
+          <p className="text-[12px]" style={{ color: "#888" }}>
+            {lastWorkout.completed_at
+              ? new Date(lastWorkout.completed_at).toLocaleString("ar-SA", { dateStyle: "medium", timeStyle: "short" })
+              : "—"}
+          </p>
+          <p className="mt-2 text-[14px] text-white">
+            الحجم: {Math.round(Number(lastWorkout.total_volume) || 0)} كجم
+            {lastWorkout.duration_minutes != null ? ` · ${lastWorkout.duration_minutes} د` : ""}
+          </p>
+        </div>
+      )}
+
+      <MuscleRecoveryMap clientId={clientRow?.id} />
     </div>
   );
 };

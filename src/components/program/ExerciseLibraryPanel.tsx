@@ -13,10 +13,12 @@ import {
 } from "@/lib/exercise-translations";
 import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import { mergeExerciseListsPreferLocal } from "@/lib/localExercisesDb";
+import { useToast } from "@/hooks/use-toast";
 import {
   ensureExerciseLibrarySynced,
   searchExercisesUnified,
   fetchRemoteExercisePage,
+  retryExerciseLibrarySync,
 } from "@/lib/exercise-library-service";
 import {
   MUSCLE_FILTER_OPTIONS,
@@ -96,7 +98,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   }, [open]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -456,8 +458,48 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                       <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     </div>
                   )}
-                  {!loading && exercises.length === 0 && debouncedSearch.length >= 1 && (
-                    <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
+                  {!loading && exercises.length === 0
+                    && (debouncedSearch.length >= 1 || muscleFilter || equipmentFilter) && (
+                    <div className="flex flex-col items-center gap-3 py-8 px-2">
+                      <p className="text-center text-sm text-muted-foreground">لا توجد نتائج</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        disabled={syncRetrying}
+                        onClick={async () => {
+                          setSyncRetrying(true);
+                          try {
+                            const r = await retryExerciseLibrarySync();
+                            if (r.ok) {
+                              toast({
+                                title: "تمت مزامنة المكتبة",
+                                description:
+                                  r.count != null ? `تم تحديث ${r.count} تمرين` : undefined,
+                              });
+                              await loadPage();
+                            } else {
+                              toast({
+                                title: "تعذّرت المزامنة",
+                                description: r.error,
+                                variant: "destructive",
+                              });
+                            }
+                          } finally {
+                            setSyncRetrying(false);
+                          }
+                        }}
+                      >
+                        {syncRetrying ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : null}
+                        إعادة مزامنة المكتبة
+                      </Button>
+                      <p className="text-[10px] text-center text-muted-foreground max-w-[240px]">
+                        إن كانت قاعدة البيانات فارغة، تُعبأ من ExerciseDB عبر المزامنة
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

@@ -152,15 +152,31 @@ serve(async (req) => {
       synced_at: new Date().toISOString(),
     }));
 
+    const { count: countBefore } = await admin
+      .from("exercisedb_cache")
+      .select("*", { head: true, count: "exact" });
+    console.log("[exercise-library-sync] RapidAPI rows:", list.length, "| exercisedb_cache rows before upsert:", countBefore ?? "unknown");
+
     const { error: upErr } = await admin.from("exercisedb_cache").upsert(rows, {
       onConflict: "external_id",
     });
     if (upErr) {
+      console.error("[exercise-library-sync] upsert failed:", upErr.message, upErr);
       return new Response(JSON.stringify({ error: upErr.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const { count: countAfter } = await admin
+      .from("exercisedb_cache")
+      .select("*", { head: true, count: "exact" });
+    console.log(
+      "[exercise-library-sync] upsert wrote",
+      rows.length,
+      "rows; exercisedb_cache total row count after:",
+      countAfter ?? "unknown",
+    );
 
     return new Response(JSON.stringify({ ok: true, count: rows.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

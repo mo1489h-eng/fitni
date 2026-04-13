@@ -14,6 +14,11 @@ function canonicalBodyPart(p: string): string {
   return BODY_PART_ALIASES[p.toLowerCase()] ?? p.toLowerCase();
 }
 
+/** Trim, collapse spaces, Unicode NFC — use for consistent Arabic / English search. */
+export function normalizeExerciseSearchQuery(s: string): string {
+  return s.normalize("NFC").trim().replace(/\s+/g, " ");
+}
+
 export function rowToExerciseDBItem(row: LocalExerciseRow): ExerciseDBItem {
   return {
     id: row.id,
@@ -40,23 +45,61 @@ function matchesQuery(row: LocalExerciseRow, qRaw: string, ql: string): boolean 
   ];
   for (const p of parts) {
     if (!p) continue;
-    const pl = p.toLowerCase();
+    const pn = normalizeExerciseSearchQuery(String(p));
+    const pl = pn.toLowerCase();
     if (pl.includes(ql)) return true;
-    if (p.includes(qRaw)) return true;
+    if (pn.includes(qRaw)) return true;
   }
   return false;
 }
 
 /** Local-first browse (no query) or filter by text (Arabic / English / muscle tags). */
 export function searchLocalExercises(query: string, limit = 80): ExerciseDBItem[] {
-  const qRaw = query.trim();
+  return filterLocalUnified({
+    query,
+    bodyPart: null,
+    equipment: null,
+    limit: limit > 0 ? limit : 80,
+    browseLimit: 40,
+  });
+}
+
+/** Bundled JSON search with optional body-part + equipment (English / Arabic, case-insensitive Latin). */
+export function filterLocalUnified(opts: {
+  query: string;
+  bodyPart: string | null;
+  equipment: string | null;
+  limit?: number;
+  /** Max rows when query is empty (browse). */
+  browseLimit?: number;
+}): ExerciseDBItem[] {
+  const limit = opts.limit ?? 80;
+  const browseLimit = opts.browseLimit ?? 40;
+  const qRaw = normalizeExerciseSearchQuery(opts.query);
   const ql = qRaw.toLowerCase();
-  if (!qRaw) {
-    return rows.slice(0, 40).map(rowToExerciseDBItem);
+
+  let pool: LocalExerciseRow[] = rows;
+  if (opts.bodyPart) {
+    const want = opts.bodyPart.toLowerCase();
+    pool = pool.filter((row) => canonicalBodyPart(row.bodyPart) === want);
   }
+
+  if (!qRaw) {
+    let browse = pool;
+    if (opts.equipment) {
+      const em = opts.equipment.toLowerCase();
+      browse = pool.filter((row) => (row.equipment || "").toLowerCase().includes(em));
+    }
+    return browse.slice(0, browseLimit).map(rowToExerciseDBItem);
+  }
+
   const out: ExerciseDBItem[] = [];
-  for (const row of rows) {
+  for (const row of pool) {
     if (!matchesQuery(row, qRaw, ql)) continue;
+    if (opts.equipment) {
+      const em = opts.equipment.toLowerCase();
+      if (!(row.equipment || "").toLowerCase().includes(em)) continue;
+    }
     out.push(rowToExerciseDBItem(row));
     if (out.length >= limit) break;
   }

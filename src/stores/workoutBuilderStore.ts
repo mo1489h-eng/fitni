@@ -19,12 +19,15 @@ import { randomUUID } from "@/lib/random-id";
 import { exerciseLibrary } from "@/mocks/mockWorkouts";
 import type { Exercise, Set, WorkoutDay, WorkoutProgram } from "@/types/workout";
 
-/** localStorage key for persist (also used for targeted cleanup). */
-export const WORKOUT_BUILDER_STORAGE_KEY = "fitni-workout-builder-v1";
+/**
+ * localStorage key for WorkoutBuilder persist only.
+ * Must differ from template / program stores — see `TEMPLATE_STORAGE_KEY` in templateStore.
+ */
+export const WORKOUT_BUILDER_STORAGE_KEY = "fitni-builder-v1";
 
 const STORAGE_VERSION = 1;
 
-type WorkoutBuilderState = {
+export type WorkoutBuilderState = {
   programId: string;
   title: string;
   description: string;
@@ -56,6 +59,9 @@ type WorkoutBuilderState = {
 
   /** Reset to bundled sample program (fixes corrupt UI / error boundary recovery). */
   resetBuilderState: () => void;
+
+  /** True after persist rehydration + validation; UI should wait before reading weekDays. */
+  _hasHydrated: boolean;
 };
 
 function hydrateInitialWeeks(): WorkoutDay[][] {
@@ -88,6 +94,7 @@ export function buildWorkoutBuilderInitialData(): Omit<
     weeksCount: sampleHypertrophyProgram.weeksCount,
     activeWeekIndex: 0,
     weekDays: hydrateInitialWeeks(),
+    _hasHydrated: false,
   };
 }
 
@@ -300,7 +307,11 @@ function createBuilderActions(
       };
     },
 
-    resetBuilderState: () => set(buildWorkoutBuilderInitialData()),
+    resetBuilderState: () =>
+      set({
+        ...buildWorkoutBuilderInitialData(),
+        _hasHydrated: true,
+      }),
   };
 }
 
@@ -325,6 +336,7 @@ export const useWorkoutBuilderStore = create<WorkoutBuilderState>()(
         const merged = {
           ...currentState,
           ...persistedState,
+          _hasHydrated: false,
         } as WorkoutBuilderState;
         try {
           assertBuilderDataSliceValid({
@@ -342,6 +354,49 @@ export const useWorkoutBuilderStore = create<WorkoutBuilderState>()(
             ...currentState,
             ...buildWorkoutBuilderInitialData(),
           };
+        }
+      },
+      onRehydrateStorage: () => (state, error) => {
+        if (error) {
+          console.warn(`[${WORKOUT_BUILDER_STORAGE_KEY}] rehydrate failed, applying defaults`, error);
+          queueMicrotask(() => {
+            try {
+              useWorkoutBuilderStore.persist.clearStorage();
+            } catch {
+              /* ignore */
+            }
+            try {
+              useWorkoutBuilderStore.setState({
+                ...buildWorkoutBuilderInitialData(),
+                _hasHydrated: true,
+              });
+            } catch (e) {
+              console.error(`[${WORKOUT_BUILDER_STORAGE_KEY}] failed to apply defaults after rehydrate error`, e);
+            }
+          });
+          return;
+        }
+        if (state) {
+          try {
+            validateWorkoutBuilderStoreState(state);
+          } catch (e) {
+            console.warn(`[${WORKOUT_BUILDER_STORAGE_KEY}] post-rehydrate validation failed, resetting`, e);
+            queueMicrotask(() => {
+              try {
+                useWorkoutBuilderStore.persist.clearStorage();
+              } catch {
+                /* ignore */
+              }
+              try {
+                useWorkoutBuilderStore.setState({
+                  ...buildWorkoutBuilderInitialData(),
+                  _hasHydrated: true,
+                });
+              } catch (setErr) {
+                console.error(`[${WORKOUT_BUILDER_STORAGE_KEY}] failed to reset after invalid state`, setErr);
+              }
+            });
+          }
         }
       },
       migrate: (persisted, fromVersion) => {
@@ -377,4 +432,25 @@ export function validateWorkoutBuilderStoreState(state: WorkoutBuilderState): vo
     activeWeekIndex: state.activeWeekIndex,
     weekDays: state.weekDays,
   });
+}
+
+/** Presentational slices passed from WorkoutCanvas — no direct Zustand in dumb components. */
+export type WorkoutBuilderExerciseActions = Pick<
+  WorkoutBuilderState,
+  "patchSet" | "unlinkSuperset" | "applyRestToAllSets"
+>;
+
+export type WorkoutBuilderDayActions = Pick<
+  WorkoutBuilderState,
+  "linkSupersetWithNext" | "addExerciseToDay" | "smartFillDay"
+>;
+
+/**
+ * Returns `null` until `_hasHydrated` is true so subtree can skip reading weekDays/days.
+ * Still subscribes to the selector (Zustand rules); pair with parent gate that mounts after hydration.
+ */
+export function useSafeWorkoutBuilderStore<T>(selector: (state: WorkoutBuilderState) => T): T | null {
+  const hasHydrated = useWorkoutBuilderStore((s) => s._hasHydrated);
+  const result = useWorkoutBuilderStore(selector);
+  return hasHydrated ? result : null;
 }

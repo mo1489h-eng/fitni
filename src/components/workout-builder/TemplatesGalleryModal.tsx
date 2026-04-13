@@ -1,7 +1,7 @@
 import { LayoutTemplate, Trash2 } from "lucide-react";
 
 import type { SavedWorkoutTemplate } from "@/stores/templateStore";
-import { useWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
+import { useSafeWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
 import { useTemplateStore } from "@/stores/templateStore";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,9 +22,13 @@ export function TemplatesGalleryModal({ open, onOpenChange }: Props) {
   const templates = useTemplateStore((s) => s.templates);
   const removeTemplate = useTemplateStore((s) => s.removeTemplate);
   const getHydratedProgram = useTemplateStore((s) => s.getHydratedProgram);
-  const replaceActiveWeekFromProgram = useWorkoutBuilderStore((s) => s.replaceActiveWeekFromProgram);
+  const replaceActiveWeekFromProgram = useSafeWorkoutBuilderStore((s) => s.replaceActiveWeekFromProgram);
 
   const apply = (t: SavedWorkoutTemplate) => {
+    if (!replaceActiveWeekFromProgram) {
+      toast.error("المحرّر غير جاهز بعد");
+      return;
+    }
     const program = getHydratedProgram(t.id);
     if (!program) {
       toast.error("تعذر تحميل القالب");
@@ -38,6 +42,10 @@ export function TemplatesGalleryModal({ open, onOpenChange }: Props) {
     toast.success("تم تطبيق القالب", { description: t.name });
     onOpenChange(false);
   };
+
+  if (!replaceActiveWeekFromProgram) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

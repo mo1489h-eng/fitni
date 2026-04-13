@@ -1,4 +1,12 @@
-import { Component, type ErrorInfo, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Component,
+  type ErrorInfo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen,
@@ -38,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AI_STREAMING_MESSAGES } from "@/constants/workout-builder-ai-messages";
 import {
+  useSafeWorkoutBuilderStore,
   useWorkoutBuilderStore,
   validateWorkoutBuilderStoreState,
   WORKOUT_BUILDER_STORAGE_KEY,
@@ -155,49 +164,18 @@ function buildAiComparisonLines(before: WorkoutProgram, after: WorkoutProgram): 
 }
 
 /**
- * Advanced workout program builder — validation, AI prompt bridge, templates, PDF.
+ * Shell only: persist hydration + emergency error listener. No trainer shell / no week data until hydrated.
  */
 export default function WorkoutBuilder() {
   usePageTitle("منشئ التمارين");
-  useRegisterTrainerShell({ title: "منشئ التمارين" });
+  const hasHydrated = useWorkoutBuilderStore((s) => s._hasHydrated);
 
-  const title = useWorkoutBuilderStore((s) => s.title);
-  const setTitle = useWorkoutBuilderStore((s) => s.setTitle);
-  const weeksCount = useWorkoutBuilderStore((s) => s.weeksCount);
-  const activeWeekIndex = useWorkoutBuilderStore((s) => s.activeWeekIndex);
-  const setActiveWeekIndex = useWorkoutBuilderStore((s) => s.setActiveWeekIndex);
-  const addWeek = useWorkoutBuilderStore((s) => s.addWeek);
-  const getProgramSnapshot = useWorkoutBuilderStore((s) => s.getProgramSnapshot);
-  const replaceActiveWeekFromProgram = useWorkoutBuilderStore((s) => s.replaceActiveWeekFromProgram);
-
-  const programSnapshot = useWorkoutBuilderStore((s) => ({
-    id: s.programId,
-    title: s.title,
-    description: s.description,
-    weeksCount: s.weeksCount,
-    days: s.weekDays[s.activeWeekIndex] ?? [],
-  }));
-
-  const addTemplate = useTemplateStore((s) => s.addTemplate);
-
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const [copilotStep, setCopilotStep] = useState<CopilotStep>("compose");
-  const [copilotPrompt, setCopilotPrompt] = useState("");
-  const [builtPrompt, setBuiltPrompt] = useState("");
-  const [pendingProgram, setPendingProgram] = useState<WorkoutProgram | null>(null);
-  const [pasteJson, setPasteJson] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiStatusIdx, setAiStatusIdx] = useState(0);
-
-  const weekLabels = useMemo(() => Array.from({ length: weeksCount }, (_, i) => i), [weeksCount]);
-
-  /** After persist rehydration, validate; heal corrupt storage without nuking unrelated keys (e.g. Supabase session). */
   useEffect(() => {
     const store = useWorkoutBuilderStore;
-    const healAfterHydration = () => {
+    const afterHydration = () => {
       try {
         validateWorkoutBuilderStoreState(store.getState());
+        store.setState({ _hasHydrated: true });
       } catch (e) {
         console.error("[WorkoutBuilder] Persisted state invalid", e);
         try {
@@ -211,15 +189,99 @@ export default function WorkoutBuilder() {
           /* ignore */
         }
         store.getState().resetBuilderState();
-        window.location.reload();
       }
     };
 
     if (store.persist.hasHydrated()) {
-      healAfterHydration();
+      afterHydration();
     }
-    return store.persist.onFinishHydration(healAfterHydration);
+    return store.persist.onFinishHydration(afterHydration);
   }, []);
+
+  useEffect(() => {
+    const handleError = (e: Event) => {
+      const msg = e instanceof ErrorEvent ? e.message : "";
+      if (msg.includes("hydration") || msg.includes("persist")) {
+        console.warn("Detected store corruption, emergency reset...");
+        try {
+          useWorkoutBuilderStore.persist.clearStorage();
+        } catch {
+          /* ignore */
+        }
+        window.location.reload();
+      }
+    };
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, []);
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex h-[min(100dvh,720px)] items-center justify-center gap-3" dir="rtl">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <p className="text-sm text-muted-foreground">جارٍ تحميل المحرّر…</p>
+      </div>
+    );
+  }
+
+  return <WorkoutBuilderInner />;
+}
+
+function WorkoutBuilderInner() {
+  const trainerShellOpts = useMemo(() => ({ title: "منشئ التمارين" as const }), []);
+  useRegisterTrainerShell(trainerShellOpts);
+
+  const title = useSafeWorkoutBuilderStore((s) => s.title);
+  const setTitle = useSafeWorkoutBuilderStore((s) => s.setTitle);
+  const weeksCount = useSafeWorkoutBuilderStore((s) => s.weeksCount);
+  const activeWeekIndex = useSafeWorkoutBuilderStore((s) => s.activeWeekIndex);
+  const setActiveWeekIndex = useSafeWorkoutBuilderStore((s) => s.setActiveWeekIndex);
+  const addWeek = useSafeWorkoutBuilderStore((s) => s.addWeek);
+  const getProgramSnapshot = useSafeWorkoutBuilderStore((s) => s.getProgramSnapshot);
+  const replaceActiveWeekFromProgram = useSafeWorkoutBuilderStore((s) => s.replaceActiveWeekFromProgram);
+
+  const programSnapshot =
+    useSafeWorkoutBuilderStore((s) => {
+      try {
+        const days = Array.isArray(s.weekDays) ? (s.weekDays[s.activeWeekIndex] ?? []) : [];
+        return {
+          id: s.programId,
+          title: s.title,
+          description: s.description,
+          weeksCount: s.weeksCount,
+          days,
+        };
+      } catch {
+        return {
+          id: "",
+          title: "",
+          description: "",
+          weeksCount: 1,
+          days: [],
+        };
+      }
+    }) ?? { id: "", title: "", description: "", weeksCount: 1, days: [] };
+
+  const addTemplate = useTemplateStore((s) => s.addTemplate);
+
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotStep, setCopilotStep] = useState<CopilotStep>("compose");
+  const [copilotPrompt, setCopilotPrompt] = useState("");
+  const [builtPrompt, setBuiltPrompt] = useState("");
+  const [pendingProgram, setPendingProgram] = useState<WorkoutProgram | null>(null);
+  const [pasteJson, setPasteJson] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiStatusIdx, setAiStatusIdx] = useState(0);
+
+  const weekLabels = useMemo(() => {
+    try {
+      const n = Math.max(1, Math.min(52, Math.floor(Number(weeksCount ?? 1)) || 1));
+      return Array.from({ length: n }, (_, i) => i);
+    } catch {
+      return [0];
+    }
+  }, [weeksCount]);
 
   useEffect(() => {
     if (!aiLoading) {
@@ -246,23 +308,26 @@ export default function WorkoutBuilder() {
   }, []);
 
   const saveAsTemplate = useCallback(() => {
+    if (!getProgramSnapshot) return;
     const snap = getProgramSnapshot();
     const v = validateWorkoutProgram(snap);
     if (!v.ok) {
       toast.error("لا يمكن حفظ قالب بهيكل غير صالح");
       return;
     }
-    addTemplate(title.trim() || "قالب بدون اسم", snap);
+    addTemplate((title ?? "").trim() || "قالب بدون اسم", snap);
     toast.success("تم حفظ القالب", { description: "يمكنك فتح المعرض من «قوالبي»." });
   }, [addTemplate, getProgramSnapshot, title]);
 
   const exportPdf = useCallback(() => {
+    if (!getProgramSnapshot) return;
     const snap = getProgramSnapshot();
-    exportWorkoutProgramPdf(snap, title.replace(/\s+/g, "_").slice(0, 60) || "workout");
+    exportWorkoutProgramPdf(snap, (title ?? "").replace(/\s+/g, "_").slice(0, 60) || "workout");
     toast.message("تصدير PDF", { description: "تم تنزيل الملف." });
   }, [getProgramSnapshot, title]);
 
   const runAiRequest = useCallback(async () => {
+    if (!getProgramSnapshot) return;
     const trimmed = copilotPrompt.trim();
     if (!trimmed) {
       toast.error("اكتب طلباً للمساعد");
@@ -302,7 +367,7 @@ export default function WorkoutBuilder() {
   }, [pasteJson]);
 
   const confirmAiOverwrite = useCallback(() => {
-    if (!pendingProgram) return;
+    if (!pendingProgram || !replaceActiveWeekFromProgram) return;
     const res = replaceActiveWeekFromProgram(pendingProgram);
     if (!res.ok) {
       toast.error(res.message);
@@ -314,11 +379,36 @@ export default function WorkoutBuilder() {
   }, [pendingProgram, replaceActiveWeekFromProgram, resetCopilot]);
 
   const diffSummary = useMemo(() => {
-    if (!pendingProgram) return [] as string[];
-    return buildAiComparisonLines(programSnapshot, pendingProgram);
+    try {
+      if (!pendingProgram) return [] as string[];
+      return buildAiComparisonLines(programSnapshot, pendingProgram);
+    } catch (e) {
+      console.error("[WorkoutBuilder] diffSummary", e);
+      return [] as string[];
+    }
   }, [pendingProgram, programSnapshot]);
 
-  return (
+  if (
+    title == null ||
+    setTitle == null ||
+    weeksCount == null ||
+    activeWeekIndex == null ||
+    setActiveWeekIndex == null ||
+    addWeek == null ||
+    getProgramSnapshot == null ||
+    replaceActiveWeekFromProgram == null
+  ) {
+    return (
+      <div className="flex h-48 items-center justify-center gap-2" dir="rtl">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
+        <span className="text-sm text-muted-foreground">جارٍ التهيئة…</span>
+      </div>
+    );
+  }
+
+  let main: ReactNode;
+  try {
+    main = (
     <WorkoutBuilderErrorBoundary>
       <div className="space-y-8 pb-10">
       <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
@@ -543,5 +633,22 @@ export default function WorkoutBuilder() {
       </section>
       </div>
     </WorkoutBuilderErrorBoundary>
-  );
+    );
+  } catch (err) {
+    console.error("[WorkoutBuilder] render guard", err);
+    main = (
+      <div className="min-h-[40vh] rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center" dir="rtl">
+        <p className="text-sm font-medium text-foreground">تعذّر تهيئة واجهة منشئ التمارين.</p>
+        <Button
+          type="button"
+          className="mt-4"
+          onClick={() => useWorkoutBuilderStore.getState().resetBuilderState()}
+        >
+          إعادة تعيين المحرّر
+        </Button>
+      </div>
+    );
+  }
+
+  return main;
 }

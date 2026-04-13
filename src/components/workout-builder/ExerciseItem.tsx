@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Timer, Unlink } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { WorkoutExercise } from "@/types/workout";
+import type { WorkoutBuilderExerciseActions } from "@/stores/workoutBuilderStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
 
 const REST_PRESETS: { label: string; sec: number }[] = [
   { label: "30ث", sec: 30 },
@@ -33,18 +32,18 @@ function formatRestLabel(seconds: number | null | undefined): string {
 function ExerciseItemCard({
   dayId,
   ex,
+  actions,
   dragHandleProps,
   isOverlay,
 }: {
   dayId: string;
   ex: WorkoutExercise;
+  actions: WorkoutBuilderExerciseActions;
   dragHandleProps?: Record<string, unknown>;
   isOverlay?: boolean;
 }) {
-  const patchSet = useWorkoutBuilderStore((s) => s.patchSet);
-  const unlinkSuperset = useWorkoutBuilderStore((s) => s.unlinkSuperset);
-  const applyRestToAllSets = useWorkoutBuilderStore((s) => s.applyRestToAllSets);
-  const [restOpen, setRestOpen] = useState(false);
+  const { patchSet, unlinkSuperset, applyRestToAllSets } = actions;
+  const [, setRestOpen] = useState(false);
 
   return (
     <div
@@ -105,7 +104,6 @@ function ExerciseItemCard({
                         className="text-xs"
                         onClick={() => {
                           applyRestToAllSets(dayId, ex.instanceId, p.sec);
-                          setRestOpen(false);
                         }}
                       >
                         {p.label}
@@ -196,9 +194,10 @@ function ExerciseItemCard({
 type Props = {
   dayId: string;
   workoutExercise: WorkoutExercise;
+  exerciseActions: WorkoutBuilderExerciseActions;
 };
 
-export function ExerciseItem({ dayId, workoutExercise }: Props) {
+export function ExerciseItem({ dayId, workoutExercise, exerciseActions }: Props) {
   const {
     attributes,
     listeners,
@@ -222,19 +221,19 @@ export function ExerciseItem({ dayId, workoutExercise }: Props) {
       <ExerciseItemCard
         dayId={dayId}
         ex={workoutExercise}
+        actions={exerciseActions}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
   );
 }
 
-export function ExerciseItemDragPreview({
-  dayId,
-  workoutExercise,
-}: Props) {
+type PreviewProps = Props;
+
+export function ExerciseItemDragPreview({ dayId, workoutExercise, exerciseActions }: PreviewProps) {
   return (
     <div className="pointer-events-none w-[min(100vw-2rem,28rem)] max-w-[28rem]">
-      <ExerciseItemCard dayId={dayId} ex={workoutExercise} isOverlay />
+      <ExerciseItemCard dayId={dayId} ex={workoutExercise} actions={exerciseActions} isOverlay />
     </div>
   );
 }

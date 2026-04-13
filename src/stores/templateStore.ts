@@ -29,6 +29,9 @@ type TemplateStoreState = {
   getHydratedProgram: (id: string) => WorkoutProgram | null;
 };
 
+/** Distinct from `WORKOUT_BUILDER_STORAGE_KEY` — never share persist names between stores. */
+export const TEMPLATE_STORAGE_KEY = "fitni-program-templates-v1";
+
 export const useTemplateStore = create(
   persist<TemplateStoreState>(
     (set, get) => ({
@@ -80,7 +83,7 @@ export const useTemplateStore = create(
       },
     }),
     {
-      name: "fitni-workout-templates-v1",
+      name: TEMPLATE_STORAGE_KEY,
       partialize: (s) => ({ templates: s.templates }),
     },
   ),

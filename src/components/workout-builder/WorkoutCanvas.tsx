@@ -14,11 +14,12 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { useMemo, useState } from "react";
 
-import { useWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
+import { useSafeWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
 import type { WorkoutDay } from "@/types/workout";
 
 import { ExerciseItemDragPreview } from "./ExerciseItem";
 import { WorkoutDayCard } from "./WorkoutDayCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const dropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
@@ -33,13 +34,66 @@ function findDayIdForExercise(days: WorkoutDay[], exerciseInstanceId: string): s
   return null;
 }
 
-export function WorkoutCanvas() {
-  const activeWeekIndex = useWorkoutBuilderStore((s) => s.activeWeekIndex);
-  const weekDays = useWorkoutBuilderStore((s) => s.weekDays);
-  const updateWeekDays = useWorkoutBuilderStore((s) => s.updateWeekDays);
-  const getProgramSnapshot = useWorkoutBuilderStore((s) => s.getProgramSnapshot);
+function WorkoutCanvasSkeleton() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" dir="rtl">
+      <Skeleton className="h-[320px] w-full rounded-xl" />
+      <Skeleton className="h-[320px] w-full rounded-xl" />
+      <Skeleton className="h-[320px] w-full rounded-xl" />
+    </div>
+  );
+}
 
-  const currentDays = weekDays[activeWeekIndex] ?? [];
+export function WorkoutCanvas() {
+  const activeWeekIndex = useSafeWorkoutBuilderStore((s) => s.activeWeekIndex);
+  const weekDays = useSafeWorkoutBuilderStore((s) => s.weekDays);
+  const updateWeekDays = useSafeWorkoutBuilderStore((s) => s.updateWeekDays);
+  const getProgramSnapshot = useSafeWorkoutBuilderStore((s) => s.getProgramSnapshot);
+
+  const patchSet = useSafeWorkoutBuilderStore((s) => s.patchSet);
+  const unlinkSuperset = useSafeWorkoutBuilderStore((s) => s.unlinkSuperset);
+  const applyRestToAllSets = useSafeWorkoutBuilderStore((s) => s.applyRestToAllSets);
+  const linkSupersetWithNext = useSafeWorkoutBuilderStore((s) => s.linkSupersetWithNext);
+  const addExerciseToDay = useSafeWorkoutBuilderStore((s) => s.addExerciseToDay);
+  const smartFillDay = useSafeWorkoutBuilderStore((s) => s.smartFillDay);
+
+  const ready =
+    activeWeekIndex != null &&
+    weekDays != null &&
+    updateWeekDays != null &&
+    getProgramSnapshot != null &&
+    patchSet != null &&
+    unlinkSuperset != null &&
+    applyRestToAllSets != null &&
+    linkSupersetWithNext != null &&
+    addExerciseToDay != null &&
+    smartFillDay != null;
+
+  const exerciseActions = useMemo(
+    () =>
+      ready
+        ? {
+            patchSet,
+            unlinkSuperset,
+            applyRestToAllSets,
+          }
+        : null,
+    [ready, patchSet, unlinkSuperset, applyRestToAllSets],
+  );
+
+  const dayActions = useMemo(
+    () =>
+      ready
+        ? {
+            linkSupersetWithNext,
+            addExerciseToDay,
+            smartFillDay,
+          }
+        : null,
+    [ready, linkSupersetWithNext, addExerciseToDay, smartFillDay],
+  );
+
+  const currentDays = weekDays?.[activeWeekIndex ?? 0] ?? [];
 
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -71,7 +125,7 @@ export function WorkoutCanvas() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    if (!over) return;
+    if (!over || !ready || activeWeekIndex == null || !updateWeekDays || !getProgramSnapshot) return;
 
     const activeInstanceId = String(active.id);
     const overId = String(over.id);
@@ -146,6 +200,10 @@ export function WorkoutCanvas() {
     setActiveId(null);
   };
 
+  if (!ready || !exerciseActions || !dayActions) {
+    return <WorkoutCanvasSkeleton />;
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -159,7 +217,12 @@ export function WorkoutCanvas() {
         dir="rtl"
       >
         {currentDays.map((day) => (
-          <WorkoutDayCard key={day.id} day={day} />
+          <WorkoutDayCard
+            key={day.id}
+            day={day}
+            dayActions={dayActions}
+            exerciseActions={exerciseActions}
+          />
         ))}
       </div>
 
@@ -168,6 +231,7 @@ export function WorkoutCanvas() {
           <ExerciseItemDragPreview
             dayId={activeDrag.dayId}
             workoutExercise={activeDrag.exercise}
+            exerciseActions={exerciseActions}
           />
         ) : null}
       </DragOverlay>

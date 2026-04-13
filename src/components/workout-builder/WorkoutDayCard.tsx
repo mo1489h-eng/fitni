@@ -6,6 +6,7 @@ import { Fragment, useState } from "react";
 
 import type { WorkoutDay } from "@/types/workout";
 import type { TrainingGoal } from "@/lib/workout-builder-utils";
+import type { WorkoutBuilderDayActions, WorkoutBuilderExerciseActions } from "@/stores/workoutBuilderStore";
 import { totalSetsForDay } from "@/lib/workout-volume";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
 import { cn } from "@/lib/utils";
 
 import { AddExerciseButton } from "./AddExerciseButton";
@@ -23,6 +23,8 @@ import { ExerciseSelectorDialog } from "./ExerciseSelectorDialog";
 
 type Props = {
   day: WorkoutDay;
+  dayActions: WorkoutBuilderDayActions;
+  exerciseActions: WorkoutBuilderExerciseActions;
 };
 
 function EmptyDayDropZone({ dayId }: { dayId: string }) {
@@ -64,12 +66,10 @@ function EmptyDayDropZone({ dayId }: { dayId: string }) {
   );
 }
 
-export function WorkoutDayCard({ day }: Props) {
+export function WorkoutDayCard({ day, dayActions, exerciseActions }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [fillOpen, setFillOpen] = useState(false);
-  const linkSupersetWithNext = useWorkoutBuilderStore((s) => s.linkSupersetWithNext);
-  const addExerciseToDay = useWorkoutBuilderStore((s) => s.addExerciseToDay);
-  const smartFillDay = useWorkoutBuilderStore((s) => s.smartFillDay);
+  const { linkSupersetWithNext, addExerciseToDay, smartFillDay } = dayActions;
 
   const ids = day.exercises.map((e) => e.instanceId);
   const isWorkout = day.type === "workout";
@@ -143,7 +143,11 @@ export function WorkoutDayCard({ day }: Props) {
             <div className="space-y-0">
               {day.exercises.map((ex, index) => (
                 <Fragment key={ex.instanceId}>
-                  <ExerciseItem dayId={day.id} workoutExercise={ex} />
+                  <ExerciseItem
+                    dayId={day.id}
+                    workoutExercise={ex}
+                    exerciseActions={exerciseActions}
+                  />
                   {index < day.exercises.length - 1 ? (
                     <div className="flex justify-center py-1.5">
                       <Button

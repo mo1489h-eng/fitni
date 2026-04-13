@@ -79,11 +79,20 @@ const ClientRegister = () => {
       });
 
       if (fnError) {
-        throw new Error("تعذر الاتصال بالخادم. حاول مرة أخرى.");
+        if (isEmailAlreadyRegisteredError(fnError.message ?? "")) {
+          const { title, description } = await duplicateEmailToastContent(email, { preferClientLogin: true });
+          toast({ title, description, variant: "destructive" });
+          return;
+        }
+        toast({
+          title: "تعذّر الاتصال بالخادم",
+          description: "تحقق من الشبكة وحاول مرة أخرى.",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!fnData?.success) {
-        // Handle specific error codes
         if (fnData?.code === "TOKEN_EXPIRED") {
           setExpired(true);
           return;
@@ -93,7 +102,17 @@ const ClientRegister = () => {
           navigate("/client-login");
           return;
         }
-        throw new Error(fnData?.message || "فشل إنشاء الحساب");
+        if (clientRegistrationLooksLikeDuplicate(fnData?.code, fnData?.message)) {
+          const { title, description } = await duplicateEmailToastContent(email, { preferClientLogin: true });
+          toast({ title, description, variant: "destructive" });
+          return;
+        }
+        toast({
+          title: "فشل إنشاء الحساب",
+          description: fnData?.message || "تعذّر إكمال التسجيل",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Step 2: Sign in with the exact same password

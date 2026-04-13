@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrendingUp, User, Mail, Lock, Loader2, CheckCircle, Users, ClipboardList, CreditCard, Gift, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib/auth-email-errors";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 

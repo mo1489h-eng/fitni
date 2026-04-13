@@ -7,8 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Password reset: Supabase redirects here with URL hash (#access_token=...&type=recovery).
- * The JS client exchanges the hash for a session; then updateUser({ password }) applies the new password.
+ * Recovery: Supabase redirects with PKCE (?code=) or implicit hash (#access_token=&type=recovery).
  */
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -22,6 +21,18 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let cancelled = false;
+    const timeouts: number[] = [];
+
+    const markSession = () => {
+      if (cancelled) return;
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (cancelled) return;
+        if (session) {
+          setReady(true);
+          setInvalid(false);
+        }
+      });
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (cancelled) return;
@@ -35,33 +46,45 @@ export default function ResetPassword() {
       }
     });
 
-    const check = () =>
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (cancelled) return;
-        if (session) {
-          setReady(true);
-          setInvalid(false);
-        }
-      });
+    const hasImplicitRecovery =
+      typeof window !== "undefined" &&
+      (window.location.hash.includes("type=recovery") || window.location.hash.includes("access_token"));
 
-    void check();
-    const t1 = window.setTimeout(() => void check(), 300);
-    const t2 = window.setTimeout(() => void check(), 1200);
+    void (async () => {
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) console.error("exchangeCodeForSession", error);
+        window.history.replaceState({}, document.title, `${url.pathname}${url.hash}`);
+      }
+      markSession();
+    })();
 
-    const tInvalid = window.setTimeout(() => {
-      if (cancelled) return;
-      supabase.auth.getSession().then(({ data: { session } }) => {
+    [400, 1200, 2800].forEach((ms) => {
+      timeouts.push(window.setTimeout(markSession, ms));
+    });
+
+    const failAfter = hasImplicitRecovery ? 15000 : 5000;
+    timeouts.push(
+      window.setTimeout(() => {
         if (cancelled) return;
-        if (!session) setInvalid(true);
-      });
-    }, 2500);
+        void supabase.auth.getSession().then(({ data: { session } }) => {
+          if (cancelled) return;
+          if (session) {
+            setReady(true);
+            setInvalid(false);
+            return;
+          }
+          setInvalid(true);
+        });
+      }, failAfter),
+    );
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(tInvalid);
+      timeouts.forEach((id) => window.clearTimeout(id));
     };
   }, []);
 
@@ -104,9 +127,14 @@ export default function ResetPassword() {
         <div className="max-w-md text-center space-y-4">
           <p className="text-foreground font-medium">رابط إعادة التعيين غير صالح أو انتهت صلاحيته.</p>
           <p className="text-sm text-muted-foreground">اطلب رابطاً جديداً من صفحة تسجيل الدخول.</p>
-          <Button asChild>
-            <Link to="/login">العودة لتسجيل الدخول</Link>
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Button asChild variant="default">
+              <Link to="/login">دخول المدرب</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/client-login">دخول المتدرب</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -11,28 +11,29 @@ export function isEmailAlreadyRegisteredError(message: string): boolean {
     m.includes("email address is already registered") ||
     m.includes("email already exists") ||
     m.includes("duplicate key") ||
-    m.includes("already exists")
+    m.includes("already exists") ||
+    m.includes("database error saving new user")
   );
 }
 
-/** Toast content when Supabase reports the email is already registered. */
+/** Toast content when signup fails because the email is already taken. */
 export async function duplicateEmailToastContent(email: string, options?: { preferClientLogin?: boolean }) {
   const preferClient = options?.preferClientLogin ?? false;
   const { data, error } = await supabase.rpc("check_email_account_type", {
     p_email: email.trim().toLowerCase(),
   });
 
-  const base = (
+  const unknown = (
     <>
-      هذا البريد الإلكتروني مستخدم مسبقاً، يرجى تسجيل الدخول أو استخدام بريد آخر.{" "}
+      هذا البريد مستخدم مسبقاً.{" "}
       <Link to={preferClient ? "/client-login" : "/login"} className="underline font-semibold text-primary">
-        تسجيل الدخول
+        سجّل دخولك من هنا
       </Link>
     </>
   );
 
   if (error) {
-    return { title: "البريد مستخدم مسبقاً", description: base };
+    return { title: "البريد مستخدم مسبقاً", description: unknown };
   }
 
   switch (String(data)) {
@@ -41,11 +42,10 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         title: "البريد مستخدم مسبقاً",
         description: (
           <>
-            هذا البريد مسجل كمدرب.{" "}
+            هذا البريد مسجل كمدرب،{" "}
             <Link to="/login" className="underline font-semibold text-primary">
-              تسجيل الدخول
+              سجّل دخولك من هنا
             </Link>
-            {" أو استخدم بريداً آخر."}
           </>
         ),
       };
@@ -56,7 +56,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
           <>
             هذا البريد مسجل كمتدرب، تواصل مع مدربك.{" "}
             <Link to="/client-login" className="underline font-semibold text-primary">
-              تسجيل الدخول كمتدرب
+              سجّل دخولك من هنا
             </Link>
           </>
         ),
@@ -66,7 +66,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         title: "البريد مستخدم مسبقاً",
         description: (
           <>
-            هذا البريد مسجل كمدرب وكمتدرب.{" "}
+            هذا البريد مسجّل كمدرب وكمتدرب.{" "}
             <Link to="/login" className="underline font-semibold text-primary">
               دخول المدرب
             </Link>
@@ -78,7 +78,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         ),
       };
     default:
-      return { title: "البريد مستخدم مسبقاً", description: base };
+      return { title: "البريد مستخدم مسبقاً", description: unknown };
   }
 }
 
@@ -91,5 +91,5 @@ export function clientRegistrationLooksLikeDuplicate(code?: string, message?: st
   ) {
     return true;
   }
-  return isEmailAlreadyRegisteredError(m) || m.includes("already") || m.includes("duplicate");
+  return isEmailAlreadyRegisteredError(m) || m.includes("already") || m.includes("duplicate") || m.includes("مسجل");
 }

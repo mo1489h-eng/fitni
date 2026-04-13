@@ -13,6 +13,7 @@ const ClientLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotSending, setForgotSending] = useState(false);
   const [mode, setMode] = useState<"link" | "email">("email");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,21 +56,35 @@ const ClientLogin = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      toast({ title: "أدخل بريدك الإلكتروني أولاً", variant: "destructive" });
+    const trimmed = email.trim();
+    if (!trimmed) {
+      toast({
+        title: "أدخل بريدك الإلكتروني أولاً",
+        description: "اكتب بريدك في الحقل ثم اضغط «نسيت كلمة المرور؟» مرة أخرى",
+        variant: "destructive",
+      });
       return;
     }
-    setLoading(true);
+    setForgotSending(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
         redirectTo: PASSWORD_RESET_REDIRECT_URL,
       });
       if (error) throw error;
-      toast({ title: "تم إرسال رابط إعادة التعيين", description: "تحقق من بريدك الإلكتروني" });
-    } catch (err: any) {
-      toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
+      toast({
+        title: "تم إرسال رابط إعادة التعيين",
+        description: "تحقق من بريدك وافتح الرابط لإنشاء كلمة مرور جديدة",
+      });
+    } catch (err: unknown) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const m = raw.toLowerCase();
+      const description =
+        m.includes("rate") || m.includes("too many")
+          ? "تجاوزت عدد المحاولات. انتظر قليلاً ثم حاول مرة أخرى."
+          : `تعذّر إرسال الرابط: ${raw}`;
+      toast({ title: "تعذّر إرسال البريد", description, variant: "destructive" });
     } finally {
-      setLoading(false);
+      setForgotSending(false);
     }
   };
 
@@ -157,12 +172,18 @@ const ClientLogin = () => {
                   <input type="checkbox" className="w-4 h-4 rounded border-[hsl(0_0%_15%)] bg-[hsl(0_0%_4%)] accent-primary" />
                   <span className="text-xs text-[hsl(0_0%_45%)]">تذكرني</span>
                 </label>
-                <button type="button" onClick={handleForgotPassword} className="text-xs text-primary hover:text-primary/80 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={forgotSending}
+                  className="text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                >
+                  {forgotSending ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : null}
                   نسيت كلمة المرور؟
                 </button>
               </div>
 
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
+              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading || forgotSending}>
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "تسجيل الدخول"}
               </Button>
             </form>

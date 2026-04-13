@@ -176,7 +176,18 @@ const Login = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => setShowForgot((v) => !v)}
+                  onClick={() => {
+                    setShowForgot(true);
+                    const t = email.trim();
+                    if (t) void handleForgotPassword();
+                    else {
+                      toast({
+                        title: "أدخل بريدك الإلكتروني",
+                        description: "اكتب بريدك في الحقل أعلاه ثم اضغط «نسيت كلمة المرور؟» مرة أخرى لإرسال الرابط.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                   className="text-sm text-primary hover:underline font-medium"
                 >
                   نسيت كلمة المرور؟
@@ -200,7 +211,7 @@ const Login = () => {
                 </div>
               ) : null}
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              <Button type="submit" className="w-full" size="lg" disabled={loading || forgotSending}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "تسجيل الدخول"}
               </Button>
             </form>

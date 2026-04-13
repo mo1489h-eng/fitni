@@ -209,8 +209,8 @@ async function fetchRemoteMerged(
   local: ExerciseDBItem[],
 ): Promise<{ items: ExerciseDBItem[]; source: "local" | "remote" }> {
   const safeLocal = Array.isArray(local) ? local : [];
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  if (!projectId) {
+  const supabaseBase = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
+  if (!supabaseBase) {
     return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
   }
 
@@ -230,7 +230,7 @@ async function fetchRemoteMerged(
     params.set("endpoint", "exercises");
   }
 
-  const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
+  const url = `${supabaseBase}/functions/v1/exercisedb-proxy?${params.toString()}`;
   let response: Response;
   try {
     response = await fetch(url, {
@@ -308,7 +308,7 @@ export async function searchExercisesUnified(opts: SearchExerciseOptions): Promi
 
     if (!cacheEmpty) {
       try {
-        let qb = supabase.from("exercisedb_cache").select("*").order("name_en");
+        let qb = supabase.from("exercisedb_cache").select("*").order("name");
 
         if (bp) {
           qb = qb.eq("body_part", bp);
@@ -319,7 +319,7 @@ export async function searchExercisesUnified(opts: SearchExerciseOptions): Promi
         if (q.length >= 1) {
           const safe = sanitizeIlikeFragment(q);
           if (safe.length >= 1) {
-            qb = qb.or(`name_en.ilike.%${safe}%,name_ar.ilike.%${safe}%`);
+            qb = qb.ilike("name", `%${safe}%`);
           }
         }
 
@@ -382,8 +382,8 @@ export async function fetchRemoteExercisePage(
 ): Promise<ExerciseDBItem[]> {
   try {
     const q = query ? normalizeExerciseSearchQuery(query) : "";
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    if (!projectId) return [];
+    const supabaseBase = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
+    if (!supabaseBase) return [];
 
     const params = new URLSearchParams({ limit: "30", offset: String(offset) });
     if (bodyPart) {
@@ -395,7 +395,7 @@ export async function fetchRemoteExercisePage(
     } else {
       params.set("endpoint", "exercises");
     }
-    const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
+    const url = `${supabaseBase}/functions/v1/exercisedb-proxy?${params.toString()}`;
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
     });

@@ -3,66 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-/** Popular ExerciseDB names -> Arabic (subset; extend over time). */
-const NAME_AR: Record<string, string> = {
-  "barbell bench press": "بنش بريس بار",
-  "dumbbell bench press": "بنش بريس دمبل",
-  "incline barbell bench press": "بنش مائل بار",
-  "incline dumbbell bench press": "بنش مائل دمبل",
-  "lat pulldown": "سحب علوي",
-  "pull-up": "عقلة",
-  "pull up": "عقلة",
-  "chin-up": "عقلة ضيقة",
-  "barbell squat": "سكوات بار",
-  "leg press": "ليج بريس",
-  "deadlift": "ديدليفت",
-  "romanian deadlift": "رومانيان ديدليفت",
-  "barbell bent over row": "تجديف بار",
-  "seated cable row": "تجديف جالس",
-  "dumbbell shoulder press": "ضغط أكتاف دمبل",
-  "overhead press": "ضغط فوق الرأس",
-  "lateral raise": "رفع جانبي",
-  "barbell curl": "كيرل بار",
-  "dumbbell curl": "كيرل دمبل",
-  "triceps pushdown": "ترايسبس بوش داون",
-  "push-up": "ضغط",
-  "front squat": "فرونت سكوات",
-  "hack squat": "هاك سكوات",
-  "bulgarian split squat": "سبلت سكوات بلغاري",
-  "walking lunge": "مشي طعنات",
-  "leg extension": "تمديد ركبة",
-  "lying leg curl": "كيرل رجل نائم",
-  "face pull": "فيس بول",
-  "cable crossover": "كروس أوفر",
-  "dumbbell fly": "فلاي دمبل",
-  "chest dip": "ديبس صدر",
-  "t-bar row": "تي بار رو",
-  "hip thrust": "هيب ثرست",
-  "standing calf raise": "بطة واقف",
-  "hammer curl": "هامر كيرل",
-  "skull crusher": "سكال كراشر",
-  "preacher curl": "بريتشر كيرل",
-  "farmers walk": "حمل مزارع",
-  "farmer carry": "حمل مزارع",
-  "plank": "بلانك",
-  "hanging leg raise": "رفع رجلين معلق",
-  "kettlebell swing": "سوينغ كيتلبل",
-  "jump rope": "حبل قفز",
-  "burpee": "بيربي",
-};
-
-function arabicForName(en: string): string {
-  const k = en.toLowerCase().replace(/\s+/g, " ").trim();
-  if (NAME_AR[k]) return NAME_AR[k];
-  for (const [key, val] of Object.entries(NAME_AR)) {
-    if (k.includes(key) || key.includes(k)) return val;
-  }
-  return en;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -131,6 +74,7 @@ serve(async (req) => {
       equipment: string;
       secondaryMuscles?: string[];
       instructions?: string[];
+      gifUrl?: string;
     }>;
 
     if (!Array.isArray(list)) {
@@ -141,15 +85,15 @@ serve(async (req) => {
     }
 
     const rows = list.map((ex) => ({
-      external_id: ex.id,
-      name_en: ex.name,
-      name_ar: arabicForName(ex.name),
+      id: ex.id,
+      name: ex.name,
       body_part: ex.bodyPart,
-      target: ex.target ?? "",
       equipment: ex.equipment ?? "",
+      gif_url: typeof ex.gifUrl === "string" && ex.gifUrl.trim() ? ex.gifUrl.trim() : null,
+      target: ex.target ?? "",
       secondary_muscles: ex.secondaryMuscles ?? [],
       instructions: ex.instructions ?? [],
-      synced_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     }));
 
     const { count: countBefore } = await admin
@@ -158,7 +102,7 @@ serve(async (req) => {
     console.log("[exercise-library-sync] RapidAPI rows:", list.length, "| exercisedb_cache rows before upsert:", countBefore ?? "unknown");
 
     const { error: upErr } = await admin.from("exercisedb_cache").upsert(rows, {
-      onConflict: "external_id",
+      onConflict: "id",
     });
     if (upErr) {
       console.error("[exercise-library-sync] upsert failed:", upErr.message, upErr);

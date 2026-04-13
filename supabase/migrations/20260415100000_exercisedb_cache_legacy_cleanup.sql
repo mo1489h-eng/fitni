@@ -1,4 +1,14 @@
--- RapidAPI ExerciseDB read-through cache (distinct from legacy public.exercise_library trainer table)
+-- If an older exercisedb_cache (external_id / name_en / jsonb) exists, replace with current schema.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'exercisedb_cache' and column_name = 'external_id'
+  ) then
+    drop table public.exercisedb_cache cascade;
+  end if;
+end $$;
+
 create extension if not exists pg_trgm;
 
 create table if not exists public.exercisedb_cache (

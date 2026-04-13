@@ -1,6 +1,6 @@
 /**
- * Returns a proxied image URL for an exercise by its ExerciseDB `external_id`.
- * Uses the `exercise-gif` Edge Function (same RapidAPI image path as `exercisedb-proxy` `endpoint=image`).
+ * Returns a proxied GIF URL for an ExerciseDB exercise id.
+ * Path: `{VITE_SUPABASE_URL}/functions/v1/exercise-gif?id=…` (Edge Function `exercise-gif`).
  */
 export function getExerciseImageUrl(exerciseId: string): string {
   if (!exerciseId) return "";

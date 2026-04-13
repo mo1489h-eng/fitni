@@ -3,9 +3,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+/** Subset of common ExerciseDB names → Arabic for prompts and display. */
+const NAME_AR: Record<string, string> = {
+  "barbell bench press": "بنش بريس بار",
+  "dumbbell bench press": "بنش بريس دمبل",
+  "lat pulldown": "سحب علوي",
+  "pull-up": "عقلة",
+  "pull up": "عقلة",
+  "barbell squat": "سكوات بار",
+  "leg press": "ليج بريس",
+  "deadlift": "ديدليفت",
+};
+
+function arabicForName(en: string): string {
+  const k = en.toLowerCase().replace(/\s+/g, " ").trim();
+  if (NAME_AR[k]) return NAME_AR[k];
+  for (const [key, val] of Object.entries(NAME_AR)) {
+    if (k.includes(key) || key.includes(k)) return val;
+  }
+  return en;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -75,11 +96,10 @@ serve(async (req) => {
     }
 
     const exclude = nameEn.toLowerCase();
-    const candidates = lib.filter(
-      (r) =>
-        !r.name_en.toLowerCase().includes(exclude) &&
-        r.name_en.toLowerCase() !== exclude,
-    );
+    const candidates = lib.filter((r) => {
+      const n = (r.name ?? "").toLowerCase();
+      return !n.includes(exclude) && n !== exclude;
+    });
     const pool = (candidates.length >= 10 ? candidates : lib).slice(0, 80);
 
     const model = "gemini-1.5-flash";
@@ -87,7 +107,11 @@ serve(async (req) => {
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
 
     const listText = pool
-      .map((x) => `- id:${x.external_id} | ${x.name_en} | ${x.name_ar} | ${x.body_part} | ${x.equipment}`)
+      .map((x) => {
+        const en = x.name ?? "";
+        const ar = arabicForName(en);
+        return `- id:${x.id} | ${en} | ${ar} | ${x.body_part ?? ""} | ${x.equipment ?? ""}`;
+      })
       .join("\n");
 
     const prompt = `أنت مدرب قوة. التمرين الحالي: "${nameEn}" (${nameAr}). سبب الاستبدال: ${reason}.
@@ -131,18 +155,19 @@ ${listText}`;
       });
     }
 
-    const ids = new Set(pool.map((p) => p.external_id));
+    const ids = new Set(pool.map((p) => p.id));
     const alts = (parsed.alternatives ?? [])
       .filter((a) => a.external_id && ids.has(a.external_id))
       .slice(0, 3)
       .map((a) => {
-        const row = pool.find((r) => r.external_id === a.external_id)!;
+        const row = pool.find((r) => r.id === a.external_id)!;
+        const en = row.name ?? "";
         return {
           external_id: a.external_id,
-          name_en: row.name_en,
-          name_ar: row.name_ar,
-          body_part: row.body_part,
-          equipment: row.equipment,
+          name_en: en,
+          name_ar: arabicForName(en),
+          body_part: row.body_part ?? "",
+          equipment: row.equipment ?? "",
           reason_ar: a.reason_ar ?? "",
         };
       });

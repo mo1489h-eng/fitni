@@ -836,36 +836,36 @@ export type Database = {
       }
       exercisedb_cache: {
         Row: {
-          body_part: string
+          body_part: string | null
+          created_at: string | null
           equipment: string | null
-          external_id: string
-          instructions: Json
-          name_ar: string
-          name_en: string
-          secondary_muscles: Json
-          synced_at: string
+          gif_url: string | null
+          id: string
+          instructions: string[] | null
+          name: string | null
+          secondary_muscles: string[] | null
           target: string | null
         }
         Insert: {
-          body_part: string
+          body_part?: string | null
+          created_at?: string | null
           equipment?: string | null
-          external_id: string
-          instructions?: Json
-          name_ar?: string
-          name_en: string
-          secondary_muscles?: Json
-          synced_at?: string
+          gif_url?: string | null
+          id: string
+          instructions?: string[] | null
+          name?: string | null
+          secondary_muscles?: string[] | null
           target?: string | null
         }
         Update: {
-          body_part?: string
+          body_part?: string | null
+          created_at?: string | null
           equipment?: string | null
-          external_id?: string
-          instructions?: Json
-          name_ar?: string
-          name_en?: string
-          secondary_muscles?: Json
-          synced_at?: string
+          gif_url?: string | null
+          id?: string
+          instructions?: string[] | null
+          name?: string | null
+          secondary_muscles?: string[] | null
           target?: string | null
         }
         Relationships: []

@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "test:supabase": "node test-supabase.js",
     "deploy:exercise-gif": "npx supabase functions deploy exercise-gif",
-    "deploy:exercisedb-proxy": "npx supabase functions deploy exercisedb-proxy"
+    "deploy:exercise-library-sync": "npx supabase functions deploy exercise-library-sync",
+    "deploy:exercisedb-proxy": "npx supabase functions deploy exercisedb-proxy",
+    "deploy:exercise-functions": "npx supabase functions deploy exercise-gif && npx supabase functions deploy exercise-library-sync && npx supabase functions deploy exercisedb-proxy"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",

@@ -8,6 +8,46 @@ const corsHeaders = {
 
 const RAPID_HOST = "exercisedb.p.rapidapi.com";
 
+/** Try exercise JSON endpoints; re-stream CDN `gifUrl` bytes. */
+async function fetchGifViaExerciseDetail(
+  exerciseId: string,
+  headers: Record<string, string>,
+): Promise<{ buffer: ArrayBuffer; contentType: string } | null> {
+  const detailUrls = [
+    `https://${RAPID_HOST}/exercises/exercise/${encodeURIComponent(exerciseId)}`,
+    `https://${RAPID_HOST}/exercises/${encodeURIComponent(exerciseId)}`,
+  ];
+
+  for (const detailUrl of detailUrls) {
+    try {
+      const detailRes = await fetch(detailUrl, { headers });
+      if (!detailRes.ok) continue;
+
+      let data: { gifUrl?: string };
+      try {
+        data = (await detailRes.json()) as { gifUrl?: string };
+      } catch {
+        continue;
+      }
+
+      const gifUrl = typeof data?.gifUrl === "string" ? data.gifUrl.trim() : "";
+      if (!gifUrl) continue;
+
+      const gifRes = await fetch(gifUrl, {
+        headers: { "User-Agent": "Fitni-ExerciseGif/1.0" },
+      });
+      if (!gifRes.ok) continue;
+
+      const buffer = await gifRes.arrayBuffer();
+      const contentType = gifRes.headers.get("content-type") || "image/gif";
+      return { buffer, contentType };
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -31,47 +71,33 @@ serve(async (req) => {
       });
     }
 
-    const headers = {
+    const headers: Record<string, string> = {
       "X-RapidAPI-Key": rapidApiKey,
       "X-RapidAPI-Host": RAPID_HOST,
     };
 
-    // Official image streaming API (query params): exerciseId + resolution
-    // https://edb-docs.up.railway.app/docs/image-service/image
+    // Documented: /image?exerciseId=&resolution=
     const primaryUrl =
       `https://${RAPID_HOST}/image?exerciseId=${encodeURIComponent(exerciseId)}&resolution=360`;
     let response = await fetch(primaryUrl, { headers });
 
-    // Fallback: path form used by some stacks
     if (!response.ok) {
       const pathUrl = `https://${RAPID_HOST}/image/${encodeURIComponent(exerciseId)}`;
       response = await fetch(pathUrl, { headers });
     }
 
-    // Fallback: exercise detail returns `gifUrl` (CDN URL) — fetch and re-stream
     if (!response.ok) {
-      const detailUrl = `https://${RAPID_HOST}/exercises/exercise/${encodeURIComponent(exerciseId)}`;
-      const detailRes = await fetch(detailUrl, { headers });
-      if (detailRes.ok) {
-        const data = (await detailRes.json()) as { gifUrl?: string };
-        const gifUrl = typeof data?.gifUrl === "string" ? data.gifUrl.trim() : "";
-        if (gifUrl) {
-          const gifRes = await fetch(gifUrl, {
-            headers: { "User-Agent": "Fitni-ExerciseGif/1.0" },
-          });
-          if (gifRes.ok) {
-            const buf = await gifRes.arrayBuffer();
-            const ct = gifRes.headers.get("content-type") || "image/gif";
-            return new Response(buf, {
-              headers: {
-                ...corsHeaders,
-                "Content-Type": ct,
-                "Cache-Control": "public, max-age=86400",
-              },
-            });
-          }
-        }
+      const fromDetail = await fetchGifViaExerciseDetail(exerciseId, headers);
+      if (fromDetail) {
+        return new Response(fromDetail.buffer, {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": fromDetail.contentType,
+            "Cache-Control": "public, max-age=86400",
+          },
+        });
       }
+
       const errText = await response.text().catch(() => "");
       return new Response(
         JSON.stringify({

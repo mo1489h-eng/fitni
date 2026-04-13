@@ -5,6 +5,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const RAPID_HOST = 'exercisedb.p.rapidapi.com';
+
+async function fetchGifViaExerciseDetail(
+  exerciseId: string,
+  headers: Record<string, string>,
+): Promise<{ buffer: ArrayBuffer; contentType: string } | null> {
+  const detailUrls = [
+    `https://${RAPID_HOST}/exercises/exercise/${encodeURIComponent(exerciseId)}`,
+    `https://${RAPID_HOST}/exercises/${encodeURIComponent(exerciseId)}`,
+  ];
+  for (const detailUrl of detailUrls) {
+    try {
+      const detailRes = await fetch(detailUrl, { headers });
+      if (!detailRes.ok) continue;
+      let data: { gifUrl?: string };
+      try {
+        data = (await detailRes.json()) as { gifUrl?: string };
+      } catch {
+        continue;
+      }
+      const gifUrl = typeof data?.gifUrl === 'string' ? data.gifUrl.trim() : '';
+      if (!gifUrl) continue;
+      const gifRes = await fetch(gifUrl, { headers: { 'User-Agent': 'Fitni-ExerciseGif/1.0' } });
+      if (!gifRes.ok) continue;
+      const buffer = await gifRes.arrayBuffer();
+      const contentType = gifRes.headers.get('content-type') || 'image/gif';
+      return { buffer, contentType };
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -30,26 +64,31 @@ serve(async (req) => {
         });
       }
 
+      const rapidHeaders: Record<string, string> = {
+        'X-RapidAPI-Key': RAPIDAPI_KEY,
+        'X-RapidAPI-Host': RAPID_HOST,
+      };
+
       // Documented image API: ?exerciseId=&resolution= (see ExerciseDB docs)
       const primaryUrl =
-        `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(exerciseId)}&resolution=360`;
-      let imgResponse = await fetch(primaryUrl, {
-        headers: {
-          'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-        },
-      });
+        `https://${RAPID_HOST}/image?exerciseId=${encodeURIComponent(exerciseId)}&resolution=360`;
+      let imgResponse = await fetch(primaryUrl, { headers: rapidHeaders });
       if (!imgResponse.ok) {
-        const pathUrl = `https://exercisedb.p.rapidapi.com/image/${encodeURIComponent(exerciseId)}`;
-        imgResponse = await fetch(pathUrl, {
-          headers: {
-            'X-RapidAPI-Key': RAPIDAPI_KEY,
-            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
-          },
-        });
+        const pathUrl = `https://${RAPID_HOST}/image/${encodeURIComponent(exerciseId)}`;
+        imgResponse = await fetch(pathUrl, { headers: rapidHeaders });
       }
 
       if (!imgResponse.ok) {
+        const fromDetail = await fetchGifViaExerciseDetail(exerciseId, rapidHeaders);
+        if (fromDetail) {
+          return new Response(fromDetail.buffer, {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': fromDetail.contentType,
+              'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+            },
+          });
+        }
         return new Response(JSON.stringify({ error: `Image fetch failed: ${imgResponse.status}` }), {
           status: imgResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

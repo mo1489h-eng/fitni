@@ -10,12 +10,10 @@ import {
   CheckCircle2,
   ClipboardList,
   Copy,
-  CreditCard,
   Eye,
   MessageCircle,
   Plus,
   Sparkles,
-  TrendingUp,
   UserPlus,
   Users,
   Zap,
@@ -28,7 +26,6 @@ import PremiumSkeleton from "@/components/PremiumSkeleton";
 import TrainerLayout from "@/components/TrainerLayout";
 import TrialBanner from "@/components/TrialBanner";
 import UpgradeModal from "@/components/UpgradeModal";
-import AnimatedCounter from "@/components/AnimatedCounter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardTrainerAnalytics } from "@/components/analytics/DashboardTrainerAnalytics";
+import { DashboardPremiumStats } from "@/components/analytics/DashboardPremiumStats";
 
 type Client = {
   id: string;
@@ -64,84 +62,7 @@ type SessionItem = {
   notes: string | null;
 };
 
-type PaymentItem = {
-  id: string;
-  amount: number;
-  created_at: string;
-  status: string;
-};
-
 const formatWhatsApp = (phone?: string) => `https://wa.me/966${(phone || "").replace(/^0/, "")}`;
-
-const CircularProgress = forwardRef<HTMLDivElement, { value: number }>(({ value }, ref) => {
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-  const progress = circumference - (Math.max(0, Math.min(100, value)) / 100) * circumference;
-
-  return (
-    <div ref={ref} className="relative flex h-24 w-24 items-center justify-center">
-      <svg viewBox="0 0 84 84" className="h-full w-full -rotate-90">
-        <circle cx="42" cy="42" r={radius} fill="none" stroke="hsl(var(--border))" strokeWidth="6" />
-        <circle
-          cx="42"
-          cy="42"
-          r={radius}
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={progress}
-        />
-      </svg>
-      <div className="absolute text-center">
-        <div className="text-2xl font-black text-foreground">
-          <AnimatedCounter end={value} suffix="%" />
-        </div>
-      </div>
-    </div>
-  );
-});
-CircularProgress.displayName = "CircularProgress";
-
-const StatCard = ({
-  title,
-  icon: Icon,
-  value,
-  suffix,
-  trend,
-  ring,
-}: {
-  title: string;
-  icon: typeof Users;
-  value: number;
-  suffix?: string;
-  trend: string;
-  ring?: boolean;
-}) => (
-  <Card className="group rounded-xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_20px_60px_hsl(var(--primary)/0.08)]">
-    <CardContent className="p-7">
-      <div className="mb-5 flex items-start justify-between border-t-2 border-primary pt-5">
-        <div>
-          <div className="text-sm font-medium text-muted-foreground">{title}</div>
-          <div className="mt-4 text-4xl font-black leading-none text-foreground tabular-nums">
-            {ring ? <span className="sr-only">{value}%</span> : <AnimatedCounter end={value} suffix={suffix} />}
-          </div>
-          <div className="mt-3 text-sm font-medium text-primary">{trend}</div>
-        </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-          <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-        </div>
-      </div>
-      {ring ? (
-        <div className="flex items-center justify-between">
-          <CircularProgress value={value} />
-          <div className="max-w-[8rem] text-sm leading-7 text-muted-foreground">نسبة العملاء الذين سجّلوا نشاطاً حديثاً.</div>
-        </div>
-      ) : null}
-    </CardContent>
-  </Card>
-);
 
 const EmptyPanel = forwardRef<HTMLDivElement, {
   icon: typeof Users;
@@ -221,16 +142,6 @@ const Dashboard = () => {
     enabled: !!user,
   });
 
-  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
-    queryKey: ["dashboard-payments", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("client_payments").select("id, amount, created_at, status").eq("status", "paid").order("created_at", { ascending: true });
-      if (error) throw error;
-      return data as PaymentItem[];
-    },
-    enabled: !!user,
-  });
-
   const { data: pendingCopilotCount = 0 } = useQuery({
     queryKey: ["dashboard-copilot-pending-count", user?.id],
     queryFn: async () => {
@@ -241,7 +152,7 @@ const Dashboard = () => {
     enabled: !!user && hasCopilotAccess,
   });
 
-  const isLoading = clientsLoading || measurementsLoading || sessionsLoading || paymentsLoading;
+  const isLoading = clientsLoading || measurementsLoading || sessionsLoading;
 
   const today = new Date();
   const todayKey = today.toISOString().slice(0, 10);
@@ -253,33 +164,12 @@ const Dashboard = () => {
 
   const clientMap = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients]);
 
-  const monthlyRevenue = useMemo(
-    () => payments.filter((payment) => new Date(payment.created_at).getMonth() === today.getMonth()).reduce((sum, payment) => sum + (payment.amount || 0), 0),
-    [payments, today],
-  );
-
-  const previousMonthRevenue = useMemo(() => {
-    const previousMonth = (today.getMonth() + 11) % 12;
-    return payments.filter((payment) => new Date(payment.created_at).getMonth() === previousMonth).reduce((sum, payment) => sum + (payment.amount || 0), 0);
-  }, [payments, today]);
-
-  const revenueChange = previousMonthRevenue > 0 ? Math.round(((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100) : 100;
-
   const weeklySessions = sessions.filter((session) => {
     const date = new Date(`${session.session_date}T00:00:00`);
     return date >= startOfWeek && date < endOfWeek;
   });
 
   const todaySessions = weeklySessions.filter((session) => session.session_date === todayKey);
-  const upcomingSessions = todaySessions.filter((session) => session.start_time >= today.toTimeString().slice(0, 5)).length;
-
-  const inactiveClients = clients.filter((client) => {
-    const lastWorkoutDate = new Date(client.last_workout_date);
-    const diffDays = Math.ceil((Date.now() - lastWorkoutDate.getTime()) / 86400000);
-    return diffDays >= 5;
-  });
-
-  const adherenceRate = clients.length > 0 ? Math.round(((clients.length - inactiveClients.length) / clients.length) * 100) : 0;
   const expiringClients = clients.filter((client) => {
     const remainingDays = Math.ceil((new Date(client.subscription_end_date).getTime() - Date.now()) / 86400000);
     return remainingDays >= 0 && remainingDays <= 7;
@@ -386,12 +276,10 @@ const Dashboard = () => {
           <PremiumSkeleton rows={6} />
         ) : (
           <>
-            <section className="grid gap-5 xl:grid-cols-4 md:grid-cols-2">
-              <StatCard title="العملاء النشطون" icon={Users} value={clients.length} trend={`+${Math.max(1, Math.ceil(clients.length / 6))} هذا الشهر`} />
-              <StatCard title="إيرادات الشهر" icon={TrendingUp} value={monthlyRevenue} suffix=" ر.س" trend={`${revenueChange >= 0 ? "+" : ""}${revenueChange}% مقارنة بالشهر الماضي`} />
-              <StatCard title="جلسات هذا الأسبوع" icon={CalendarDays} value={weeklySessions.length} trend={`${upcomingSessions} جلسة قادمة`} />
-              <StatCard title="معدل الالتزام" icon={Activity} value={adherenceRate} trend="مبني على آخر نشاط مسجل" ring />
-            </section>
+            <div className="mb-12 space-y-12">
+              <DashboardPremiumStats />
+              <DashboardTrainerAnalytics />
+            </div>
 
             <section className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
               <div className="space-y-8">

@@ -29,8 +29,8 @@ export function ChartCard({
     <div className={`rounded-2xl border border-[hsl(0_0%_12%)] bg-[#111111] p-4 md:p-5 ${className}`} dir="rtl">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="text-base font-bold text-white">{title}</h3>
-          {description ? <p className="mt-1 text-xs text-white/50">{description}</p> : null}
+          <h3 className="text-xl font-semibold text-white">{title}</h3>
+          {description ? <p className="mt-1 text-[12px] text-[#6b7280]">{description}</p> : null}
         </div>
         <Button
           type="button"
@@ -52,9 +52,7 @@ export function ChartCard({
       </div>
       <div ref={ref} className="min-h-[220px]">
         {loading ? (
-          <div className="flex h-[280px] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-[#22C55E]" />
-          </div>
+          <div className="analytics-shimmer min-h-[280px] w-full rounded-xl" aria-hidden />
         ) : empty ? (
           <p className="flex h-[220px] items-center justify-center text-center text-sm text-white/45">لا توجد بيانات كافية</p>
         ) : (

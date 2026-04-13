@@ -11,6 +11,7 @@ import AuthGuard from "@/components/AuthGuard";
 import MobileApp from "@/components/mobile/MobileApp";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -83,6 +84,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/register" element={<Register />} />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
 

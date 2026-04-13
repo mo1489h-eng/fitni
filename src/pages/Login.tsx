@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
+import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
@@ -19,6 +20,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotSending, setForgotSending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -46,6 +49,40 @@ const Login = () => {
     }
     navigate("/dashboard");
     setLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
+      toast({
+        title: "أدخل البريد الإلكتروني",
+        description: "نحتاج بريدك لإرسال رابط إعادة تعيين كلمة المرور",
+        variant: "destructive",
+      });
+      return;
+    }
+    setForgotSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: PASSWORD_RESET_REDIRECT_URL,
+      });
+      if (error) throw error;
+      toast({
+        title: "تم إرسال رابط إعادة التعيين",
+        description: "تحقق من بريدك الإلكتروني وافتح الرابط لإنشاء كلمة مرور جديدة",
+      });
+      setShowForgot(false);
+    } catch (e: unknown) {
+      const raw = e instanceof Error ? e.message : String(e);
+      const m = raw.toLowerCase();
+      const description =
+        m.includes("rate") || m.includes("too many")
+          ? "تجاوزت عدد المحاولات. انتظر قليلاً ثم حاول مرة أخرى."
+          : `تعذّر إرسال الرابط: ${raw}`;
+      toast({ title: "تعذّر إرسال البريد", description, variant: "destructive" });
+    } finally {
+      setForgotSending(false);
+    }
   };
 
   return (
@@ -137,8 +174,31 @@ const Login = () => {
                   <input type="checkbox" className="rounded border-border bg-background h-4 w-4 accent-primary" />
                   تذكرني
                 </label>
-                <button type="button" className="text-sm text-primary hover:underline font-medium">نسيت كلمة المرور؟</button>
+                <button
+                  type="button"
+                  onClick={() => setShowForgot((v) => !v)}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  نسيت كلمة المرور؟
+                </button>
               </div>
+
+              {showForgot ? (
+                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    سنرسل رابطاً إلى بريدك لإعادة تعيين كلمة المرور.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    disabled={forgotSending || !email.trim()}
+                    onClick={handleForgotPassword}
+                  >
+                    {forgotSending ? <Loader2 className="h-4 w-4 animate-spin" /> : "إرسال رابط الاستعادة"}
+                  </Button>
+                </div>
+              ) : null}
 
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "تسجيل الدخول"}

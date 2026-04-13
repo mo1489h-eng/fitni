@@ -6,6 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dumbbell, Loader2, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  clientRegistrationLooksLikeDuplicate,
+  duplicateEmailToastContent,
+  isEmailAlreadyRegisteredError,
+} from "@/lib/auth-email-errors";
 
 const ClientRegister = () => {
   const { token } = useParams();
@@ -115,7 +120,12 @@ const ClientRegister = () => {
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      toast({ title: "حدث خطأ", description: message, variant: "destructive" });
+      if (isEmailAlreadyRegisteredError(message)) {
+        const { title, description } = await duplicateEmailToastContent(email, { preferClientLogin: true });
+        toast({ title, description, variant: "destructive" });
+      } else {
+        toast({ title: "حدث خطأ", description: message, variant: "destructive" });
+      }
     } finally {
       setSubmitting(false);
     }

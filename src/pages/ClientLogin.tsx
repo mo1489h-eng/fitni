@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dumbbell, Link2, Mail, Loader2, Eye, EyeOff, Lock, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 
 const ClientLogin = () => {
   const [portalLink, setPortalLink] = useState("");
@@ -61,7 +62,7 @@ const ClientLogin = () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: PASSWORD_RESET_REDIRECT_URL,
       });
       if (error) throw error;
       toast({ title: "تم إرسال رابط إعادة التعيين", description: "تحقق من بريدك الإلكتروني" });

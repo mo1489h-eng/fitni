@@ -21,12 +21,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Maps Supabase Auth errors to clear Arabic copy for trainers. */
 function describeAuthSignUpError(message: string): string {
   const m = message.toLowerCase();
-  if (
-    m.includes("already registered") ||
-    m.includes("already been registered") ||
-    m.includes("user already registered")
-  ) {
-    return "هذا البريد الإلكتروني مسجّل مسبقاً.";
+  if (isEmailAlreadyRegisteredError(message)) {
+    return "هذا البريد الإلكتروني مستخدم مسبقاً، يرجى تسجيل الدخول أو استخدام بريد آخر";
   }
   if (m.includes("password")) {
     return "كلمة المرور غير مقبولة. استخدم 8 أحرف على الأقل.";
@@ -142,7 +138,9 @@ const Register = () => {
       });
 
       if (error) {
-        if (error.message?.includes("already registered") || error.message?.includes("already been registered")) {
+        if (isEmailAlreadyRegisteredError(error.message)) {
+          const { title, description } = await duplicateEmailToastContent(email);
+          toast({ title, description, variant: "destructive" });
           setEmailError("هذا البريد مستخدم بالفعل");
         } else {
           toast({

@@ -2494,6 +2494,7 @@ export type Database = {
     }
     Functions: {
       cleanup_copilot_messages: { Args: never; Returns: undefined }
+      check_email_account_type: { Args: { p_email: string }; Returns: string }
       complete_trainer_session: {
         Args: { p_session_id: string }
         Returns: boolean

@@ -25,11 +25,12 @@ export type ExerciseLibraryRow = {
 
 function resolveGifUrlFromRow(id: string, r: Record<string, unknown>): string {
   const proxied = getExerciseImageUrl(id);
-  const fromDb =
+  if (proxied) return proxied;
+  return (
     (typeof r.gif_url === "string" && r.gif_url.trim()) ||
     (typeof r.gifUrl === "string" && r.gifUrl.trim()) ||
-    "";
-  return proxied || fromDb;
+    ""
+  );
 }
 
 /** Safe map from DB/cache row → ExerciseDBItem; skips unusable rows instead of throwing. */

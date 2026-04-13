@@ -11,7 +11,7 @@ import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
-import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
+import { getExerciseImageUrl, isLikelyExerciseDbRemoteId } from "@/lib/exercise-image-proxy";
 import { mergeExerciseListsPreferLocal } from "@/lib/localExercisesDb";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -229,6 +229,15 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       ? (ex.gifUrl && String(ex.gifUrl).trim()) || ""
       : getExerciseImageUrl(ex.id) || (ex.gifUrl && String(ex.gifUrl).trim()) || "";
 
+    if (import.meta.env.DEV && !isBundledLocal) {
+      console.log("[ExerciseLibraryPanel] gif row", {
+        exerciseId: ex.id,
+        exerciseDbIdOk: isLikelyExerciseDbRemoteId(ex.id),
+        gifUrlUsed: thumb || "(empty)",
+        viteSupabaseUrl: import.meta.env.VITE_SUPABASE_URL ? "set" : "MISSING",
+      });
+    }
+
     return (
       <div
         key={ex.id}
@@ -295,7 +304,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
     const detailGif =
       ex.id.startsWith("fitni-db-")
         ? ""
-        : ((ex.gifUrl && String(ex.gifUrl).trim()) || getExerciseImageUrl(ex.id));
+        : getExerciseImageUrl(ex.id) || (ex.gifUrl && String(ex.gifUrl).trim()) || "";
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card border-r border-border" dir="rtl">
         <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">

@@ -13,11 +13,13 @@ interface Props {
   loading?: "eager" | "lazy";
   /** Shown when `src` is empty, load fails, or after error */
   errorFallback: ReactNode;
+  /** Default: omit (browser default). Use `no-referrer` for strict CDN hotlink rules. */
+  referrerPolicy?: React.HTMLAttributeReferrerPolicy;
 }
 
 /**
- * GIF from our `exercise-gif` Edge proxy (or absolute URLs). Uses `referrerPolicy="no-referrer"`
- * for compatibility with some CDN / API image responses.
+ * GIF from our `exercise-gif` Edge proxy (or absolute URLs).
+ * Supabase GIFs use default referrer; some third-party CDN URLs may need `referrerPolicy="no-referrer"`.
  */
 export function ExerciseGifImage({
   src,
@@ -26,6 +28,7 @@ export function ExerciseGifImage({
   objectFit = "cover",
   loading = "lazy",
   errorFallback,
+  referrerPolicy,
 }: Props) {
   const [phase, setPhase] = useState<Phase>(!src ? "error" : "loading");
 
@@ -55,11 +58,16 @@ export function ExerciseGifImage({
         src={src}
         alt={alt}
         loading={loading}
-        referrerPolicy="no-referrer"
+        referrerPolicy={referrerPolicy}
         className={cn(className, phase === "loading" && "opacity-0")}
         style={{ objectFit }}
         onLoad={() => setPhase("loaded")}
-        onError={() => setPhase("error")}
+        onError={() => {
+          if (import.meta.env.DEV) {
+            console.warn("[ExerciseGifImage] failed to load", src.slice(0, 120));
+          }
+          setPhase("error");
+        }}
       />
     </div>
   );

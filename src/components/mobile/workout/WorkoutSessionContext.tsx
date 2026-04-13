@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildWorkoutPlanFromDay, type PlanExercise } from "@/lib/workoutDayPlan";
 import type { CompletedSetValue, WorkoutPhase } from "./types";
 import { STORAGE_KEY, type PersistedWorkoutV1 } from "./types";
+import { useWorkoutStore } from "@/store/workout-store";
 
 const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 
@@ -50,6 +51,10 @@ type Ctx = {
   completed: Record<string, CompletedSetValue>;
   restRemaining: number;
   restTotalSeconds: number;
+  restEndsAtMs: number | null;
+  restPaused: boolean;
+  pauseRest: () => void;
+  resumeRest: () => void;
   elapsedMs: number;
   totalVolume: number;
   totalSetsLogged: number;
@@ -57,7 +62,7 @@ type Ctx = {
   setDrawerOpen: (v: boolean) => void;
   previewOffset: number;
   setPreviewOffset: (n: number) => void;
-  completeSet: (weight: number, reps: number) => Promise<void>;
+  completeSet: (weight: number, reps: number, opts?: { extraRestSeconds?: number }) => Promise<void>;
   skipRest: () => void;
   addRestSeconds: (n: number) => void;
   goNextExercise: () => void;
@@ -91,6 +96,9 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   const [completed, setCompleted] = useState<Record<string, CompletedSetValue>>({});
   const [restRemaining, setRestRemaining] = useState(0);
   const [restTotalSeconds, setRestTotalSeconds] = useState(0);
+  const [restEndsAtMs, setRestEndsAtMs] = useState<number | null>(null);
+  const [restPaused, setRestPaused] = useState(false);
+  const pausedRemainingMsRef = useRef(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [previewOffset, setPreviewOffset] = useState(0);
@@ -192,17 +200,17 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     return () => window.clearInterval(id);
   }, [phase]);
 
+  /** Timestamp-based rest countdown (accurate after sleep / background). */
   useEffect(() => {
-    if (phase !== "rest" || restRemaining <= 0) return;
-    restHandledRef.current = false;
-    const t = window.setTimeout(() => {
-      setRestRemaining((r) => {
-        if (r <= 1) return 0;
-        return r - 1;
-      });
-    }, 1000);
-    return () => window.clearTimeout(t);
-  }, [phase, restRemaining]);
+    if (phase !== "rest" || restPaused || !restEndsAtMs) return;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((restEndsAtMs - Date.now()) / 1000));
+      setRestRemaining(left);
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [phase, restEndsAtMs, restPaused]);
 
   useEffect(() => {
     if (phase !== "rest" || restRemaining > 0) return;
@@ -257,6 +265,17 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     persist();
   }, [persist]);
 
+  const scheduleRestPhase = useCallback((baseSeconds: number, opts?: { extraRestSeconds?: number }) => {
+    const extra = useWorkoutStore.getState().consumePendingExtraRest();
+    const total = Math.max(0, baseSeconds + extra + (opts?.extraRestSeconds ?? 0));
+    setRestTotalSeconds(total);
+    setRestRemaining(total);
+    setRestEndsAtMs(Date.now() + total * 1000);
+    setRestPaused(false);
+    pausedRemainingMsRef.current = 0;
+    setPhase("rest");
+  }, []);
+
   const insertSetMutation = useMutation({
     mutationFn: async (payload: {
       weight: number;
@@ -298,7 +317,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   });
 
   const completeSet = useCallback(
-    async (weight: number, reps: number) => {
+    async (weight: number, reps: number, opts?: { extraRestSeconds?: number }) => {
       const ex = plan[exerciseIndex];
       if (!ex) return;
       const k = setKey(ex.exerciseId, setWithinExercise);
@@ -307,6 +326,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
 
       try {
         await insertSetMutation.mutateAsync({ weight, reps, exercise: ex, setNum: setWithinExercise });
+        useWorkoutStore.getState().applyFatigueFromExercise(ex.muscleGroup, weight * reps);
       } catch {
         setCompleted(rollback);
         return;
@@ -317,9 +337,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
 
       if (!isLastSet) {
         if (ex.restSeconds > 0) {
-          setRestTotalSeconds(ex.restSeconds);
-          setRestRemaining(ex.restSeconds);
-          setPhase("rest");
+          scheduleRestPhase(ex.restSeconds, opts);
         } else {
           setSetWithinExercise((s) => s + 1);
         }
@@ -328,9 +346,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
 
       if (!isLastEx) {
         if (ex.restSeconds > 0) {
-          setRestTotalSeconds(ex.restSeconds);
-          setRestRemaining(ex.restSeconds);
-          setPhase("rest");
+          scheduleRestPhase(ex.restSeconds, opts);
         } else {
           setAwaitingNextExercise(true);
         }
@@ -338,24 +354,48 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       }
 
       if (ex.restSeconds > 0) {
-        setRestTotalSeconds(ex.restSeconds);
-        setRestRemaining(ex.restSeconds);
-        setPhase("rest");
+        scheduleRestPhase(ex.restSeconds, opts);
       } else {
         setPhase("complete");
       }
     },
-    [plan, exerciseIndex, setWithinExercise, insertSetMutation, clientId, sessionId]
+    [plan, exerciseIndex, setWithinExercise, insertSetMutation, scheduleRestPhase]
   );
 
   const skipRest = useCallback(() => {
     setRestRemaining(0);
+    setRestEndsAtMs(null);
+    setRestPaused(false);
+    pausedRemainingMsRef.current = 0;
   }, []);
 
   const addRestSeconds = useCallback((n: number) => {
+    if (restPaused) {
+      pausedRemainingMsRef.current += n * 1000;
+      setRestRemaining((r) => r + n);
+      setRestTotalSeconds((t) => t + n);
+      return;
+    }
+    setRestEndsAtMs((prev) => {
+      const anchor = prev ?? Date.now() + restRemaining * 1000;
+      return anchor + n * 1000;
+    });
     setRestRemaining((r) => r + n);
     setRestTotalSeconds((t) => t + n);
-  }, []);
+  }, [restPaused, restRemaining]);
+
+  const pauseRest = useCallback(() => {
+    if (phase !== "rest" || restPaused || !restEndsAtMs) return;
+    pausedRemainingMsRef.current = Math.max(0, restEndsAtMs - Date.now());
+    setRestPaused(true);
+    setRestEndsAtMs(null);
+  }, [phase, restPaused, restEndsAtMs]);
+
+  const resumeRest = useCallback(() => {
+    if (!restPaused || pausedRemainingMsRef.current <= 0) return;
+    setRestEndsAtMs(Date.now() + pausedRemainingMsRef.current);
+    setRestPaused(false);
+  }, [restPaused]);
 
   const goNextExercise = useCallback(() => {
     if (exerciseIndex >= plan.length - 1) return;
@@ -399,6 +439,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     } catch {
       /* ignore */
     }
+    void useWorkoutStore.getState().persistIndexedSnapshot(null);
   }, [sessionId, elapsedMs]);
 
   const finalizeAndExit = useCallback(async () => {
@@ -428,6 +469,10 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       completed,
       restRemaining,
       restTotalSeconds,
+      restEndsAtMs,
+      restPaused,
+      pauseRest,
+      resumeRest,
       elapsedMs,
       totalVolume,
       totalSetsLogged,
@@ -460,6 +505,10 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       completed,
       restRemaining,
       restTotalSeconds,
+      restEndsAtMs,
+      restPaused,
+      pauseRest,
+      resumeRest,
       elapsedMs,
       totalVolume,
       totalSetsLogged,

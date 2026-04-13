@@ -1,7 +1,6 @@
 import { WorkoutSessionProvider, useWorkoutSession } from "./WorkoutSessionContext";
 import FeatureErrorBoundary from "./FeatureErrorBoundary";
-import WorkoutSessionScreen from "./WorkoutSessionScreen";
-import RestTimerScreen from "./RestTimerScreen";
+import WorkoutSession from "./WorkoutSession";
 import WorkoutCompleteScreen from "./WorkoutCompleteScreen";
 import { CB } from "./designTokens";
 
@@ -22,9 +21,8 @@ function WorkoutFlowInner() {
     );
   }
 
-  if (w.phase === "rest") return <RestTimerScreen />;
   if (w.phase === "complete") return <WorkoutCompleteScreen />;
-  return <WorkoutSessionScreen />;
+  return <WorkoutSession />;
 }
 
 type Props = {

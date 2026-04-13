@@ -92,6 +92,11 @@ const Dashboard = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    localStorage.removeItem("fitni-builder-v1");
+    localStorage.removeItem("fitni-workout-builder-v1");
+  }, []);
+
   // Real-time sync: workout completions + measurements
   useEffect(() => {
     if (!user) return;

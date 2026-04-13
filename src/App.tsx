@@ -61,7 +61,6 @@ import VaultUnit from "./pages/VaultUnit";
 import PortalVault from "./pages/portal/PortalVault";
 import PortalLessonPlayer from "./pages/portal/PortalLessonPlayer";
 import { TrainerAppLayout } from "./components/layout/TrainerAppLayout";
-import WorkoutBuilder from "./pages/WorkoutBuilder";
 
 const queryClient = new QueryClient();
 
@@ -93,7 +92,6 @@ const App = () => {
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:id" element={<ClientProfile />} />
                 <Route path="programs" element={<ProgramBuilder />} />
-                <Route path="workout-builder" element={<WorkoutBuilder />} />
                 <Route path="payments" element={<Payments />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="nutrition" element={<Nutrition />} />

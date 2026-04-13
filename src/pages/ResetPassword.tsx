@@ -6,14 +6,16 @@ import { Lock, Eye, EyeOff, Loader2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+type RecoveryStatus = "loading" | "ready" | "invalid";
+
 /**
- * Recovery: Supabase redirects with PKCE (?code=) or implicit hash (#access_token=&type=recovery).
+ * Password recovery: Supabase PKCE redirects with ?code=... (primary).
+ * Legacy implicit flow may use #access_token=...&type=recovery.
  */
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [ready, setReady] = useState(false);
-  const [invalid, setInvalid] = useState(false);
+  const [status, setStatus] = useState<RecoveryStatus>("loading");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,70 +23,78 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let cancelled = false;
-    const timeouts: number[] = [];
-
-    const markSession = () => {
-      if (cancelled) return;
-      void supabase.auth.getSession().then(({ data: { session } }) => {
-        if (cancelled) return;
-        if (session) {
-          setReady(true);
-          setInvalid(false);
-        }
-      });
-    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (cancelled) return;
-      if (event === "PASSWORD_RECOVERY" && session) {
-        setReady(true);
-        setInvalid(false);
-      }
-      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        setReady(true);
-        setInvalid(false);
+      if (cancelled || !session) return;
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        setStatus("ready");
       }
     });
-
-    const hasImplicitRecovery =
-      typeof window !== "undefined" &&
-      (window.location.hash.includes("type=recovery") || window.location.hash.includes("access_token"));
 
     void (async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
+
+      // --- PKCE: exchange ?code= before anything else ---
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) console.error("exchangeCodeForSession", error);
-        window.history.replaceState({}, document.title, `${url.pathname}${url.hash}`);
-      }
-      markSession();
-    })();
-
-    [400, 1200, 2800].forEach((ms) => {
-      timeouts.push(window.setTimeout(markSession, ms));
-    });
-
-    const failAfter = hasImplicitRecovery ? 15000 : 5000;
-    timeouts.push(
-      window.setTimeout(() => {
         if (cancelled) return;
-        void supabase.auth.getSession().then(({ data: { session } }) => {
+
+        // Remove ?code= (and related query params) from the address bar
+        window.history.replaceState({}, document.title, url.pathname);
+
+        if (error) {
+          console.error("exchangeCodeForSession", error);
+          setStatus("invalid");
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (session) {
+          setStatus("ready");
+          return;
+        }
+        setStatus("invalid");
+        return;
+      }
+
+      // --- No code: maybe implicit hash already parsed by the client ---
+      const trySession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session;
+      };
+
+      let session = await trySession();
+      if (cancelled) return;
+      if (session) {
+        setStatus("ready");
+        return;
+      }
+
+      const hasImplicitHash =
+        window.location.hash.includes("type=recovery") ||
+        window.location.hash.includes("access_token");
+
+      if (hasImplicitHash) {
+        for (let i = 0; i < 8; i++) {
+          await new Promise((r) => setTimeout(r, 400));
           if (cancelled) return;
+          session = await trySession();
           if (session) {
-            setReady(true);
-            setInvalid(false);
+            setStatus("ready");
             return;
           }
-          setInvalid(true);
-        });
-      }, failAfter),
-    );
+        }
+      }
+
+      if (cancelled) return;
+      setStatus("invalid");
+    })();
 
     return () => {
       cancelled = true;
       subscription.unsubscribe();
-      timeouts.forEach((id) => window.clearTimeout(id));
     };
   }, []);
 
@@ -121,7 +131,7 @@ export default function ResetPassword() {
     }
   };
 
-  if (invalid && !ready) {
+  if (status === "invalid") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6" dir="rtl">
         <div className="max-w-md text-center space-y-4">
@@ -140,10 +150,11 @@ export default function ResetPassword() {
     );
   }
 
-  if (!ready) {
+  if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background" dir="rtl">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">جارٍ التحقق من الرابط…</p>
       </div>
     );
   }

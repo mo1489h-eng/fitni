@@ -31,31 +31,57 @@ export default function ResetPassword() {
       }
     });
 
+    const stripRecoveryQueryFromUrl = (pathname: string) => {
+      window.history.replaceState({}, document.title, pathname);
+    };
+
+    const waitForSession = async (maxMs: number, intervalMs: number) => {
+      const deadline = Date.now() + maxMs;
+      while (Date.now() < deadline && !cancelled) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) return session;
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+      if (cancelled) return null;
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    };
+
     void (async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
 
-      // --- PKCE: exchange ?code= before anything else ---
+      // --- PKCE: `detectSessionInUrl` may already exchange ?code= on client init.
+      // Calling exchangeCodeForSession again consumes the one-time code and fails — so wait for session first, then fall back to manual exchange. ---
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        let session = await waitForSession(3500, 100);
         if (cancelled) return;
 
-        // Remove ?code= (and related query params) from the address bar
-        window.history.replaceState({}, document.title, url.pathname);
-
-        if (error) {
-          console.error("exchangeCodeForSession", error);
-          setStatus("invalid");
-          return;
+        if (!session) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (cancelled) return;
+          if (error) {
+            console.error("exchangeCodeForSession", error);
+            // Race: auto-exchange may have completed after our failed manual attempt
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            session = retrySession ?? null;
+            if (!session) {
+              setStatus("invalid");
+              return;
+            }
+          } else {
+            const { data: { session: afterExchange } } = await supabase.auth.getSession();
+            session = afterExchange ?? null;
+            if (!session) {
+              setStatus("invalid");
+              return;
+            }
+          }
         }
 
-        const { data: { session } } = await supabase.auth.getSession();
+        stripRecoveryQueryFromUrl(url.pathname);
         if (cancelled) return;
-        if (session) {
-          setStatus("ready");
-          return;
-        }
-        setStatus("invalid");
+        setStatus("ready");
         return;
       }
 

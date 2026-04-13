@@ -1,7 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mapMuscleToBucket, type MuscleBucket } from "@/lib/analytics/muscleBuckets";
-import { rangeStartDate, setVolumeKg, type TimeRangeKey, toYmd, weekKeyMonday } from "@/lib/analytics/calculations";
+import {
+  parseYmd,
+  rangeStartDate,
+  setVolumeKg,
+  type TimeRangeKey,
+  toYmd,
+  weekKeyMonday,
+} from "@/lib/analytics/calculations";
 
 export type SessionExerciseRow = {
   id: string;

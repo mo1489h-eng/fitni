@@ -20,8 +20,10 @@ export function toYmd(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function parseYmd(s: string): Date {
-  return new Date(`${s}T12:00:00`);
+/** Parse YYYY-MM-DD as local calendar date (avoids UTC offset surprises). */
+export function parseYmd(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 /** Non-overlapping consecutive calendar-day runs (workout on that day). */

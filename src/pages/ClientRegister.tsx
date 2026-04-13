@@ -4,71 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Dumbbell, Loader2, Eye, EyeOff } from "lucide-react";
+import { Dumbbell, Loader2, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-/** Must match the deployed Edge Function name exactly (Dashboard → Edge Functions). */
-const REGISTER_CLIENT_ACCOUNT_FN = "register-client-account" as const;
-
-function logFunctionInvokeResult(
-  fnName: string,
-  result: {
-    data: unknown;
-    error: Error | null;
-  }
-) {
-  const { data, error } = result;
-  const err = error as Error & {
-    context?: Response;
-    status?: number;
-    message?: string;
-  };
-
-  let httpStatus: number | undefined;
-  let httpStatusText: string | undefined;
-  if (err?.context instanceof Response) {
-    httpStatus = err.context.status;
-    httpStatusText = err.context.statusText;
-  } else if (typeof err?.status === "number") {
-    httpStatus = err.status;
-  }
-
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const invokedUrl = baseUrl ? `${baseUrl.replace(/\/$/, "")}/functions/v1/${fnName}` : "(VITE_SUPABASE_URL missing)";
-
-  console.log("[ClientRegister] supabase.functions.invoke result", {
-    functionName: fnName,
-    matchesExpected: fnName === REGISTER_CLIENT_ACCOUNT_FN,
-    invokedUrl,
-    httpStatus: httpStatus ?? "(not available — e.g. network/CORS failure before response)",
-    httpStatusText,
-    data,
-    error: error ?? null,
-    errorMessage: err?.message,
-    errorStack: err && "stack" in err ? (err as Error).stack : undefined,
-  });
-
-  if (error) {
-    try {
-      console.error(
-        "[ClientRegister] invoke error (JSON):",
-        JSON.stringify(error, Object.getOwnPropertyNames(Object(error)))
-      );
-    } catch {
-      console.error("[ClientRegister] invoke error (string):", String(error));
-    }
-    if (err?.context && !(err.context instanceof Response)) {
-      console.error("[ClientRegister] invoke error.context:", err.context);
-    }
-  }
-
-  if (!error && !data) {
-    console.warn(
-      "[ClientRegister] Both data and error are empty — function may not exist (404) or returned empty body. Check Network tab for",
-      invokedUrl
-    );
-  }
-}
 
 const ClientRegister = () => {
   const { token } = useParams();
@@ -77,6 +14,7 @@ const ClientRegister = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [clientData, setClientData] = useState<{
     id: string; name: string; email: string; phone: string; trainer_name: string;
   } | null>(null);
@@ -86,14 +24,8 @@ const ClientRegister = () => {
 
   useEffect(() => {
     const fetchClient = async () => {
-      console.log("[ClientRegister] useParams token:", token, "type:", typeof token, "length:", token?.length);
-      if (!token) {
-        console.warn("[ClientRegister] No token in URL — expected /client-register/:token");
-        setLoading(false);
-        return;
-      }
+      if (!token) { setLoading(false); return; }
       const { data, error } = await supabase.rpc("get_client_by_invite_token", { p_token: token });
-      console.log("[ClientRegister] get_client_by_invite_token", { data, error });
       if (error || !data || data.length === 0) {
         setLoading(false);
         return;
@@ -125,14 +57,13 @@ const ClientRegister = () => {
 
     setSubmitting(true);
     try {
-      console.log("[ClientRegister] submit — invite token:", token, "email:", email);
-
-      const invokeResult = await supabase.functions.invoke<{
+      // Step 1: Call edge function to create auth user with exact password
+      const { data: fnData, error: fnError } = await supabase.functions.invoke<{
         success?: boolean;
         code?: string;
         message?: string;
         userId?: string;
-      }>(REGISTER_CLIENT_ACCOUNT_FN, {
+      }>("register-client-account", {
         body: {
           invite_token: token,
           email,
@@ -142,140 +73,49 @@ const ClientRegister = () => {
         },
       });
 
-      const { data: fnData, error: fnError } = invokeResult;
-      logFunctionInvokeResult(REGISTER_CLIENT_ACCOUNT_FN, { data: fnData, error: fnError });
-
-      let userId: string | null = null;
-      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
-
-      if (!fnError && fnData?.success && fnData.userId) {
-        console.log("[ClientRegister] Server created confirmed user; signing in…", fnData.userId);
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: form.password,
-        });
-        console.log("[ClientRegister] signIn after server create:", { signInData, signInError });
-        if (signInError) {
-          console.error("[ClientRegister] signIn error (full):", signInError);
-          throw signInError;
-        }
-        userId = signInData.user?.id ?? null;
-        session = signInData.session ?? null;
-      } else if (!fnError && fnData?.code === "USER_EXISTS") {
-        console.log("[ClientRegister] USER_EXISTS — signIn + link_client_account");
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: form.password,
-        });
-        console.log("[ClientRegister] signIn (existing user):", { signInData, signInError });
-        if (signInError) throw signInError;
-        userId = signInData.user?.id ?? null;
-        session = signInData.session ?? null;
-        const { error: linkError } = await supabase.rpc("link_client_account", {
-          p_invite_token: token!,
-          p_auth_user_id: userId!,
-        });
-        console.log("[ClientRegister] link_client_account:", { linkError });
-        if (linkError) throw linkError;
-      } else if (!fnError && fnData && !fnData.success) {
-        console.warn("[ClientRegister] register-client-account declined:", fnData);
-        throw new Error(fnData.message || fnData.code || "Registration failed");
-      } else if (fnError || !fnData?.success) {
-        console.warn("[ClientRegister] Falling back to supabase.auth.signUp (Edge Function unavailable or failed)");
-        const redirectTo = `${window.location.origin}/client-login`;
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: form.password,
-          options: {
-            data: { full_name: form.name, is_client: true },
-            emailRedirectTo: redirectTo,
-          },
-        });
-        console.log("[ClientRegister] signUp fallback result:", { signUpData, signUpError });
-        if (signUpError) {
-          console.error("[ClientRegister] signUp error (full):", signUpError);
-          console.error(
-            "[ClientRegister] signUp error serialized:",
-            JSON.stringify(signUpError, Object.getOwnPropertyNames(signUpError))
-          );
-        }
-
-        userId = signUpData.user?.id ?? null;
-        session = signUpData.session ?? null;
-
-        if (signUpError) {
-          const msg = (signUpError.message ?? "").toLowerCase();
-          const duplicate =
-            msg.includes("already") ||
-            msg.includes("registered") ||
-            msg.includes("exists") ||
-            (signUpError as { code?: string }).code === "user_already_exists";
-
-          if (duplicate) {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email,
-              password: form.password,
-            });
-            console.log("[ClientRegister] signIn after duplicate signUp:", { signInData, signInError });
-            if (signInError) throw signInError;
-            userId = signInData.user?.id ?? null;
-            session = signInData.session ?? null;
-          } else {
-            throw signUpError;
-          }
-        }
-
-        if (!userId) {
-          console.error("[ClientRegister] No user id after signUp — often means email confirmation required (user not active until confirm).");
-          throw new Error(
-            "تعذر إنشاء الحساب. إن كان تأكيد البريد مفعّلاً في Supabase، عطّله أو انشر دالة register-client-account."
-          );
-        }
-
-        const { error: linkError } = await supabase.rpc("link_client_account", {
-          p_invite_token: token!,
-          p_auth_user_id: userId,
-        });
-        console.log("[ClientRegister] link_client_account (fallback):", { linkError });
-        if (linkError) throw linkError;
+      if (fnError) {
+        throw new Error("تعذر الاتصال بالخادم. حاول مرة أخرى.");
       }
 
-      if (!userId) {
-        throw new Error("تعذر إنشاء الحساب.");
-      }
-
-      toast({ title: "تم إنشاء حسابك وربطه بملفك بنجاح" });
-
-      const activeSession = session ?? (await supabase.auth.getSession()).data.session;
-      console.log("[ClientRegister] active session after flow:", !!activeSession);
-
-      if (activeSession) {
-        const { data: profile } = await supabase.rpc("get_my_client_profile");
-        if (profile && profile.length > 0 && profile[0].portal_token) {
-          navigate(`/client-portal/${profile[0].portal_token}`);
-        } else {
+      if (!fnData?.success) {
+        // Handle specific error codes
+        if (fnData?.code === "TOKEN_EXPIRED") {
+          setExpired(true);
+          return;
+        }
+        if (fnData?.code === "ALREADY_LINKED") {
+          toast({ title: "هذا الحساب مربوط مسبقاً", description: "سجّل دخولك من صفحة تسجيل الدخول" });
           navigate("/client-login");
+          return;
         }
+        throw new Error(fnData?.message || "فشل إنشاء الحساب");
+      }
+
+      // Step 2: Sign in with the exact same password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: form.password,
+      });
+
+      if (signInError) {
+        console.error("signIn after register failed:", signInError);
+        toast({ title: "تم إنشاء حسابك بنجاح", description: "سجّل دخولك الآن" });
+        navigate("/client-login");
+        return;
+      }
+
+      // Step 3: Redirect to client portal
+      toast({ title: "أهلاً بك! تم إنشاء حسابك بنجاح 🎉" });
+
+      const { data: profile } = await supabase.rpc("get_my_client_profile");
+      if (profile && profile.length > 0 && profile[0].portal_token) {
+        navigate(`/client-portal/${profile[0].portal_token}`);
       } else {
-        toast({ title: "تحقق من بريدك الإلكتروني لتفعيل الحساب ثم سجّل الدخول" });
         navigate("/client-login");
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      const lower = message.toLowerCase();
-      let description = message;
-      if (lower.includes("already registered") || lower.includes("user already")) {
-        description = "هذا البريد مسجل مسبقاً. جرّب تسجيل الدخول.";
-      } else if (lower.includes("invalid or already used invite")) {
-        description = "رابط الدعوة غير صالح أو تم استخدامه. اطلب من مدربك رابطاً جديداً.";
-      } else if (lower.includes("invalid login") || lower.includes("invalid credentials")) {
-        description = "البريد مسجل مسبقاً وكلمة المرور غير صحيحة. استخدم نفس كلمة المرور أو استعدها من تسجيل الدخول.";
-      }
-      toast({
-        title: "حدث خطأ",
-        description,
-        variant: "destructive",
-      });
+      toast({ title: "حدث خطأ", description: message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -289,6 +129,29 @@ const ClientRegister = () => {
     );
   }
 
+  // Token expired state
+  if (expired) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4" dir="rtl">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+          </div>
+          <h1 className="text-2xl font-black">انتهت صلاحية الرابط</h1>
+          <p className="text-white/50">تواصل مع مدربك لإعادة إرسال رابط الدعوة</p>
+          <div className="flex flex-col gap-2">
+            <Link to="/client-login">
+              <Button className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white">
+                تسجيل الدخول
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Invalid token state
   if (!clientData) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4" dir="rtl">
@@ -310,7 +173,6 @@ const ClientRegister = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col" dir="rtl">
-      {/* Header */}
       <header className="px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -330,7 +192,9 @@ const ClientRegister = () => {
       <main className="flex-1 flex items-center justify-center px-4 pb-20">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-black inline-flex items-center justify-center gap-2"><Dumbbell className="w-7 h-7 text-[#4ade80]" />أنشئ حسابك</h1>
+            <h1 className="text-3xl font-black inline-flex items-center justify-center gap-2">
+              <Dumbbell className="w-7 h-7 text-[#4ade80]" />أنشئ حسابك
+            </h1>
             <p className="text-white/50">
               ابدأ رحلتك مع <span className="text-[#4ade80] font-bold">{clientData.trainer_name}</span>
             </p>
@@ -340,50 +204,26 @@ const ClientRegister = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-white/70 mb-1 block">الاسم الكامل</label>
-                <Input
-                  required
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                  placeholder="اسمك الكامل"
-                />
+                <Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="اسمك الكامل" />
               </div>
               <div>
                 <label className="text-sm font-medium text-white/70 mb-1 block">رقم الجوال</label>
-                <Input
-                  value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                  placeholder="05XXXXXXXX"
-                  type="tel"
-                  dir="ltr"
-                />
+                <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="05XXXXXXXX" type="tel" dir="ltr" />
               </div>
               <div>
                 <label className="text-sm font-medium text-white/70 mb-1 block">البريد الإلكتروني</label>
-                <Input
-                  required
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                  placeholder="email@example.com"
-                  dir="ltr"
-                />
+                <Input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="email@example.com" dir="ltr" />
               </div>
               <div>
                 <label className="text-sm font-medium text-white/70 mb-1 block">كلمة المرور</label>
                 <div className="relative">
-                  <Input
-                    required
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
+                  <Input required type={showPassword ? "text" : "password"} value={form.password}
                     onChange={e => setForm({ ...form, password: e.target.value })}
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/20 pl-10"
-                    placeholder="6 أحرف على الأقل"
-                    dir="ltr"
-                    minLength={6}
-                  />
+                    placeholder="6 أحرف على الأقل" dir="ltr" minLength={6} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -392,19 +232,12 @@ const ClientRegister = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-white/70 mb-1 block">تأكيد كلمة المرور</label>
-                <Input
-                  required
-                  type="password"
-                  value={form.confirmPassword}
+                <Input required type="password" value={form.confirmPassword}
                   onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
-                  placeholder="أعد كتابة كلمة المرور"
-                  dir="ltr"
-                  minLength={6}
-                />
+                  placeholder="أعد كتابة كلمة المرور" dir="ltr" minLength={6} />
               </div>
-              <Button type="submit" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white text-base py-6"
-                disabled={submitting}>
+              <Button type="submit" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white text-base py-6" disabled={submitting}>
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "إنشاء حسابي ←"}
               </Button>
             </form>

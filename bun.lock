@@ -8,6 +8,7 @@
         "@capacitor/android": "^8.3.0",
         "@capacitor/cli": "^8.3.0",
         "@capacitor/core": "^8.3.0",
+        "@capacitor/haptics": "^8.0.2",
         "@capacitor/ios": "^8.3.0",
         "@capgo/capacitor-updater": "^8.45.3",
         "@hookform/resolvers": "^3.10.0",
@@ -41,6 +42,7 @@
         "@sentry/react": "^10.47.0",
         "@supabase/supabase-js": "^2.98.0",
         "@tanstack/react-query": "^5.83.0",
+        "body-highlighter": "^3.0.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
@@ -107,6 +109,8 @@
     "@capacitor/cli": ["@capacitor/cli@8.3.0", "", { "dependencies": { "@ionic/cli-framework-output": "^2.2.8", "@ionic/utils-subprocess": "^3.0.1", "@ionic/utils-terminal": "^2.3.5", "commander": "^12.1.0", "debug": "^4.4.0", "env-paths": "^2.2.0", "fs-extra": "^11.2.0", "kleur": "^4.1.5", "native-run": "^2.0.3", "open": "^8.4.0", "plist": "^3.1.0", "prompts": "^2.4.2", "rimraf": "^6.0.1", "semver": "^7.6.3", "tar": "^7.5.3", "tslib": "^2.8.1", "xml2js": "^0.6.2" }, "bin": { "cap": "bin/capacitor", "capacitor": "bin/capacitor" } }, "sha512-n3QDUimtFNbagoo8kLdjvTz3i3Y4jX1fOjvo6ptUKLzErmuqeamL8kECASoyQvg/OzJisZToGZrgLphBsptJcw=="],
 
     "@capacitor/core": ["@capacitor/core@8.3.0", "", { "dependencies": { "tslib": "^2.1.0" } }, "sha512-S4ajn4G/fS3VJj8salxqH/3LO5PPWv1VxGKQ27OCajnDcLJjEg9VXwgMPnlypgkIOqCJ2fmQLtk8GT+BlI9/rw=="],
+
+    "@capacitor/haptics": ["@capacitor/haptics@8.0.2", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-c2hZzRR5Fk1tbTvhG1jhh2XBAf3EhnIerMIb2sl7Mt41Gxx1fhBJFDa0/BI1IbY4loVepyyuqNC9820/GZuoWQ=="],
 
     "@capacitor/ios": ["@capacitor/ios@8.3.0", "", { "peerDependencies": { "@capacitor/core": "^8.3.0" } }, "sha512-5Rtwv8SITKlYTt8lAZG+khnVIdzPtqbocH3eP+JkEmX1vpSMwx4TOKtT8OBz8gpQ+pUJDRp7DBYOv3U6l/obCw=="],
 
@@ -585,6 +589,8 @@
     "big-integer": ["big-integer@1.6.52", "", {}, "sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg=="],
 
     "binary-extensions": ["binary-extensions@2.3.0", "", {}, "sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw=="],
+
+    "body-highlighter": ["body-highlighter@3.0.2", "", {}, "sha512-1V32BDCbdEoFL/y3yr3xyO98u3SLPlcRjvbJy0/47E5gKmYezf8w+Hzsnm5M0vu92rArTOPNu0vawEdvruDhcQ=="],
 
     "bplist-parser": ["bplist-parser@0.3.2", "", { "dependencies": { "big-integer": "1.6.x" } }, "sha512-apC2+fspHGI3mMKj+dGevkGo/tCqVB8jMb6i+OX+E29p0Iposz07fABkRIfVUPNd5A5VbuOz1bZbnmkKLYF+wQ=="],
 

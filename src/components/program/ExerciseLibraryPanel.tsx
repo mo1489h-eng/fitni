@@ -224,8 +224,10 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
     const arName = (ex.name_ar ?? "").trim() || getArabicName(nameEn);
     const config = BODY_PART_CONFIG[bodyPartKey] || { color: "bg-muted text-muted-foreground" };
     const isBundledLocal = ex.id.startsWith("fitni-db-");
-    const thumb =
-      (ex.gifUrl && String(ex.gifUrl)) || (!isBundledLocal ? getExerciseImageUrl(ex.id) : "");
+    // Remote ExerciseDB ids: always prefer Supabase `exercise-gif` proxy (fixes bad/missing direct gifUrl).
+    const thumb = isBundledLocal
+      ? (ex.gifUrl && String(ex.gifUrl).trim()) || ""
+      : getExerciseImageUrl(ex.id) || (ex.gifUrl && String(ex.gifUrl).trim()) || "";
 
     return (
       <div

@@ -30,13 +30,24 @@ serve(async (req) => {
         });
       }
 
-      const imageUrl = `https://exercisedb.p.rapidapi.com/image/${encodeURIComponent(exerciseId)}`;
-      const imgResponse = await fetch(imageUrl, {
+      // Documented image API: ?exerciseId=&resolution= (see ExerciseDB docs)
+      const primaryUrl =
+        `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(exerciseId)}&resolution=360`;
+      let imgResponse = await fetch(primaryUrl, {
         headers: {
           'X-RapidAPI-Key': RAPIDAPI_KEY,
           'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
         },
       });
+      if (!imgResponse.ok) {
+        const pathUrl = `https://exercisedb.p.rapidapi.com/image/${encodeURIComponent(exerciseId)}`;
+        imgResponse = await fetch(pathUrl, {
+          headers: {
+            'X-RapidAPI-Key': RAPIDAPI_KEY,
+            'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com',
+          },
+        });
+      }
 
       if (!imgResponse.ok) {
         return new Response(JSON.stringify({ error: `Image fetch failed: ${imgResponse.status}` }), {

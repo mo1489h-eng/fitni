@@ -24,12 +24,12 @@ export type ExerciseLibraryRow = {
 };
 
 function resolveGifUrlFromRow(id: string, r: Record<string, unknown>): string {
+  const proxied = getExerciseImageUrl(id);
   const fromDb =
     (typeof r.gif_url === "string" && r.gif_url.trim()) ||
     (typeof r.gifUrl === "string" && r.gifUrl.trim()) ||
     "";
-  if (fromDb) return fromDb;
-  return getExerciseImageUrl(id);
+  return proxied || fromDb;
 }
 
 /** Safe map from DB/cache row → ExerciseDBItem; skips unusable rows instead of throwing. */
@@ -55,7 +55,7 @@ export function mapCacheRowToExerciseItem(row: unknown): ExerciseDBItem | null {
     bodyPart,
     target,
     equipment,
-    gifUrl: getExerciseImageUrl(id),
+    gifUrl: resolveGifUrlFromRow(id, r),
     secondaryMuscles: Array.isArray(sec) ? sec.filter((x): x is string => typeof x === "string") : [],
     instructions: Array.isArray(instr) ? instr.filter((x): x is string => typeof x === "string") : [],
   };
@@ -78,11 +78,13 @@ export function normalizeProxyExerciseToItem(raw: unknown): ExerciseDBItem | nul
   const bodyPart = typeof o.bodyPart === "string" ? o.bodyPart : "";
   const target = typeof o.target === "string" ? o.target : "";
   const equipment = typeof o.equipment === "string" ? o.equipment : "";
+  // Prefer our Edge proxy so RapidAPI auth + CORS stay server-side; API `gifUrl` is CDN fallback only.
   const fromApi =
     (typeof o.gifUrl === "string" && o.gifUrl.trim()) ||
     (typeof o.gif_url === "string" && o.gif_url.trim()) ||
     "";
-  const gifUrl = fromApi || getExerciseImageUrl(id);
+  const proxied = getExerciseImageUrl(id);
+  const gifUrl = proxied || fromApi;
   const sec = o.secondaryMuscles;
   const instr = o.instructions;
 

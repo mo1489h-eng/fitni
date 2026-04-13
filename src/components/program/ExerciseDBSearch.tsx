@@ -17,6 +17,7 @@ import {
   filterLocalByBodyPart,
   mergeExerciseListsPreferLocal,
 } from "@/lib/localExercisesDb";
+import { normalizeProxyExerciseToItem } from "@/lib/exercise-library-service";
 
 interface Props {
   open: boolean;
@@ -109,7 +110,10 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
 
       if (!response.ok) throw new Error("API Error");
       const result = await response.json();
-      const remote: ExerciseDBItem[] = Array.isArray(result) ? result : [];
+      const raw = Array.isArray(result) ? result : [];
+      const remote: ExerciseDBItem[] = raw
+        .map((row) => normalizeProxyExerciseToItem(row))
+        .filter((x): x is ExerciseDBItem => x != null);
 
       if (append) {
         setExercises((prev) => mergeExerciseListsPreferLocal(prev, remote));

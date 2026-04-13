@@ -272,8 +272,8 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   if (detailExercise) {
     const ex = detailExercise;
     return (
-      <div className="h-full flex flex-col bg-card border-r border-border" dir="rtl">
-        <div className="p-4 border-b border-border flex items-center justify-between">
+      <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card border-r border-border" dir="rtl">
+        <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
           <button onClick={() => setDetailExercise(null)} className="text-sm text-primary font-medium">
             رجوع
           </button>
@@ -282,7 +282,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
             <X className="w-4 h-4" />
           </button>
         </div>
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="min-h-0 flex-1 p-4">
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative flex items-center justify-center border border-border/50">
               {ex.id.startsWith("fitni-db-") ? (
@@ -358,8 +358,8 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-card border-r border-border" dir="rtl">
-      <div className="p-4 border-b border-border">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card border-r border-border" dir="rtl">
+      <div className="flex-shrink-0 p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Dumbbell className="w-4 h-4 text-primary" strokeWidth={1.5} />
@@ -445,7 +445,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
               </div>
               <p className="text-[10px] text-muted-foreground">{exercises.length} نتيجة</p>
             </div>
-            <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" onScroll={handleScroll}>
               {loading && exercises.length === 0 ? (
                 <ResultGridSkeleton />
               ) : (
@@ -499,7 +499,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
               <p className="text-sm font-bold">{getArabicBodyPart(selectedBodyPart)}</p>
               <p className="text-[10px] text-muted-foreground">{exercises.length} تمرين</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1" onScroll={handleScroll}>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 space-y-1 [-webkit-overflow-scrolling:touch]" onScroll={handleScroll}>
               {loading && exercises.length === 0 ? (
                 <ResultGridSkeleton />
               ) : (
@@ -517,7 +517,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         )}
 
         {tab === "recent" && (
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 space-y-1 [-webkit-overflow-scrolling:touch]">
             {recentExercises.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
@@ -531,7 +531,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="p-3 border-t border-border">
+        <div className="flex-shrink-0 p-3 border-t border-border">
           <Button className="w-full gap-2" onClick={handleAdd}>
             <Check className="w-4 h-4" />
             إضافة {selectedIds.size} تمرين

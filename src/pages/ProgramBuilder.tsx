@@ -595,7 +595,7 @@ const ProgramBuilder = () => {
 
           {/* Right: Exercise Library Panel */}
           {showLibrary && (
-            <div className="w-80 flex-shrink-0 border-l border-border animate-in slide-in-from-left duration-200">
+            <div className="flex h-full min-h-0 w-80 flex-shrink-0 flex-col overflow-hidden border-l border-border animate-in slide-in-from-left duration-200">
               <ExerciseLibraryPanel
                 open={showLibrary}
                 onClose={() => setShowLibrary(false)}

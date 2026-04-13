@@ -33,11 +33,15 @@ const ExercisePreviewSheet = ({ exercise, open, onOpenChange }: Props) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md p-0 flex flex-col" dir="rtl">
-        <SheetHeader className="p-4 border-b border-border space-y-1">
+      <SheetContent
+        side="left"
+        className="h-full max-h-[100dvh] min-h-0 w-full overflow-hidden p-0 sm:max-w-md flex flex-col"
+        dir="rtl"
+      >
+        <SheetHeader className="flex-shrink-0 p-4 border-b border-border space-y-1">
           <SheetTitle className="text-right text-base">معاينة التمرين</SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="p-4 space-y-4">
             <div className="aspect-square max-h-[280px] rounded-xl overflow-hidden bg-muted flex items-center justify-center mx-auto border border-border/50">
               {gif ? (

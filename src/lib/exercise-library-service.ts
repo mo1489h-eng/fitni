@@ -4,34 +4,83 @@ import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import { getArabicName } from "@/lib/exercise-translations";
 import {
   mergeExerciseListsPreferLocal,
-  searchLocalExercises,
   filterLocalUnified,
   normalizeExerciseSearchQuery,
 } from "@/lib/localExercisesDb";
 
+/** Maps `exercisedb_cache` / loose Supabase rows into the UI `ExerciseDBItem` shape. */
 export type ExerciseLibraryRow = {
-  external_id: string;
-  name_en: string;
-  name_ar: string;
-  body_part: string;
-  target: string | null;
-  equipment: string | null;
-  secondary_muscles: string[] | unknown;
-  instructions: string[] | unknown;
+  external_id?: string | null;
+  name_en?: string | null;
+  name_ar?: string | null;
+  body_part?: string | null;
+  target?: string | null;
+  equipment?: string | null;
+  secondary_muscles?: unknown;
+  instructions?: unknown;
 };
 
-function rowToItem(row: ExerciseLibraryRow): ExerciseDBItem {
-  const gif = getExerciseImageUrl(row.external_id);
+/** Safe map from DB/cache row → ExerciseDBItem; skips unusable rows instead of throwing. */
+export function mapCacheRowToExerciseItem(row: unknown): ExerciseDBItem | null {
+  if (row == null || typeof row !== "object") return null;
+  const r = row as Record<string, unknown>;
+  const idRaw = r.external_id ?? r.id;
+  const id = idRaw != null && String(idRaw).length > 0 ? String(idRaw) : null;
+  if (!id) return null;
+
+  const nameEn = typeof r.name_en === "string" ? r.name_en : typeof r.name === "string" ? r.name : "";
+  const nameArRaw = typeof r.name_ar === "string" ? r.name_ar : "";
+  const bodyPart = typeof r.body_part === "string" ? r.body_part : "";
+  const target = typeof r.target === "string" ? r.target : "";
+  const equipment = typeof r.equipment === "string" ? r.equipment : "";
+  const sec = r.secondary_muscles;
+  const instr = r.instructions;
+
   return {
-    id: row.external_id,
-    name: row.name_en,
-    name_ar: row.name_ar || getArabicName(row.name_en),
-    bodyPart: row.body_part,
-    target: row.target ?? "",
-    equipment: row.equipment ?? "",
-    gifUrl: gif,
-    secondaryMuscles: Array.isArray(row.secondary_muscles) ? row.secondary_muscles : [],
-    instructions: Array.isArray(row.instructions) ? row.instructions : [],
+    id,
+    name: nameEn,
+    name_ar: nameArRaw || (nameEn ? getArabicName(nameEn) : undefined),
+    bodyPart,
+    target,
+    equipment,
+    gifUrl: getExerciseImageUrl(id),
+    secondaryMuscles: Array.isArray(sec) ? sec.filter((x): x is string => typeof x === "string") : [],
+    instructions: Array.isArray(instr) ? instr.filter((x): x is string => typeof x === "string") : [],
+  };
+}
+
+function mapCacheRowsToItems(data: unknown): ExerciseDBItem[] {
+  const dbResults = Array.isArray(data) ? data : [];
+  const mapped = dbResults.map(mapCacheRowToExerciseItem).filter((x): x is ExerciseDBItem => x != null);
+  return mapped;
+}
+
+/** Normalizes items from `exercisedb-proxy` / RapidAPI JSON to `ExerciseDBItem`. */
+export function normalizeProxyExerciseToItem(raw: unknown): ExerciseDBItem | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.id != null && String(o.id).length > 0 ? String(o.id) : null;
+  if (!id) return null;
+
+  const name = typeof o.name === "string" ? o.name : "";
+  const bodyPart = typeof o.bodyPart === "string" ? o.bodyPart : "";
+  const target = typeof o.target === "string" ? o.target : "";
+  const equipment = typeof o.equipment === "string" ? o.equipment : "";
+  const gifUrl =
+    typeof o.gifUrl === "string" && o.gifUrl.length > 0 ? o.gifUrl : getExerciseImageUrl(id);
+  const sec = o.secondaryMuscles;
+  const instr = o.instructions;
+
+  return {
+    id,
+    name,
+    name_ar: typeof o.name_ar === "string" ? o.name_ar : undefined,
+    bodyPart,
+    target,
+    equipment,
+    gifUrl,
+    secondaryMuscles: Array.isArray(sec) ? sec.filter((x): x is string => typeof x === "string") : [],
+    instructions: Array.isArray(instr) ? instr.filter((x): x is string => typeof x === "string") : [],
   };
 }
 
@@ -59,15 +108,10 @@ export function ensureExerciseLibrarySynced(): Promise<void> {
   return syncOnce;
 }
 
-/** Clears the one-shot sync guard so the next `ensureExerciseLibrarySynced` can run again. */
 function resetExerciseLibrarySyncGuard(): void {
   syncOnce = null;
 }
 
-/**
- * Invokes the edge function again (e.g. after empty search / trainer retry).
- * Resets the internal one-shot so background `ensureExerciseLibrarySynced` can run on next library open.
- */
 export async function retryExerciseLibrarySync(): Promise<{
   ok: boolean;
   count?: number;
@@ -93,7 +137,6 @@ export async function retryExerciseLibrarySync(): Promise<{
   }
 }
 
-/** PostgREST `ilike` wildcards — strip so user input matches literally. */
 function sanitizeIlikeFragment(s: string): string {
   return s
     .replace(/\\/g, " ")
@@ -109,13 +152,34 @@ function buildLocalItems(opts: {
   equipment: string | null;
   limit: number;
 }): ExerciseDBItem[] {
-  return filterLocalUnified({
-    query: opts.query,
-    bodyPart: opts.bodyPart,
-    equipment: opts.equipment,
-    limit: opts.limit,
-    browseLimit: 40,
-  });
+  try {
+    return filterLocalUnified({
+      query: opts.query,
+      bodyPart: opts.bodyPart,
+      equipment: opts.equipment,
+      limit: opts.limit,
+      browseLimit: 40,
+    });
+  } catch {
+    return [];
+  }
+}
+
+function fallbackSearchItems(opts: SearchExerciseOptions): ExerciseDBItem[] {
+  try {
+    const rawQ = opts.query ?? "";
+    const q = normalizeExerciseSearchQuery(rawQ);
+    const bp = opts.bodyPart?.trim() ? opts.bodyPart.trim() : null;
+    const equip = opts.equipmentMatch?.trim() ? opts.equipmentMatch.trim() : null;
+    return buildLocalItems({
+      query: q,
+      bodyPart: bp,
+      equipment: equip,
+      limit: q.length >= 1 ? 80 : 40,
+    });
+  } catch {
+    return [];
+  }
 }
 
 async function fetchRemoteMerged(
@@ -127,9 +191,10 @@ async function fetchRemoteMerged(
   },
   local: ExerciseDBItem[],
 ): Promise<{ items: ExerciseDBItem[]; source: "local" | "remote" }> {
+  const safeLocal = Array.isArray(local) ? local : [];
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   if (!projectId) {
-    return { source: local.length ? "local" : "remote", items: local };
+    return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
   }
 
   const q = opts.query;
@@ -149,23 +214,40 @@ async function fetchRemoteMerged(
   }
 
   const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-  });
-  if (!response.ok) {
-    return { source: local.length ? "local" : "remote", items: local.length ? local : [] };
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+    });
+  } catch {
+    return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
   }
 
-  const result = (await response.json()) as ExerciseDBItem[] | unknown;
-  const remote = Array.isArray(result) ? result : [];
-  let merged = mergeExerciseListsPreferLocal(local, remote);
+  if (!response.ok) {
+    return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = await response.json();
+  } catch {
+    return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
+  }
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && "error" in parsed) {
+    return { source: safeLocal.length ? "local" : "remote", items: safeLocal };
+  }
+
+  const rawList = Array.isArray(parsed) ? parsed : [];
+  const remote = rawList.map(normalizeProxyExerciseToItem).filter((x): x is ExerciseDBItem => x != null);
+  let merged = mergeExerciseListsPreferLocal(safeLocal, remote);
 
   if (equip) {
-    merged = merged.filter((ex) => (ex.equipment || "").toLowerCase().includes(equip.toLowerCase()));
+    merged = merged.filter((ex) => ex && (ex.equipment || "").toLowerCase().includes(equip.toLowerCase()));
   }
 
   return {
-    source: local.length ? "local" : "remote",
+    source: safeLocal.length ? "local" : "remote",
     items: merged,
   };
 }
@@ -187,113 +269,132 @@ export async function searchExercisesUnified(opts: SearchExerciseOptions): Promi
   items: ExerciseDBItem[];
   source: "db" | "local" | "remote";
 }> {
-  const rawQ = opts.query ?? "";
-  const q = normalizeExerciseSearchQuery(rawQ);
-  const offset = opts.offset ?? 0;
-  const limit = opts.limit ?? 40;
-  const bp = opts.bodyPart?.trim() ? opts.bodyPart.trim() : null;
-  const equip = opts.equipmentMatch?.trim() ? opts.equipmentMatch.trim() : null;
-
-  let cacheEmpty = false;
   try {
-    const { count, error: countErr } = await supabase
-      .from("exercisedb_cache")
-      .select("*", { head: true, count: "exact" });
-    if (!countErr) {
-      cacheEmpty = (count ?? 0) === 0;
-    }
-  } catch {
-    cacheEmpty = true;
-  }
+    const rawQ = opts.query ?? "";
+    const q = normalizeExerciseSearchQuery(rawQ);
+    const offset = opts.offset ?? 0;
+    const limit = opts.limit ?? 40;
+    const bp = opts.bodyPart?.trim() ? opts.bodyPart.trim() : null;
+    const equip = opts.equipmentMatch?.trim() ? opts.equipmentMatch.trim() : null;
 
-  if (!cacheEmpty) {
+    let cacheEmpty = false;
     try {
-      let qb = supabase.from("exercisedb_cache").select("*").order("name_en");
-
-      if (bp) {
-        qb = qb.eq("body_part", bp);
-      }
-      if (equip) {
-        qb = qb.ilike("equipment", `%${sanitizeIlikeFragment(equip)}%`);
-      }
-      if (q.length >= 1) {
-        const safe = sanitizeIlikeFragment(q);
-        if (safe.length >= 1) {
-          qb = qb.or(`name_en.ilike.%${safe}%,name_ar.ilike.%${safe}%`);
-        }
-      }
-
-      qb = qb.range(offset, offset + limit - 1);
-
-      const { data: rows, error } = await qb;
-      if (!error && rows && rows.length > 0) {
-        const dbItems = (rows as ExerciseLibraryRow[]).map(rowToItem);
-        if (q.length >= 1) {
-          const localHits = buildLocalItems({
-            query: q,
-            bodyPart: bp,
-            equipment: equip,
-            limit: Math.max(limit, 80),
-          });
-          const merged = mergeExerciseListsPreferLocal(localHits, dbItems);
-          return {
-            source: "db",
-            items: merged.slice(0, limit),
-          };
-        }
-        return {
-          source: "db",
-          items: dbItems,
-        };
+      const { count, error: countErr } = await supabase
+        .from("exercisedb_cache")
+        .select("*", { head: true, count: "exact" });
+      if (!countErr) {
+        cacheEmpty = (count ?? 0) === 0;
       }
     } catch {
-      /* table missing or RLS */
+      cacheEmpty = true;
     }
-  }
 
-  const local = buildLocalItems({
-    query: q,
-    bodyPart: bp,
-    equipment: equip,
-    limit: q.length >= 1 ? 80 : 40,
-  });
+    if (!cacheEmpty) {
+      try {
+        let qb = supabase.from("exercisedb_cache").select("*").order("name_en");
 
-  return fetchRemoteMerged(
-    {
+        if (bp) {
+          qb = qb.eq("body_part", bp);
+        }
+        if (equip) {
+          qb = qb.ilike("equipment", `%${sanitizeIlikeFragment(equip)}%`);
+        }
+        if (q.length >= 1) {
+          const safe = sanitizeIlikeFragment(q);
+          if (safe.length >= 1) {
+            qb = qb.or(`name_en.ilike.%${safe}%,name_ar.ilike.%${safe}%`);
+          }
+        }
+
+        qb = qb.range(offset, offset + limit - 1);
+
+        const { data: rows, error } = await qb;
+        if (!error && rows != null) {
+          const dbItems = mapCacheRowsToItems(rows);
+          if (dbItems.length > 0) {
+            if (q.length >= 1) {
+              const localHits = buildLocalItems({
+                query: q,
+                bodyPart: bp,
+                equipment: equip,
+                limit: Math.max(limit, 80),
+              });
+              const merged = mergeExerciseListsPreferLocal(localHits, dbItems);
+              return {
+                source: "db",
+                items: merged.slice(0, limit),
+              };
+            }
+            return {
+              source: "db",
+              items: dbItems,
+            };
+          }
+        }
+      } catch {
+        /* fall through to local + remote */
+      }
+    }
+
+    const local = buildLocalItems({
       query: q,
       bodyPart: bp,
-      offset,
       equipment: equip,
-    },
-    local,
-  );
+      limit: q.length >= 1 ? 80 : 40,
+    });
+
+    return fetchRemoteMerged(
+      {
+        query: q,
+        bodyPart: bp,
+        offset,
+        equipment: equip,
+      },
+      local,
+    );
+  } catch {
+    const items = fallbackSearchItems(opts);
+    return { items, source: "local" };
+  }
 }
 
-/** Extra pages from the Edge proxy only (infinite scroll). */
 export async function fetchRemoteExercisePage(
   query: string | undefined,
   bodyPart: string | undefined,
   offset: number,
 ): Promise<ExerciseDBItem[]> {
-  const q = query ? normalizeExerciseSearchQuery(query) : "";
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  if (!projectId) return [];
+  try {
+    const q = query ? normalizeExerciseSearchQuery(query) : "";
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    if (!projectId) return [];
 
-  const params = new URLSearchParams({ limit: "30", offset: String(offset) });
-  if (bodyPart) {
-    params.set("endpoint", "byBodyPart");
-    params.set("bodyPart", bodyPart);
-  } else if (q.length >= 2) {
-    params.set("endpoint", "byName");
-    params.set("name", q.toLowerCase());
-  } else {
-    params.set("endpoint", "exercises");
+    const params = new URLSearchParams({ limit: "30", offset: String(offset) });
+    if (bodyPart) {
+      params.set("endpoint", "byBodyPart");
+      params.set("bodyPart", bodyPart);
+    } else if (q.length >= 2) {
+      params.set("endpoint", "byName");
+      params.set("name", q.toLowerCase());
+    } else {
+      params.set("endpoint", "exercises");
+    }
+    const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+    });
+    if (!response.ok) return [];
+    let parsed: unknown;
+    try {
+      parsed = await response.json();
+    } catch {
+      return [];
+    }
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && "error" in parsed) {
+      return [];
+    }
+    const rawList = Array.isArray(parsed) ? parsed : [];
+    return rawList.map(normalizeProxyExerciseToItem).filter((x): x is ExerciseDBItem => x != null);
+  } catch {
+    return [];
   }
-  const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-  });
-  if (!response.ok) return [];
-  const result = (await response.json()) as unknown;
-  return Array.isArray(result) ? result : [];
 }

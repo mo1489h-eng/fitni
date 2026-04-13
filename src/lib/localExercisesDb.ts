@@ -115,17 +115,21 @@ export function filterLocalByBodyPart(bodyPart: string): ExerciseDBItem[] {
 
 /** Prefer `local` order, then append remote items with new ids (dedupe by id). */
 export function mergeExerciseListsPreferLocal(
-  local: ExerciseDBItem[],
-  remote: ExerciseDBItem[],
+  local?: ExerciseDBItem[] | null,
+  remote?: ExerciseDBItem[] | null,
 ): ExerciseDBItem[] {
+  const L = Array.isArray(local) ? local : [];
+  const R = Array.isArray(remote) ? remote : [];
   const seen = new Set<string>();
   const out: ExerciseDBItem[] = [];
-  for (const x of local) {
+  for (const x of L) {
+    if (!x || typeof x.id !== "string" || !x.id.trim()) continue;
     if (seen.has(x.id)) continue;
     seen.add(x.id);
     out.push(x);
   }
-  for (const x of remote) {
+  for (const x of R) {
+    if (!x || typeof x.id !== "string" || !x.id.trim()) continue;
     if (seen.has(x.id)) continue;
     seen.add(x.id);
     out.push(x);

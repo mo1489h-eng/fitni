@@ -79,6 +79,8 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   const [detailExercise, setDetailExercise] = useState<ExerciseDBItem | null>(null);
   const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
   const [equipmentFilter, setEquipmentFilter] = useState<string | null>(null);
+  const [syncRetrying, setSyncRetrying] = useState(false);
+  const { toast } = useToast();
   const listSource = useRef<"db" | "local" | "remote">("remote");
 
   useEffect(() => {
@@ -117,10 +119,11 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         offset: 0,
         limit: 80,
       });
-      listSource.current = res.source;
-      setExercises(res.items);
-      setOffset(res.items.length);
-      setHasMore(res.source !== "db" && res.items.length >= 25);
+      const items = Array.isArray(res?.items) ? res.items : [];
+      listSource.current = res?.source ?? "local";
+      setExercises(items);
+      setOffset(items.length);
+      setHasMore(res?.source !== "db" && items.length >= 25);
     } catch {
       setExercises([]);
       setHasMore(false);
@@ -155,15 +158,18 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
           bp ?? undefined,
           offset,
         );
-        let next = remote;
+        const safeRemote = Array.isArray(remote) ? remote : [];
+        let next = safeRemote;
         if (equipmentFilter) {
-          next = next.filter((ex) =>
-            (ex.equipment || "").toLowerCase().includes(equipmentFilter.toLowerCase()),
+          next = safeRemote.filter((ex) =>
+            ex && (ex.equipment || "").toLowerCase().includes(equipmentFilter.toLowerCase()),
           );
         }
-        setExercises((prev) => mergeExerciseListsPreferLocal(prev, next));
-        setHasMore(remote.length >= 30);
-        setOffset((o) => o + remote.length);
+        setExercises((prev) => mergeExerciseListsPreferLocal(prev ?? [], next));
+        setHasMore(safeRemote.length >= 30);
+        setOffset((o) => o + safeRemote.length);
+      } catch {
+        /* keep current list */
       } finally {
         setLoading(false);
       }
@@ -172,29 +178,31 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   );
 
   const toggleSelect = (ex: ExerciseDBItem) => {
+    const id = typeof ex?.id === "string" ? ex.id : "";
+    if (!id) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(ex.id)) next.delete(ex.id);
-      else next.add(ex.id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
   const handleAdd = () => {
-    const allExercises = [...exercises, ...recentExercises];
-    const selected = allExercises.filter((e) => selectedIds.has(e.id));
+    const allExercises = [...(exercises ?? []), ...(recentExercises ?? [])];
+    const selected = allExercises.filter((e) => e && typeof e.id === "string" && selectedIds.has(e.id));
     const unique = selected.filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
 
     const mapped: SelectedExercise[] = unique.map((e) => ({
       id: e.id,
-      name_en: e.name,
-      name_ar: e.name_ar ?? getArabicName(e.name),
-      bodyPart: e.bodyPart,
-      target: e.target,
-      equipment: e.equipment,
+      name_en: e.name ?? "",
+      name_ar: e.name_ar ?? getArabicName(e.name ?? ""),
+      bodyPart: e.bodyPart ?? "",
+      target: e.target ?? "",
+      equipment: e.equipment ?? "",
       gifUrl: e.gifUrl || getExerciseImageUrl(e.id),
-      secondaryMuscles: e.secondaryMuscles,
-      instructions: e.instructions,
+      secondaryMuscles: Array.isArray(e.secondaryMuscles) ? e.secondaryMuscles : [],
+      instructions: Array.isArray(e.instructions) ? e.instructions : [],
     }));
 
     const recent = [...unique, ...recentExercises]
@@ -207,13 +215,16 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
     onClose();
   };
 
-  const renderExerciseRow = (ex: ExerciseDBItem) => {
+  const renderExerciseRow = (ex: ExerciseDBItem | null | undefined) => {
+    if (!ex || typeof ex.id !== "string" || !ex.id) return null;
+    const nameEn = ex.name ?? "";
+    const bodyPartKey = ex.bodyPart ?? "";
     const isSelected = selectedIds.has(ex.id);
-    const arName = ex.name_ar ?? getArabicName(ex.name);
-    const config = BODY_PART_CONFIG[ex.bodyPart] || { color: "bg-muted text-muted-foreground" };
+    const arName = (ex.name_ar ?? "").trim() || getArabicName(nameEn);
+    const config = BODY_PART_CONFIG[bodyPartKey] || { color: "bg-muted text-muted-foreground" };
     const isBundledLocal = ex.id.startsWith("fitni-db-");
     const thumb =
-      ex.gifUrl || (!isBundledLocal ? getExerciseImageUrl(ex.id) : "");
+      (ex.gifUrl && String(ex.gifUrl)) || (!isBundledLocal ? getExerciseImageUrl(ex.id) : "");
 
     return (
       <div
@@ -227,7 +238,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
           {thumb ? (
             <img
               src={thumb}
-              alt={ex.name}
+              alt={nameEn || arName}
               className="w-full h-full object-cover"
               loading="lazy"
               onError={(e) => {
@@ -244,18 +255,18 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
             {isBundledLocal ? (
               <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
             ) : (
-              ex.name.charAt(0).toUpperCase()
+              (nameEn || "?").charAt(0).toUpperCase()
             )}
           </div>
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-bold text-foreground truncate">{arName}</p>
-          <p className="text-[11px] text-muted-foreground truncate">{ex.name}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{nameEn}</p>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap justify-end">
             <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${config.color}`}>
-              {getArabicBodyPart(ex.bodyPart)}
+              {getArabicBodyPart(bodyPartKey)}
             </Badge>
-            <span className="text-[9px] text-muted-foreground">{getArabicEquipment(ex.equipment)}</span>
+            <span className="text-[9px] text-muted-foreground">{getArabicEquipment(ex.equipment ?? "")}</span>
           </div>
         </div>
         <div
@@ -273,13 +284,15 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
   if (detailExercise) {
     const ex = detailExercise;
+    const detailNameEn = ex.name ?? "";
+    const detailTitle = (ex.name_ar ?? "").trim() || getArabicName(detailNameEn);
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card border-r border-border" dir="rtl">
         <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
           <button onClick={() => setDetailExercise(null)} className="text-sm text-primary font-medium">
             رجوع
           </button>
-          <span className="text-sm font-bold">{ex.name_ar ?? getArabicName(ex.name)}</span>
+          <span className="text-sm font-bold">{detailTitle}</span>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
           </button>
@@ -293,7 +306,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                 <>
                   <img
                     src={getExerciseImageUrl(ex.id)}
-                    alt={ex.name}
+                    alt={detailNameEn || detailTitle}
                     className="w-full h-full object-contain"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
@@ -305,21 +318,21 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                     style={{ display: "none" }}
                     className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-5xl font-bold absolute inset-0"
                   >
-                    {ex.name.charAt(0).toUpperCase()}
+                    {(detailNameEn || "?").charAt(0).toUpperCase()}
                   </div>
                 </>
               )}
             </div>
             <div>
-              <p className="text-lg font-bold text-foreground">{ex.name_ar ?? getArabicName(ex.name)}</p>
-              <p className="text-sm text-muted-foreground">{ex.name}</p>
+              <p className="text-lg font-bold text-foreground">{detailTitle}</p>
+              <p className="text-sm text-muted-foreground">{detailNameEn}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Badge className={BODY_PART_CONFIG[ex.bodyPart]?.color || ""}>{getArabicBodyPart(ex.bodyPart)}</Badge>
-              <Badge variant="secondary">{getArabicTarget(ex.target)}</Badge>
-              <Badge variant="outline">{getArabicEquipment(ex.equipment)}</Badge>
+              <Badge className={BODY_PART_CONFIG[ex.bodyPart ?? ""]?.color || ""}>{getArabicBodyPart(ex.bodyPart ?? "")}</Badge>
+              <Badge variant="secondary">{getArabicTarget(ex.target ?? "")}</Badge>
+              <Badge variant="outline">{getArabicEquipment(ex.equipment ?? "")}</Badge>
             </div>
-            {ex.secondaryMuscles.length > 0 && (
+            {Array.isArray(ex.secondaryMuscles) && ex.secondaryMuscles.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">العضلات المساعدة</p>
                 <div className="flex gap-1 flex-wrap">
@@ -331,7 +344,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                 </div>
               </div>
             )}
-            {ex.instructions.length > 0 && (
+            {Array.isArray(ex.instructions) && ex.instructions.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2">خطوات التنفيذ</p>
                 <ol className="space-y-2">
@@ -445,20 +458,20 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground">{exercises.length} نتيجة</p>
+              <p className="text-[10px] text-muted-foreground">{(exercises ?? []).length} نتيجة</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" onScroll={handleScroll}>
-              {loading && exercises.length === 0 ? (
+              {loading && (exercises ?? []).length === 0 ? (
                 <ResultGridSkeleton />
               ) : (
                 <div className="p-2 space-y-1">
-                  {exercises.map(renderExerciseRow)}
-                  {loading && exercises.length > 0 && (
+                  {(exercises ?? []).map(renderExerciseRow)}
+                  {loading && (exercises ?? []).length > 0 && (
                     <div className="flex justify-center py-3">
                       <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     </div>
                   )}
-                  {!loading && exercises.length === 0
+                  {!loading && (exercises ?? []).length === 0
                     && (debouncedSearch.length >= 1 || muscleFilter || equipmentFilter) && (
                     <div className="flex flex-col items-center gap-3 py-8 px-2">
                       <p className="text-center text-sm text-muted-foreground">لا توجد نتائج</p>
@@ -539,15 +552,15 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                 رجوع
               </button>
               <p className="text-sm font-bold">{getArabicBodyPart(selectedBodyPart)}</p>
-              <p className="text-[10px] text-muted-foreground">{exercises.length} تمرين</p>
+              <p className="text-[10px] text-muted-foreground">{(exercises ?? []).length} تمرين</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 space-y-1 [-webkit-overflow-scrolling:touch]" onScroll={handleScroll}>
-              {loading && exercises.length === 0 ? (
+              {loading && (exercises ?? []).length === 0 ? (
                 <ResultGridSkeleton />
               ) : (
                 <>
-                  {exercises.map(renderExerciseRow)}
-                  {loading && exercises.length > 0 && (
+                  {(exercises ?? []).map(renderExerciseRow)}
+                  {loading && (exercises ?? []).length > 0 && (
                     <div className="flex justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     </div>
@@ -566,7 +579,7 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                 <p className="text-sm text-muted-foreground">لا توجد تمارين حديثة</p>
               </div>
             ) : (
-              recentExercises.map(renderExerciseRow)
+              (recentExercises ?? []).map(renderExerciseRow)
             )}
           </div>
         )}

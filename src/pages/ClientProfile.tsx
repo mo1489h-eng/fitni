@@ -418,21 +418,58 @@ const ClientProfile = () => {
             </h3>
             <p className="text-xs text-muted-foreground mb-3">أرسل هذا الرابط لعميلك لإنشاء حسابه الخاص</p>
             <div className="bg-[hsl(0_0%_5%)] rounded-lg p-2.5 text-xs text-muted-foreground dir-ltr text-left mb-3 break-all border border-[hsl(0_0%_10%)]">
-              {window.location.origin}/client-register/{(client as any).invite_token}
+              https://coachbase.health/client-register/{(client as any).invite_token}
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button variant="outline" size="sm" className="gap-1" onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/client-register/${(client as any).invite_token}`);
+                navigator.clipboard.writeText(`https://coachbase.health/client-register/${(client as any).invite_token}`);
                 toast({ title: "تم نسخ رابط التسجيل" });
               }}>
-                <Copy className="w-4 h-4" strokeWidth={1.5} /> نسخ الرابط
+                <Copy className="w-4 h-4" strokeWidth={1.5} /> نسخ
               </Button>
-              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`مرحبا ${client.name}\nمدربك أضافك على CoachBase\nأنشئ حسابك المجاني:\n${window.location.origin}/client-register/${(client as any).invite_token}`)}`} target="_blank" rel="noopener noreferrer">
+              <a href={`https://wa.me/${client.phone ? "966" + client.phone.replace(/^0/, "") : ""}?text=${encodeURIComponent(`مرحبا ${client.name}\nمدربك أضافك على CoachBase\nأنشئ حسابك المجاني:\nhttps://coachbase.health/client-register/${(client as any).invite_token}`)}`} target="_blank" rel="noopener noreferrer">
                 <Button size="sm" className="gap-1 w-full">
-                  <Send className="w-4 h-4" strokeWidth={1.5} /> إرسال دعوة واتساب
+                  <Send className="w-4 h-4" strokeWidth={1.5} /> واتساب
                 </Button>
               </a>
+              <Button variant="outline" size="sm" className="gap-1" onClick={async () => {
+                try {
+                  // Generate new token and resend
+                  const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+                  await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
+                  const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
+                    body: { clientName: client.name, clientEmail: client.email, trainerName: "", inviteToken: newToken },
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["client", id] });
+                  toast({ title: emailResult?.emailSent ? "تم إعادة إرسال الدعوة بالإيميل" : "تم تجديد الرابط" });
+                } catch { toast({ title: "حدث خطأ", variant: "destructive" }); }
+              }}>
+                <Send className="w-4 h-4" strokeWidth={1.5} /> إعادة إرسال
+              </Button>
             </div>
+          </Card>
+        )}
+
+        {/* Resend invite for clients without invite_token and without auth */}
+        {!(client as any).invite_token && !(client as any).auth_user_id && client.email && (
+          <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
+            <h3 className="font-bold text-card-foreground mb-2 flex items-center gap-2">
+              <Send className="w-4 h-4 text-yellow-500" strokeWidth={1.5} /> لم يسجّل العميل بعد
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">أرسل دعوة جديدة لإنشاء حسابه</p>
+            <Button size="sm" className="gap-1" onClick={async () => {
+              try {
+                const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
+                await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
+                const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
+                  body: { clientName: client.name, clientEmail: client.email, trainerName: "", inviteToken: newToken },
+                });
+                queryClient.invalidateQueries({ queryKey: ["client", id] });
+                toast({ title: emailResult?.emailSent ? "تم إرسال الدعوة بالإيميل" : "تم إنشاء رابط الدعوة" });
+              } catch { toast({ title: "حدث خطأ", variant: "destructive" }); }
+            }}>
+              <Send className="w-4 h-4" strokeWidth={1.5} /> إعادة إرسال الدعوة
+            </Button>
           </Card>
         )}
 

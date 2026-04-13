@@ -213,6 +213,8 @@ export const getArabicEquipment = (eq: string): string =>
 export interface ExerciseDBItem {
   id: string;
   name: string;
+  /** Present for bundled `exercises-db.json` rows — preferred over dictionary lookup in UI */
+  name_ar?: string;
   bodyPart: string;
   target: string;
   equipment: string;

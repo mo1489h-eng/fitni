@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import { useIsNativePlatform } from "@/hooks/useNativePlatform";
@@ -91,8 +91,9 @@ const App = () => {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="clients" element={<Clients />} />
                 <Route path="clients/:id" element={<ClientProfile />} />
-                <Route path="programs" element={<ProgramBuilder />} />
-                <Route path="payments" element={<Payments />} />
+              <Route path="programs" element={<ProgramBuilder />} />
+              <Route path="workout-builder" element={<Navigate to="/programs" replace />} />
+              <Route path="payments" element={<Payments />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="nutrition" element={<Nutrition />} />
                 <Route path="calendar" element={<Calendar />} />

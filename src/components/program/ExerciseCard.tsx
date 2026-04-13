@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   ChevronUp, ChevronDown, X, CopyPlus, Link2, GripVertical,
   Plus, MoreHorizontal, FileText, Trash2, Video, ChevronRight,
-  ExternalLink,
+  ExternalLink, Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -24,6 +24,8 @@ interface Props {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onSuperset?: () => void;
+  onOpenPreview?: () => void;
+  onSuggestAlternatives?: () => void;
 }
 
 function extractYouTubeId(url: string): string | null {
@@ -38,6 +40,7 @@ function extractYouTubeId(url: string): string | null {
 const ExerciseCard = ({
   ex, isWarmup, isSuperset,
   onUpdate, onRemove, onDuplicate, onMoveUp, onMoveDown, onSuperset,
+  onOpenPreview, onSuggestAlternatives,
 }: Props) => {
   const [showNotes, setShowNotes] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
@@ -92,45 +95,95 @@ const ExerciseCard = ({
           </div>
         )}
 
-        {/* GIF Thumbnail */}
-        <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!imageUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
-          {imageUrl ? (
-            <>
-              <img
-                src={imageUrl}
-                alt={ex.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-                  if (sibling) sibling.style.display = 'flex';
-                }}
-              />
-              <div
-                style={{ display: 'none' }}
-                className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0 rounded-lg"
-              >
-                {ex.name.charAt(0).toUpperCase()}
-              </div>
-            </>
-          ) : (
-            <span className="text-lg font-bold">{ex.name.charAt(0).toUpperCase()}</span>
-          )}
-        </div>
+        {/* GIF Thumbnail — click for large preview */}
+        {onOpenPreview ? (
+          <button
+            type="button"
+            onClick={() => onOpenPreview()}
+            className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative text-left ${!imageUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'} cursor-zoom-in ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40`}
+          >
+            {imageUrl ? (
+              <>
+                <img
+                  src={imageUrl}
+                  alt={ex.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (sibling) sibling.style.display = 'flex';
+                  }}
+                />
+                <div
+                  style={{ display: 'none' }}
+                  className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0 rounded-lg"
+                >
+                  {ex.name.charAt(0).toUpperCase()}
+                </div>
+              </>
+            ) : (
+              <span className="text-lg font-bold">{ex.name.charAt(0).toUpperCase()}</span>
+            )}
+          </button>
+        ) : (
+          <div className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 relative ${!imageUrl ? bodyPartColor + ' flex items-center justify-center' : 'bg-muted'}`}>
+            {imageUrl ? (
+              <>
+                <img
+                  src={imageUrl}
+                  alt={ex.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (sibling) sibling.style.display = 'flex';
+                  }}
+                />
+                <div
+                  style={{ display: 'none' }}
+                  className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0 rounded-lg"
+                >
+                  {ex.name.charAt(0).toUpperCase()}
+                </div>
+              </>
+            ) : (
+              <span className="text-lg font-bold">{ex.name.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+        )}
 
         {/* Name + Tags */}
-        <div className="flex-1 min-w-0 text-right">
-          <p className="text-sm font-bold text-foreground truncate">{ex.name}</p>
-          {ex.name_en && <p className="text-[10px] text-muted-foreground truncate">{ex.name_en}</p>}
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${bodyPartColor}`}>
-              {getArabicBodyPart(ex.muscle) || ex.muscle}
-            </Badge>
-            {isSuperset && <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1.5">SS</Badge>}
-            {ex.rpe && <span className="text-[9px] text-amber-400 font-medium">RPE {ex.rpe}</span>}
+        {onOpenPreview ? (
+          <button
+            type="button"
+            onClick={() => onOpenPreview()}
+            className="flex-1 min-w-0 text-right cursor-pointer"
+          >
+            <p className="text-sm font-bold text-foreground truncate">{ex.name}</p>
+            {ex.name_en && <p className="text-[10px] text-muted-foreground truncate">{ex.name_en}</p>}
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${bodyPartColor}`}>
+                {getArabicBodyPart(ex.muscle) || ex.muscle}
+              </Badge>
+              {isSuperset && <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1.5">SS</Badge>}
+              {ex.rpe && <span className="text-[9px] text-amber-400 font-medium">RPE {ex.rpe}</span>}
+            </div>
+          </button>
+        ) : (
+          <div className="flex-1 min-w-0 text-right">
+            <p className="text-sm font-bold text-foreground truncate">{ex.name}</p>
+            {ex.name_en && <p className="text-[10px] text-muted-foreground truncate">{ex.name_en}</p>}
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${bodyPartColor}`}>
+                {getArabicBodyPart(ex.muscle) || ex.muscle}
+              </Badge>
+              {isSuperset && <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1.5">SS</Badge>}
+              {ex.rpe && <span className="text-[9px] text-amber-400 font-medium">RPE {ex.rpe}</span>}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Menu */}
         <DropdownMenu>
@@ -148,6 +201,11 @@ const ExerciseCard = ({
             {onSuperset && (
               <DropdownMenuItem onClick={onSuperset} className="gap-2 text-xs">
                 <Link2 className="w-3.5 h-3.5" />سوبرسيت
+              </DropdownMenuItem>
+            )}
+            {onSuggestAlternatives && (
+              <DropdownMenuItem onClick={onSuggestAlternatives} className="gap-2 text-xs">
+                <Sparkles className="w-3.5 h-3.5" />بدائل ذكية
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => setShowNotes(!showNotes)} className="gap-2 text-xs">

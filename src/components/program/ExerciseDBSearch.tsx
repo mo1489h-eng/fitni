@@ -12,6 +12,11 @@ import {
   ExerciseDBItem, getArabicName, getArabicBodyPart, getArabicTarget,
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
+import {
+  searchLocalExercises,
+  filterLocalByBodyPart,
+  mergeExerciseListsPreferLocal,
+} from "@/lib/localExercisesDb";
 
 interface Props {
   open: boolean;
@@ -66,12 +71,23 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch exercises
   const fetchExercises = useCallback(async (
     query?: string, bodyPart?: string, newOffset = 0, append = false
   ) => {
     setLoading(true);
     try {
+      let localFirst: ExerciseDBItem[] = [];
+      if (!append) {
+        if (bodyPart) {
+          localFirst = filterLocalByBodyPart(bodyPart);
+        } else if (query && query.trim().length >= 1) {
+          localFirst = searchLocalExercises(query, 80);
+        } else {
+          localFirst = searchLocalExercises("", 40);
+        }
+        setExercises(localFirst);
+      }
+
       const params = new URLSearchParams({ limit: "30", offset: String(newOffset) });
 
       if (bodyPart) {
@@ -93,15 +109,16 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
 
       if (!response.ok) throw new Error("API Error");
       const result = await response.json();
+      const remote: ExerciseDBItem[] = Array.isArray(result) ? result : [];
 
-      if (Array.isArray(result)) {
-        if (append) {
-          setExercises(prev => [...prev, ...result]);
-        } else {
-          setExercises(result);
-        }
-        setHasMore(result.length >= 30);
-        setOffset(newOffset + result.length);
+      if (append) {
+        setExercises((prev) => mergeExerciseListsPreferLocal(prev, remote));
+        setHasMore(remote.length >= 30);
+        setOffset(newOffset + remote.length);
+      } else {
+        setExercises(mergeExerciseListsPreferLocal(localFirst, remote));
+        setHasMore(remote.length >= 30);
+        setOffset(newOffset + remote.length);
       }
     } catch (err) {
       console.error("ExerciseDB fetch error:", err);
@@ -114,9 +131,9 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
   useEffect(() => {
     if (!open) return;
     if (tab === "search") {
-      if (debouncedSearch.length >= 2) {
+      if (debouncedSearch.length >= 1) {
         fetchExercises(debouncedSearch);
-      } else if (debouncedSearch.length === 0) {
+      } else {
         fetchExercises();
       }
     }
@@ -179,7 +196,7 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
 
   const renderExerciseRow = (ex: ExerciseDBItem) => {
     const isSelected = selectedIds.has(ex.id);
-    const arName = getArabicName(ex.name);
+    const arName = ex.name_ar ?? getArabicName(ex.name);
     const config = BODY_PART_CONFIG[ex.bodyPart] || { color: "bg-muted text-muted-foreground" };
 
     return (
@@ -191,13 +208,17 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
         onClick={() => toggleSelect(ex)}
       >
         {/* GIF Thumbnail */}
-        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-          <img
-            src={ex.gifUrl}
-            alt={ex.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
+          {ex.gifUrl ? (
+            <img
+              src={ex.gifUrl}
+              alt={ex.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
+          )}
         </div>
 
         {/* Info */}
@@ -233,16 +254,20 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
         <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0" dir="rtl">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <button onClick={() => setDetailExercise(null)} className="text-sm text-primary font-medium">رجوع</button>
-            <DialogTitle className="text-sm">{getArabicName(ex.name)}</DialogTitle>
+            <DialogTitle className="text-sm">{ex.name_ar ?? getArabicName(ex.name)}</DialogTitle>
             <div className="w-8" />
           </div>
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
-              <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[300px] mx-auto">
-                <img src={ex.gifUrl} alt={ex.name} className="w-full h-full object-contain" />
+              <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[300px] mx-auto flex items-center justify-center">
+                {ex.gifUrl ? (
+                  <img src={ex.gifUrl} alt={ex.name} className="w-full h-full object-contain" />
+                ) : (
+                  <Dumbbell className="w-20 h-20 text-muted-foreground/40" strokeWidth={1.25} />
+                )}
               </div>
               <div>
-                <p className="text-lg font-bold text-foreground">{getArabicName(ex.name)}</p>
+                <p className="text-lg font-bold text-foreground">{ex.name_ar ?? getArabicName(ex.name)}</p>
                 <p className="text-sm text-muted-foreground">{ex.name}</p>
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -340,7 +365,7 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
                   </div>
                 )}
-                {!loading && exercises.length === 0 && debouncedSearch.length >= 2 && (
+                {!loading && exercises.length === 0 && debouncedSearch.length >= 1 && (
                   <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
                 )}
               </div>

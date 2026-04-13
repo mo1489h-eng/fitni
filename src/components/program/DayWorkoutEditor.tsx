@@ -26,6 +26,8 @@ interface Props {
   onMoveExercise: (exId: string, dir: "up" | "down") => void;
   onToggleSuperset: (exId: string) => void;
   onOpenLibrary: () => void;
+  onOpenExercisePreview?: (ex: LocalExercise) => void;
+  onSuggestExerciseAlternatives?: (ex: LocalExercise) => void;
 }
 
 const DAY_TYPES: { value: EditorDay["type"]; label: string; icon: typeof Dumbbell }[] = [
@@ -38,6 +40,7 @@ const DayWorkoutEditor = ({
   day, onUpdateLabel, onUpdateType,
   onUpdateExercise, onRemoveExercise, onDuplicateExercise,
   onMoveExercise, onToggleSuperset, onOpenLibrary,
+  onOpenExercisePreview, onSuggestExerciseAlternatives,
 }: Props) => {
   if (!day) {
     return (
@@ -128,6 +131,10 @@ const DayWorkoutEditor = ({
                       onMoveUp={idx > 0 ? () => onMoveExercise(ex.id, "up") : undefined}
                       onMoveDown={idx < day.exercises.length - 1 ? () => onMoveExercise(ex.id, "down") : undefined}
                       onSuperset={idx < day.exercises.length - 1 ? () => onToggleSuperset(ex.id) : undefined}
+                      onOpenPreview={onOpenExercisePreview ? () => onOpenExercisePreview(ex) : undefined}
+                      onSuggestAlternatives={
+                        onSuggestExerciseAlternatives ? () => onSuggestExerciseAlternatives(ex) : undefined
+                      }
                     />
                   </div>
                 );

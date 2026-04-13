@@ -834,6 +834,42 @@ export type Database = {
         }
         Relationships: []
       }
+      exercisedb_cache: {
+        Row: {
+          body_part: string
+          equipment: string | null
+          external_id: string
+          instructions: Json
+          name_ar: string
+          name_en: string
+          secondary_muscles: Json
+          synced_at: string
+          target: string | null
+        }
+        Insert: {
+          body_part: string
+          equipment?: string | null
+          external_id: string
+          instructions?: Json
+          name_ar?: string
+          name_en: string
+          secondary_muscles?: Json
+          synced_at?: string
+          target?: string | null
+        }
+        Update: {
+          body_part?: string
+          equipment?: string | null
+          external_id?: string
+          instructions?: Json
+          name_ar?: string
+          name_en?: string
+          secondary_muscles?: Json
+          synced_at?: string
+          target?: string | null
+        }
+        Relationships: []
+      }
       food_database: {
         Row: {
           barcode: string | null
@@ -1740,6 +1776,7 @@ export type Database = {
           created_at: string
           description: string | null
           difficulty: string | null
+          equipment: string | null
           goal: string | null
           id: string
           is_template: boolean
@@ -1751,6 +1788,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1762,6 +1800,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean

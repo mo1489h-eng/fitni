@@ -4,6 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GOALS, LEVELS } from "./types";
 
+export const PROGRAM_EQUIPMENT_OPTIONS = [
+  { value: "جيم كامل", hint: "أوزان حرة، آلات، كابلات" },
+  { value: "منزل — معدات أساسية", hint: "دمبل، مقعد، أوزان محدودة" },
+  { value: "منزل — وزن الجسم", hint: "تمارين وزن الجسم / مقاومة بسيطة" },
+  { value: "استوديو صغير", hint: "معدات محدودة أو كيتل فقط" },
+] as const;
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -11,6 +18,7 @@ interface Props {
     name: string;
     goal: string;
     level: string;
+    equipment: string;
     weeks: number;
     daysPerWeek: number;
   }) => void;
@@ -22,13 +30,15 @@ const CreateProgramModal = ({ open, onOpenChange, onSubmit }: Props) => {
   const [level, setLevel] = useState("");
   const [weeks, setWeeks] = useState(8);
   const [daysPerWeek, setDaysPerWeek] = useState(4);
+  const [equipment, setEquipment] = useState("");
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSubmit({ name: name.trim(), goal, level, weeks, daysPerWeek });
+    onSubmit({ name: name.trim(), goal, level, equipment, weeks, daysPerWeek });
     setName("");
     setGoal("");
     setLevel("");
+    setEquipment("");
     setWeeks(8);
     setDaysPerWeek(4);
   };
@@ -84,6 +94,28 @@ const CreateProgramModal = ({ open, onOpenChange, onSubmit }: Props) => {
                   }`}
                 >
                   {l.value}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Equipment */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">معدات البرنامج</label>
+            <div className="grid grid-cols-1 gap-1.5">
+              {PROGRAM_EQUIPMENT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setEquipment(equipment === opt.value ? "" : opt.value)}
+                  className={`text-right rounded-lg border px-3 py-2 transition-all ${
+                    equipment === opt.value
+                      ? "border-primary/40 bg-primary/10 ring-1 ring-primary/30"
+                      : "border-border hover:border-primary/25"
+                  }`}
+                >
+                  <span className="text-[12px] font-medium text-foreground block">{opt.value}</span>
+                  <span className="text-[10px] text-muted-foreground">{opt.hint}</span>
                 </button>
               ))}
             </div>

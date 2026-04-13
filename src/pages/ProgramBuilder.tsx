@@ -20,8 +20,11 @@ import CreateProgramModal from "@/components/program/CreateProgramModal";
 import WeekDayNav, { WeekData, DayData } from "@/components/program/WeekDayNav";
 import DayWorkoutEditor, { EditorDay } from "@/components/program/DayWorkoutEditor";
 import ExerciseLibraryPanel from "@/components/program/ExerciseLibraryPanel";
+import ExercisePreviewSheet from "@/components/program/ExercisePreviewSheet";
+import ExerciseAlternativesDialog from "@/components/program/ExerciseAlternativesDialog";
 import SmartWarnings from "@/components/program/SmartWarnings";
 import { LocalExercise, LocalDay, genId } from "@/components/program/types";
+import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import type { SelectedExercise } from "@/components/program/ExerciseLibraryPanel";
 
 // ──────────────── Types ────────────────
@@ -51,11 +54,14 @@ const ProgramBuilder = () => {
   const [programName, setProgramName] = useState("");
   const [programGoal, setProgramGoal] = useState("");
   const [programLevel, setProgramLevel] = useState("");
+  const [programEquipment, setProgramEquipment] = useState("");
   const [programWeeks, setProgramWeeks] = useState(8);
   const [days, setDays] = useState<ProgramDay[]>([]);
   const [activeWeek, setActiveWeek] = useState(0);
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [previewExercise, setPreviewExercise] = useState<LocalExercise | null>(null);
+  const [altTargetExercise, setAltTargetExercise] = useState<LocalExercise | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -140,10 +146,18 @@ const ProgramBuilder = () => {
   }, []);
 
   // ──────────── PROGRAM CREATION ────────────
-  const handleCreateProgram = (data: { name: string; goal: string; level: string; weeks: number; daysPerWeek: number }) => {
+  const handleCreateProgram = (data: {
+    name: string;
+    goal: string;
+    level: string;
+    equipment: string;
+    weeks: number;
+    daysPerWeek: number;
+  }) => {
     setProgramName(data.name);
     setProgramGoal(data.goal);
     setProgramLevel(data.level);
+    setProgramEquipment(data.equipment);
     setProgramWeeks(data.weeks);
     setEditingProgramId(null);
 
@@ -200,8 +214,10 @@ const ProgramBuilder = () => {
     }));
     setProgramWeeks(prev => prev + 1);
     setDays(prev => [...prev, ...newDays]);
+    setActiveWeek(newWeekIdx);
+    setActiveDayId(newDays[0]?.id ?? null);
     setHasUnsavedChanges(true);
-    toast({ title: "تم تكرار الأسبوع" });
+    toast({ title: "تم تكرار الأسبوع — تم تحديد الأسبوع الجديد" });
   };
 
   const handleCreateDeload = (weekIdx: number) => {
@@ -334,6 +350,7 @@ const ProgramBuilder = () => {
           weeks: programWeeks,
           goal: programGoal || null,
           difficulty: programLevel || null,
+          equipment: programEquipment.trim() || null,
           is_template: asTemplate,
         })
         .select().single();
@@ -500,6 +517,7 @@ const ProgramBuilder = () => {
             />
             {programGoal && <Badge variant="secondary" className="text-[10px]">{programGoal}</Badge>}
             {programLevel && <Badge variant="secondary" className="text-[10px]">{programLevel}</Badge>}
+            {programEquipment && <Badge variant="outline" className="text-[10px]">{programEquipment}</Badge>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -570,6 +588,8 @@ const ProgramBuilder = () => {
               onMoveExercise={handleMoveExercise}
               onToggleSuperset={handleToggleSuperset}
               onOpenLibrary={() => setShowLibrary(true)}
+              onOpenExercisePreview={setPreviewExercise}
+              onSuggestExerciseAlternatives={setAltTargetExercise}
             />
           </div>
 
@@ -584,6 +604,37 @@ const ProgramBuilder = () => {
             </div>
           )}
         </div>
+
+        <ExercisePreviewSheet
+          exercise={previewExercise}
+          open={!!previewExercise}
+          onOpenChange={(o) => { if (!o) setPreviewExercise(null); }}
+        />
+        <ExerciseAlternativesDialog
+          open={!!altTargetExercise}
+          onOpenChange={(o) => { if (!o) setAltTargetExercise(null); }}
+          exercise={altTargetExercise}
+          onApply={(alt) => {
+            if (!activeDayId || !altTargetExercise) return;
+            updateDayField(activeDayId, (d) => ({
+              ...d,
+              exercises: d.exercises.map((e) =>
+                e.id === altTargetExercise.id
+                  ? {
+                      ...e,
+                      name: alt.name_ar,
+                      name_en: alt.name_en,
+                      muscle: alt.body_part,
+                      exerciseDbId: alt.external_id,
+                      gifUrl: getExerciseImageUrl(alt.external_id),
+                    }
+                  : e,
+              ),
+            }));
+            setHasUnsavedChanges(true);
+            setAltTargetExercise(null);
+          }}
+        />
 
         {/* Save as Template Modal */}
         <SaveAsTemplateModal
@@ -703,6 +754,9 @@ const ProgramBuilder = () => {
                     </Badge>
                     {program.goal && <Badge variant="secondary" className="text-[10px]">{program.goal}</Badge>}
                     {program.difficulty && <Badge variant="secondary" className="text-[10px]">{program.difficulty}</Badge>}
+                    {program.equipment && (
+                      <Badge variant="outline" className="text-[10px]">{program.equipment}</Badge>
+                    )}
                   </div>
                   <div className="flex gap-1.5">
                     <Button variant="outline" size="sm" className="text-[10px] h-7 flex-1 gap-0.5"

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Check, Dumbbell, Clock, Loader2, X,
 } from "lucide-react";
@@ -11,6 +12,16 @@ import {
   getArabicEquipment, BODY_PART_CONFIG,
 } from "@/lib/exercise-translations";
 import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
+import { mergeExerciseListsPreferLocal } from "@/lib/localExercisesDb";
+import {
+  ensureExerciseLibrarySynced,
+  searchExercisesUnified,
+  fetchRemoteExercisePage,
+} from "@/lib/exercise-library-service";
+import {
+  MUSCLE_FILTER_OPTIONS,
+  EQUIPMENT_FILTER_OPTIONS,
+} from "@/lib/exercise-filter-maps";
 
 export interface SelectedExercise {
   id: string;
@@ -35,6 +46,23 @@ const BODY_PARTS = [
   "neck", "shoulders", "upper arms", "upper legs", "waist",
 ];
 
+function ResultGridSkeleton() {
+  return (
+    <div className="space-y-2 p-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex gap-3 p-2 rounded-lg border border-border/40">
+          <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-[70%] mr-auto" />
+            <Skeleton className="h-3 w-[45%] mr-auto" />
+            <Skeleton className="h-5 w-24 mr-auto" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   const [tab, setTab] = useState<"search" | "bodypart" | "recent">("search");
   const [search, setSearch] = useState("");
@@ -47,17 +75,23 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
   const [hasMore, setHasMore] = useState(true);
   const [recentExercises, setRecentExercises] = useState<ExerciseDBItem[]>([]);
   const [detailExercise, setDetailExercise] = useState<ExerciseDBItem | null>(null);
+  const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
+  const [equipmentFilter, setEquipmentFilter] = useState<string | null>(null);
+  const listSource = useRef<"db" | "local" | "remote">("remote");
 
   useEffect(() => {
     if (open) {
       const stored = localStorage.getItem("recent-exercises");
       if (stored) {
-        try { setRecentExercises(JSON.parse(stored)); } catch {}
+        try { setRecentExercises(JSON.parse(stored)); } catch { /* */ }
       }
       setSelectedIds(new Set());
       setSearch("");
       setSelectedBodyPart(null);
       setDetailExercise(null);
+      setMuscleFilter(null);
+      setEquipmentFilter(null);
+      void ensureExerciseLibrarySynced();
     }
   }, [open]);
 
@@ -66,62 +100,77 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchExercises = useCallback(async (
-    query?: string, bodyPart?: string, newOffset = 0, append = false
-  ) => {
+  const loadPage = useCallback(async () => {
+    if (!open) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams({ limit: "30", offset: String(newOffset) });
-      if (bodyPart) {
-        params.set("endpoint", "byBodyPart");
-        params.set("bodyPart", bodyPart);
-      } else if (query && query.length >= 2) {
-        params.set("endpoint", "byName");
-        params.set("name", query.toLowerCase());
-      } else {
-        params.set("endpoint", "exercises");
-      }
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+      const bp =
+        tab === "bodypart" && selectedBodyPart
+          ? selectedBodyPart
+          : muscleFilter;
+      const res = await searchExercisesUnified({
+        query: tab === "search" ? debouncedSearch : undefined,
+        bodyPart: bp,
+        equipmentMatch: equipmentFilter,
+        offset: 0,
+        limit: 80,
       });
-      if (!response.ok) throw new Error("API Error");
-      const result = await response.json();
-      if (Array.isArray(result)) {
-        setExercises(prev => append ? [...prev, ...result] : result);
-        setHasMore(result.length >= 30);
-        setOffset(newOffset + result.length);
-      }
-    } catch (err) {
-      console.error("ExerciseDB fetch error:", err);
+      listSource.current = res.source;
+      setExercises(res.items);
+      setOffset(res.items.length);
+      setHasMore(res.source !== "db" && res.items.length >= 25);
+    } catch {
+      setExercises([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [open, tab, selectedBodyPart, muscleFilter, equipmentFilter, debouncedSearch]);
 
   useEffect(() => {
     if (!open) return;
-    if (tab === "search") {
-      if (debouncedSearch.length >= 2) fetchExercises(debouncedSearch);
-      else if (debouncedSearch.length === 0) fetchExercises();
+    if (tab === "search" || (tab === "bodypart" && selectedBodyPart)) {
+      setOffset(0);
+      void loadPage();
     }
-  }, [debouncedSearch, open, tab, fetchExercises]);
+  }, [debouncedSearch, open, tab, selectedBodyPart, muscleFilter, equipmentFilter, loadPage]);
 
-  useEffect(() => {
-    if (selectedBodyPart) fetchExercises(undefined, selectedBodyPart);
-  }, [selectedBodyPart, fetchExercises]);
+  const handleScroll = useCallback(
+    async (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      if (el.scrollTop + el.clientHeight < el.scrollHeight - 100 || !hasMore || loading) return;
+      if (listSource.current === "db") return;
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100 && hasMore && !loading) {
-      if (tab === "search") fetchExercises(debouncedSearch || undefined, undefined, offset, true);
-      else if (tab === "bodypart" && selectedBodyPart) fetchExercises(undefined, selectedBodyPart, offset, true);
-    }
-  }, [hasMore, loading, offset, tab, debouncedSearch, selectedBodyPart, fetchExercises]);
+      const bp =
+        tab === "bodypart" && selectedBodyPart
+          ? selectedBodyPart
+          : muscleFilter;
+
+      setLoading(true);
+      try {
+        const remote = await fetchRemoteExercisePage(
+          tab === "search" ? debouncedSearch : undefined,
+          bp ?? undefined,
+          offset,
+        );
+        let next = remote;
+        if (equipmentFilter) {
+          next = next.filter((ex) =>
+            (ex.equipment || "").toLowerCase().includes(equipmentFilter.toLowerCase()),
+          );
+        }
+        setExercises((prev) => mergeExerciseListsPreferLocal(prev, next));
+        setHasMore(remote.length >= 30);
+        setOffset((o) => o + remote.length);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [hasMore, loading, offset, tab, debouncedSearch, selectedBodyPart, muscleFilter, equipmentFilter],
+  );
 
   const toggleSelect = (ex: ExerciseDBItem) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(ex.id)) next.delete(ex.id);
       else next.add(ex.id);
@@ -131,17 +180,24 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
   const handleAdd = () => {
     const allExercises = [...exercises, ...recentExercises];
-    const selected = allExercises.filter(e => selectedIds.has(e.id));
-    const unique = selected.filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i);
+    const selected = allExercises.filter((e) => selectedIds.has(e.id));
+    const unique = selected.filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
 
-    const mapped: SelectedExercise[] = unique.map(e => ({
-      id: e.id, name_en: e.name, name_ar: getArabicName(e.name),
-      bodyPart: e.bodyPart, target: e.target, equipment: e.equipment,
-      gifUrl: e.gifUrl, secondaryMuscles: e.secondaryMuscles, instructions: e.instructions,
+    const mapped: SelectedExercise[] = unique.map((e) => ({
+      id: e.id,
+      name_en: e.name,
+      name_ar: e.name_ar ?? getArabicName(e.name),
+      bodyPart: e.bodyPart,
+      target: e.target,
+      equipment: e.equipment,
+      gifUrl: e.gifUrl || getExerciseImageUrl(e.id),
+      secondaryMuscles: e.secondaryMuscles,
+      instructions: e.instructions,
     }));
 
-    // Save to recent
-    const recent = [...unique, ...recentExercises].filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i).slice(0, 20);
+    const recent = [...unique, ...recentExercises]
+      .filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i)
+      .slice(0, 20);
     localStorage.setItem("recent-exercises", JSON.stringify(recent));
 
     onAdd(mapped);
@@ -151,8 +207,11 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
   const renderExerciseRow = (ex: ExerciseDBItem) => {
     const isSelected = selectedIds.has(ex.id);
-    const arName = getArabicName(ex.name);
+    const arName = ex.name_ar ?? getArabicName(ex.name);
     const config = BODY_PART_CONFIG[ex.bodyPart] || { color: "bg-muted text-muted-foreground" };
+    const isBundledLocal = ex.id.startsWith("fitni-db-");
+    const thumb =
+      ex.gifUrl || (!isBundledLocal ? getExerciseImageUrl(ex.id) : "");
 
     return (
       <div
@@ -162,38 +221,46 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         }`}
         onClick={() => toggleSelect(ex)}
       >
-        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
-          <img
-            src={getExerciseImageUrl(ex.id)}
-            alt={ex.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-              if (sibling) sibling.style.display = 'flex';
-            }}
-          />
+        <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative flex items-center justify-center border border-border/30">
+          {thumb ? (
+            <img
+              src={thumb}
+              alt={ex.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                if (sibling) sibling.style.display = "flex";
+              }}
+            />
+          ) : null}
           <div
-            style={{ display: 'none' }}
-            className="w-full h-full rounded-lg bg-primary/20 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0"
+            style={{ display: thumb ? "none" : "flex" }}
+            className="w-full h-full rounded-lg bg-primary/15 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0"
           >
-            {ex.name.charAt(0).toUpperCase()}
+            {isBundledLocal ? (
+              <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
+            ) : (
+              ex.name.charAt(0).toUpperCase()
+            )}
           </div>
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-bold text-foreground truncate">{arName}</p>
           <p className="text-[11px] text-muted-foreground truncate">{ex.name}</p>
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap justify-end">
             <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${config.color}`}>
               {getArabicBodyPart(ex.bodyPart)}
             </Badge>
             <span className="text-[9px] text-muted-foreground">{getArabicEquipment(ex.equipment)}</span>
           </div>
         </div>
-        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-          isSelected ? "bg-primary border-primary" : "border-border"
-        }`}>
+        <div
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+            isSelected ? "bg-primary border-primary" : "border-border"
+          }`}
+        >
           {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={2.5} />}
         </div>
       </div>
@@ -202,38 +269,47 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
   if (!open) return null;
 
-  // Detail view
   if (detailExercise) {
     const ex = detailExercise;
     return (
       <div className="h-full flex flex-col bg-card border-r border-border" dir="rtl">
         <div className="p-4 border-b border-border flex items-center justify-between">
-          <button onClick={() => setDetailExercise(null)} className="text-sm text-primary font-medium">رجوع</button>
-          <span className="text-sm font-bold">{getArabicName(ex.name)}</span>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+          <button onClick={() => setDetailExercise(null)} className="text-sm text-primary font-medium">
+            رجوع
+          </button>
+          <span className="text-sm font-bold">{ex.name_ar ?? getArabicName(ex.name)}</span>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X className="w-4 h-4" />
+          </button>
         </div>
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-             <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative">
-               <img
-                 src={getExerciseImageUrl(ex.id)}
-                 alt={ex.name}
-                 className="w-full h-full object-contain"
-                 onError={(e) => {
-                   e.currentTarget.style.display = 'none';
-                   const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-                   if (sibling) sibling.style.display = 'flex';
-                 }}
-               />
-               <div
-                 style={{ display: 'none' }}
-                 className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-5xl font-bold absolute inset-0"
-               >
-                 {ex.name.charAt(0).toUpperCase()}
-               </div>
-             </div>
+            <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative flex items-center justify-center border border-border/50">
+              {ex.id.startsWith("fitni-db-") ? (
+                <Dumbbell className="w-20 h-20 text-muted-foreground/40" strokeWidth={1.25} />
+              ) : (
+                <>
+                  <img
+                    src={getExerciseImageUrl(ex.id)}
+                    alt={ex.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      const sibling = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (sibling) sibling.style.display = "flex";
+                    }}
+                  />
+                  <div
+                    style={{ display: "none" }}
+                    className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-5xl font-bold absolute inset-0"
+                  >
+                    {ex.name.charAt(0).toUpperCase()}
+                  </div>
+                </>
+              )}
+            </div>
             <div>
-              <p className="text-lg font-bold text-foreground">{getArabicName(ex.name)}</p>
+              <p className="text-lg font-bold text-foreground">{ex.name_ar ?? getArabicName(ex.name)}</p>
               <p className="text-sm text-muted-foreground">{ex.name}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -245,8 +321,10 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">العضلات المساعدة</p>
                 <div className="flex gap-1 flex-wrap">
-                  {ex.secondaryMuscles.map(m => (
-                    <Badge key={m} variant="outline" className="text-[10px]">{getArabicTarget(m)}</Badge>
+                  {ex.secondaryMuscles.map((m) => (
+                    <Badge key={m} variant="outline" className="text-[10px]">
+                      {getArabicTarget(m)}
+                    </Badge>
                   ))}
                 </div>
               </div>
@@ -264,7 +342,13 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                 </ol>
               </div>
             )}
-            <Button className="w-full" onClick={() => { toggleSelect(ex); setDetailExercise(null); }}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                toggleSelect(ex);
+                setDetailExercise(null);
+              }}
+            >
               إضافة للتمرين
             </Button>
           </div>
@@ -275,64 +359,107 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
   return (
     <div className="h-full flex flex-col bg-card border-r border-border" dir="rtl">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Dumbbell className="w-4 h-4 text-primary" strokeWidth={1.5} />
-            إضافة تمرين
+            مكتبة التمارين
           </h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">
             <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-1 bg-muted rounded-lg p-0.5">
-          {([
-            { key: "search", label: "بحث", icon: Search },
-            { key: "bodypart", label: "عضلة", icon: Dumbbell },
-            { key: "recent", label: "الأخيرة", icon: Clock },
-          ] as const).map(t => (
+          {(
+            [
+              { key: "search", label: "بحث", icon: Search },
+              { key: "bodypart", label: "عضلة", icon: Dumbbell },
+              { key: "recent", label: "الأخيرة", icon: Clock },
+            ] as const
+          ).map((t) => (
             <button
               key={t.key}
-              onClick={() => { setTab(t.key); setSelectedBodyPart(null); }}
+              onClick={() => {
+                setTab(t.key);
+                setSelectedBodyPart(null);
+              }}
               className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                 tab === t.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
               }`}
             >
-              <t.icon className="w-3 h-3" />{t.label}
+              <t.icon className="w-3 h-3" />
+              {t.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 min-h-0 flex flex-col">
         {tab === "search" && (
           <>
-            <div className="p-3 border-b border-border">
+            <div className="p-3 border-b border-border space-y-2">
               <div className="relative">
                 <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="ابحث بالعربي أو الإنجليزي..."
+                  placeholder="بحث بالعربي أو الإنجليزي — مثل سحب علوي، chest..."
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="pr-10 h-9"
                   autoFocus
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">{exercises.length} نتيجة</p>
+              <div className="flex flex-wrap gap-1">
+                <span className="text-[9px] text-muted-foreground w-full">المجموعة العضلية</span>
+                {MUSCLE_FILTER_OPTIONS.map((m) => (
+                  <button
+                    key={m.bodyPart}
+                    type="button"
+                    onClick={() => setMuscleFilter(muscleFilter === m.bodyPart ? null : m.bodyPart)}
+                    className={`px-2 py-0.5 rounded-full text-[10px] border ${
+                      muscleFilter === m.bodyPart
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                <span className="text-[9px] text-muted-foreground w-full">المعدات</span>
+                {EQUIPMENT_FILTER_OPTIONS.map((m) => (
+                  <button
+                    key={m.match}
+                    type="button"
+                    onClick={() => setEquipmentFilter(equipmentFilter === m.match ? null : m.match)}
+                    className={`px-2 py-0.5 rounded-full text-[10px] border ${
+                      equipmentFilter === m.match
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">{exercises.length} نتيجة</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1" onScroll={handleScroll}>
-              {exercises.map(renderExerciseRow)}
-              {loading && (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
+              {loading && exercises.length === 0 ? (
+                <ResultGridSkeleton />
+              ) : (
+                <div className="p-2 space-y-1">
+                  {exercises.map(renderExerciseRow)}
+                  {loading && exercises.length > 0 && (
+                    <div className="flex justify-center py-3">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    </div>
+                  )}
+                  {!loading && exercises.length === 0 && debouncedSearch.length >= 1 && (
+                    <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
+                  )}
                 </div>
-              )}
-              {!loading && exercises.length === 0 && debouncedSearch.length >= 2 && (
-                <p className="text-center text-sm text-muted-foreground py-8">لا توجد نتائج</p>
               )}
             </div>
           </>
@@ -340,11 +467,14 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
 
         {tab === "bodypart" && !selectedBodyPart && (
           <div className="p-3 grid grid-cols-2 gap-2">
-            {BODY_PARTS.map(bp => {
+            {BODY_PARTS.map((bp) => {
               const config = BODY_PART_CONFIG[bp] || { color: "bg-muted text-muted-foreground" };
               return (
-                <button key={bp} onClick={() => setSelectedBodyPart(bp)}
-                  className={`p-4 rounded-xl border border-border hover:border-primary/30 transition-all text-center ${config.color}`}>
+                <button
+                  key={bp}
+                  onClick={() => setSelectedBodyPart(bp)}
+                  className={`p-4 rounded-xl border border-border hover:border-primary/30 transition-all text-center ${config.color}`}
+                >
                   <Dumbbell className="w-6 h-6 mx-auto mb-1.5" strokeWidth={1.5} />
                   <p className="text-sm font-bold">{getArabicBodyPart(bp)}</p>
                   <p className="text-[10px] opacity-70 mt-0.5">{bp}</p>
@@ -357,17 +487,30 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         {tab === "bodypart" && selectedBodyPart && (
           <>
             <div className="p-3 border-b border-border flex items-center justify-between">
-              <button onClick={() => { setSelectedBodyPart(null); setExercises([]); }}
-                className="text-xs text-primary font-medium">رجوع</button>
+              <button
+                onClick={() => {
+                  setSelectedBodyPart(null);
+                  setExercises([]);
+                }}
+                className="text-xs text-primary font-medium"
+              >
+                رجوع
+              </button>
               <p className="text-sm font-bold">{getArabicBodyPart(selectedBodyPart)}</p>
               <p className="text-[10px] text-muted-foreground">{exercises.length} تمرين</p>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1" onScroll={handleScroll}>
-              {exercises.map(renderExerciseRow)}
-              {loading && (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                </div>
+              {loading && exercises.length === 0 ? (
+                <ResultGridSkeleton />
+              ) : (
+                <>
+                  {exercises.map(renderExerciseRow)}
+                  {loading && exercises.length > 0 && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </>
@@ -387,7 +530,6 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         )}
       </div>
 
-      {/* Bottom Add Button */}
       {selectedIds.size > 0 && (
         <div className="p-3 border-t border-border">
           <Button className="w-full gap-2" onClick={handleAdd}>

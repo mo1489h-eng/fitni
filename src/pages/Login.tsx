@@ -28,11 +28,21 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "خطأ في تسجيل الدخول", description: "البريد أو كلمة المرور غير صحيحة", variant: "destructive" });
       setLoading(false);
       return;
+    }
+    // Check if user is a client — redirect to client portal
+    const userId = signInData.user?.id;
+    if (userId) {
+      const { data: clientProfile } = await supabase.rpc("get_my_client_profile");
+      if (clientProfile && clientProfile.length > 0 && clientProfile[0].portal_token) {
+        navigate(`/client-portal/${clientProfile[0].portal_token}`);
+        setLoading(false);
+        return;
+      }
     }
     navigate("/dashboard");
     setLoading(false);

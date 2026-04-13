@@ -19,7 +19,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
     queryKey: ["mobile-portal-client", token],
     queryFn: async () => {
       if (!token) return null;
-      const { data, error } = await supabase.rpc("get_client_by_portal_token", { p_token: token });
+      const { data, error } = await supabase.rpc("get_client_by_portal_token" as never, { p_token: token } as never);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : null;
       return row as {
@@ -36,7 +36,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
     queryKey: ["mobile-portal-program", token],
     queryFn: async () => {
       if (!token) return null;
-      const { data, error } = await supabase.rpc("get_portal_program", { p_token: token });
+      const { data, error } = await supabase.rpc("get_portal_program" as never, { p_token: token } as never);
       if (error) return null;
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       if (!parsed?.days?.length) return { todayLabel: null as string | null, totalDays: 0 };
@@ -61,7 +61,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
     queryKey: ["mobile-portal-workout-stats", token],
     queryFn: async () => {
       if (!token) return { total_workouts: 0, current_streak: 0 };
-      const { data, error } = await supabase.rpc("get_portal_workout_stats" as never, { p_token: token });
+      const { data, error } = await supabase.rpc("get_portal_workout_stats" as never, { p_token: token } as never);
       if (error || !data || typeof data !== "object") return { total_workouts: 0, current_streak: 0 };
       const j = data as { total_workouts?: number; current_streak?: number };
       return {
@@ -89,6 +89,24 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
       const daysPerWeek = clientRow.days_per_week ?? 3;
       const expected = Math.max(1, Math.round((daysPerWeek / 7) * 28));
       return Math.min(100, Math.round((done / expected) * 100));
+    },
+    enabled: !!clientRow?.id,
+  });
+
+  const { data: lastWorkout } = useQuery({
+    queryKey: ["mobile-last-workout", clientRow?.id],
+    queryFn: async () => {
+      if (!clientRow?.id) return null;
+      const { data, error } = await supabase
+        .from("workout_sessions")
+        .select("completed_at, total_volume, duration_minutes")
+        .eq("client_id", clientRow.id)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) return null;
+      return data;
     },
     enabled: !!clientRow?.id,
   });

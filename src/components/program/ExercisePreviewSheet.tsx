@@ -13,6 +13,7 @@ import {
 import { getExerciseImageUrl } from "@/lib/exercise-image-proxy";
 import type { LocalExercise } from "@/components/program/types";
 import { Dumbbell } from "lucide-react";
+import { ExerciseGifImage } from "@/components/program/ExerciseGifImage";
 
 interface Props {
   exercise: LocalExercise | null;
@@ -28,7 +29,7 @@ const ExercisePreviewSheet = ({ exercise, open, onOpenChange }: Props) => {
   const gif =
     exercise.exerciseDbId
       ? getExerciseImageUrl(exercise.exerciseDbId)
-      : exercise.gifUrl || "";
+      : (exercise.gifUrl && String(exercise.gifUrl).trim()) || "";
   const partColor = BODY_PART_CONFIG[exercise.muscle]?.color ?? "bg-muted text-muted-foreground";
 
   return (
@@ -42,24 +43,28 @@ const ExercisePreviewSheet = ({ exercise, open, onOpenChange }: Props) => {
           <SheetTitle className="text-right text-base">معاينة التمرين</SheetTitle>
         </SheetHeader>
         <ScrollArea className="min-h-0 flex-1">
-          <div className="p-4 space-y-4">
-            <div className="aspect-square max-h-[280px] rounded-xl overflow-hidden bg-muted flex items-center justify-center mx-auto border border-border/50">
+          <div className="space-y-4 p-4">
+            <div className="mx-auto flex aspect-square max-h-[280px] items-center justify-center overflow-hidden rounded-xl border border-border/50 bg-muted">
               {gif ? (
-                <img
+                <ExerciseGifImage
                   src={gif}
                   alt={ar}
-                  className="w-full h-full object-contain"
+                  className="h-full w-full"
+                  objectFit="contain"
                   loading="eager"
+                  errorFallback={
+                    <Dumbbell className="h-24 w-24 text-muted-foreground/35" strokeWidth={1.25} />
+                  }
                 />
               ) : (
-                <Dumbbell className="w-24 h-24 text-muted-foreground/35" strokeWidth={1.25} />
+                <Dumbbell className="h-24 w-24 text-muted-foreground/35" strokeWidth={1.25} />
               )}
             </div>
             <div>
               <p className="text-lg font-bold text-foreground">{ar}</p>
               {en ? <p className="text-sm text-muted-foreground">{en}</p> : null}
             </div>
-            <div className="flex flex-wrap gap-2 justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
               <Badge className={partColor}>{getArabicBodyPart(exercise.muscle)}</Badge>
             </div>
           </div>

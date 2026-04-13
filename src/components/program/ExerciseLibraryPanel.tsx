@@ -24,6 +24,7 @@ import {
   MUSCLE_FILTER_OPTIONS,
   EQUIPMENT_FILTER_OPTIONS,
 } from "@/lib/exercise-filter-maps";
+import { ExerciseGifImage } from "@/components/program/ExerciseGifImage";
 
 export interface SelectedExercise {
   id: string;
@@ -236,28 +237,31 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
       >
         <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative flex items-center justify-center border border-border/30">
           {thumb ? (
-            <img
+            <ExerciseGifImage
               src={thumb}
               alt={nameEn || arName}
-              className="w-full h-full object-cover"
+              className="h-full w-full"
+              objectFit="cover"
               loading="lazy"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-                const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-                if (sibling) sibling.style.display = "flex";
-              }}
+              errorFallback={
+                <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary/15 text-lg font-bold text-primary-foreground">
+                  {isBundledLocal ? (
+                    <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
+                  ) : (
+                    (nameEn || "?").charAt(0).toUpperCase()
+                  )}
+                </div>
+              }
             />
-          ) : null}
-          <div
-            style={{ display: thumb ? "none" : "flex" }}
-            className="w-full h-full rounded-lg bg-primary/15 text-primary-foreground items-center justify-center text-lg font-bold absolute inset-0"
-          >
-            {isBundledLocal ? (
-              <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
-            ) : (
-              (nameEn || "?").charAt(0).toUpperCase()
-            )}
-          </div>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary/15 text-lg font-bold text-primary-foreground">
+              {isBundledLocal ? (
+                <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
+              ) : (
+                (nameEn || "?").charAt(0).toUpperCase()
+              )}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0 text-right">
           <p className="text-sm font-bold text-foreground truncate">{arName}</p>
@@ -286,6 +290,10 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
     const ex = detailExercise;
     const detailNameEn = ex.name ?? "";
     const detailTitle = (ex.name_ar ?? "").trim() || getArabicName(detailNameEn);
+    const detailGif =
+      ex.id.startsWith("fitni-db-")
+        ? ""
+        : ((ex.gifUrl && String(ex.gifUrl).trim()) || getExerciseImageUrl(ex.id));
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-card border-r border-border" dir="rtl">
         <div className="flex-shrink-0 p-4 border-b border-border flex items-center justify-between">
@@ -299,28 +307,24 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
         </div>
         <ScrollArea className="min-h-0 flex-1 p-4">
           <div className="space-y-4">
-            <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] mx-auto relative flex items-center justify-center border border-border/50">
+            <div className="rounded-xl overflow-hidden bg-muted aspect-square max-w-[280px] min-h-[200px] mx-auto relative flex items-center justify-center border border-border/50">
               {ex.id.startsWith("fitni-db-") ? (
                 <Dumbbell className="w-20 h-20 text-muted-foreground/40" strokeWidth={1.25} />
+              ) : detailGif ? (
+                <ExerciseGifImage
+                  src={detailGif}
+                  alt={detailNameEn || detailTitle}
+                  className="h-full max-h-[280px] w-full"
+                  objectFit="contain"
+                  loading="eager"
+                  errorFallback={
+                    <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-primary/20 text-5xl font-bold text-primary-foreground">
+                      {(detailNameEn || "?").charAt(0).toUpperCase()}
+                    </div>
+                  }
+                />
               ) : (
-                <>
-                  <img
-                    src={getExerciseImageUrl(ex.id)}
-                    alt={detailNameEn || detailTitle}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      const sibling = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (sibling) sibling.style.display = "flex";
-                    }}
-                  />
-                  <div
-                    style={{ display: "none" }}
-                    className="w-full h-full bg-primary/20 text-primary-foreground items-center justify-center text-5xl font-bold absolute inset-0"
-                  >
-                    {(detailNameEn || "?").charAt(0).toUpperCase()}
-                  </div>
-                </>
+                <Dumbbell className="w-20 h-20 text-muted-foreground/40" strokeWidth={1.25} />
               )}
             </div>
             <div>

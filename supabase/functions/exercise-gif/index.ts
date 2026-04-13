@@ -29,15 +29,14 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch(
-      `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(exerciseId)}&resolution=360`,
-      {
-        headers: {
-          'x-rapidapi-key': rapidApiKey,
-          'x-rapidapi-host': 'exercisedb.p.rapidapi.com',
-        },
-      }
-    );
+    // Path-style URL matches `exercisedb-proxy` image route (query form was unreliable for some IDs).
+    const imageUrl = `https://exercisedb.p.rapidapi.com/image/${encodeURIComponent(exerciseId)}`;
+    const response = await fetch(imageUrl, {
+      headers: {
+        "X-RapidAPI-Key": rapidApiKey,
+        "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
+      },
+    });
 
     if (!response.ok) {
       return new Response(JSON.stringify({ error: `Upstream error: ${response.status}` }), {

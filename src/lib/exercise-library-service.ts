@@ -16,9 +16,21 @@ export type ExerciseLibraryRow = {
   body_part?: string | null;
   target?: string | null;
   equipment?: string | null;
+  /** Optional stored absolute GIF URL (if column exists / sync fills it). */
+  gif_url?: string | null;
+  gifUrl?: string | null;
   secondary_muscles?: unknown;
   instructions?: unknown;
 };
+
+function resolveGifUrlFromRow(id: string, r: Record<string, unknown>): string {
+  const fromDb =
+    (typeof r.gif_url === "string" && r.gif_url.trim()) ||
+    (typeof r.gifUrl === "string" && r.gifUrl.trim()) ||
+    "";
+  if (fromDb) return fromDb;
+  return getExerciseImageUrl(id);
+}
 
 /** Safe map from DB/cache row → ExerciseDBItem; skips unusable rows instead of throwing. */
 export function mapCacheRowToExerciseItem(row: unknown): ExerciseDBItem | null {
@@ -66,8 +78,11 @@ export function normalizeProxyExerciseToItem(raw: unknown): ExerciseDBItem | nul
   const bodyPart = typeof o.bodyPart === "string" ? o.bodyPart : "";
   const target = typeof o.target === "string" ? o.target : "";
   const equipment = typeof o.equipment === "string" ? o.equipment : "";
-  const gifUrl =
-    typeof o.gifUrl === "string" && o.gifUrl.length > 0 ? o.gifUrl : getExerciseImageUrl(id);
+  const fromApi =
+    (typeof o.gifUrl === "string" && o.gifUrl.trim()) ||
+    (typeof o.gif_url === "string" && o.gif_url.trim()) ||
+    "";
+  const gifUrl = fromApi || getExerciseImageUrl(id);
   const sec = o.secondaryMuscles;
   const instr = o.instructions;
 

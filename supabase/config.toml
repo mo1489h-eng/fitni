@@ -53,3 +53,10 @@ verify_jwt = false
 
 [functions.trainer-delete-client]
 verify_jwt = false
+
+# Required for <img src="…/functions/v1/exercise-gif"> — browsers do not send Supabase JWT on image requests.
+[functions.exercise-gif]
+verify_jwt = false
+
+[functions.exercisedb-proxy]
+verify_jwt = false

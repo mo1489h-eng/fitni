@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen,
@@ -23,7 +23,6 @@ import {
 import { refactorProgramWithAI } from "@/lib/ai-service";
 import { exportWorkoutProgramPdf } from "@/lib/workout-export-pdf";
 import { validateWorkoutProgram } from "@/lib/validations/workout";
-import { useWorkoutBuilderStore } from "@/stores/workoutBuilderStore";
 import { useTemplateStore } from "@/stores/templateStore";
 import type { WorkoutProgram } from "@/types/workout";
 import { Button } from "@/components/ui/button";
@@ -37,15 +36,65 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AI_STREAMING_MESSAGES } from "@/constants/workout-builder-ai-messages";
+import {
+  useWorkoutBuilderStore,
+  validateWorkoutBuilderStoreState,
+  WORKOUT_BUILDER_STORAGE_KEY,
+} from "@/stores/workoutBuilderStore";
 
 type CopilotStep = "compose" | "preview";
 
-const AI_STREAMING_MESSAGES = [
-  "Gemini يحلّل حجم تدريبك...",
-  "تحسين توزيع العضلات على الأيام...",
-  "مراجعة أوقات الراحة بين المجموعات...",
-  "إعداد مسودة البرنامج المقترح...",
-] as const;
+type WorkoutBuilderErrorBoundaryState = { hasError: boolean; error: Error | null };
+
+/**
+ * Catches render errors in the builder subtree so the global Sentry boundary does not blank the whole app.
+ * "Reset Builder" restores the Zustand slice to defaults.
+ */
+class WorkoutBuilderErrorBoundary extends Component<
+  { children: ReactNode },
+  WorkoutBuilderErrorBoundaryState
+> {
+  state: WorkoutBuilderErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): WorkoutBuilderErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[WorkoutBuilder] render error", error, info.componentStack);
+  }
+
+  handleResetBuilder = () => {
+    useWorkoutBuilderStore.getState().resetBuilderState();
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center"
+          dir="rtl"
+        >
+          <p className="max-w-md text-sm font-medium text-foreground">
+            حدث خطأ أثناء عرض منشئ التمارين. يمكنك إعادة تعيين المحرّر إلى الحالة الافتراضية دون إعادة تحميل الصفحة
+            بالكامل.
+          </p>
+          {this.state.error ? (
+            <p className="max-w-lg break-all font-mono text-[11px] text-muted-foreground" dir="ltr">
+              {this.state.error.message}
+            </p>
+          ) : null}
+          <Button type="button" onClick={this.handleResetBuilder}>
+            إعادة تعيين المحرّر
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function buildAiComparisonLines(before: WorkoutProgram, after: WorkoutProgram): string[] {
   const lines: string[] = [];
@@ -143,15 +192,48 @@ export default function WorkoutBuilder() {
 
   const weekLabels = useMemo(() => Array.from({ length: weeksCount }, (_, i) => i), [weeksCount]);
 
+  /** After persist rehydration, validate; heal corrupt storage without nuking unrelated keys (e.g. Supabase session). */
+  useEffect(() => {
+    const store = useWorkoutBuilderStore;
+    const healAfterHydration = () => {
+      try {
+        validateWorkoutBuilderStoreState(store.getState());
+      } catch (e) {
+        console.error("[WorkoutBuilder] Persisted state invalid", e);
+        try {
+          store.persist.clearStorage();
+        } catch {
+          /* ignore */
+        }
+        try {
+          localStorage.removeItem(WORKOUT_BUILDER_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        store.getState().resetBuilderState();
+        window.location.reload();
+      }
+    };
+
+    if (store.persist.hasHydrated()) {
+      healAfterHydration();
+    }
+    return store.persist.onFinishHydration(healAfterHydration);
+  }, []);
+
   useEffect(() => {
     if (!aiLoading) {
       setAiStatusIdx(0);
       return;
     }
-    const id = setInterval(() => {
-      setAiStatusIdx((i) => (i + 1) % AI_STREAMING_MESSAGES.length);
+    if (!AI_STREAMING_MESSAGES || AI_STREAMING_MESSAGES.length === 0) {
+      return;
+    }
+    const len = AI_STREAMING_MESSAGES.length;
+    const id = window.setInterval(() => {
+      setAiStatusIdx((i) => (i + 1) % len);
     }, 1600);
-    return () => clearInterval(id);
+    return () => window.clearInterval(id);
   }, [aiLoading]);
 
   const resetCopilot = useCallback(() => {
@@ -237,7 +319,8 @@ export default function WorkoutBuilder() {
   }, [pendingProgram, programSnapshot]);
 
   return (
-    <div className="space-y-8 pb-10">
+    <WorkoutBuilderErrorBoundary>
+      <div className="space-y-8 pb-10">
       <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -458,6 +541,7 @@ export default function WorkoutBuilder() {
         ) : null}
         <WorkoutCanvas />
       </section>
-    </div>
+      </div>
+    </WorkoutBuilderErrorBoundary>
   );
 }

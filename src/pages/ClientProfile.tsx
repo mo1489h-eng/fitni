@@ -14,7 +14,7 @@ import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, CalendarDays, Copy, Send,
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
-  Sparkles, Eye, Activity, UserCheck, BookOpen,
+  Sparkles, Eye, Activity, UserCheck, BookOpen, BarChart3,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
 import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
@@ -24,10 +24,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { ClientAnalyticsPanel } from "@/components/analytics/ClientAnalyticsPanel";
 
-type TabKey = "overview" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
+type TabKey = "overview" | "analytics" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "نظرة عامة", icon: Eye },
+  { key: "analytics", label: "التحليلات", icon: BarChart3 },
   { key: "copilot", label: "المساعد", icon: Sparkles },
   { key: "program", label: "البرنامج", icon: ClipboardList },
   { key: "bodyscans", label: "بيانات الجسم", icon: Activity },
@@ -194,6 +196,7 @@ const ClientProfile = () => {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_sessions', filter: `client_id=eq.${id}` }, () => {
         queryClient.invalidateQueries({ queryKey: ["client", id] });
+        queryClient.invalidateQueries({ queryKey: ["client-analytics-bundle", id] });
         toast({ title: "تم التحديث", description: "تم تحديث حالة الجلسة" });
       })
       .subscribe();
@@ -498,6 +501,8 @@ const ClientProfile = () => {
 
         {/* Tab Content */}
         <div role="tabpanel" id={`client-panel-${activeTab}`} aria-labelledby={`client-tab-${activeTab}`} className="animate-fade-in">
+          {activeTab === "analytics" && <ClientAnalyticsPanel clientId={id!} />}
+
           {activeTab === "overview" && (
             <div className="space-y-4">
               <Card className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">

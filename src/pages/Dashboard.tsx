@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertCircle,
-  BarChart2,
   Bell,
   CalendarDays,
   CheckCircle2,
@@ -36,6 +35,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardTrainerAnalytics } from "@/components/analytics/DashboardTrainerAnalytics";
 
 type Client = {
   id: string;
@@ -72,9 +72,6 @@ type PaymentItem = {
 };
 
 const formatWhatsApp = (phone?: string) => `https://wa.me/966${(phone || "").replace(/^0/, "")}`;
-
-const formatMonthLabel = (date: Date) =>
-  new Intl.DateTimeFormat("ar-SA", { month: "short" }).format(date);
 
 const CircularProgress = forwardRef<HTMLDivElement, { value: number }>(({ value }, ref) => {
   const radius = 34;
@@ -180,6 +177,7 @@ const Dashboard = () => {
       .channel('dashboard-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_sessions' }, () => {
         queryClient.invalidateQueries({ queryKey: ["dashboard-clients", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["trainer-analytics-v2", user.id] });
         toast.success("تم التحديث");
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'measurements' }, () => {
@@ -311,27 +309,6 @@ const Dashboard = () => {
         ]
       : []),
   ].slice(0, 6);
-
-  const monthlyRevenueSeries = useMemo(() => {
-    const monthStarts = Array.from({ length: 6 }).map((_, index) => {
-      const date = new Date(today.getFullYear(), today.getMonth() - (5 - index), 1);
-      return {
-        key: `${date.getFullYear()}-${date.getMonth()}`,
-        label: formatMonthLabel(date),
-        total: 0,
-      };
-    });
-
-    payments.forEach((payment) => {
-      const date = new Date(payment.created_at);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      const target = monthStarts.find((month) => month.key === key);
-      if (target) target.total += payment.amount || 0;
-    });
-
-    const maxValue = Math.max(...monthStarts.map((month) => month.total), 1);
-    return monthStarts.map((month) => ({ ...month, height: `${Math.max((month.total / maxValue) * 100, 10)}%` }));
-  }, [payments, today]);
 
   const clientProgressRows = clients.slice(0, 5).map((client) => {
     const records = measurements.filter((measurement) => measurement.client_id === client.id);
@@ -538,22 +515,6 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="border-border bg-card">
-                  <CardContent className="p-6">
-                    <div className="mb-5 flex items-center gap-2 text-lg font-semibold text-foreground">
-                      <BarChart2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      الإيرادات
-                    </div>
-                    <div className="grid h-56 grid-cols-6 items-end gap-3">
-                      {monthlyRevenueSeries.map((month) => (
-                        <div key={month.key} className="flex h-full flex-col items-center justify-end gap-3">
-                          <div className="w-full rounded-t-xl bg-primary transition-all duration-200" style={{ height: month.height }} />
-                          <div className="text-xs text-muted-foreground">{month.label}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </section>
 

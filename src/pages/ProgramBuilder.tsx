@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ interface ProgramDay {
 // ──────────────── Component ────────────────
 const ProgramBuilder = () => {
   usePageTitle("البرامج");
+  useRegisterTrainerShell({ title: "البرامج" });
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -639,7 +640,7 @@ const ProgramBuilder = () => {
   const assignProgram = programs.find(p => p.id === assignProgramId);
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-6 animate-fade-in" dir="rtl">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -737,7 +738,7 @@ const ProgramBuilder = () => {
           programs={programs}
         />
       )}
-    </TrainerLayout>
+    </>
   );
 };
 

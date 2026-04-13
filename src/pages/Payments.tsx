@@ -1,7 +1,7 @@
 import { useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { useQuery } from "@tanstack/react-query";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,7 @@ import TrainerPayoutSection from "@/components/TrainerPayoutSection";
 
 const Payments = () => {
   usePageTitle("المدفوعات");
+  useRegisterTrainerShell({ title: "الإيرادات والمدفوعات" });
   const { user } = useAuth();
   const [showPayModal, setShowPayModal] = useState<any>(null);
   const [expandedClient, setExpandedClient] = useState<string | null>(null);
@@ -92,7 +93,7 @@ const Payments = () => {
   );
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-5" dir="rtl">
         {/* Header */}
         <div>
@@ -298,7 +299,7 @@ const Payments = () => {
           onSuccess={() => refetch()}
         />
       )}
-    </TrainerLayout>
+    </>
   );
 };
 

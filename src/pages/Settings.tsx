@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ const SPECIALIZATIONS = [
 
 const Settings = () => {
   usePageTitle("الإعدادات");
+  useRegisterTrainerShell({ title: "الإعدادات" });
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { plan, hasFullAccess } = usePlanLimits();
   const { toast } = useToast();
@@ -332,7 +333,6 @@ const Settings = () => {
   };
 
   return (
-    <TrainerLayout>
       <div className="space-y-6 animate-fade-in pb-8">
         <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
 
@@ -1344,7 +1344,6 @@ const Settings = () => {
         />
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
       </div>
-    </TrainerLayout>
   );
 };
 

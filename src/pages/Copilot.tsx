@@ -4,12 +4,11 @@ import {
   Lock, Sparkles, MessageSquare, ClipboardList, FileText,
 } from "lucide-react";
 
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import FeatureTooltip from "@/components/FeatureTooltip";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import usePageTitle from "@/hooks/usePageTitle";
 import CopilotPrograms from "@/components/copilot/CopilotPrograms";
@@ -18,14 +17,13 @@ import CopilotReports from "@/components/copilot/CopilotReports";
 
 const Copilot = () => {
   usePageTitle("AI كوبايلت");
-  const { user } = useAuth();
+  useRegisterTrainerShell({ title: "AI كوبايلت" });
   const { hasCopilotAccess } = usePlanLimits();
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   if (!hasCopilotAccess) {
     return (
-      <TrainerLayout title="AI كوبايلت">
         <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border bg-card">
             <Lock className="h-10 w-10 text-muted-foreground" strokeWidth={1.5} />
@@ -40,12 +38,10 @@ const Copilot = () => {
           </Button>
           <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title="هذه الميزة للباقة الاحترافية" description="كوبايلت الذكاء الاصطناعي متاح فقط في الباقة الاحترافية" onUpgrade={() => { setShowUpgrade(false); navigate("/subscription"); }} />
         </div>
-      </TrainerLayout>
     );
   }
 
   return (
-    <TrainerLayout title="AI كوبايلت">
       <div className="space-y-4 page-enter">
         <FeatureTooltip
           id="copilot-agent"
@@ -81,7 +77,6 @@ const Copilot = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </TrainerLayout>
   );
 };
 

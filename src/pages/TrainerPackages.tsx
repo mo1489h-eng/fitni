@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,8 @@ const defaultForm: PackageForm = {
 };
 
 const TrainerPackages = () => {
+  usePageTitle("باقاتي");
+  useRegisterTrainerShell({ title: "باقاتي" });
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -147,7 +150,6 @@ const TrainerPackages = () => {
   };
 
   return (
-    <TrainerLayout>
       <div className="space-y-4 animate-fade-in" dir="rtl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Package className="w-6 h-6 text-primary" strokeWidth={1.5} />باقاتي</h1>
@@ -408,7 +410,6 @@ const TrainerPackages = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </TrainerLayout>
   );
 };
 

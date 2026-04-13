@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams, useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,9 @@ const VaultUnit = () => {
   const [unit, setUnit] = useState<VaultUnit | null>(null);
   const [lessons, setLessons] = useState<VaultLesson[]>([]);
   const [loading, setLoading] = useState(true);
+
+  usePageTitle(unit?.title ?? "وحدة المكتبة");
+  useRegisterTrainerShell({ title: unit?.title ?? "المكتبة التعليمية" });
 
   // New lesson inline
   const [adding, setAdding] = useState(false);
@@ -159,22 +163,17 @@ const VaultUnit = () => {
 
   if (loading) {
     return (
-      <TrainerLayout title="المكتبة التعليمية">
         <div className="text-center py-24 text-[hsl(0_0%_30%)]">جاري التحميل...</div>
-      </TrainerLayout>
     );
   }
 
   if (!unit) {
     return (
-      <TrainerLayout title="المكتبة التعليمية">
         <div className="text-center py-24 text-[hsl(0_0%_30%)]">الوحدة غير موجودة</div>
-      </TrainerLayout>
     );
   }
 
   return (
-    <TrainerLayout title="المكتبة التعليمية">
       <div className="space-y-6 max-w-3xl" dir="rtl">
         {/* Back + Header */}
         <div>
@@ -288,7 +287,6 @@ const VaultUnit = () => {
           </Button>
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

@@ -4,7 +4,8 @@ import TrainerBodyScans from "@/components/TrainerBodyScans";
 import ClientPaymentModal from "@/components/ClientPaymentModal";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,9 @@ const ClientProfile = () => {
     enabled: !!id,
   });
 
+  usePageTitle(client?.name ?? "عميل");
+  useRegisterTrainerShell({ title: client?.name });
+
   // Real-time sync: workout_logs, measurements, workout_sessions
   useEffect(() => {
     if (!id) return;
@@ -258,17 +262,15 @@ const ClientProfile = () => {
   });
 
   if (isLoading) {
-    return <TrainerLayout><div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div></TrainerLayout>;
+    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   }
 
   if (!client) {
     return (
-      <TrainerLayout>
         <div className="text-center py-20">
           <p className="text-muted-foreground mb-4">لم يتم العثور على العميل</p>
           <Link to="/clients"><Button variant="outline">العودة للقائمة</Button></Link>
         </div>
-      </TrainerLayout>
     );
   }
 
@@ -286,7 +288,7 @@ const ClientProfile = () => {
   }));
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-4 animate-fade-in">
         {/* Back + Actions */}
         <div className="flex items-center justify-between">
@@ -740,7 +742,7 @@ const ClientProfile = () => {
           />
         </DialogContent>
       </Dialog>
-    </TrainerLayout>
+    </>
   );
 };
 

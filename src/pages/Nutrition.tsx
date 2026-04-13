@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +51,7 @@ const emptyItem = (order: number, mealName = "فطور"): MealItem => ({
 
 const Nutrition = () => {
   usePageTitle("التغذية");
+  useRegisterTrainerShell({ title: "التغذية" });
   const { user } = useAuth();
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -281,7 +282,7 @@ const Nutrition = () => {
   const daysLogged = clientWeekly.filter(d => d.calories > 0).length;
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-6" dir="rtl">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -712,7 +713,7 @@ const Nutrition = () => {
           </div>
         </SheetContent>
       </Sheet>
-    </TrainerLayout>
+    </>
   );
 };
 

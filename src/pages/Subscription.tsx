@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,8 @@ const PLAN_ICONS = {
 };
 
 const Subscription = () => {
+  usePageTitle("باقتي");
+  useRegisterTrainerShell({ title: "باقتي" });
   const { user, profile, refreshProfile } = useAuth();
   const { plan, isOnTrial, trialDaysLeft, trialEndDate, isTrialExpired, clientCount, maxClients } = usePlanLimits();
   const { toast } = useToast();
@@ -78,7 +81,6 @@ const Subscription = () => {
   const usagePercent = maxClients === Infinity ? 0 : Math.min((clientCount / maxClients) * 100, 100);
 
   return (
-    <TrainerLayout>
       <div className="space-y-5 pb-8" dir="rtl">
         <TapTestModeBanner />
         {/* Header */}
@@ -264,7 +266,6 @@ const Subscription = () => {
 
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
       </div>
-    </TrainerLayout>
   );
 };
 

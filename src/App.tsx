@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -58,6 +59,8 @@ import Vault from "./pages/Vault";
 import VaultUnit from "./pages/VaultUnit";
 import PortalVault from "./pages/portal/PortalVault";
 import PortalLessonPlayer from "./pages/portal/PortalLessonPlayer";
+import { TrainerAppLayout } from "./components/layout/TrainerAppLayout";
+import WorkoutBuilder from "./pages/WorkoutBuilder";
 
 const queryClient = new QueryClient();
 
@@ -71,36 +74,47 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
-              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
-              <Route path="/clients" element={<AuthGuard><Clients /></AuthGuard>} />
-              <Route path="/clients/:id" element={<AuthGuard><ClientProfile /></AuthGuard>} />
-              <Route path="/programs" element={<AuthGuard><ProgramBuilder /></AuthGuard>} />
-              <Route path="/payments" element={<AuthGuard><Payments /></AuthGuard>} />
-              <Route path="/reports" element={<AuthGuard><Reports /></AuthGuard>} />
-              <Route path="/nutrition" element={<AuthGuard><Nutrition /></AuthGuard>} />
-              <Route path="/calendar" element={<AuthGuard><Calendar /></AuthGuard>} />
-              <Route path="/content" element={<AuthGuard><TrainerContent /></AuthGuard>} />
+
+              <Route element={<AuthGuard><TrainerAppLayout /></AuthGuard>}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="clients" element={<Clients />} />
+                <Route path="clients/:id" element={<ClientProfile />} />
+                <Route path="programs" element={<ProgramBuilder />} />
+                <Route path="workout-builder" element={<WorkoutBuilder />} />
+                <Route path="payments" element={<Payments />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="nutrition" element={<Nutrition />} />
+                <Route path="calendar" element={<Calendar />} />
+                <Route path="content" element={<TrainerContent />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="subscription" element={<Subscription />} />
+                <Route path="packages" element={<TrainerPackages />} />
+                <Route path="settings/page" element={<PageBuilder />} />
+                <Route path="vault" element={<Vault />} />
+                <Route path="vault/:unitId" element={<VaultUnit />} />
+                <Route path="copilot" element={<Copilot />} />
+                <Route path="marketplace" element={<Marketplace />} />
+                <Route path="challenges" element={<Challenges />} />
+                <Route path="gulf-foods" element={<GulfFoods />} />
+                <Route path="templates" element={<Templates />} />
+                <Route path="leads" element={<LeadsInbox />} />
+              </Route>
+
               <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
               <Route path="/t/:username" element={<TrainerPublicPage />} />
               <Route path="/client-login" element={<ClientLogin />} />
               <Route path="/client-register/:token" element={<ClientRegister />} />
-              <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-              <Route path="/subscription" element={<AuthGuard><Subscription /></AuthGuard>} />
-              <Route path="/packages" element={<AuthGuard><TrainerPackages /></AuthGuard>} />
-              <Route path="/settings/page" element={<AuthGuard><PageBuilder /></AuthGuard>} />
-              <Route path="/vault" element={<AuthGuard><Vault /></AuthGuard>} />
-              <Route path="/vault/:unitId" element={<AuthGuard><VaultUnit /></AuthGuard>} />
-              <Route path="/copilot" element={<AuthGuard><Copilot /></AuthGuard>} />
 
               {/* Public payment pages */}
               <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
@@ -123,15 +137,10 @@ const App = () => {
               <Route path="/portal/vault" element={<PortalTokenProvider><PortalVault /></PortalTokenProvider>} />
               <Route path="/portal/vault/:unitId/:lessonId" element={<PortalTokenProvider><PortalLessonPlayer /></PortalTokenProvider>} />
 
-              <Route path="/marketplace" element={<AuthGuard><Marketplace /></AuthGuard>} />
-              <Route path="/challenges" element={<AuthGuard><Challenges /></AuthGuard>} />
-              <Route path="/gulf-foods" element={<AuthGuard><GulfFoods /></AuthGuard>} />
               <Route path="/discover" element={<Discover />} />
-              <Route path="/leads" element={<AuthGuard><LeadsInbox /></AuthGuard>} />
               <Route path="/admin-CoachBase-dashboard" element={<AdminDashboard />} />
               <Route path="/store" element={<Store />} />
               <Route path="/store/:listingId" element={<ListingSalesPage />} />
-              <Route path="/templates" element={<AuthGuard><Templates /></AuthGuard>} />
               <Route path="/ref/:code" element={<ReferralRedirect />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
@@ -140,8 +149,9 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

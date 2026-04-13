@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,8 +22,9 @@ import { toast } from "sonner";
 
 import ImportClientsModal from "@/components/ImportClientsModal";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
-import PremiumSkeleton from "@/components/PremiumSkeleton";
-import TrainerLayout from "@/components/TrainerLayout";
+import { DashboardStatsSkeleton } from "@/components/skeletons/DashboardStatsSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import TrialBanner from "@/components/TrialBanner";
 import UpgradeModal from "@/components/UpgradeModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -228,8 +229,11 @@ const Dashboard = () => {
     navigate(targetClientId ? `/clients/${targetClientId}` : "/clients");
   };
 
+  const onQuickAdd = useCallback(() => setShowImport(true), []);
+  useRegisterTrainerShell({ onQuickAdd });
+
   return (
-    <TrainerLayout onQuickAdd={() => setShowImport(true)}>
+    <>
       <div className="space-y-8 page-enter">
         <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         <OnboardingChecklist />
@@ -273,7 +277,13 @@ const Dashboard = () => {
         ) : null}
 
         {isLoading ? (
-          <PremiumSkeleton rows={6} />
+          <div className="space-y-8">
+            <DashboardStatsSkeleton />
+            <div className="grid gap-8 xl:grid-cols-[1.25fr_0.95fr]">
+              <Skeleton className="min-h-[280px] rounded-2xl" />
+              <Skeleton className="min-h-[280px] rounded-2xl" />
+            </div>
+          </div>
         ) : (
           <>
             <div className="mb-12 space-y-12">
@@ -496,7 +506,7 @@ const Dashboard = () => {
           setShowPlans(true);
         }}
       />
-    </TrainerLayout>
+    </>
   );
 };
 

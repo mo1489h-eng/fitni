@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import PostCard from "@/components/PostCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ const POST_TYPES = [
 ];
 
 const TrainerContent = () => {
+  usePageTitle("المحتوى");
+  useRegisterTrainerShell({ title: "المحتوى" });
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -199,7 +202,7 @@ const TrainerContent = () => {
   const publicUrl = `${window.location.origin}/trainer/${user?.id}`;
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-4" dir="rtl">
         <div className="flex items-center justify-between">
           <div>
@@ -482,7 +485,7 @@ const TrainerContent = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </TrainerLayout>
+    </>
   );
 };
 

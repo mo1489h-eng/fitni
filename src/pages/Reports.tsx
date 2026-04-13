@@ -1,7 +1,7 @@
 import { useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
 import { useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ import {
 
 const Reports = () => {
   usePageTitle("التقارير");
+  useRegisterTrainerShell({ title: "التقارير" });
   const { user, profile } = useAuth();
   const { hasReportsAccess, plan } = usePlanLimits();
   const [sendingIndex, setSendingIndex] = useState<number | null>(null);
@@ -172,7 +173,6 @@ const Reports = () => {
 
   if (!hasReportsAccess) {
     return (
-      <TrainerLayout>
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center">
             <Lock className="w-8 h-8 text-warning" strokeWidth={1.5} />
@@ -182,12 +182,10 @@ const Reports = () => {
           <Button onClick={() => setShowPlans(true)}>ترقية الآن</Button>
           <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         </div>
-      </TrainerLayout>
     );
   }
 
   return (
-    <TrainerLayout>
       <div className="space-y-5" dir="rtl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -284,7 +282,6 @@ const Reports = () => {
           </>
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

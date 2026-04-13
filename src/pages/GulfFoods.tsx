@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import TrainerLayout from "@/components/TrainerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,10 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, UtensilsCrossed, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 
 const categories = ["الكل", "أطباق رئيسية", "مقبلات", "حلويات", "مشروبات", "خبز ومعجنات", "أرز", "لحوم", "دواجن", "أسماك", "سلطات", "شوربات", "وجبات خفيفة"];
 
 const GulfFoods = () => {
+  usePageTitle("الأطعمة الخليجية");
+  useRegisterTrainerShell({ title: "الأطعمة الخليجية" });
   const { user } = useAuth();
   const [foods, setFoods] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -46,7 +49,6 @@ const GulfFoods = () => {
   });
 
   return (
-    <TrainerLayout>
       <div className="space-y-5" dir="rtl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -130,7 +132,6 @@ const GulfFoods = () => {
           </div>
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

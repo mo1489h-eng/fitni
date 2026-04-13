@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import usePageTitle from "@/hooks/usePageTitle";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ const defaultGradients = [
 ];
 
 const Vault = () => {
+  usePageTitle("المكتبة التعليمية");
+  useRegisterTrainerShell({ title: "المكتبة التعليمية" });
   const { user } = useAuth();
   const navigate = useNavigate();
   const [units, setUnits] = useState<VaultUnit[]>([]);
@@ -298,7 +301,6 @@ const Vault = () => {
   };
 
   return (
-    <TrainerLayout title="المكتبة التعليمية">
       <div className="space-y-8" dir="rtl">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -397,7 +399,6 @@ const Vault = () => {
           </div>
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

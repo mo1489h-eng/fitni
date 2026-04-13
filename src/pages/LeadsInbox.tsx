@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import TrainerLayout from "@/components/TrainerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ const LeadsInbox = () => {
     ({ pending: "default" as const, accepted: "secondary" as const, rejected: "destructive" as const, converted: "outline" as const }[s] || "default" as const);
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-5" dir="rtl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -89,7 +88,7 @@ const LeadsInbox = () => {
           </div>
         )}
       </div>
-    </TrainerLayout>
+    </>
   );
 };
 

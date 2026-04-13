@@ -1,13 +1,13 @@
 import usePageTitle from "@/hooks/usePageTitle";
-import TrainerLayout from "@/components/TrainerLayout";
 import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import { BookOpen } from "lucide-react";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 
 const Templates = () => {
   usePageTitle("مكتبة القوالب");
+  useRegisterTrainerShell({ title: "مكتبة القوالب" });
 
   return (
-    <TrainerLayout>
       <div className="space-y-6 animate-fade-in" dir="rtl">
         <div>
           <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -18,7 +18,6 @@ const Templates = () => {
         </div>
         <TemplatesLibrary />
       </div>
-    </TrainerLayout>
   );
 };
 

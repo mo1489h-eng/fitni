@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ import {
 
 const CalendarPage = () => {
   usePageTitle("التقويم");
+  useRegisterTrainerShell({ title: "التقويم" });
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -250,7 +251,6 @@ const CalendarPage = () => {
   };
 
   return (
-    <TrainerLayout>
       <div className="flex flex-col h-[calc(100vh-80px)]" dir="rtl">
         {/* ═══ TOP BAR ═══ */}
         <div className="flex items-center justify-between px-1 py-3 shrink-0">
@@ -438,7 +438,6 @@ const CalendarPage = () => {
           />
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

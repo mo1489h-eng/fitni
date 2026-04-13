@@ -3,7 +3,6 @@ import FeatureTooltip from "@/components/FeatureTooltip";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import TrainerLayout from "@/components/TrainerLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import UpgradeModal from "@/components/UpgradeModal";
+import TrialBanner from "@/components/TrialBanner";
+import { ClientCardSkeleton } from "@/components/skeletons/ClientCardSkeleton";
 import {
   Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users,
   UserPlus, MoreVertical, Phone, CalendarDays, MessageCircle, Eye, ClipboardList, Filter, Trash2,
@@ -232,8 +233,7 @@ const Clients = () => {
   ];
 
   return (
-    <TrainerLayout>
-      <div className="space-y-5 page-enter">
+    <div className="space-y-5 page-enter">
         <FeatureTooltip id="clients-add" targetSelector="[data-tour='add-client']" message="ابدأ بإضافة عملاءك هنا" />
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -277,7 +277,11 @@ const Clients = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="grid grid-cols-1 gap-3 pb-20 md:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <ClientCardSkeleton key={i} />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 space-y-4">
             {search || filter !== "all" ? (
@@ -581,11 +585,9 @@ const Clients = () => {
 
         {showPlans && <TrialBannerPlans open={showPlans} onOpenChange={setShowPlans} />}
       </div>
-    </TrainerLayout>
   );
 };
 
-import TrialBanner from "@/components/TrialBanner";
 const TrialBannerPlans = ({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) => (
   <TrialBanner showPlans={open} onShowPlansChange={onOpenChange} />
 );

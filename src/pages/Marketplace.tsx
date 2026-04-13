@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
@@ -253,7 +253,7 @@ const Marketplace = () => {
   });
 
   return (
-    <TrainerLayout>
+    <>
       <div className="space-y-5" dir="rtl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -621,7 +621,7 @@ const Marketplace = () => {
       </div>
       <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title={getProFeatureBlockReason().title} description={getProFeatureBlockReason().description} ctaText="ترقية للاحترافي" secondaryText="لاحقاً" onUpgrade={() => { setShowUpgrade(false); setShowPlans(true); }} />
       <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
-    </TrainerLayout>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import TrainerLayout from "@/components/TrainerLayout";
+import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import UpgradeModal from "@/components/UpgradeModal";
 import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ const CHALLENGE_TYPES = [
 
 const Challenges = () => {
   usePageTitle("التحديات الجماعية");
+  useRegisterTrainerShell({ title: "التحديات" });
   const { user } = useAuth();
   const { hasChallengesAccess, getProFeatureBlockReason } = usePlanLimits();
   const navigate = useNavigate();
@@ -153,7 +154,6 @@ const Challenges = () => {
 
   if (!hasChallengesAccess) {
     return (
-      <TrainerLayout>
         <div className="space-y-4 py-16 text-center">
           <div className="w-16 h-16 rounded-full bg-warning/10 flex items-center justify-center mx-auto">
             <Lock className="w-8 h-8 text-warning" strokeWidth={1.5} />
@@ -164,12 +164,10 @@ const Challenges = () => {
           <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title={getProFeatureBlockReason().title} description={getProFeatureBlockReason().description} ctaText="ترقية للاحترافي" secondaryText="لاحقاً" onUpgrade={() => { setShowUpgrade(false); setShowPlans(true); }} />
           <TrialBanner showPlans={showPlans} onShowPlansChange={setShowPlans} />
         </div>
-      </TrainerLayout>
     );
   }
 
   return (
-    <TrainerLayout>
       <div className="space-y-5" dir="rtl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -448,7 +446,6 @@ const Challenges = () => {
           </>
         )}
       </div>
-    </TrainerLayout>
   );
 };
 

@@ -685,6 +685,36 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_conversations: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          messages: Json
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       copilot_messages: {
         Row: {
           content: string
@@ -2319,42 +2349,95 @@ export type Database = {
           },
         ]
       }
+      workout_session_exercises: {
+        Row: {
+          completed_at: string
+          created_at: string
+          exercise_id: string
+          id: string
+          program_day_id: string | null
+          reps_completed: number
+          session_id: string
+          set_number: number
+          weight_used: number
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          exercise_id: string
+          id?: string
+          program_day_id?: string | null
+          reps_completed?: number
+          session_id: string
+          set_number?: number
+          weight_used?: number
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          program_day_id?: string | null
+          reps_completed?: number
+          session_id?: string
+          set_number?: number
+          weight_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_session_exercises_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_sessions: {
         Row: {
           client_id: string
           completed_at: string | null
           created_at: string
+          current_exercise_index: number
           duration_minutes: number | null
           id: string
+          is_active: boolean
           notes: string | null
           program_day_id: string
           started_at: string
           total_sets: number | null
           total_volume: number | null
+          trainer_id: string | null
         }
         Insert: {
           client_id: string
           completed_at?: string | null
           created_at?: string
+          current_exercise_index?: number
           duration_minutes?: number | null
           id?: string
+          is_active?: boolean
           notes?: string | null
           program_day_id: string
           started_at?: string
           total_sets?: number | null
           total_volume?: number | null
+          trainer_id?: string | null
         }
         Update: {
           client_id?: string
           completed_at?: string | null
           created_at?: string
+          current_exercise_index?: number
           duration_minutes?: number | null
           id?: string
+          is_active?: boolean
           notes?: string | null
           program_day_id?: string
           started_at?: string
           total_sets?: number | null
           total_volume?: number | null
+          trainer_id?: string | null
         }
         Relationships: [
           {

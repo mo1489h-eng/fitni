@@ -2515,6 +2515,7 @@ export type Database = {
         }[]
       }
       create_session_reminders: { Args: never; Returns: number }
+      ensure_trainer_profile: { Args: never; Returns: undefined }
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {

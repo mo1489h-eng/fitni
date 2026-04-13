@@ -78,13 +78,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const profileSelect =
+    "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
-      .select("full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username")
+      .select(profileSelect)
       .eq("user_id", userId)
       .maybeSingle();
-    if (data) setProfile(data as Profile);
+
+    if (error) {
+      console.error("fetchProfile", error);
+      setProfile(null);
+      return;
+    }
+
+    if (data) {
+      setProfile(data as Profile);
+      return;
+    }
+
+    const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile");
+    if (ensureErr) {
+      console.error("ensure_trainer_profile", ensureErr);
+      setProfile(null);
+      return;
+    }
+
+    const { data: retry } = await supabase.from("profiles").select(profileSelect).eq("user_id", userId).maybeSingle();
+    if (retry) setProfile(retry as Profile);
+    else setProfile(null);
   };
 
   const refreshProfile = async () => {

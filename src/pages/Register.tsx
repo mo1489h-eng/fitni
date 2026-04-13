@@ -18,6 +18,37 @@ const FOUNDER_LIMIT = 100;
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Maps Supabase Auth errors to clear Arabic copy for trainers. */
+function describeAuthSignUpError(message: string): string {
+  const m = message.toLowerCase();
+  if (
+    m.includes("already registered") ||
+    m.includes("already been registered") ||
+    m.includes("user already registered")
+  ) {
+    return "هذا البريد الإلكتروني مسجّل مسبقاً.";
+  }
+  if (m.includes("password")) {
+    return "كلمة المرور غير مقبولة. استخدم 8 أحرف على الأقل.";
+  }
+  if (m.includes("email") && m.includes("invalid")) {
+    return "صيغة البريد الإلكتروني غير صحيحة.";
+  }
+  if (m.includes("network") || m.includes("fetch") || m.includes("failed to fetch")) {
+    return "تعذّر الاتصال بالخادم. تحقّق من الشبكة وحاول مرة أخرى.";
+  }
+  return `تعذّر إنشاء الحساب: ${message}`;
+}
+
+function describeProfileSetupFailure(err: { message?: string; code?: string } | null): string {
+  const code = err?.code ?? "";
+  const msg = (err?.message ?? "").toLowerCase();
+  if (code === "23505" || msg.includes("duplicate")) {
+    return "تمّ إنشاء ملف المدرب مسبقاً.";
+  }
+  return "تعذّر حفظ ملف المدرب في المنصة. يُرجى إعادة المحاولة أو التواصل مع الدعم الفني.";
+}
+
 function getPasswordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string; color: string } {
   if (pw.length < 8) return { level: 0, label: "قصيرة جداً", color: "bg-destructive" };
   let score = 0;
@@ -92,60 +123,88 @@ const Register = () => {
 
     setLoading(true);
 
-    let validatedPromo: { valid: boolean; days?: number; message: string } | null = null;
-    if (promoCode.trim()) {
-      validatedPromo = await validatePromo(promoCode, email);
-      if (validatedPromo && !validatedPromo.valid) { setLoading(false); return; }
-    }
-
-    const { data: signUpData, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name },
-        emailRedirectTo: "https://coachbase.health/dashboard",
-      },
-    });
-
-    if (error) {
-      if (error.message?.includes("already registered") || error.message?.includes("already been registered")) {
-        setEmailError("هذا البريد مستخدم بالفعل");
-      } else {
-        toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    try {
+      let validatedPromo: { valid: boolean; days?: number; message: string } | null = null;
+      if (promoCode.trim()) {
+        validatedPromo = await validatePromo(promoCode, email);
+        if (validatedPromo && !validatedPromo.valid) {
+          return;
+        }
       }
+
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name },
+          emailRedirectTo: "https://coachbase.health/dashboard",
+        },
+      });
+
+      if (error) {
+        if (error.message?.includes("already registered") || error.message?.includes("already been registered")) {
+          setEmailError("هذا البريد مستخدم بالفعل");
+        } else {
+          toast({
+            title: "فشل التسجيل",
+            description: describeAuthSignUpError(error.message),
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      // If user needs to confirm email (no session returned) — trigger should have created profiles row.
+      if (signUpData?.user && !signUpData.session) {
+        if (validatedPromo?.valid && promoCode.trim() && signUpData.user.id) {
+          await supabase.rpc("validate_and_redeem_promo" as any, {
+            p_code: promoCode.trim(),
+            p_email: email,
+            p_trainer_id: signUpData.user.id,
+          });
+        }
+        navigate(`/confirm-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      // Session present: ensure profiles row (backup if DB trigger did not run).
+      if (signUpData?.user && signUpData.session) {
+        const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile");
+        if (rpcErr) {
+          const { error: insertErr } = await supabase.from("profiles").insert({
+            user_id: signUpData.user.id,
+            full_name: name.trim() || "",
+          });
+          if (insertErr && insertErr.code !== "23505") {
+            toast({
+              title: "تعذّر إكمال إنشاء حساب المدرب",
+              description: describeProfileSetupFailure(insertErr),
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
+        if (validatedPromo?.valid && promoCode.trim()) {
+          await supabase.rpc("validate_and_redeem_promo" as any, {
+            p_code: promoCode.trim(),
+            p_email: email,
+            p_trainer_id: signUpData.user.id,
+          });
+        }
+        toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
+        navigate("/dashboard");
+      }
+    } catch (e: unknown) {
+      toast({
+        title: "فشل التسجيل",
+        description:
+          e instanceof Error ? describeAuthSignUpError(e.message) : "حدث خطأ غير متوقع أثناء التسجيل. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // If user needs to confirm email (no session returned)
-    if (signUpData?.user && !signUpData.session) {
-      // Redeem promo if valid (user exists but unconfirmed)
-      if (validatedPromo?.valid && promoCode.trim() && signUpData.user.id) {
-        await supabase.rpc("validate_and_redeem_promo" as any, {
-          p_code: promoCode.trim(),
-          p_email: email,
-          p_trainer_id: signUpData.user.id,
-        });
-      }
-      navigate(`/confirm-email?email=${encodeURIComponent(email)}`);
-      setLoading(false);
-      return;
-    }
-
-    // If auto-confirmed (shouldn't happen now, but handle gracefully)
-    if (signUpData?.user && signUpData.session) {
-      if (validatedPromo?.valid && promoCode.trim()) {
-        await supabase.rpc("validate_and_redeem_promo" as any, {
-          p_code: promoCode.trim(),
-          p_email: email,
-          p_trainer_id: signUpData.user.id,
-        });
-      }
-      toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
-      navigate("/dashboard");
-    }
-
-    setLoading(false);
   };
 
   return (

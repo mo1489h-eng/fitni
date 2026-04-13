@@ -20,14 +20,14 @@ export default function TrainerLiveSession({ clientId, clientName, programId, on
   const { data: session } = useQuery({
     queryKey: ["trainer-live-session", clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("workout_sessions")
         .select("id, current_exercise_index, total_volume, total_sets, is_active, started_at, program_day_id")
         .eq("client_id", clientId)
         .eq("is_active", true)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as { id: string; current_exercise_index: number; total_volume: number; total_sets: number; is_active: boolean; started_at: string; program_day_id: string } | null;
     },
     refetchInterval: 5000,
     enabled: !!clientId,

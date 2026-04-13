@@ -149,7 +149,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("workout_sessions")
         .insert({
           client_id: clientId,
@@ -162,7 +162,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
         .select("id")
         .single();
       if (error) throw error;
-      return data.id as string;
+      return (data as { id: string }).id;
     },
     onSuccess: (id) => {
       setSessionId(id);
@@ -267,7 +267,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       const { weight, reps, exercise, setNum } = payload;
       const vol = weight * reps;
       if (sessionId) {
-        await supabase.from("workout_session_exercises").insert({
+        await (supabase as any).from("workout_session_exercises").insert({
           session_id: sessionId,
           exercise_id: exercise.exerciseId,
           program_day_id: exercise.programDayId,
@@ -287,7 +287,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
           actual_weight: weight,
           completed: true,
         });
-        await supabase
+        await (supabase as any)
           .from("workout_sessions")
           .update({ current_exercise_index: exerciseIndex })
           .eq("id", sessionId);
@@ -363,7 +363,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     setExerciseIndex((i) => i + 1);
     setSetWithinExercise(1);
     setPreviewOffset(0);
-    void supabase
+    void (supabase as any)
       .from("workout_sessions")
       .update({ current_exercise_index: exerciseIndex + 1 })
       .eq("id", sessionId!);
@@ -375,7 +375,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     setExerciseIndex((i) => i - 1);
     setSetWithinExercise(1);
     setPreviewOffset(0);
-    void supabase
+    void (supabase as any)
       .from("workout_sessions")
       .update({ current_exercise_index: exerciseIndex - 1 })
       .eq("id", sessionId!);
@@ -384,7 +384,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   const finalizeWorkout = useCallback(async () => {
     if (!sessionId) return;
     const durationMin = Math.max(1, Math.round(elapsedMs / 60000));
-    await supabase
+    await (supabase as any)
       .from("workout_sessions")
       .update({
         completed_at: new Date().toISOString(),

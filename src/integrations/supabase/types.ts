@@ -700,7 +700,7 @@ export type Database = {
           created_at?: string
           id?: string
           messages?: Json
-          role: string
+          role?: string
           updated_at?: string
           user_id: string
         }
@@ -713,15 +713,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "copilot_conversations_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       copilot_messages: {
         Row: {
@@ -2363,52 +2355,35 @@ export type Database = {
           created_at: string
           exercise_id: string
           id: string
-          notes: string | null
-          program_day_id: string
-          reps_completed: number | null
+          program_day_id: string | null
+          reps_completed: number
           session_id: string
           set_number: number
-          weight_used: number | null
+          weight_used: number
         }
         Insert: {
           completed_at?: string
           created_at?: string
           exercise_id: string
           id?: string
-          notes?: string | null
-          program_day_id: string
-          reps_completed?: number | null
+          program_day_id?: string | null
+          reps_completed?: number
           session_id: string
-          set_number: number
-          weight_used?: number | null
+          set_number?: number
+          weight_used?: number
         }
         Update: {
           completed_at?: string
           created_at?: string
           exercise_id?: string
           id?: string
-          notes?: string | null
-          program_day_id?: string
-          reps_completed?: number | null
+          program_day_id?: string | null
+          reps_completed?: number
           session_id?: string
           set_number?: number
-          weight_used?: number | null
+          weight_used?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "workout_session_exercises_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "program_exercises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workout_session_exercises_program_day_id_fkey"
-            columns: ["program_day_id"]
-            isOneToOne: false
-            referencedRelation: "program_days"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "workout_session_exercises_session_id_fkey"
             columns: ["session_id"]

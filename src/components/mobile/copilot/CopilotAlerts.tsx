@@ -57,25 +57,22 @@ export function useCopilotAlertsData() {
       const weekAgo = new Date(now - 7 * 86400000).toISOString();
       const { data: sessions } = await supabase
         .from("workout_sessions")
-        .select("total_volume, started_at, clients(name)")
-        .eq("trainer_id", user.id)
-        .not("completed_at", "is", null)
+        .select("total_volume, started_at")
         .gte("started_at", weekAgo)
+        .not("completed_at", "is", null)
         .order("total_volume", { ascending: false })
         .limit(8);
 
       const seen = new Set<string>();
-      for (const s of sessions ?? []) {
-        const name = (s.clients as { name?: string } | null)?.name;
-        if (!name) continue;
+      for (const s of (sessions ?? []) as { total_volume?: number; started_at?: string }[]) {
         const vol = s.total_volume ?? 0;
-        const key = `${name}-${vol}`;
+        const key = `vol-${vol}`;
         if (seen.has(key)) continue;
         seen.add(key);
         out.push({
-          id: `vol-${s.started_at}-${name}`,
+          id: `vol-${s.started_at}-${vol}`,
           type: "success",
-          message: `🏆 ${name} — جلسة مميزة (${Math.round(vol)} كجم حجم) هذا الأسبوع`,
+          message: `🏆 جلسة مميزة (${Math.round(vol)} كجم حجم) هذا الأسبوع`,
           action: "شاركه",
         });
       }

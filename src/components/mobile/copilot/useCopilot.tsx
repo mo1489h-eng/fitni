@@ -83,7 +83,7 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return null;
-      let q = supabase
+      let q = (supabase as any)
         .from("copilot_conversations")
         .select("id, messages")
         .eq("user_id", u.user.id)
@@ -91,7 +91,7 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
       q = effectiveScopeClientId ? q.eq("client_id", effectiveScopeClientId) : q.is("client_id", null);
       const { data, error } = await q.maybeSingle();
       if (error) return null;
-      return data;
+      return data as { id: string; messages: unknown } | null;
     },
     enabled: open && (role === "trainer" || (clientReady && !!fixedClientId)),
   });
@@ -115,7 +115,7 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
   const persistClear = useCallback(async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
-    let q = supabase.from("copilot_conversations").delete().eq("user_id", u.user.id).eq("role", role);
+    let q = (supabase as any).from("copilot_conversations").delete().eq("user_id", u.user.id).eq("role", role);
     q = effectiveScopeClientId ? q.eq("client_id", effectiveScopeClientId) : q.is("client_id", null);
     await q;
     setMessages([]);

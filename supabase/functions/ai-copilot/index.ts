@@ -8,7 +8,12 @@ const corsHeaders = {
 };
 
 type CopilotRole = "trainer" | "client";
-type CopilotContext = "post_workout" | "pre_workout" | "general" | "program_review";
+type CopilotContext =
+  | "post_workout"
+  | "pre_workout"
+  | "general"
+  | "program_review"
+  | "workout_builder";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -316,6 +321,47 @@ serve(async (req) => {
 
     const message = (body.message ?? "").trim();
     if (!message) return jsonErr("الرسالة فارغة");
+
+    /** Workout builder: JSON program refactor via Gemini (server-side key only). */
+    if (body.context === "workout_builder") {
+      const resolved = await resolveUserRole(admin, userId);
+      if (!resolved.trainerId) {
+        return jsonErr("هذه الميزة للمدربين فقط", 403);
+      }
+      const geminiKey = Deno.env.get("GEMINI_API_KEY");
+      if (!geminiKey) {
+        return jsonErr("خدمة الذكاء غير مهيأة", 503);
+      }
+      const model = "gemini-1.5-flash";
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+      const gemRes = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: message }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        }),
+      });
+      if (!gemRes.ok) {
+        const t = await gemRes.text();
+        console.error("ai-copilot workout_builder gemini", gemRes.status, t);
+        return jsonErr("تعذّر الاتصال بالذكاء الاصطناعي. حاول لاحقاً.", 502);
+      }
+      const gemJson = (await gemRes.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      const text =
+        gemJson.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      if (!text.trim()) {
+        return jsonErr("رد الذكاء فارغ", 502);
+      }
+      return new Response(JSON.stringify({ reply: text.trim() }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const resolved = await resolveUserRole(admin, userId);
     const effectiveRole: CopilotRole | null = resolved.trainerId

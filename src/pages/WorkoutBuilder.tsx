@@ -139,6 +139,7 @@ export default function WorkoutBuilder() {
   const [pendingProgram, setPendingProgram] = useState<WorkoutProgram | null>(null);
   const [pasteJson, setPasteJson] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiStatusIdx, setAiStatusIdx] = useState(0);
 
   const weekLabels = useMemo(() => Array.from({ length: weeksCount }, (_, i) => i), [weeksCount]);
 

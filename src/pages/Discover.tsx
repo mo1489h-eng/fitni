@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Dumbbell, MapPin, ArrowRight, Search, Target, Banknote, Gift } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { randomUUID } from "@/lib/random-id";
 
 const Discover = () => {
   const [step, setStep] = useState<"intake" | "results">("intake");
@@ -24,7 +25,7 @@ const Discover = () => {
       toast({ title: "يرجى تعبئة الحقول المطلوبة", variant: "destructive" }); return;
     }
     setLoading(true);
-    const intakeId = crypto.randomUUID();
+    const intakeId = randomUUID();
 
     const { error: intakeErr } = await supabase.from("client_intakes").insert({ ...form, id: intakeId } as any);
     if (intakeErr) { toast({ title: "خطأ", variant: "destructive" }); setLoading(false); return; }

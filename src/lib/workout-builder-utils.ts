@@ -1,8 +1,10 @@
 import type { Exercise, Set, WorkoutDay, WorkoutExercise, WorkoutProgram } from "@/types/workout";
 
+import { randomUUID } from "@/lib/random-id";
+
 export function newSet(partial?: Partial<Set>): Set {
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     type: partial?.type ?? "normal",
     weight: partial?.weight ?? null,
     reps: partial?.reps ?? null,
@@ -16,7 +18,7 @@ export type TrainingGoal = "hypertrophy" | "strength";
 
 export function createWorkoutExercise(exercise: Exercise): WorkoutExercise {
   return {
-    instanceId: crypto.randomUUID(),
+    instanceId: randomUUID(),
     exercise,
     notes: "",
     sets: [newSet({ type: "warm-up" }), newSet({ type: "normal" })],
@@ -27,7 +29,7 @@ export function createWorkoutExercise(exercise: Exercise): WorkoutExercise {
 export function createWorkoutExerciseForGoal(exercise: Exercise, goal: TrainingGoal): WorkoutExercise {
   if (goal === "strength") {
     return {
-      instanceId: crypto.randomUUID(),
+      instanceId: randomUUID(),
       exercise,
       notes: "",
       sets: [
@@ -39,7 +41,7 @@ export function createWorkoutExerciseForGoal(exercise: Exercise, goal: TrainingG
     };
   }
   return {
-    instanceId: crypto.randomUUID(),
+    instanceId: randomUUID(),
     exercise,
     notes: "",
     sets: [
@@ -53,11 +55,11 @@ export function createWorkoutExerciseForGoal(exercise: Exercise, goal: TrainingG
 export function cloneDaysWithNewIds(days: WorkoutDay[]): WorkoutDay[] {
   return days.map((d) => ({
     ...d,
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     exercises: d.exercises.map((ex) => ({
       ...ex,
-      instanceId: crypto.randomUUID(),
-      sets: ex.sets.map((s) => ({ ...s, id: crypto.randomUUID() })),
+      instanceId: randomUUID(),
+      sets: ex.sets.map((s) => ({ ...s, id: randomUUID() })),
     })),
   }));
 }
@@ -66,7 +68,7 @@ export function cloneDaysWithNewIds(days: WorkoutDay[]): WorkoutDay[] {
 export function hydrateWorkoutProgramIds(program: WorkoutProgram): WorkoutProgram {
   return {
     ...program,
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     days: cloneDaysWithNewIds(program.days),
   };
 }

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { motion } from "framer-motion";
 import { GripVertical, Timer, Unlink } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -219,18 +218,13 @@ export function ExerciseItem({ dayId, workoutExercise }: Props) {
   };
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      style={style}
-      layout
-      transition={{ type: "spring", stiffness: 420, damping: 32 }}
-    >
+    <div ref={setNodeRef} style={style}>
       <ExerciseItemCard
         dayId={dayId}
         ex={workoutExercise}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
-    </motion.div>
+    </div>
   );
 }
 

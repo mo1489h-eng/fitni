@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { hydrateWorkoutProgramIds } from "@/lib/workout-builder-utils";
+import { randomUUID } from "@/lib/random-id";
 import {
   collectWorkoutProgramIssues,
   formatWorkoutProgramIssuesArabic,
@@ -47,7 +48,7 @@ export const useTemplateStore = create(
             templates: [
               ...s.templates,
               {
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 name: name.trim() || "قالب بدون اسم",
                 savedAt: new Date().toISOString(),
                 program: JSON.parse(JSON.stringify(parsed)) as WorkoutProgram,

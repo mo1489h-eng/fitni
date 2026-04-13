@@ -10,6 +10,7 @@ import {
 } from "@/lib/workout-builder-utils";
 import { validateWorkoutProgram } from "@/lib/validations/workout";
 import { pickFiveForSmartFill } from "@/lib/smart-fill-exercises";
+import { randomUUID } from "@/lib/random-id";
 import { exerciseLibrary } from "@/mocks/mockWorkouts";
 import type { Exercise, Set, WorkoutDay, WorkoutProgram } from "@/types/workout";
 
@@ -136,7 +137,7 @@ export const useWorkoutBuilderStore = create<WorkoutBuilderState>((set, get) => 
       const idx = day.exercises.findIndex((e) => e.instanceId === instanceId);
       const nextEx = day.exercises[idx + 1];
       if (idx < 0 || !nextEx) return s;
-      const sid = crypto.randomUUID();
+      const sid = randomUUID();
       const days = s.weekDays[w].map((d) => {
         if (d.id !== dayId) return d;
         return {

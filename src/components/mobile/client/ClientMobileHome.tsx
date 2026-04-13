@@ -21,7 +21,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
       if (!token) return null;
       const { data, error } = await supabase.rpc("get_client_by_portal_token" as never, { p_token: token } as never);
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : null;
+      const row = Array.isArray(data) ? (data as Record<string, unknown>[])[0] : null;
       return row as {
         id: string;
         name: string;

@@ -117,7 +117,18 @@ export function ensureExerciseLibrarySynced(): Promise<void> {
         return;
       }
       try {
-        await supabase.functions.invoke("exercise-library-sync", { body: {} });
+        // Call sync without auth — the edge function uses service_role internally
+        const supabaseBase = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
+        if (!supabaseBase) return;
+        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        await fetch(`${supabaseBase}/functions/v1/exercise-library-sync`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(anonKey ? { apikey: anonKey } : {}),
+          },
+          body: "{}",
+        });
       } catch {
         /* optional */
       }

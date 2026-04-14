@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Wallet, Clock, TrendingUp, ArrowDownToLine, XCircle, Loader2 } from "lucide-react";
+import { ArrowDownToLine, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -71,6 +71,7 @@ const TYPE_META: Record<
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   completed: { label: "مكتمل", className: "bg-emerald-500/15 text-emerald-400" },
+  complete: { label: "مكتمل", className: "bg-emerald-500/15 text-emerald-400" },
   pending: { label: "معلق", className: "bg-amber-500/15 text-amber-400" },
   rejected: { label: "مرفوض", className: "bg-red-500/15 text-red-400" },
 };
@@ -105,7 +106,7 @@ export default function Earnings() {
     enabled: !!user?.id,
   });
 
-  const balance = Number(wallet?.balance_available ?? 0);
+  const balance = Number(wallet?.balance_available ?? (wallet as { balance?: number } | null)?.balance ?? 0);
   const pendingBal = Number(wallet?.pending_balance ?? 0);
   const totalEarn = Number(wallet?.total_earnings ?? 0);
 
@@ -186,6 +187,7 @@ export default function Earnings() {
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
       void queryClient.invalidateQueries({ queryKey: ["withdrawals-pending"] });
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions-count"] });
     },
     onError: (e: Error) => toast.error(e.message || "فشل الطلب"),
   });
@@ -227,8 +229,10 @@ export default function Earnings() {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white/[0.06] bg-[#111111] p-6 shadow-xl">
             <div className="flex items-center gap-2 text-white/50">
-              <Wallet className="h-5 w-5 text-[#22C55E]" strokeWidth={1.5} />
-              <span className="text-sm">الرصيد المتاح</span>
+              <span className="text-xl" aria-hidden>
+                💰
+              </span>
+              <span className="text-sm font-medium">الرصيد المتاح</span>
             </div>
             {walletLoading ? (
               <Skeleton className="mt-4 h-12 w-40 bg-white/10" />
@@ -241,8 +245,10 @@ export default function Earnings() {
           </div>
           <div className="rounded-2xl border border-white/[0.06] bg-[#111111] p-6 shadow-xl">
             <div className="flex items-center gap-2 text-white/50">
-              <Clock className="h-5 w-5 text-amber-400" strokeWidth={1.5} />
-              <span className="text-sm">قيد الانتظار</span>
+              <span className="text-xl" aria-hidden>
+                ⏳
+              </span>
+              <span className="text-sm font-medium">قيد الانتظار</span>
             </div>
             {walletLoading ? (
               <Skeleton className="mt-4 h-12 w-32 bg-white/10" />
@@ -254,8 +260,10 @@ export default function Earnings() {
           </div>
           <div className="rounded-2xl border border-white/[0.06] bg-[#111111] p-6 shadow-xl">
             <div className="flex items-center gap-2 text-white/50">
-              <TrendingUp className="h-5 w-5 text-sky-400" strokeWidth={1.5} />
-              <span className="text-sm">إجمالي الأرباح</span>
+              <span className="text-xl" aria-hidden>
+                📈
+              </span>
+              <span className="text-sm font-medium">إجمالي الأرباح</span>
             </div>
             {walletLoading ? (
               <Skeleton className="mt-4 h-12 w-36 bg-white/10" />
@@ -383,7 +391,7 @@ export default function Earnings() {
                   )}
                 </TableBody>
               </Table>
-              {txCount > PAGE_SIZE && (
+              {totalPages > 1 && (
                 <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3">
                   <Button
                     variant="ghost"

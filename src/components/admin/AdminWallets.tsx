@@ -7,6 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type WalletRow = Record<string, unknown> & {
   id: string;
@@ -35,19 +36,31 @@ export function AdminWallets({
         <Card className="border-border/60 bg-card/50">
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">إجمالي الأرصدة</p>
-            <p className="text-2xl font-black text-emerald-500 tabular-nums">{fmt(walletTotals?.bal)}</p>
+            {loading ? (
+              <Skeleton className="mt-2 h-9 w-28" />
+            ) : (
+              <p className="text-2xl font-black text-emerald-500 tabular-nums">{fmt(walletTotals?.bal)}</p>
+            )}
           </CardContent>
         </Card>
         <Card className="border-border/60 bg-card/50">
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">إجمالي المعلق</p>
-            <p className="text-2xl font-black text-amber-500 tabular-nums">{fmt(walletTotals?.pend)}</p>
+            {loading ? (
+              <Skeleton className="mt-2 h-9 w-28" />
+            ) : (
+              <p className="text-2xl font-black text-amber-500 tabular-nums">{fmt(walletTotals?.pend)}</p>
+            )}
           </CardContent>
         </Card>
         <Card className="border-border/60 bg-card/50">
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground">إجمالي الأرباح</p>
-            <p className="text-2xl font-black text-sky-500 tabular-nums">{fmt(walletTotals?.earn)}</p>
+            {loading ? (
+              <Skeleton className="mt-2 h-9 w-28" />
+            ) : (
+              <p className="text-2xl font-black text-sky-500 tabular-nums">{fmt(walletTotals?.earn)}</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -64,11 +77,24 @@ export function AdminWallets({
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
-                  جاري التحميل...
-                </TableCell>
-              </TableRow>
+              <>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton className="h-5 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-20" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             ) : wallets.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">

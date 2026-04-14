@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Copy, Loader2, X } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type WithdrawalRow = Record<string, unknown> & {
@@ -164,7 +164,7 @@ export function AdminWithdrawals({
                             disabled={busyId === w.id}
                             onClick={() => void run(w.id, "approve")}
                           >
-                            {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                            {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <span aria-hidden>✅</span>}
                             قبول
                           </Button>
                           <Button
@@ -174,7 +174,7 @@ export function AdminWithdrawals({
                             disabled={busyId === w.id}
                             onClick={() => void run(w.id, "reject")}
                           >
-                            <X className="h-3 w-3" />
+                            <span aria-hidden>❌</span>
                             رفض
                           </Button>
                         </>
@@ -186,7 +186,7 @@ export function AdminWithdrawals({
                           disabled={busyId === w.id}
                           onClick={() => void run(w.id, "mark_paid")}
                         >
-                          {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                          {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <span aria-hidden>✅</span>}
                           تأكيد الدفع
                         </Button>
                       )}

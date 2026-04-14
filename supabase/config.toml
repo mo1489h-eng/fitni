@@ -36,6 +36,13 @@ verify_jwt = false
 [functions.create-tap-charge]
 verify_jwt = false
 
+# Subscription verification after Tap redirect — requires logged-in trainer JWT.
+[functions.verify-payment]
+verify_jwt = true
+
+[functions.verify-client-payment]
+verify_jwt = true
+
 [functions.verify-platform-payment]
 verify_jwt = false
 

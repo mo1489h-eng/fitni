@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionInvoke";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,11 @@ const PaymentCallback = () => {
         let lastError: Error | null = null;
         for (let attempt = 0; attempt < 3; attempt++) {
           try {
-            const { data, error } = await supabase.functions.invoke("verify-payment", {
-              body: { payment_id: tapId, plan },
-            });
-            if (error) throw new Error(error.message || "فشل التحقق");
+            const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+              "verify-payment",
+              { payment_id: tapId, plan },
+            );
+            if (error) throw error;
             if (!data?.success) throw new Error(data?.error || "فشل التحقق");
             
             setStatus("success");
@@ -69,10 +70,11 @@ const PaymentCallback = () => {
         const clientId = searchParams.get("client_id");
         const amount = searchParams.get("amount");
         const billingCycle = searchParams.get("billing_cycle") || "monthly";
-        const { data, error } = await supabase.functions.invoke("verify-client-payment", {
-          body: { payment_id: tapId, client_id: clientId, amount: Number(amount), billing_cycle: billingCycle },
-        });
-        if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
+        const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+          "verify-client-payment",
+          { payment_id: tapId, client_id: clientId, amount: Number(amount), billing_cycle: billingCycle },
+        );
+        if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
         setStatus("success");
         toast({ title: "تم الدفع بنجاح" });
         setTimeout(() => navigate(`/clients/${clientId}`), 2000);
@@ -83,11 +85,17 @@ const PaymentCallback = () => {
         const rawReferralCode = sessionStorage.getItem("referral_code");
         // Sanitize: only allow alphanumeric hex codes (max 24 chars)
         const referralCode = rawReferralCode && /^[a-f0-9]{1,24}$/i.test(rawReferralCode.trim()) ? rawReferralCode.trim() : null;
-        const { data, error } = await supabase.functions.invoke("verify-package-payment", {
-          body: { payment_id: tapId, package_id: packageId, checkout_token: checkoutToken, referral_code: referralCode },
-        });
+        const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+          "verify-package-payment",
+          {
+            payment_id: tapId,
+            package_id: packageId,
+            checkout_token: checkoutToken,
+            referral_code: referralCode,
+          },
+        );
         if (rawReferralCode) sessionStorage.removeItem("referral_code");
-        if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
+        if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
         setStatus("success");
         toast({ title: "تم الدفع بنجاح" });
 
@@ -106,20 +114,29 @@ const PaymentCallback = () => {
         const amount = searchParams.get("amount");
         const billingCycle = searchParams.get("billing_cycle") || "monthly";
         const portalToken = searchParams.get("portal_token");
-        const { data, error } = await supabase.functions.invoke("renew-subscription", {
-          body: { payment_id: tapId, client_id: clientId, package_id: packageId, amount: Number(amount), billing_cycle: billingCycle, portal_token: portalToken },
-        });
-        if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
+        const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+          "renew-subscription",
+          {
+            payment_id: tapId,
+            client_id: clientId,
+            package_id: packageId,
+            amount: Number(amount),
+            billing_cycle: billingCycle,
+            portal_token: portalToken,
+          },
+        );
+        if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
         setStatus("success");
         toast({ title: "تم تجديد اشتراكك بنجاح" });
         setTimeout(() => navigate("/portal/subscription"), 2000);
 
       } else if (type === "marketplace") {
         const listingId = searchParams.get("listing_id");
-        const { data, error } = await supabase.functions.invoke("public-purchase", {
-          body: { listing_id: listingId, payment_id: tapId },
-        });
-        if (error || !data?.success) throw new Error(data?.error || "فشل التحقق");
+        const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+          "public-purchase",
+          { listing_id: listingId, payment_id: tapId },
+        );
+        if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
         setStatus("success");
         toast({ title: "تم الشراء بنجاح" });
         setTimeout(() => navigate("/store"), 2000);

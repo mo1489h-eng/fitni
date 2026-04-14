@@ -2,7 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -24,13 +27,20 @@ serve(async (req) => {
       });
     }
 
+    const metaIn = metadata && typeof metadata === "object" ? (metadata as Record<string, unknown>) : {};
+    const metaStrings: Record<string, string> = {};
+    for (const [k, v] of Object.entries(metaIn)) {
+      if (v === undefined || v === null) continue;
+      metaStrings[k] = typeof v === "string" ? v : String(v);
+    }
+
     const chargeBody: Record<string, unknown> = {
       amount,
       currency: currency || "SAR",
       description: description || "CoachBase Payment",
       source: { id: "src_all" },
       redirect: { url: redirect_url },
-      metadata: metadata || {},
+      metadata: metaStrings,
     };
 
     if (customer) {

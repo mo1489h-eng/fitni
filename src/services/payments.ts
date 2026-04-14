@@ -1,4 +1,16 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctionInvoke";
+
+/** Tap metadata values must be strings for API compatibility. */
+function stringifyMetadata(
+  metadata: Record<string, string | number | boolean | undefined>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(metadata)) {
+    if (v === undefined) continue;
+    out[k] = typeof v === "string" ? v : String(v);
+  }
+  return out;
+}
 
 export type PaymentCustomer = {
   name?: string;
@@ -23,25 +35,28 @@ export type CreatePaymentSessionInput = {
 export async function createPaymentSession(
   input: CreatePaymentSessionInput,
 ): Promise<{ payment_url: string; charge_id?: string }> {
-  const { data, error } = await supabase.functions.invoke("create-tap-charge", {
-    body: {
-      amount: input.amount,
-      currency: input.currency ?? "SAR",
-      description: input.description ?? "CoachBase Payment",
-      customer: input.customer ?? {},
-      redirect_url: input.redirectUrl,
-      metadata: input.metadata,
-    },
+  const { data, error } = await invokeEdgeFunction<{
+    redirect_url?: string;
+    charge_id?: string;
+    error?: string;
+    details?: unknown;
+  }>("create-tap-charge", {
+    amount: input.amount,
+    currency: input.currency ?? "SAR",
+    description: input.description ?? "CoachBase Payment",
+    customer: input.customer ?? {},
+    redirect_url: input.redirectUrl,
+    metadata: stringifyMetadata(input.metadata),
   });
 
-  if (error) throw new Error(error.message);
-  if (!data || !(data as { redirect_url?: string }).redirect_url) {
-    throw new Error((data as { error?: string })?.error ?? "فشل إنشاء عملية الدفع");
+  if (error) throw error;
+  if (!data?.redirect_url) {
+    throw new Error(data?.error ?? "فشل إنشاء عملية الدفع");
   }
 
   return {
-    payment_url: (data as { redirect_url: string }).redirect_url,
-    charge_id: (data as { charge_id?: string }).charge_id,
+    payment_url: data.redirect_url,
+    charge_id: data.charge_id,
   };
 }
 
@@ -55,14 +70,22 @@ export async function verifyPlatformPayment(paymentId: string): Promise<{
   trainer_id?: string;
   kind?: string;
 }> {
-  const { data, error } = await supabase.functions.invoke("verify-platform-payment", {
-    body: { payment_id: paymentId },
-  });
+  const { data, error } = await invokeEdgeFunction<{
+    success?: boolean;
+    error?: string;
+    idempotent?: boolean;
+    trainer_id?: string;
+    kind?: string;
+  }>("verify-platform-payment", { payment_id: paymentId });
 
-  if (error) throw new Error(error.message);
-  const body = data as { success?: boolean; error?: string; idempotent?: boolean; trainer_id?: string; kind?: string };
-  if (!body?.success) {
-    throw new Error(body?.error ?? "فشل التحقق من الدفع");
+  if (error) throw error;
+  if (!data?.success) {
+    throw new Error(data?.error ?? "فشل التحقق من الدفع");
   }
-  return body;
+  return data as {
+    success: boolean;
+    idempotent?: boolean;
+    trainer_id?: string;
+    kind?: string;
+  };
 }

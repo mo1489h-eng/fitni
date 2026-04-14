@@ -107,10 +107,10 @@ serve(async (req) => {
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
 
     const listText = pool
-      .map((x) => {
-        const en = x.name ?? "";
+      .map((x: any) => {
+        const en = x.name_en ?? "";
         const ar = arabicForName(en);
-        return `- id:${x.id} | ${en} | ${ar} | ${x.body_part ?? ""} | ${x.equipment ?? ""}`;
+        return `- id:${x.external_id} | ${en} | ${ar} | ${x.body_part ?? ""} | ${x.equipment ?? ""}`;
       })
       .join("\n");
 

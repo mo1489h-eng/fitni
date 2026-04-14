@@ -255,12 +255,8 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
               objectFit="cover"
               loading="lazy"
               errorFallback={
-                <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary/15 text-lg font-bold text-primary-foreground">
-                  {isBundledLocal ? (
-                    <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} />
-                  ) : (
-                    (nameEn || "?").charAt(0).toUpperCase()
-                  )}
+                <div className="flex h-full w-full items-center justify-center rounded-lg bg-muted/60">
+                  <Dumbbell className="w-7 h-7 text-muted-foreground/50" strokeWidth={1.5} aria-hidden />
                 </div>
               }
             />
@@ -329,8 +325,8 @@ const ExerciseLibraryPanel = ({ open, onClose, onAdd }: Props) => {
                   objectFit="contain"
                   loading="eager"
                   errorFallback={
-                    <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-primary/20 text-5xl font-bold text-primary-foreground">
-                      {(detailNameEn || "?").charAt(0).toUpperCase()}
+                    <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-muted/60">
+                      <Dumbbell className="h-16 w-16 text-muted-foreground/45" strokeWidth={1.25} aria-hidden />
                     </div>
                   }
                 />

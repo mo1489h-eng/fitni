@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { Dumbbell } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type Phase = "loading" | "loaded" | "error";
@@ -11,15 +12,21 @@ interface Props {
   /** `object-contain` for previews, `object-cover` for list thumbs */
   objectFit?: "contain" | "cover";
   loading?: "eager" | "lazy";
-  /** Shown when `src` is empty, load fails, or after error */
-  errorFallback: ReactNode;
+  /** Shown when `src` is empty, load fails, or after error. Defaults to dumbbell icon. */
+  errorFallback?: ReactNode;
   /** Default: omit (browser default). Use `no-referrer` for strict CDN hotlink rules. */
   referrerPolicy?: React.HTMLAttributeReferrerPolicy;
 }
 
+const defaultErrorFallback = (
+  <div className="flex h-full w-full items-center justify-center bg-muted/60">
+    <Dumbbell className="h-8 w-8 text-muted-foreground/55" strokeWidth={1.5} aria-hidden />
+  </div>
+);
+
 /**
- * GIF from our `exercise-gif` Edge proxy (or absolute URLs).
- * Supabase GIFs use default referrer; some third-party CDN URLs may need `referrerPolicy="no-referrer"`.
+ * GIF from `{VITE_SUPABASE_URL}/functions/v1/exercise-gif?id=…&apikey=…` (see getExerciseImageUrl)
+ * or absolute URLs. Loading: skeleton overlay; onError: dumbbell fallback.
  */
 export function ExerciseGifImage({
   src,
@@ -27,7 +34,7 @@ export function ExerciseGifImage({
   className,
   objectFit = "cover",
   loading = "lazy",
-  errorFallback,
+  errorFallback = defaultErrorFallback,
   referrerPolicy,
 }: Props) {
   const [phase, setPhase] = useState<Phase>(!src ? "error" : "loading");
@@ -47,12 +54,10 @@ export function ExerciseGifImage({
   return (
     <div className="relative h-full w-full">
       {phase === "loading" && (
-        <div
-          className="absolute inset-0 z-[1] flex items-center justify-center bg-muted/50"
+        <Skeleton
+          className="absolute inset-0 z-[1] h-full w-full rounded-[inherit]"
           aria-hidden
-        >
-          <Loader2 className="h-7 w-7 animate-spin text-muted-foreground/70" strokeWidth={1.5} />
-        </div>
+        />
       )}
       <img
         src={src}

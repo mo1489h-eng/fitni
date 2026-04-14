@@ -1,7 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-/** Default admin password when `ADMIN_DASHBOARD_SECRET` is not set in Supabase Edge secrets. */
-const DEFAULT_ADMIN_SECRET = "fitni@2026@!Asa";
+/**
+ * Official CoachBase admin password when `ADMIN_DASHBOARD_SECRET` is not set in Edge secrets.
+ * Must remain exactly: fitni@2026@!Asa (fitni, @, 2026, @, !, Asa).
+ */
+const DEFAULT_ADMIN_SECRET = "fitni@2026@!Asa" as const;
+// Guard against accidental edits breaking login (same literal).
+if (DEFAULT_ADMIN_SECRET !== "fitni@2026@!Asa") {
+  throw new Error("admin-dashboard: DEFAULT_ADMIN_SECRET must be fitni@2026@!Asa");
+}
 /** Empty/whitespace-only env counts as unset (avoids accidental blank secret in dashboard). */
 const ADMIN_SECRET =
   Deno.env.get("ADMIN_DASHBOARD_SECRET")?.trim() || DEFAULT_ADMIN_SECRET;

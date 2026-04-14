@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { uploadImage, validateImageFile } from "@/lib/image-upload";
+import { createPaymentSession } from "@/services/payments";
 
 const CATEGORIES = [
   { value: "weight_loss", label: "انقاص الوزن" },
@@ -188,26 +189,21 @@ const Marketplace = () => {
     setPurchasing(listing.id);
     try {
       if (listing.price > 0) {
-        // Fetch trainer's tap_destination_id for split payment
-        const { data: trainerProfile } = await supabase
-          .from("profiles").select("tap_destination_id").eq("user_id", listing.trainer_id).single();
-
-        const destinations = trainerProfile?.tap_destination_id
-          ? [{ id: trainerProfile.tap_destination_id, amount: Math.round(listing.price * 0.9 * 100) / 100, currency: listing.currency || "SAR" }]
-          : undefined;
-
-        const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
-          body: {
-            amount: listing.price, currency: listing.currency || "SAR",
-            description: `شراء برنامج: ${listing.title}`,
-            customer: { name: user.user_metadata?.full_name || "Customer", email: user.email || "" },
-            redirect_url: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
-            metadata: { type: "marketplace", listing_id: listing.id, user_id: user.id },
-            destinations,
+        const { payment_url } = await createPaymentSession({
+          amount: listing.price,
+          currency: listing.currency || "SAR",
+          description: `شراء برنامج: ${listing.title}`,
+          customer: { name: user.user_metadata?.full_name || "Customer", email: user.email || "" },
+          redirectUrl: `${window.location.origin}/payment/callback?type=marketplace&listing_id=${listing.id}`,
+          metadata: {
+            type: "marketplace",
+            listing_id: listing.id,
+            user_id: user.id,
+            trainer_id: listing.trainer_id,
+            reference_id: listing.id,
           },
         });
-        if (fnError || !data?.redirect_url) throw new Error(data?.error || "فشل انشاء عملية الدفع");
-        window.location.href = data.redirect_url;
+        window.location.href = payment_url;
         return;
       }
       // Free program

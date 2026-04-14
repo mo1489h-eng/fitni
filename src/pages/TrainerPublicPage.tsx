@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createPaymentSession } from "@/services/payments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TrainerAchievements from "@/components/TrainerAchievements";
@@ -222,17 +223,15 @@ const TrainerPublicPage = () => {
         trainer_id: profile.user_id,
         return_url: window.location.href,
       }));
-      const { data, error } = await supabase.functions.invoke("create-tap-charge", {
-        body: {
-          amount: selectedPackage.price,
-          currency: "SAR",
-          description: `اشتراك ${selectedPackage.name} — ${profile.full_name}`,
-          redirect_url: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPackage.id}&trainer_id=${profile.user_id}&username=${username}`,
-          metadata: { type: "package_purchase", package_id: selectedPackage.id, trainer_id: profile.user_id },
-        },
+      const { payment_url } = await createPaymentSession({
+        amount: selectedPackage.price,
+        currency: "SAR",
+        description: `اشتراك ${selectedPackage.name} — ${profile.full_name}`,
+        customer: {},
+        redirectUrl: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPackage.id}&trainer_id=${profile.user_id}&username=${username}`,
+        metadata: { type: "package_purchase", package_id: selectedPackage.id, trainer_id: profile.user_id },
       });
-      if (error || !data?.redirect_url) throw new Error(data?.error || "فشل إنشاء عملية الدفع");
-      window.location.href = data.redirect_url;
+      window.location.href = payment_url;
     } catch (err: any) {
       setTapLoading(false);
       alert(err.message || "حدث خطأ في الدفع");

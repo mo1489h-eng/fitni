@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { createPaymentSession } from "@/services/payments";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,26 +41,19 @@ const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
         return_url: window.location.origin + "/dashboard",
       }));
 
-      const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
-        body: {
-          amount,
-          currency: "SAR",
-          description: `اشتراك CoachBase - باقة ${planName}`,
-          customer: {
-            name: user?.user_metadata?.full_name || "Trainer",
-            email: user?.email || "",
-          },
-          redirect_url: `${window.location.origin}/payment/callback?type=trainer_subscription&plan=${plan}`,
-          metadata: { type: "trainer_subscription", plan, user_id: user?.id, is_founder: isFounder },
+      const { payment_url } = await createPaymentSession({
+        amount,
+        currency: "SAR",
+        description: `اشتراك CoachBase - باقة ${planName}`,
+        customer: {
+          name: user?.user_metadata?.full_name || "Trainer",
+          email: user?.email || "",
         },
+        redirectUrl: `${window.location.origin}/payment/callback?type=trainer_subscription&plan=${plan}`,
+        metadata: { type: "trainer_subscription", plan, user_id: user?.id, is_founder: isFounder },
       });
 
-      if (fnError || !data?.redirect_url) {
-        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
-      }
-
-      // Redirect to Tap payment page
-      window.location.href = data.redirect_url;
+      window.location.href = payment_url;
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
       setLoading(false);

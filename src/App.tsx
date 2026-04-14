@@ -56,6 +56,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
+import PaymentSuccess from "./pages/payment-success";
 import Earnings from "./pages/Earnings";
 import Vault from "./pages/Vault";
 import VaultUnit from "./pages/VaultUnit";
@@ -123,6 +124,7 @@ const App = () => {
               <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
               <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />
               <Route path="/payment/callback" element={<PaymentCallback />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
 
               {/* Portal entry with token */}
               <Route path="/client-portal/:token/*" element={<PortalTokenProvider><PortalHome /></PortalTokenProvider>} />

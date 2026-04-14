@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,8 +72,8 @@ Deno.serve(async (req) => {
       verifiedAmount = Number(tapPayment.amount);
     }
 
-    // Calculate commission
-    const commissionRate = 0.10;
+    // Platform fee on marketplace program sales (recorded on purchase; trainer net via wallet)
+    const commissionRate = 0.2;
 
     // Record the purchase
     const { error: purchaseError } = await supabase.from("marketplace_purchases").insert({
@@ -89,6 +90,23 @@ Deno.serve(async (req) => {
 
     await supabase.from("marketplace_listings")
       .update({ purchase_count: (listing.purchase_count || 0) + 1 }).eq("id", listingId);
+
+    if (verifiedAmount > 0 && paymentId) {
+      const wallet = await creditTrainerWalletFromTap(supabase, {
+        tapChargeId: paymentId,
+        trainerId: listing.trainer_id,
+        amount: verifiedAmount,
+        kind: "program_sale",
+      });
+      if (!wallet.ok) {
+        await supabase.from("marketplace_purchases").delete()
+          .eq("listing_id", listingId).eq("buyer_id", userId);
+        await supabase.from("marketplace_listings")
+          .update({ purchase_count: listing.purchase_count || 0 }).eq("id", listingId);
+        console.error("Wallet credit failed after purchase insert:", wallet.error);
+        return jsonResponse({ error: "Failed to credit trainer wallet" }, 500);
+      }
+    }
 
     // Clone program to buyer
     let programCloned = false;

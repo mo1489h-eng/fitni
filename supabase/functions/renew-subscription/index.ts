@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,6 +91,19 @@ serve(async (req) => {
         type: "payment",
         title: `💰 ${client.name} جدد اشتراكه`,
         body: `المبلغ: ${amount} ر.س — ساري حتى ${newEnd.toLocaleDateString("ar-SA")}`,
+      });
+    }
+
+    const wallet = await creditTrainerWalletFromTap(supabase, {
+      tapChargeId: payment_id,
+      trainerId: client.trainer_id,
+      amount: Number(amount),
+      kind: "subscription",
+    });
+    if (!wallet.ok) {
+      console.error("renew-subscription wallet credit failed:", wallet.error);
+      return new Response(JSON.stringify({ error: "Failed to credit trainer wallet" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 

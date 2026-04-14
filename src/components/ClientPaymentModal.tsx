@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createPaymentSession } from "@/services/payments";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -26,22 +26,16 @@ const ClientPaymentModal = ({ open, onClose, clientId, clientName, amount, billi
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
-        body: {
-          amount,
-          currency: "SAR",
-          description: `اشتراك ${clientName} — ${cycleLabel}`,
-          customer: { name: clientName },
-          redirect_url: `${window.location.origin}/payment/callback?type=client_payment&client_id=${clientId}&amount=${amount}&billing_cycle=${billingCycle}`,
-          metadata: { type: "client_payment", client_id: clientId },
-        },
+      const { payment_url } = await createPaymentSession({
+        amount,
+        currency: "SAR",
+        description: `اشتراك ${clientName} — ${cycleLabel}`,
+        customer: { name: clientName },
+        redirectUrl: `${window.location.origin}/payment/callback?type=client_payment&client_id=${clientId}&amount=${amount}&billing_cycle=${billingCycle}`,
+        metadata: { type: "client_payment", client_id: clientId },
       });
 
-      if (fnError || !data?.redirect_url) {
-        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
-      }
-
-      window.location.href = data.redirect_url;
+      window.location.href = payment_url;
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
       setLoading(false);

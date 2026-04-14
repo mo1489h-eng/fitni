@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { createPaymentSession } from "@/services/payments";
 import { usePortalToken } from "@/hooks/usePortalToken";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -83,17 +84,19 @@ const PortalSubscription = () => {
     setLoading(true);
     setPayError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("create-tap-charge", {
-        body: {
-          amount: selectedPkg.price,
-          currency: "SAR",
-          description: `تجديد اشتراك - ${selectedPkg.name}`,
-          redirect_url: `${window.location.origin}/payment/callback?type=renewal&client_id=${client.id}&package_id=${selectedPkg.id}&amount=${selectedPkg.price}&billing_cycle=${selectedPkg.billing_cycle}&portal_token=${token}`,
-          metadata: { type: "renewal", client_id: client.id },
+      const { payment_url } = await createPaymentSession({
+        amount: selectedPkg.price,
+        currency: "SAR",
+        description: `تجديد اشتراك - ${selectedPkg.name}`,
+        customer: {},
+        redirectUrl: `${window.location.origin}/payment/callback?type=renewal&client_id=${client.id}&package_id=${selectedPkg.id}&amount=${selectedPkg.price}&billing_cycle=${selectedPkg.billing_cycle}&portal_token=${token}`,
+        metadata: {
+          type: "renewal",
+          client_id: client.id,
+          trainer_id: client.trainer_id,
         },
       });
-      if (error || !data?.redirect_url) throw new Error(data?.error || "فشل إنشاء عملية الدفع");
-      window.location.href = data.redirect_url;
+      window.location.href = payment_url;
     } catch (err: any) {
       setPayError(err.message || "حدث خطأ");
       setLoading(false);

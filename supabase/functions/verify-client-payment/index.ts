@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,6 +102,19 @@ serve(async (req) => {
       subscription_end_date: endDate.toISOString().split("T")[0],
       subscription_price: amount, billing_cycle: cycle,
     }).eq("id", client_id);
+
+    const wallet = await creditTrainerWalletFromTap(supabase, {
+      tapChargeId: payment_id,
+      trainerId: user.id,
+      amount: Number(amount),
+      kind: "subscription",
+    });
+    if (!wallet.ok) {
+      console.error("verify-client-payment wallet credit failed:", wallet.error);
+      return new Response(JSON.stringify({ error: "Failed to credit trainer wallet" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Send receipt email
     const resendKey = Deno.env.get("RESEND_API_KEY");

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createPaymentSession } from "@/services/payments";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,31 +82,26 @@ const PublicPayment = () => {
 
       const referralCode = sessionStorage.getItem("referral_code");
 
-      const { data, error: fnError } = await supabase.functions.invoke("create-tap-charge", {
-        body: {
-          amount: selectedPkg.price,
-          currency: "SAR",
-          description: `اشتراك ${selectedPkg.name} - ${trainer?.full_name}`,
-          customer: {
-            name: clientName,
-            email: clientEmail,
-            phone: clientPhone,
-          },
-          redirect_url: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPkg.id}&checkout_token=${checkoutSession.token}`,
-          metadata: {
-            type: "package_purchase",
-            package_id: selectedPkg.id,
-            checkout_token: checkoutSession.token,
-            referral_code: referralCode || "",
-          },
+      const { payment_url } = await createPaymentSession({
+        amount: selectedPkg.price,
+        currency: "SAR",
+        description: `اشتراك ${selectedPkg.name} - ${trainer?.full_name}`,
+        customer: {
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone,
+        },
+        redirectUrl: `${window.location.origin}/payment/callback?type=package_purchase&package_id=${selectedPkg.id}&checkout_token=${checkoutSession.token}`,
+        metadata: {
+          type: "package_purchase",
+          package_id: selectedPkg.id,
+          checkout_token: checkoutSession.token,
+          referral_code: referralCode || "",
+          trainer_id: trainer?.user_id,
         },
       });
 
-      if (fnError || !data?.redirect_url) {
-        throw new Error(data?.error || "فشل إنشاء عملية الدفع");
-      }
-
-      window.location.href = data.redirect_url;
+      window.location.href = payment_url;
     } catch (err: any) {
       setError(err.message || "حدث خطأ");
       setLoading(false);

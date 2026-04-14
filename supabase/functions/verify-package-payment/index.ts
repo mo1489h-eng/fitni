@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,17 +80,41 @@ serve(async (req) => {
       });
     }
 
-    // Check duplicate
+    const trainer_id = pkg.trainer_id;
+
+    // Duplicate Tap charge: if already paid, complete wallet + session if a prior run failed mid-way
     const { data: existingPayment } = await supabase
-      .from("client_payments").select("id").eq("moyasar_payment_id", payment_id).maybeSingle();
+      .from("client_payments").select("id, client_id").eq("moyasar_payment_id", payment_id).maybeSingle();
 
     if (existingPayment) {
-      return new Response(JSON.stringify({ error: "Payment already processed" }), {
-        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const { data: settled } = await supabase
+        .from("tap_wallet_settlements").select("tap_charge_id")
+        .eq("tap_charge_id", payment_id).maybeSingle();
+
+      if (settled) {
+        return new Response(JSON.stringify({ success: true, client_id: existingPayment.client_id }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const walletRetry = await creditTrainerWalletFromTap(supabase, {
+        tapChargeId: payment_id,
+        trainerId: trainer_id,
+        amount: pkg.price,
+        kind: "subscription",
+      });
+      if (!walletRetry.ok) {
+        return new Response(JSON.stringify({ error: "Failed to credit trainer wallet" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabase.from("package_checkout_sessions")
+        .update({ used_at: new Date().toISOString() }).eq("id", session.id);
+
+      return new Response(JSON.stringify({ success: true, client_id: existingPayment.client_id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const trainer_id = pkg.trainer_id;
     const client_name = session.client_name;
     const client_phone = session.client_phone;
     const client_email = session.client_email;
@@ -148,6 +173,19 @@ serve(async (req) => {
           body: `${client_name} انضم عبر رابط إحالة ${referrer.name}`,
         });
       }
+    }
+
+    const wallet = await creditTrainerWalletFromTap(supabase, {
+      tapChargeId: payment_id,
+      trainerId: trainer_id,
+      amount: pkg.price,
+      kind: "subscription",
+    });
+    if (!wallet.ok) {
+      console.error("verify-package-payment wallet credit failed:", wallet.error);
+      return new Response(JSON.stringify({ error: "Failed to credit trainer wallet" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     await supabase.from("package_checkout_sessions")

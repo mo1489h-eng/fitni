@@ -56,6 +56,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import ReferralRedirect from "./pages/ReferralRedirect";
 import PaymentCallback from "./pages/PaymentCallback";
+import Earnings from "./pages/Earnings";
 import Vault from "./pages/Vault";
 import VaultUnit from "./pages/VaultUnit";
 import PortalVault from "./pages/portal/PortalVault";
@@ -93,7 +94,8 @@ const App = () => {
                 <Route path="clients/:id" element={<ClientProfile />} />
               <Route path="programs" element={<ProgramBuilder />} />
               <Route path="workout-builder" element={<Navigate to="/programs" replace />} />
-              <Route path="payments" element={<Payments />} />
+                <Route path="earnings" element={<Earnings />} />
+                <Route path="payments" element={<Payments />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="nutrition" element={<Nutrition />} />
                 <Route path="calendar" element={<Calendar />} />

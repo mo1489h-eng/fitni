@@ -79,7 +79,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { password, session_token, action, month, payout_id } = await req.json();
+    const body = await req.json();
+    const {
+      password,
+      session_token,
+      action,
+      month,
+      payout_id,
+      withdrawal_id,
+      withdrawal_action,
+      admin_notes,
+    } = body as Record<string, unknown>;
 
     if (!ADMIN_SECRET) {
       return jsonResponse({ error: "unauthorized" }, 401);
@@ -116,6 +126,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, session_token: nextSessionToken });
     }
 
+    if (action === "process_withdrawal" && typeof withdrawal_id === "string" && withdrawal_id) {
+      const act = typeof withdrawal_action === "string" ? withdrawal_action : "";
+      const notes = typeof admin_notes === "string" ? admin_notes : null;
+      const { error: rpcErr } = await supabase.rpc("admin_process_withdrawal", {
+        p_withdrawal_id: withdrawal_id,
+        p_action: act,
+        p_admin_notes: notes,
+      });
+      if (rpcErr) {
+        return jsonResponse({ error: rpcErr.message, session_token: nextSessionToken }, 400);
+      }
+      return jsonResponse({ success: true, session_token: nextSessionToken });
+    }
+
     const [
       { data: profiles },
       { data: clients },
@@ -123,6 +147,8 @@ Deno.serve(async (req) => {
       { data: payouts },
       { data: paymentSettings },
       { data: npsFeedback },
+      coachWithdrawalsRes,
+      coachWalletsRes,
     ] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("clients").select("id, name, trainer_id, subscription_price, created_at"),
@@ -130,7 +156,11 @@ Deno.serve(async (req) => {
       supabase.from("payout_requests").select("*").order("requested_at", { ascending: false }),
       supabase.from("trainer_payment_settings").select("*"),
       supabase.from("nps_feedback").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("withdrawals").select("*").order("created_at", { ascending: false }),
+      supabase.from("wallets").select("*"),
     ]);
+    const coachWithdrawals = coachWithdrawalsRes.error ? [] : coachWithdrawalsRes.data;
+    const coachWallets = coachWalletsRes.error ? [] : coachWalletsRes.data;
 
     // Founder stats
     const allProfiles = profiles || [];
@@ -245,9 +275,41 @@ Deno.serve(async (req) => {
       trainer_name: trainerMap[n.trainer_id]?.name || "مدرب",
     }));
 
+    const withdrawalRows = coachWithdrawals || [];
+    const withdrawalsWithTrainer = withdrawalRows.map((w: Record<string, unknown>) => {
+      const tid = w.trainer_id as string | undefined;
+      return {
+        ...w,
+        trainer_name: tid ? trainerMap[tid]?.name || "—" : "—",
+        trainer_email: null as string | null,
+      };
+    });
+
+    const walletRows = coachWallets || [];
+    const walletsWithTrainer = walletRows.map((w: Record<string, unknown>) => {
+      const tid = w.trainer_id as string | undefined;
+      return {
+        ...w,
+        trainer_name: tid ? trainerMap[tid]?.name || "—" : "—",
+      };
+    });
+
+    const walletTotals = walletRows.reduce(
+      (acc: { bal: number; pend: number; earn: number }, w: Record<string, unknown>) => {
+        acc.bal += Number(w.balance_available ?? w.balance ?? 0);
+        acc.pend += Number(w.pending_balance ?? 0);
+        acc.earn += Number(w.total_earnings ?? 0);
+        return acc;
+      },
+      { bal: 0, pend: 0, earn: 0 },
+    );
+
     return jsonResponse({
       trainers,
       payouts,
+      withdrawals: withdrawalsWithTrainer,
+      wallets: walletsWithTrainer,
+      wallet_totals: walletTotals,
       stats: {
         total_trainers: allProfiles.length,
         total_clients: (clients || []).length,

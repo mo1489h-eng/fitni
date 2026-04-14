@@ -12,6 +12,7 @@ import {
   Trophy,
   Users,
   Utensils,
+  Wallet,
 } from "lucide-react";
 
 /** Single primary navigation entry for the trainer shell (Arabic labels, RTL UI). */
@@ -28,6 +29,7 @@ export const desktopNavItems: TrainerNavItem[] = [
   { label: "القوالب", href: "/templates", icon: BookOpen },
   { label: "التغذية", href: "/nutrition", icon: Utensils },
   { label: "التقويم", href: "/calendar", icon: CalendarDays },
+  { label: "الأرباح", href: "/earnings", icon: Wallet },
   { label: "الاشتراكات", href: "/payments", icon: CreditCard },
   { label: "التحديات", href: "/challenges", icon: Trophy },
   { label: "المكتبة التعليمية", href: "/vault", icon: GraduationCap },

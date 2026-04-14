@@ -3,7 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, LogOut, LayoutDashboard, Users, Star, BarChart2, MessageSquare, Settings, FileText } from "lucide-react";
+import {
+  Lock,
+  LogOut,
+  LayoutDashboard,
+  Users,
+  Star,
+  BarChart2,
+  MessageSquare,
+  Settings,
+  FileText,
+  Wallet,
+  ArrowDownToLine,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AdminMainDashboard } from "@/components/admin/AdminMainDashboard";
 import { AdminTrainers } from "@/components/admin/AdminTrainers";
@@ -12,6 +24,8 @@ import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminNPS } from "@/components/admin/AdminNPS";
 import { AdminPlans } from "@/components/admin/AdminPlans";
 import { AdminReports } from "@/components/admin/AdminReports";
+import { AdminWithdrawals } from "@/components/admin/AdminWithdrawals";
+import { AdminWallets } from "@/components/admin/AdminWallets";
 
 const SESSION_KEY = "CoachBase_admin_session";
 
@@ -35,7 +49,16 @@ function setSession(token: string) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({ token }));
 }
 
-type NavPage = "dashboard" | "trainers" | "founders" | "revenue" | "nps" | "plans" | "reports";
+type NavPage =
+  | "dashboard"
+  | "trainers"
+  | "founders"
+  | "revenue"
+  | "nps"
+  | "plans"
+  | "reports"
+  | "withdrawals"
+  | "wallets";
 
 const NAV_ITEMS: { id: NavPage; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
@@ -45,6 +68,8 @@ const NAV_ITEMS: { id: NavPage; label: string; icon: typeof LayoutDashboard }[] 
   { id: "nps", label: "تقييمات NPS", icon: MessageSquare },
   { id: "plans", label: "الباقات والأسعار", icon: Settings },
   { id: "reports", label: "التقارير", icon: FileText },
+  { id: "withdrawals", label: "طلبات السحب", icon: ArrowDownToLine },
+  { id: "wallets", label: "المحافظ", icon: Wallet },
 ];
 
 export default function AdminDashboard() {
@@ -129,7 +154,7 @@ export default function AdminDashboard() {
     fetchData(sessionToken, m);
   };
 
-  const handleAction = async (action: string, payload?: Record<string, any>) => {
+  const handleAction = async (action: string, payload?: Record<string, unknown>) => {
     const { data: result } = await supabase.functions.invoke("admin-dashboard", {
       body: { session_token: sessionToken, action, ...payload },
     });
@@ -139,8 +164,8 @@ export default function AdminDashboard() {
       return null;
     }
     if (result?.session_token) {
-      setSession(result.session_token);
-      setSessionToken(result.session_token);
+      setSession(result.session_token as string);
+      setSessionToken(result.session_token as string);
     }
     return result;
   };
@@ -181,6 +206,21 @@ export default function AdminDashboard() {
   }
 
   const pageProps = { data, loading, month, onMonthChange: handleMonthChange, onAction: handleAction, onRefresh: () => fetchData(sessionToken, month) };
+
+  const processWithdrawal = async (
+    id: string,
+    action: "approve" | "reject" | "mark_paid",
+    notes: string,
+  ) => {
+    const result = await handleAction("process_withdrawal", {
+      withdrawal_id: id,
+      withdrawal_action: action,
+      admin_notes: notes || null,
+    });
+    if (result && typeof result === "object" && "error" in result && result.error) {
+      throw new Error(String(result.error));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] flex" dir="rtl">
@@ -237,6 +277,21 @@ export default function AdminDashboard() {
           {activePage === "nps" && <AdminNPS {...pageProps} />}
           {activePage === "plans" && <AdminPlans {...pageProps} />}
           {activePage === "reports" && <AdminReports {...pageProps} />}
+          {activePage === "withdrawals" && (
+            <AdminWithdrawals
+              withdrawals={(data?.withdrawals as Record<string, unknown>[]) ?? []}
+              loading={loading}
+              onProcess={processWithdrawal}
+              onRefresh={() => fetchData(sessionToken, month)}
+            />
+          )}
+          {activePage === "wallets" && (
+            <AdminWallets
+              wallets={(data?.wallets as Record<string, unknown>[]) ?? []}
+              walletTotals={data?.wallet_totals as { bal: number; pend: number; earn: number } | undefined}
+              loading={loading}
+            />
+          )}
         </div>
       </main>
     </div>

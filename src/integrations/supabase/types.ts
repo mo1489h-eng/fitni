@@ -2495,6 +2495,126 @@ export type Database = {
           },
         ]
       }
+      wallets: {
+        Row: {
+          balance_available: number | null
+          id: string
+          pending_balance: number | null
+          total_earnings: number | null
+          trainer_id: string
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          balance_available?: number | null
+          id?: string
+          pending_balance?: number | null
+          total_earnings?: number | null
+          trainer_id: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          balance_available?: number | null
+          id?: string
+          pending_balance?: number | null
+          total_earnings?: number | null
+          trainer_id?: string
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          commission: number | null
+          created_at: string
+          id: string
+          net_amount: number | null
+          status: string
+          trainer_id: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          commission?: number | null
+          created_at?: string
+          id?: string
+          net_amount?: number | null
+          status: string
+          trainer_id: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          commission?: number | null
+          created_at?: string
+          id?: string
+          net_amount?: number | null
+          status?: string
+          trainer_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_holder_name: string
+          admin_notes: string | null
+          amount: number
+          bank_name: string
+          created_at: string
+          iban: string
+          id: string
+          status: string
+          trainer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          admin_notes?: string | null
+          amount: number
+          bank_name: string
+          created_at?: string
+          iban: string
+          id?: string
+          status?: string
+          trainer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          admin_notes?: string | null
+          amount?: number
+          bank_name?: string
+          created_at?: string
+          iban?: string
+          id?: string
+          status?: string
+          trainer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_profiles: {
@@ -2850,6 +2970,38 @@ export type Database = {
       verify_portal_access: {
         Args: { p_client_id: string; p_token: string }
         Returns: boolean
+      }
+      add_transaction: {
+        Args: {
+          p_amount?: number
+          p_commission?: number
+          p_net_amount?: number
+          p_status?: string
+          p_trainer_id?: string
+          p_type?: string
+        }
+        Returns: Json
+      }
+      admin_process_withdrawal: {
+        Args: {
+          p_action: string
+          p_admin_notes?: string | null
+          p_withdrawal_id: string
+        }
+        Returns: Json
+      }
+      cancel_withdrawal: {
+        Args: { p_withdrawal_id: string }
+        Returns: Json
+      }
+      request_withdrawal: {
+        Args: {
+          p_account_holder_name: string
+          p_amount: number
+          p_bank_name: string
+          p_iban: string
+        }
+        Returns: Json
       }
     }
     Enums: {

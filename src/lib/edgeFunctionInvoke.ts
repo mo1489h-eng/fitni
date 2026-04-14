@@ -9,9 +9,66 @@ function getSupabaseConfig(): { url: string; anonKey: string } {
   return { url, anonKey };
 }
 
+async function parseFunctionResponse<T>(res: Response): Promise<{ data: T | null; error: Error | null }> {
+  const text = await res.text();
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      return {
+        data: null,
+        error: new Error(
+          res.ok
+            ? "استجابة غير صالحة من الخادم"
+            : `خطأ ${res.status}: ${text.slice(0, 200)}`,
+        ),
+      };
+    }
+  }
+
+  if (!res.ok) {
+    const j = json as { error?: string; message?: string } | null;
+    const msg = j?.error ?? j?.message ?? `HTTP ${res.status}`;
+    return { data: null, error: new Error(msg) };
+  }
+
+  return { data: json as T, error: null };
+}
+
 /**
- * Invokes a Supabase Edge Function via fetch with explicit `apikey` + `Authorization`.
- * More reliable than `supabase.functions.invoke` in some browsers / when the JS client omits headers.
+ * Calls Edge Function via fetch. Used after SDK or for dev proxy path.
+ */
+async function invokeViaFetch(
+  endpoint: string,
+  body: Record<string, unknown>,
+  anonKey: string,
+  bearer: string,
+): Promise<{ data: unknown | null; error: Error | null }> {
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${bearer}`,
+        apikey: anonKey,
+      },
+      body: JSON.stringify(body),
+    });
+    return parseFunctionResponse(res);
+  } catch (e) {
+    const raw = e instanceof Error ? e.message : String(e);
+    return {
+      data: null,
+      error: new Error(raw),
+    };
+  }
+}
+
+/**
+ * Invokes Supabase Edge Functions reliably:
+ * - **Development**: prefers same-origin `/functions/v1/...` (Vite proxy) to avoid browser "Failed to fetch" to *.supabase.co.
+ * - **Production**: uses `supabase.functions.invoke` first, then direct fetch as fallback.
  */
 export async function invokeEdgeFunction<T>(
   functionName: string,
@@ -29,53 +86,57 @@ export async function invokeEdgeFunction<T>(
   }
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const accessToken = sessionData.session?.access_token;
-  const bearer = accessToken ?? anonKey;
+  const bearer = sessionData.session?.access_token ?? anonKey;
 
-  const endpoint = `${url}/functions/v1/${functionName}`;
+  const remoteEndpoint = `${url}/functions/v1/${functionName}`;
 
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${bearer}`,
-        apikey: anonKey,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const text = await res.text();
-    let json: unknown = null;
-    if (text) {
-      try {
-        json = JSON.parse(text);
-      } catch {
-        return {
-          data: null,
-          error: new Error(
-            res.ok
-              ? "استجابة غير صالحة من الخادم"
-              : `خطأ ${res.status}: ${text.slice(0, 200)}`,
-          ),
-        };
-      }
+  // --- Local dev: Vite proxies /functions/v1 → VITE_SUPABASE_URL (same-origin = no cross-origin fetch failures)
+  if (import.meta.env.DEV) {
+    const localFirst = await invokeViaFetch(`/functions/v1/${functionName}`, body, anonKey, bearer);
+    if (!localFirst.error) {
+      return { data: localFirst.data as T, error: null };
     }
 
-    if (!res.ok) {
-      const j = json as { error?: string; message?: string } | null;
-      const msg = j?.error ?? j?.message ?? `HTTP ${res.status}`;
-      return { data: null, error: new Error(msg) };
+    const sdk = await supabase.functions.invoke<T>(functionName, { body });
+    if (!sdk.error) {
+      return { data: sdk.data as T, error: null };
     }
 
-    return { data: json as T, error: null };
-  } catch (e) {
-    const raw = e instanceof Error ? e.message : String(e);
+    const remote = await invokeViaFetch(remoteEndpoint, body, anonKey, bearer);
+    if (!remote.error) {
+      return { data: remote.data as T, error: null };
+    }
+
     return {
       data: null,
       error: new Error(
-        `تعذر الاتصال بدالة Edge (${functionName}): ${raw}. تحقق من الشبكة، وأن الدالة منشورة على مشروع Supabase، وأن عنوان VITE_SUPABASE_URL صحيح.`,
+        `فشل الاتصال بدالة ${functionName}. تأكد من: (1) تشغيل npm من مجلد المشروع حيث يعمل Vite proxy، (2) نشر الدالة: supabase functions deploy ${functionName}، (3) تعطيل مانع الإعلانات مؤقتاً. آخر خطأ: ${localFirst.error.message}`,
       ),
     };
   }
+
+  // --- Production: official SDK first (handles client version & headers)
+  const sdk = await supabase.functions.invoke<T>(functionName, { body });
+  if (!sdk.error) {
+    return { data: sdk.data as T, error: null };
+  }
+
+  const sdkErr = sdk.error;
+  const remote = await invokeViaFetch(remoteEndpoint, body, anonKey, bearer);
+  if (!remote.error) {
+    return { data: remote.data as T, error: null };
+  }
+
+  const hint =
+    /failed to fetch|networkerror|load failed/i.test(sdkErr?.message ?? "") ||
+    /failed to fetch|networkerror/i.test(remote.error.message)
+      ? " غالباً: حظر الشبكة أو الإضافات، أو مشروع Supabase متوقف، أو الدالة غير منشورة. Tap: عرّف TAP_SECRET_KEY في Supabase → Edge Functions → Secrets للدالة create-tap-charge."
+      : "";
+
+  return {
+    data: null,
+    error: new Error(
+      `${sdkErr?.message ?? remote.error.message}${hint}`,
+    ),
+  };
 }

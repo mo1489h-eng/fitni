@@ -834,42 +834,6 @@ export type Database = {
         }
         Relationships: []
       }
-      exercisedb_cache: {
-        Row: {
-          body_part: string | null
-          created_at: string | null
-          equipment: string | null
-          gif_url: string | null
-          id: string
-          instructions: string[] | null
-          name: string | null
-          secondary_muscles: string[] | null
-          target: string | null
-        }
-        Insert: {
-          body_part?: string | null
-          created_at?: string | null
-          equipment?: string | null
-          gif_url?: string | null
-          id: string
-          instructions?: string[] | null
-          name?: string | null
-          secondary_muscles?: string[] | null
-          target?: string | null
-        }
-        Update: {
-          body_part?: string | null
-          created_at?: string | null
-          equipment?: string | null
-          gif_url?: string | null
-          id?: string
-          instructions?: string[] | null
-          name?: string | null
-          secondary_muscles?: string[] | null
-          target?: string | null
-        }
-        Relationships: []
-      }
       food_database: {
         Row: {
           barcode: string | null
@@ -1776,7 +1740,6 @@ export type Database = {
           created_at: string
           description: string | null
           difficulty: string | null
-          equipment: string | null
           goal: string | null
           id: string
           is_template: boolean
@@ -1788,7 +1751,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
-          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1800,7 +1762,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
-          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -2533,7 +2494,6 @@ export type Database = {
     }
     Functions: {
       cleanup_copilot_messages: { Args: never; Returns: undefined }
-      check_email_account_type: { Args: { p_email: string }; Returns: string }
       complete_trainer_session: {
         Args: { p_session_id: string }
         Returns: boolean
@@ -2555,7 +2515,6 @@ export type Database = {
         }[]
       }
       create_session_reminders: { Args: never; Returns: number }
-      ensure_trainer_profile: { Args: never; Returns: undefined }
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {

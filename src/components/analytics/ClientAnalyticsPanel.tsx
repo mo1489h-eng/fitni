@@ -31,8 +31,8 @@ import {
   weeklyCompliance,
   dayVolumeMap,
   weekdayCounts,
-  type TimeRangeKey,
 } from "@/hooks/useClientAnalyticsData";
+import type { TimeRangeKey } from "@/lib/analytics/calculations";
 import { MUSCLE_BUCKETS_AR, bucketsList, type MuscleBucket } from "@/lib/analytics/muscleBuckets";
 import { toYmd, streakStats } from "@/lib/analytics/calculations";
 import { Flame, TrendingUp } from "lucide-react";

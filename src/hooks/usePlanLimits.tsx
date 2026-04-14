@@ -1,10 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getTrialEndDate } from "@/lib/trial-config";
 
 export type PlanType = "free" | "basic" | "pro" | null;
-
-const FREE_TRIAL_DAYS = 91; // 3 months
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
   free: { maxClients: 0 },
@@ -30,9 +29,7 @@ export function usePlanLimits() {
   const rawPlan = profile?.subscription_plan;
   const plan: PlanType = rawPlan === "basic" || rawPlan === "pro" ? rawPlan : "free";
 
-  const createdAt = profile ? new Date(profile.created_at) : new Date();
-  const trialEndDate = new Date(createdAt);
-  trialEndDate.setMonth(trialEndDate.getMonth() + 6);
+  const trialEndDate = getTrialEndDate(profile?.created_at);
 
   const now = new Date();
   const msRemaining = trialEndDate.getTime() - now.getTime();

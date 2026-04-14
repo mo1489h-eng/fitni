@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, Activity, TrendingDown, RefreshCw, Star } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { AdminPageProps } from "./types";
+import { getTrialEndDate } from "@/lib/trial-config";
 
 export function AdminMainDashboard({ data }: AdminPageProps) {
   const stats = data?.stats;
@@ -34,8 +35,7 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
 
   // Trial conversion
   const trialExpired = trainers.filter((t: any) => {
-    const created = new Date(t.subscribed_at || t.created_at || Date.now());
-    const trialEnd = new Date(created.getTime() + 91 * 86400000);
+    const trialEnd = getTrialEndDate(t.created_at || t.subscribed_at);
     return trialEnd < new Date();
   });
   const converted = trialExpired.filter((t: any) => t.plan === "pro" || t.plan === "basic");

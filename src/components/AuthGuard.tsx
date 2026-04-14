@@ -9,8 +9,7 @@ import ReadOnlyBanner from "@/components/ReadOnlyBanner";
 import NpsFeedbackModal from "@/components/NpsFeedbackModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const FREE_TRIAL_DAYS = 91; // 3 months
+import { getTrialEndDate } from "@/lib/trial-config";
 
 const EmailConfirmBanner = () => {
   const [sending, setSending] = useState(false);
@@ -70,18 +69,13 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     if (!profile) return false;
     if (normalizedPlan !== "free") return false;
 
-    const createdAt = new Date(profile.created_at);
-    const trialEndDate = new Date(createdAt);
-    trialEndDate.setMonth(trialEndDate.getMonth() + 6);
-
+    const trialEndDate = getTrialEndDate(profile.created_at);
     return new Date() >= trialEndDate;
   })();
 
   const daysBeforeExpiry = (() => {
     if (!profile) return 999;
-    const createdAt = new Date(profile.created_at);
-    const trialEndDate = new Date(createdAt);
-    trialEndDate.setMonth(trialEndDate.getMonth() + 6);
+    const trialEndDate = getTrialEndDate(profile.created_at);
     return Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   })();
 

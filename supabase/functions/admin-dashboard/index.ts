@@ -167,25 +167,36 @@ Deno.serve(async (req) => {
     const founderDiscountRemaining = founderCount - founderDiscountUsed;
     const spotsRemaining = Math.max(0, 100 - allProfiles.length);
 
+    /** Canonical key is auth.users.id (= profiles.user_id). Also alias profiles.id for legacy FKs. */
     const trainerMap: Record<string, any> = {};
+    const mapTrainer = (p: Record<string, unknown>) => ({
+      id: p.user_id,
+      profile_id: p.id,
+      name: p.full_name,
+      phone: p.phone || "",
+      plan: p.subscription_plan,
+      subscribed_at: p.subscribed_at,
+      subscription_end_date: p.subscription_end_date,
+      is_founder: p.is_founder || false,
+      founder_discount_used: p.founder_discount_used || false,
+      created_at: p.created_at,
+      client_count: 0,
+      total_sales: 0,
+      month_sales: 0,
+      iban: "",
+      bank_name: "",
+      account_holder: "",
+      wallet_balance_available: 0,
+      wallet_pending: 0,
+      wallet_total_earnings: 0,
+    });
+
     for (const p of profiles || []) {
-      trainerMap[p.user_id] = {
-        id: p.user_id,
-        name: p.full_name,
-        phone: p.phone || "",
-        plan: p.subscription_plan,
-        subscribed_at: p.subscribed_at,
-        subscription_end_date: p.subscription_end_date,
-        is_founder: p.is_founder || false,
-        founder_discount_used: p.founder_discount_used || false,
-        created_at: p.created_at,
-        client_count: 0,
-        total_sales: 0,
-        month_sales: 0,
-        iban: "",
-        bank_name: "",
-        account_holder: "",
-      };
+      const entry = mapTrainer(p as Record<string, unknown>);
+      trainerMap[String(p.user_id)] = entry;
+      if (p.id && String(p.id) !== String(p.user_id)) {
+        trainerMap[String(p.id)] = entry;
+      }
     }
 
     for (const ps of paymentSettings || []) {
@@ -207,11 +218,12 @@ Deno.serve(async (req) => {
 
     for (const pay of payments || []) {
       if (pay.status !== "paid") continue;
-      if (trainerMap[pay.trainer_id]) {
-        trainerMap[pay.trainer_id].total_sales += Number(pay.amount);
+      const tid = pay.trainer_id as string | undefined;
+      if (tid && trainerMap[tid]) {
+        trainerMap[tid].total_sales += Number(pay.amount);
         const payMonth = pay.created_at?.substring(0, 7);
         if (payMonth === filterMonth) {
-          trainerMap[pay.trainer_id].month_sales += Number(pay.amount);
+          trainerMap[tid].month_sales += Number(pay.amount);
         }
       }
     }
@@ -273,22 +285,58 @@ Deno.serve(async (req) => {
       trainer_name: trainerMap[n.trainer_id]?.name || "مدرب",
     }));
 
+    const emailByUserId = new Map<string, string>();
+    try {
+      let page = 1;
+      const perPage = 1000;
+      for (;;) {
+        const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({ page, perPage });
+        if (listErr) break;
+        const users = listData?.users ?? [];
+        for (const u of users) {
+          if (u.email) emailByUserId.set(u.id, u.email);
+        }
+        if (users.length < perPage) break;
+        page++;
+      }
+    } catch {
+      // emails optional for admin UI
+    }
+
     const withdrawalRows = coachWithdrawals || [];
     const withdrawalsWithTrainer = withdrawalRows.map((w: Record<string, unknown>) => {
       const tid = w.trainer_id as string | undefined;
+      const name = tid ? trainerMap[tid]?.name || "—" : "—";
+      const email = tid ? emailByUserId.get(tid) ?? null : null;
       return {
         ...w,
-        trainer_name: tid ? trainerMap[tid]?.name || "—" : "—",
-        trainer_email: null as string | null,
+        trainer_name: name,
+        trainer_email: email,
       };
     });
 
     const walletRows = coachWallets || [];
+    for (const w of walletRows) {
+      const row = w as Record<string, unknown>;
+      const tid = row.trainer_id as string | undefined;
+      if (!tid) continue;
+      const bal = Number(row.balance_available ?? row.balance ?? 0);
+      const pend = Number(row.pending_balance ?? 0);
+      const earn = Number(row.total_earnings ?? 0);
+      const tm = trainerMap[tid];
+      if (tm) {
+        tm.wallet_balance_available = bal;
+        tm.wallet_pending = pend;
+        tm.wallet_total_earnings = earn;
+      }
+    }
+
     const walletsWithTrainer = walletRows.map((w: Record<string, unknown>) => {
       const tid = w.trainer_id as string | undefined;
       return {
         ...w,
         trainer_name: tid ? trainerMap[tid]?.name || "—" : "—",
+        trainer_email: tid ? emailByUserId.get(tid) ?? null : null,
       };
     });
 
@@ -313,6 +361,10 @@ Deno.serve(async (req) => {
         total_clients: (clients || []).length,
         month_revenue: monthRevenue,
         total_revenue: totalRevenue,
+        /** Aggregated trainer wallet balances (platform owes trainers / pending / lifetime). */
+        trainer_wallets_available: walletTotals.bal,
+        trainer_wallets_pending: walletTotals.pend,
+        trainer_wallets_lifetime_earnings: walletTotals.earn,
       },
       founders: {
         total: founderCount,
@@ -339,6 +391,8 @@ Deno.serve(async (req) => {
       session_token: nextSessionToken,
     });
   } catch (e) {
-    return jsonResponse({ error: "Internal server error" }, 500);
+    const msg = e instanceof Error ? e.message : "Internal server error";
+    console.error("[admin-dashboard]", msg);
+    return jsonResponse({ error: "Internal server error", detail: msg }, 500);
   }
 });

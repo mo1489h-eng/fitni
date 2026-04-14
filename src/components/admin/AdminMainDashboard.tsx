@@ -11,6 +11,9 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
 
   const totalTrainers = stats?.total_trainers || 0;
   const monthRevenue = stats?.month_revenue || 0;
+  const trainerWalletsAvail = (stats as { trainer_wallets_available?: number } | undefined)?.trainer_wallets_available ?? 0;
+  const trainerWalletsPend = (stats as { trainer_wallets_pending?: number } | undefined)?.trainer_wallets_pending ?? 0;
+  const trainerWalletsLife = (stats as { trainer_wallets_lifetime_earnings?: number } | undefined)?.trainer_wallets_lifetime_earnings ?? 0;
 
   // Compute plan distribution
   const planDist = charts.plan_distribution || {};
@@ -68,6 +71,27 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">لوحة التحكم</h1>
+
+      {/* Platform revenue (client payments) vs trainer wallets (earnings system) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 rounded-xl border border-border/60 bg-muted/20 p-4">
+        <div>
+          <p className="text-xs text-muted-foreground">إيراد المنصة (مدفوعات العملاء — الشهر المحدد)</p>
+          <p className="text-lg font-bold text-primary tabular-nums">{monthRevenue.toLocaleString("ar-SA")} ريال</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">أرصدة المدربين المتاحة (محافظ)</p>
+          <p className="text-lg font-bold tabular-nums text-emerald-600">{trainerWalletsAvail.toLocaleString("ar-SA")} ريال</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">معلق سحب / إجمالي أرباح مسجّل</p>
+          <p className="text-sm font-semibold tabular-nums">
+            <span className="text-amber-600">{trainerWalletsPend.toLocaleString("ar-SA")}</span>
+            {" / "}
+            <span className="text-sky-600">{trainerWalletsLife.toLocaleString("ar-SA")}</span>
+            <span className="text-muted-foreground text-xs"> ريال</span>
+          </p>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

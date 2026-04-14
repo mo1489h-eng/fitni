@@ -3,9 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const RAPID_HOST = "exercisedb.p.rapidapi.com";
+const BATCH_SIZE = 200;
+const MAX_EXERCISES = 1400;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,122 +18,98 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const rapid = Deno.env.get("RAPIDAPI_KEY");
-    if (!supabaseUrl || !anon || !service || !rapid) {
-      return new Response(JSON.stringify({ error: "Server misconfigured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
+
+    if (!supabaseUrl || !serviceKey || !rapidApiKey) {
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured — missing SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or RAPIDAPI_KEY" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    const auth = req.headers.get("Authorization");
-    if (!auth) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const admin = createClient(supabaseUrl, serviceKey);
+    let totalSynced = 0;
+    let offset = 0;
+
+    while (offset < MAX_EXERCISES) {
+      const apiUrl = `https://${RAPID_HOST}/exercises?limit=${BATCH_SIZE}&offset=${offset}`;
+      console.log(`[exercise-library-sync] Fetching offset=${offset}, limit=${BATCH_SIZE}`);
+
+      const res = await fetch(apiUrl, {
+        headers: {
+          "X-RapidAPI-Key": rapidApiKey,
+          "X-RapidAPI-Host": RAPID_HOST,
+        },
       });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        console.error(`[exercise-library-sync] ExerciseDB API error ${res.status}: ${errText.slice(0, 200)}`);
+        // If we already have some data, return partial success
+        if (totalSynced > 0) break;
+        return new Response(
+          JSON.stringify({ error: `ExerciseDB API error: ${res.status}` }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const list = await res.json();
+      if (!Array.isArray(list) || list.length === 0) {
+        console.log(`[exercise-library-sync] No more exercises at offset=${offset}`);
+        break;
+      }
+
+      const rows = list.map((ex: Record<string, unknown>) => ({
+        id: String(ex.id ?? ""),
+        name: typeof ex.name === "string" ? ex.name : "",
+        body_part: typeof ex.bodyPart === "string" ? ex.bodyPart : "",
+        equipment: typeof ex.equipment === "string" ? ex.equipment : "",
+        gif_url: typeof ex.gifUrl === "string" && (ex.gifUrl as string).trim() ? (ex.gifUrl as string).trim() : null,
+        target: typeof ex.target === "string" ? ex.target : "",
+        secondary_muscles: Array.isArray(ex.secondaryMuscles) ? ex.secondaryMuscles : [],
+        instructions: Array.isArray(ex.instructions) ? ex.instructions : [],
+        created_at: new Date().toISOString(),
+      })).filter((r: { id: string }) => r.id.length > 0);
+
+      if (rows.length === 0) break;
+
+      const { error: upErr } = await admin.from("exercisedb_cache").upsert(rows, {
+        onConflict: "id",
+      });
+
+      if (upErr) {
+        console.error(`[exercise-library-sync] Upsert error at offset=${offset}:`, upErr.message);
+        if (totalSynced > 0) break;
+        return new Response(
+          JSON.stringify({ error: upErr.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      totalSynced += rows.length;
+      console.log(`[exercise-library-sync] Synced ${rows.length} exercises (total: ${totalSynced})`);
+
+      if (list.length < BATCH_SIZE) break;
+      offset += BATCH_SIZE;
     }
 
-    const userSb = createClient(supabaseUrl, anon, {
-      global: { headers: { Authorization: auth } },
-    });
-    const { data: u } = await userSb.auth.getUser();
-    if (!u.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const admin = createClient(supabaseUrl, service);
-    const { data: prof } = await admin.from("profiles").select("user_id").eq("user_id", u.user.id).maybeSingle();
-    if (!prof) {
-      return new Response(JSON.stringify({ error: "Trainers only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const res = await fetch("https://exercisedb.p.rapidapi.com/exercises?limit=200&offset=0", {
-      headers: {
-        "X-RapidAPI-Key": rapid,
-        "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
-      },
-    });
-    if (!res.ok) {
-      const t = await res.text();
-      return new Response(JSON.stringify({ error: `ExerciseDB ${res.status}: ${t}` }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const list = (await res.json()) as Array<{
-      id: string;
-      name: string;
-      bodyPart: string;
-      target: string;
-      equipment: string;
-      secondaryMuscles?: string[];
-      instructions?: string[];
-      gifUrl?: string;
-    }>;
-
-    if (!Array.isArray(list)) {
-      return new Response(JSON.stringify({ error: "Invalid ExerciseDB response" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const rows = list.map((ex) => ({
-      id: ex.id,
-      name: ex.name,
-      body_part: ex.bodyPart,
-      equipment: ex.equipment ?? "",
-      gif_url: typeof ex.gifUrl === "string" && ex.gifUrl.trim() ? ex.gifUrl.trim() : null,
-      target: ex.target ?? "",
-      secondary_muscles: ex.secondaryMuscles ?? [],
-      instructions: ex.instructions ?? [],
-      created_at: new Date().toISOString(),
-    }));
-
-    const { count: countBefore } = await admin
+    const { count } = await admin
       .from("exercisedb_cache")
       .select("*", { head: true, count: "exact" });
-    console.log("[exercise-library-sync] RapidAPI rows:", list.length, "| exercisedb_cache rows before upsert:", countBefore ?? "unknown");
 
-    const { error: upErr } = await admin.from("exercisedb_cache").upsert(rows, {
-      onConflict: "id",
-    });
-    if (upErr) {
-      console.error("[exercise-library-sync] upsert failed:", upErr.message, upErr);
-      return new Response(JSON.stringify({ error: upErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    console.log(`[exercise-library-sync] Complete. Total synced: ${totalSynced}, DB total: ${count}`);
 
-    const { count: countAfter } = await admin
-      .from("exercisedb_cache")
-      .select("*", { head: true, count: "exact" });
-    console.log(
-      "[exercise-library-sync] upsert wrote",
-      rows.length,
-      "rows; exercisedb_cache total row count after:",
-      countAfter ?? "unknown",
+    return new Response(
+      JSON.stringify({ ok: true, count: totalSynced, total: count }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
-    return new Response(JSON.stringify({ ok: true, count: rows.length }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "sync failed";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("[exercise-library-sync] Error:", msg);
+    return new Response(
+      JSON.stringify({ error: msg }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });

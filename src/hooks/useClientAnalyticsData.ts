@@ -5,7 +5,7 @@ import {
   parseYmd,
   rangeStartDate,
   setVolumeKg,
-  type TimeRangeKey,
+  type TimeRangeKey as TimeRangeKeyImport,
   toYmd,
   weekKeyMonday,
 } from "@/lib/analytics/calculations";

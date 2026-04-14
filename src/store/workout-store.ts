@@ -9,7 +9,7 @@
  */
 
 import { create } from "zustand";
-import { idbGet, idbSet } from "@/lib/workout-idb";
+import { idbGet, idbSet, idbDel } from "@/lib/workout-idb";
 import type { PersistedWorkoutV1 } from "@/components/mobile/workout/types";
 
 const IDB_SNAPSHOT_KEY = "fitni_active_workout_snapshot_v1";

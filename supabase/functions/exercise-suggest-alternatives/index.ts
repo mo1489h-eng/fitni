@@ -96,8 +96,8 @@ serve(async (req) => {
     }
 
     const exclude = nameEn.toLowerCase();
-    const candidates = lib.filter((r) => {
-      const n = (r.name ?? "").toLowerCase();
+    const candidates = lib.filter((r: any) => {
+      const n = (r.name_en ?? "").toLowerCase();
       return !n.includes(exclude) && n !== exclude;
     });
     const pool = (candidates.length >= 10 ? candidates : lib).slice(0, 80);
@@ -155,13 +155,13 @@ ${listText}`;
       });
     }
 
-    const ids = new Set(pool.map((p) => p.id));
+    const ids = new Set(pool.map((p: any) => p.external_id));
     const alts = (parsed.alternatives ?? [])
       .filter((a) => a.external_id && ids.has(a.external_id))
       .slice(0, 3)
       .map((a) => {
-        const row = pool.find((r) => r.id === a.external_id)!;
-        const en = row.name ?? "";
+        const row = pool.find((r: any) => r.external_id === a.external_id)!;
+        const en = (row as any).name_en ?? "";
         return {
           external_id: a.external_id,
           name_en: en,

@@ -834,6 +834,42 @@ export type Database = {
         }
         Relationships: []
       }
+      exercisedb_cache: {
+        Row: {
+          body_part: string
+          created_at: string
+          equipment: string
+          gif_url: string | null
+          id: string
+          instructions: string[] | null
+          name: string
+          secondary_muscles: string[] | null
+          target: string
+        }
+        Insert: {
+          body_part?: string
+          created_at?: string
+          equipment?: string
+          gif_url?: string | null
+          id: string
+          instructions?: string[] | null
+          name?: string
+          secondary_muscles?: string[] | null
+          target?: string
+        }
+        Update: {
+          body_part?: string
+          created_at?: string
+          equipment?: string
+          gif_url?: string | null
+          id?: string
+          instructions?: string[] | null
+          name?: string
+          secondary_muscles?: string[] | null
+          target?: string
+        }
+        Relationships: []
+      }
       food_database: {
         Row: {
           barcode: string | null

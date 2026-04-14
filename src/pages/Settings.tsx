@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ReferralSettings from "@/components/ReferralSettings";
-import TapAccountConnect from "@/components/TapAccountConnect";
 
 const SPECIALIZATIONS = [
   "لياقة عامة",
@@ -827,16 +826,6 @@ const Settings = () => {
             {savingDiscovery ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
             حفظ ملف الاكتشاف
           </Button>
-        </Card>
-
-        {/* ━━━ TAP PAYMENTS CONNECT ━━━ */}
-        <Card className="p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-bold text-card-foreground">ربط حساب Tap</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">اربط حساب Tap Payments لاستقبال المدفوعات مباشرة من العملاء</p>
-          <TapAccountConnect />
         </Card>
 
         {/* ━━━ PAYMENT SETTINGS ━━━ */}

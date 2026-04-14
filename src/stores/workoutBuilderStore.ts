@@ -99,7 +99,7 @@ export function buildWorkoutBuilderInitialData(): Omit<
 }
 
 function createBuilderActions(
-  set: Parameters<Parameters<typeof create<WorkoutBuilderState>>[0]>[0],
+  set: any,
   get: () => WorkoutBuilderState,
 ): Pick<
   WorkoutBuilderState,

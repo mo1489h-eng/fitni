@@ -288,7 +288,7 @@ function WorkoutBuilderInner() {
       setAiStatusIdx(0);
       return;
     }
-    if (!AI_STREAMING_MESSAGES || (AI_STREAMING_MESSAGES as any[]).length === 0) {
+    if (!AI_STREAMING_MESSAGES || (AI_STREAMING_MESSAGES as readonly string[]).length === 0) {
       return;
     }
     const len = AI_STREAMING_MESSAGES.length;

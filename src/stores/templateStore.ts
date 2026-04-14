@@ -79,12 +79,12 @@ export const useTemplateStore = create(
         if (!t) return null;
         const v = validateWorkoutProgram(t.program);
         if (!v.ok || !v.program) return null;
-        return hydrateWorkoutProgramIds(v.program);
+        return hydrateWorkoutProgramIds(v.program as WorkoutProgram);
       },
     }),
     {
       name: TEMPLATE_STORAGE_KEY,
-      partialize: (s) => ({ templates: s.templates }),
+      partialize: (s): any => ({ templates: s.templates }),
     },
   ),
 );

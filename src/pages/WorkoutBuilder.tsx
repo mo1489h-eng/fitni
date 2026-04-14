@@ -370,7 +370,7 @@ function WorkoutBuilderInner() {
     if (!pendingProgram || !replaceActiveWeekFromProgram) return;
     const res = replaceActiveWeekFromProgram(pendingProgram);
     if (!res.ok) {
-      toast.error(res.message);
+      toast.error('message' in res ? res.message : "خطأ غير معروف");
       return;
     }
     toast.success("تم تحديث البرنامج");

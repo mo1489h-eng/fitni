@@ -36,7 +36,7 @@ export function TemplatesGalleryModal({ open, onOpenChange }: Props) {
     }
     const res = replaceActiveWeekFromProgram(program);
     if (!res.ok) {
-      toast.error(res.message);
+      toast.error('message' in res ? res.message : "خطأ غير معروف");
       return;
     }
     toast.success("تم تطبيق القالب", { description: t.name });

@@ -14,7 +14,7 @@ export function useExerciseGifUrl(exerciseName: string | undefined, enabled = tr
     enabled: enabled && q.length > 1,
     staleTime: 1000 * 60 * 60 * 6,
     queryFn: async (): Promise<string> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("exercisedb_cache")
         .select("id")
         .ilike("name", `%${q}%`)

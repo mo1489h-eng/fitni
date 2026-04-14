@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile");
+    const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
     if (ensureErr) {
       console.error("ensure_trainer_profile", ensureErr);
       setProfile(null);

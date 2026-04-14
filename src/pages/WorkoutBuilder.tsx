@@ -288,7 +288,7 @@ function WorkoutBuilderInner() {
       setAiStatusIdx(0);
       return;
     }
-    if (!AI_STREAMING_MESSAGES || AI_STREAMING_MESSAGES.length === 0) {
+    if (!AI_STREAMING_MESSAGES || (AI_STREAMING_MESSAGES as readonly string[]).length === 0) {
       return;
     }
     const len = AI_STREAMING_MESSAGES.length;
@@ -359,7 +359,7 @@ function WorkoutBuilderInner() {
         toast.error(v.zodError?.message ?? "JSON غير صالح");
         return;
       }
-      setPendingProgram(v.program);
+      setPendingProgram(v.program as WorkoutProgram);
       toast.success("تم تحميل البرنامج من JSON");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "تعذر تحليل JSON");
@@ -370,7 +370,7 @@ function WorkoutBuilderInner() {
     if (!pendingProgram || !replaceActiveWeekFromProgram) return;
     const res = replaceActiveWeekFromProgram(pendingProgram);
     if (!res.ok) {
-      toast.error(res.message);
+      toast.error('message' in res ? res.message : "خطأ غير معروف");
       return;
     }
     toast.success("تم تحديث البرنامج");

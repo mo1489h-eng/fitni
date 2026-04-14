@@ -109,7 +109,7 @@ export function ensureExerciseLibrarySynced(): Promise<void> {
   if (!syncOnce) {
     syncOnce = (async () => {
       try {
-        const { count, error } = await supabase
+        const { count, error } = await (supabase as any)
           .from("exercisedb_cache")
           .select("*", { head: true, count: "exact" });
         if (!error && (count ?? 0) > 0) return;
@@ -297,7 +297,7 @@ export async function searchExercisesUnified(opts: SearchExerciseOptions): Promi
 
     let cacheEmpty = false;
     try {
-      const { count, error: countErr } = await supabase
+      const { count, error: countErr } = await (supabase as any)
         .from("exercisedb_cache")
         .select("*", { head: true, count: "exact" });
       if (!countErr) {
@@ -309,7 +309,7 @@ export async function searchExercisesUnified(opts: SearchExerciseOptions): Promi
 
     if (!cacheEmpty) {
       try {
-        let qb = supabase.from("exercisedb_cache").select("*").order("name");
+        let qb: any = (supabase as any).from("exercisedb_cache").select("*").order("name");
 
         if (bp) {
           qb = qb.eq("body_part", bp);

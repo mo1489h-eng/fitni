@@ -19,7 +19,7 @@ export function isEmailAlreadyRegisteredError(message: string): boolean {
 /** Toast content when signup fails because the email is already taken. */
 export async function duplicateEmailToastContent(email: string, options?: { preferClientLogin?: boolean }) {
   const preferClient = options?.preferClientLogin ?? false;
-  const { data, error } = await supabase.rpc("check_email_account_type", {
+  const { data, error } = await supabase.rpc("check_email_account_type" as any, {
     p_email: email.trim().toLowerCase(),
   });
 

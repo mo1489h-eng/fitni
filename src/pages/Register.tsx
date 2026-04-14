@@ -168,7 +168,7 @@ const Register = () => {
 
       // Session present: ensure profiles row (backup if DB trigger did not run).
       if (signUpData?.user && signUpData.session) {
-        const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile");
+        const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
         if (rpcErr) {
           const { error: insertErr } = await supabase.from("profiles").insert({
             user_id: signUpData.user.id,

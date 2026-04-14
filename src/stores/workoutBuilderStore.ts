@@ -99,7 +99,7 @@ export function buildWorkoutBuilderInitialData(): Omit<
 }
 
 function createBuilderActions(
-  set: Parameters<Parameters<typeof create<WorkoutBuilderState>>[0]>[0],
+  set: any,
   get: () => WorkoutBuilderState,
 ): Pick<
   WorkoutBuilderState,
@@ -282,7 +282,7 @@ function createBuilderActions(
         const msg = v.zodError?.message ?? "هيكل البرنامج غير صالح";
         return { ok: false, message: msg };
       }
-      const hydrated = hydrateWorkoutProgramIds(v.program);
+      const hydrated = hydrateWorkoutProgramIds(v.program as WorkoutProgram);
       set((s) => {
         const next = [...s.weekDays];
         next[s.activeWeekIndex] = hydrated.days;
@@ -335,7 +335,7 @@ export const useWorkoutBuilderStore = create<WorkoutBuilderState>()(
       merge: (persistedState, currentState) => {
         const merged = {
           ...currentState,
-          ...persistedState,
+          ...(persistedState as object),
           _hasHydrated: false,
         } as WorkoutBuilderState;
         try {

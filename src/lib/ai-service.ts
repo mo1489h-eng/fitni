@@ -80,5 +80,5 @@ export function parseAndValidateWorkoutProgramFromLlmText(text: string): Workout
   if (!parsed.success) {
     throw new Error(`البرنامج المُعاد غير صالح: ${formatWorkoutProgramZodError(parsed.error)}`);
   }
-  return parsed.data;
+  return parsed.data as WorkoutProgram;
 }

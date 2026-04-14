@@ -17,7 +17,7 @@ function isDuplicateUserError(err: { message?: string }): boolean {
 }
 
 async function findUserIdByEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   email: string
 ): Promise<string | null> {
   const target = email.toLowerCase();

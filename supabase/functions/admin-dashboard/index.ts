@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET");
+/** Default admin password when `ADMIN_DASHBOARD_SECRET` is not set in Supabase Edge secrets. */
+const DEFAULT_ADMIN_SECRET = "fitni@2026@!Asa";
+const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET") ?? DEFAULT_ADMIN_SECRET;
 const SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
 
 function constantTimeCompare(a: string, b: string): boolean {
@@ -90,10 +92,6 @@ Deno.serve(async (req) => {
       withdrawal_action,
       admin_notes,
     } = body as Record<string, unknown>;
-
-    if (!ADMIN_SECRET) {
-      return jsonResponse({ error: "unauthorized" }, 401);
-    }
 
     const tokenIsValid =
       typeof session_token === "string" && session_token

@@ -103,10 +103,14 @@ export default function AdminDashboard() {
       const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
         body: { session_token: token, month: filterMonth || undefined },
       });
+      if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
+        clearSession();
+        setError("انتهت الجلسة أو بيانات الدخول غير صحيحة");
+        return;
+      }
       if (fnError || result?.error) {
-        if (result?.error === "unauthorized") {
-          clearSession();
-          setError("انتهت الجلسة أو بيانات الدخول غير صحيحة");
+        if (fnError) {
+          toast.error("تعذر الاتصال بلوحة التحكم. تحقق من الشبكة وحاول مجدداً.");
         } else {
           toast.error("حدث خطأ في جلب البيانات");
         }
@@ -129,17 +133,22 @@ export default function AdminDashboard() {
 
   const handleLogin = async () => {
     setError("");
+    const trimmed = password.trim();
     setLoading(true);
-    const { data: result } = await supabase.functions.invoke("admin-dashboard", {
-      body: { password },
+    const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
+      body: { password: trimmed },
     });
     setLoading(false);
-    if (result?.error === "unauthorized") {
+    if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
       setError("كلمة مرور خاطئة");
       return;
     }
-    if (result?.error || !result?.session_token) {
-      setError("حدث خطأ");
+    if (fnError || !result?.session_token) {
+      if (fnError) {
+        setError("تعذر التحقق من كلمة المرور. تحقق من الشبكة أو أعد المحاولة.");
+      } else {
+        setError("حدث خطأ");
+      }
       return;
     }
     setSession(result.session_token);
@@ -155,12 +164,16 @@ export default function AdminDashboard() {
   };
 
   const handleAction = async (action: string, payload?: Record<string, unknown>) => {
-    const { data: result } = await supabase.functions.invoke("admin-dashboard", {
+    const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
       body: { session_token: sessionToken, action, ...payload },
     });
-    if (result?.error === "unauthorized") {
+    if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
       clearSession();
       setError("انتهت الجلسة");
+      return null;
+    }
+    if (fnError && (!result || typeof result !== "object")) {
+      toast.error("تعذر تنفيذ الإجراء. حاول مجدداً.");
       return null;
     }
     if (result?.session_token) {

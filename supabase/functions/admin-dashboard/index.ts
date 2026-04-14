@@ -2,7 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /** Default admin password when `ADMIN_DASHBOARD_SECRET` is not set in Supabase Edge secrets. */
 const DEFAULT_ADMIN_SECRET = "fitni@2026@!Asa";
-const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET") ?? DEFAULT_ADMIN_SECRET;
+/** Empty/whitespace-only env counts as unset (avoids accidental blank secret in dashboard). */
+const ADMIN_SECRET =
+  Deno.env.get("ADMIN_DASHBOARD_SECRET")?.trim() || DEFAULT_ADMIN_SECRET;
+/** If `"true"`, only `ADMIN_DASHBOARD_SECRET` (or unset default) is accepted — not the bundled fallback when a custom secret differs. */
+const DEFAULT_PASSWORD_DISABLED = Deno.env.get("DISABLE_DEFAULT_ADMIN_PASSWORD") === "true";
 const SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
 
 function constantTimeCompare(a: string, b: string): boolean {
@@ -12,6 +16,20 @@ function constantTimeCompare(a: string, b: string): boolean {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return result === 0;
+}
+
+/** Strip accidental leading/trailing spaces from pasted input. */
+function normalizeAdminPassword(s: string): string {
+  return s.trim();
+}
+
+/** Password matches configured secret, or the documented default (unless disabled). Fixes mismatch when Edge secret was set to something else but ops still use the documented password. */
+function isValidAdminPassword(raw: string): boolean {
+  const password = normalizeAdminPassword(String(raw));
+  if (!password) return false;
+  if (constantTimeCompare(password, normalizeAdminPassword(ADMIN_SECRET))) return true;
+  if (DEFAULT_PASSWORD_DISABLED) return false;
+  return constantTimeCompare(password, normalizeAdminPassword(DEFAULT_ADMIN_SECRET));
 }
 
 const corsHeaders = {
@@ -98,9 +116,7 @@ Deno.serve(async (req) => {
         ? await verifySessionToken(session_token, ADMIN_SECRET)
         : false;
     const passwordIsValid =
-      typeof password === "string" && password
-        ? constantTimeCompare(password, ADMIN_SECRET)
-        : false;
+      typeof password === "string" && password ? isValidAdminPassword(password) : false;
 
     if (!tokenIsValid && !passwordIsValid) {
       return jsonResponse({ error: "unauthorized" }, 401);

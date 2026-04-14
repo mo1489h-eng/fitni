@@ -85,7 +85,9 @@ EmptyPanel.displayName = "EmptyPanel";
 const Dashboard = () => {
   const { user, profile } = useAuth();
   usePageTitle("لوحة التحكم");
-  const { hasCopilotAccess, getProFeatureBlockReason } = usePlanLimits();
+  const { hasCopilotAccess, getProFeatureBlockReason, clientCount, maxClients } = usePlanLimits();
+  const importSlotsRemaining =
+    maxClients === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : Math.max(0, maxClients - clientCount);
   const navigate = useNavigate();
   const [showPlans, setShowPlans] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -498,7 +500,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      <ImportClientsModal open={showImport} onOpenChange={setShowImport} />
+      <ImportClientsModal open={showImport} onOpenChange={setShowImport} slotsRemaining={importSlotsRemaining} />
       <UpgradeModal
         open={showUpgrade}
         onOpenChange={setShowUpgrade}

@@ -16,6 +16,7 @@ import { ClientCardSkeleton } from "@/components/skeletons/ClientCardSkeleton";
 import {
   Plus, Search, Target, Loader2, ChevronDown, ChevronUp, Users,
   UserPlus, MoreVertical, Phone, CalendarDays, MessageCircle, Eye, ClipboardList, Filter, Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -29,6 +30,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
+import ImportClientsModal from "@/components/ImportClientsModal";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -97,9 +99,12 @@ const Clients = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { canAddClient, getAddClientBlockReason } = usePlanLimits();
+  const { getAddClientBlockReason, clientCount, maxClients } = usePlanLimits();
+  const importSlotsRemaining =
+    maxClients === Number.POSITIVE_INFINITY ? Number.POSITIVE_INFINITY : Math.max(0, maxClients - clientCount);
   const [blockReason, setBlockReason] = useState<{ title: string; description: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientListRow | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const handleAddClick = () => {
     const reason = getAddClientBlockReason();
@@ -108,6 +113,16 @@ const Clients = () => {
       setShowUpgrade(true);
     } else {
       setOpen(true);
+    }
+  };
+
+  const handleImportClick = () => {
+    const reason = getAddClientBlockReason();
+    if (reason?.blocked) {
+      setBlockReason(reason);
+      setShowUpgrade(true);
+    } else {
+      setShowImport(true);
     }
   };
 
@@ -236,15 +251,21 @@ const Clients = () => {
     <div className="space-y-5 page-enter">
         <FeatureTooltip id="clients-add" targetSelector="[data-tour='add-client']" message="ابدأ بإضافة عملاءك هنا" />
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold text-foreground">العملاء</h1>
             <p className="text-sm text-muted-foreground">{activeCount} عميل نشط</p>
           </div>
-          <Button onClick={handleAddClick} className="gap-1.5" size="sm">
-            <UserPlus className="w-4 h-4" strokeWidth={1.5} />
-            إضافة عميل
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleImportClick} className="gap-1.5" size="sm">
+              <FileSpreadsheet className="w-4 h-4" strokeWidth={1.5} />
+              استيراد Excel
+            </Button>
+            <Button onClick={handleAddClick} className="gap-1.5" size="sm">
+              <UserPlus className="w-4 h-4" strokeWidth={1.5} />
+              إضافة عميل
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -292,13 +313,15 @@ const Clients = () => {
                   <UserPlus className="w-8 h-8 text-muted-foreground" strokeWidth={1.5} />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">لم تضف عملاء بعد</h3>
-                <p className="text-sm text-muted-foreground">ابدأ بإضافة أول عميل لك</p>
-                <Button className="gap-1" onClick={() => {
-                  if (!canAddClient) { const reason = getAddClientBlockReason(); if (reason) setBlockReason(reason); return; }
-                  setOpen(true);
-                }}>
-                  <Plus className="w-4 h-4" /> إضافة عميل
-                </Button>
+                <p className="text-sm text-muted-foreground">أضف عميلاً واحداً أو استورد قائمة من Excel</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button variant="outline" className="gap-1" onClick={handleImportClick}>
+                    <FileSpreadsheet className="w-4 h-4" /> استيراد من Excel
+                  </Button>
+                  <Button className="gap-1" onClick={handleAddClick}>
+                    <Plus className="w-4 h-4" /> إضافة عميل
+                  </Button>
+                </div>
               </>
             )}
           </div>
@@ -457,6 +480,12 @@ const Clients = () => {
           title={blockReason?.title || ""}
           description={blockReason?.description || ""}
           onUpgrade={() => { setShowUpgrade(false); setShowPlans(true); }}
+        />
+
+        <ImportClientsModal
+          open={showImport}
+          onOpenChange={setShowImport}
+          slotsRemaining={importSlotsRemaining}
         />
 
         {/* Add Client Dialog */}

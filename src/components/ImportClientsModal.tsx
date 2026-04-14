@@ -1,67 +1,80 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Upload, FileSpreadsheet, Download, Loader2, CheckCircle, AlertTriangle,
-  Zap, ArrowLeft,
+  Upload,
+  FileSpreadsheet,
+  Download,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  Zap,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import {
+  IMPORT_FIELD_DEFS,
+  guessColumnMapping,
+  buildMappedRow,
+  markDuplicatePhonesInFile,
+  toClientInserts,
+  parseSpreadsheetToRows,
+  type ImportFieldKey,
+  type MappedImportRow,
+  type ClientInsert,
+} from "@/lib/clientSpreadsheetImport";
 
-
-interface ImportClientsModalProps {
+export interface ImportClientsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** How many more clients the plan allows (use Infinity for unlimited). */
+  slotsRemaining?: number;
 }
 
 type Step = "method" | "mapping" | "preview" | "done";
 
-interface RawRow {
-  [key: string]: any;
-}
+const CORE_FIELDS = IMPORT_FIELD_DEFS.filter((f) => f.group === "core");
+const EXTRA_FIELDS = IMPORT_FIELD_DEFS.filter((f) => f.group === "extra");
 
-interface MappedClient {
-  name: string;
-  phone: string;
-  goal: string;
-  subscription_price: number;
-  subscription_end_date: string;
-  valid: boolean;
-  error?: string;
-}
-
-const COLUMN_FIELDS = [
-  { key: "name", label: "الاسم", required: true },
-  { key: "phone", label: "رقم الجوال", required: false },
-  { key: "goal", label: "الهدف", required: false },
-  { key: "subscription_price", label: "سعر الاشتراك", required: false },
-  { key: "subscription_end_date", label: "تاريخ نهاية الاشتراك", required: false },
-];
-
-const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => {
+export default function ImportClientsModal({
+  open,
+  onOpenChange,
+  slotsRemaining = Number.POSITIVE_INFINITY,
+}: ImportClientsModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("method");
-  const [rawData, setRawData] = useState<RawRow[]>([]);
+  const [rawData, setRawData] = useState<Record<string, unknown>[]>([]);
   const [columns, setColumns] = useState<string[]>([]);
-  const [mapping, setMapping] = useState<Record<string, string>>({});
-  const [mappedClients, setMappedClients] = useState<MappedClient[]>([]);
+  const [mapping, setMapping] = useState<Partial<Record<ImportFieldKey, string>>>({});
+  const [mappedClients, setMappedClients] = useState<MappedImportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
+  const [cappedCount, setCappedCount] = useState(0);
   const [manualText, setManualText] = useState("");
+  const [showExtraMapping, setShowExtraMapping] = useState(true);
+
+  const defaultEndDate = useMemo(
+    () => new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+    [],
+  );
 
   const resetState = () => {
     setStep("method");
@@ -71,6 +84,8 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
     setMappedClients([]);
     setLoading(false);
     setManualText("");
+    setCappedCount(0);
+    setShowExtraMapping(true);
   };
 
   const handleClose = () => {
@@ -78,196 +93,245 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
     window.setTimeout(resetState, 300);
   };
 
-  const parseCsv = (text: string): RawRow[] => {
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-    return lines.slice(1).map((line) => {
-      const values = line.split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
-      const row: RawRow = {};
-      headers.forEach((h, i) => { row[h] = values[i] || ""; });
-      return row;
-    });
+  const applyRowsAndMapping = (
+    rows: Record<string, unknown>[],
+    map: Partial<Record<ImportFieldKey, string>>,
+  ) => {
+    if (rows.length === 0) {
+      toast({ title: "لا توجد بيانات في الملف", variant: "destructive" });
+      return;
+    }
+    const cols = Object.keys(rows[0] ?? {});
+    setRawData(rows);
+    setColumns(cols);
+    const merged = { ...guessColumnMapping(cols), ...map };
+    setMapping(merged);
+    setStep("mapping");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const text = evt.target?.result as string;
-        const json = parseCsv(text);
-        if (json.length === 0) {
-          toast({ title: "الملف فارغ", variant: "destructive" });
-          return;
-        }
-        const cols = Object.keys(json[0]);
-        setRawData(json);
-        setColumns(cols);
-
-        const autoMap: Record<string, string> = {};
-        COLUMN_FIELDS.forEach((field) => {
-          const match = cols.find((c) =>
-            c.includes(field.label) || c.toLowerCase().includes(field.key)
-          );
-          if (match) autoMap[field.key] = match;
+    setLoading(true);
+    try {
+      const lower = file.name.toLowerCase();
+      if (
+        !lower.endsWith(".csv") &&
+        !lower.endsWith(".xlsx") &&
+        !lower.endsWith(".xls") &&
+        !lower.endsWith(".ods")
+      ) {
+        toast({
+          title: "صيغة غير مدعومة",
+          description: "استخدم Excel (.xlsx) أو CSV",
+          variant: "destructive",
         });
-        setMapping(autoMap);
-        setStep("mapping");
-      } catch {
-        toast({ title: "خطأ في قراءة الملف", variant: "destructive" });
+        return;
       }
-    };
-    reader.readAsText(file);
-    if (fileRef.current) fileRef.current.value = "";
+      const rows = await parseSpreadsheetToRows(file);
+      if (rows.length === 0) {
+        toast({ title: "الملف فارغ أو لا يحتوي صفوف بيانات", variant: "destructive" });
+        return;
+      }
+      applyRowsAndMapping(rows, {});
+    } catch {
+      toast({ title: "تعذر قراءة الملف", description: "تأكد أن الملف غير مفتوح في برنامج آخر", variant: "destructive" });
+    } finally {
+      setLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   const handleManualPaste = () => {
     if (!manualText.trim()) return;
-    const lines = manualText.trim().split("\n").filter(Boolean);
-    const parsed: MappedClient[] = lines.map((line) => {
+    const lines = manualText.trim().split(/\n/).filter(Boolean);
+    const rows: Record<string, unknown>[] = lines.map((line) => {
       const parts = line.split(/[,،\t]/).map((p) => p.trim());
-      const name = parts[0] || "";
-      const phone = parts[1] || "";
-      const goal = parts[2] || "";
-      const price = parseFloat(parts[3]) || 0;
       return {
-        name,
-        phone,
-        goal,
-        subscription_price: price,
-        subscription_end_date: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
-        valid: !!name,
-        error: !name ? "الاسم مطلوب" : undefined,
+        الاسم: parts[0] ?? "",
+        الجوال: parts[1] ?? "",
+        الهدف: parts[2] ?? "",
+        السعر: parts[3] ?? "",
       };
     });
-    setMappedClients(parsed);
-    setStep("preview");
+    applyRowsAndMapping(rows, {
+      name: "الاسم",
+      phone: "الجوال",
+      goal: "الهدف",
+      subscription_price: "السعر",
+    });
   };
 
-  const downloadTemplate = () => {
-    const headers = ["الاسم", "رقم الجوال", "الهدف", "سعر الاشتراك", "تاريخ نهاية الاشتراك"];
-    const rows = [
-      ["أحمد محمد", "0501234567", "تخسيس", "500", "2026-04-01"],
-      ["سارة علي", "0559876543", "بناء عضلات", "800", "2026-05-15"],
+  const downloadTemplate = async () => {
+    const XLSX = await import("xlsx");
+    const headers = [
+      "الاسم الكامل",
+      "رقم الجوال",
+      "البريد الإلكتروني",
+      "الهدف التدريبي",
+      "سعر الاشتراك",
+      "نهاية الاشتراك",
+      "العمر",
+      "الوزن",
+      "الطول",
+      "الخبرة",
+      "أيام التمرين بالأسبوع",
+      "ملاحظات",
+      "نوع التدريب",
+      "جلسات شهرياً",
+      "أسبوع البرنامج",
     ];
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "CoachBase_clients_template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const sample = [
+      "أحمد محمد",
+      "0501234567",
+      "ahmed@example.com",
+      "تخسيس",
+      "500",
+      "2026-12-31",
+      "28",
+      "80",
+      "175",
+      "مبتدئ",
+      "4",
+      "",
+      "أونلاين",
+      "0",
+      "1",
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, sample]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "عملاء");
+    XLSX.writeFile(wb, "CoachBase_import_clients.xlsx");
   };
 
   const applyMapping = () => {
     if (!mapping.name) {
-      toast({ title: "يجب تحديد عمود الاسم", variant: "destructive" });
+      toast({ title: "حدد عمود الاسم", variant: "destructive" });
       return;
     }
-
-    const parsed: MappedClient[] = rawData.map((row) => {
-      const name = String(row[mapping.name] || "").trim();
-      const phone = mapping.phone ? String(row[mapping.phone] || "").trim() : "";
-      const goal = mapping.goal ? String(row[mapping.goal] || "").trim() : "";
-      const price = mapping.subscription_price ? parseFloat(row[mapping.subscription_price]) || 0 : 0;
-
-      let endDate = "";
-      if (mapping.subscription_end_date && row[mapping.subscription_end_date]) {
-        const raw = row[mapping.subscription_end_date];
-        if (typeof raw === "number") {
-          // Excel serial date
-          const d = new Date((raw - 25569) * 86400000);
-          endDate = d.toISOString().split("T")[0];
-        } else {
-          const d = new Date(raw);
-          endDate = isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
-        }
-      }
-      if (!endDate) {
-        endDate = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
-      }
-
-      return {
-        name,
-        phone,
-        goal,
-        subscription_price: price,
-        subscription_end_date: endDate,
-        valid: !!name,
-        error: !name ? "الاسم مطلوب" : undefined,
-      };
-    });
-
+    let parsed: MappedImportRow[] = rawData.map((row) => buildMappedRow(row, mapping, defaultEndDate));
+    parsed = markDuplicatePhonesInFile(parsed);
     setMappedClients(parsed);
     setStep("preview");
   };
+
+  const validRows = mappedClients.filter((c) => c.valid);
+  const cap =
+    Number.isFinite(slotsRemaining) && slotsRemaining >= 0 ? Math.floor(slotsRemaining) : Number.POSITIVE_INFINITY;
+  const willImport = Math.min(validRows.length, cap);
+  const overCap = validRows.length > cap && Number.isFinite(cap);
 
   const handleImport = async () => {
     if (!user) return;
     setLoading(true);
     const valid = mappedClients.filter((c) => c.valid);
     const skipped = mappedClients.filter((c) => !c.valid);
+    const maxRows = Number.isFinite(cap) ? cap : valid.length;
+    const batch = valid.slice(0, maxRows);
+    const extraSkipped = valid.length - batch.length;
 
     try {
-      if (valid.length > 0) {
-        const toInsert = valid.map((c) => ({
-          trainer_id: user.id,
-          name: c.name,
-          phone: c.phone,
-          goal: c.goal,
-          subscription_price: c.subscription_price,
-          subscription_end_date: c.subscription_end_date,
-        }));
-        const { error } = await supabase.from("clients").insert(toInsert);
-        if (error) throw error;
+      if (batch.length > 0) {
+        const today = new Date().toISOString().split("T")[0];
+        const inserts = toClientInserts(batch, user.id, today);
+        const CHUNK = 40;
+        for (let i = 0; i < inserts.length; i += CHUNK) {
+          const chunk = inserts.slice(i, i + CHUNK);
+          const { error } = await supabase.from("clients").insert(chunk as ClientInsert[]);
+          if (error) throw error;
+        }
       }
 
-      setImportedCount(valid.length);
+      setImportedCount(batch.length);
       setSkippedCount(skipped.length);
+      setCappedCount(extraSkipped);
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client-count"] });
+      queryClient.invalidateQueries({ queryKey: ["copilot-trainer-clients"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-clients"] });
       setStep("done");
-    } catch (err: any) {
-      toast({ title: "خطأ في الاستيراد", description: err.message, variant: "destructive" });
+      if (extraSkipped > 0) {
+        toast({
+          title: "تم الاستيراد مع حد الباقة",
+          description: `تم تخطي ${extraSkipped} عميل لأن الحد المسموح للعملاء اكتمل. ترقَّ للاحترافي لزيادة الحد.`,
+        });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "خطأ غير معروف";
+      toast({ title: "فشل الاستيراد", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
+  const NONE = "__none__";
+
+  const renderFieldSelect = (field: (typeof IMPORT_FIELD_DEFS)[number]) => (
+    <div key={field.key} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+      <span className="text-sm font-medium text-foreground sm:w-40 sm:flex-shrink-0">
+        {field.label}
+        {field.required && <span className="text-destructive mr-0.5">*</span>}
+      </span>
+      <Select
+        value={mapping[field.key] ?? NONE}
+        onValueChange={(v) =>
+          setMapping((m) => ({ ...m, [field.key]: v === NONE ? undefined : v }))
+        }
+      >
+        <SelectTrigger className="flex-1">
+          <SelectValue placeholder="— تجاهل —" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>— تجاهل —</SelectItem>
+          {columns.map((col) => (
+            <SelectItem key={col} value={col}>
+              {col}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
-      <DialogContent data-tour="import-clients-modal" className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent data-tour="import-clients-modal" className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5 text-primary" />
-            استيراد بيانات العملاء
+            استيراد العملاء من Excel
           </DialogTitle>
         </DialogHeader>
 
-        {/* STEP 1: Method */}
         {step === "method" && (
           <div className="space-y-3">
-            {/* Upload Excel/CSV */}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              ارفع ملف Excel أو CSV يحتوي أعمدة مثل: الاسم، الجوال، الهدف، السعر، وتاريخ نهاية الاشتراك. يمكنك إضافة
+              أعمدة اختيارية (العمر، الوزن، نوع التدريب…) لمطابقة بياناتك القديمة من الجداول.
+            </p>
+
             <Card
               className="p-4 cursor-pointer hover:shadow-md transition-shadow border-primary/20 hover:border-primary/40"
-              onClick={() => fileRef.current?.click()}
+              onClick={() => !loading && fileRef.current?.click()}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileSpreadsheet className="w-5 h-5 text-primary" />
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin text-primary" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
                 </div>
                 <div>
-                  <p className="font-bold text-card-foreground">رفع ملف Excel/CSV</p>
-                  <p className="text-xs text-muted-foreground">ارفع ملف Google Sheets أو Excel</p>
+                  <p className="font-bold text-card-foreground">رفع ملف Excel أو CSV</p>
+                  <p className="text-xs text-muted-foreground">.xlsx / .xls / .csv — الورقة الأولى فقط</p>
                 </div>
               </div>
             </Card>
-            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,.xlsx,.xls,.ods,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
 
-            {/* Manual entry */}
             <Card className="p-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -275,7 +339,7 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
                 </div>
                 <div>
                   <p className="font-bold text-card-foreground">إدخال يدوي سريع</p>
-                  <p className="text-xs text-muted-foreground">الصق البيانات مباشرة (سطر لكل عميل)</p>
+                  <p className="text-xs text-muted-foreground">سطر لكل عميل: اسم، جوال، هدف، سعر</p>
                 </div>
               </div>
               <textarea
@@ -290,128 +354,157 @@ const ImportClientsModal = ({ open, onOpenChange }: ImportClientsModalProps) => 
               </Button>
             </Card>
 
-            {/* Download template */}
-            <Card
-              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={downloadTemplate}
-            >
+            <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={downloadTemplate}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Download className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-bold text-card-foreground">تحميل نموذج جاهز</p>
-                  <p className="text-xs text-muted-foreground">حمّل النموذج واملأه ثم ارفعه</p>
+                  <p className="font-bold text-card-foreground">تحميل نموذج Excel</p>
+                  <p className="text-xs text-muted-foreground">ملف جاهز بالعربية مع صف مثال</p>
                 </div>
               </div>
             </Card>
           </div>
         )}
 
-        {/* STEP 2: Column Mapping */}
         {step === "mapping" && (
           <div className="space-y-4">
             <Button variant="ghost" size="sm" className="gap-1" onClick={() => setStep("method")}>
               <ArrowLeft className="w-4 h-4" /> رجوع
             </Button>
 
-            <p className="text-sm text-muted-foreground">تم العثور على {rawData.length} سجل و {columns.length} أعمدة</p>
+            <p className="text-sm text-muted-foreground">
+              وُجد <strong>{rawData.length}</strong> صفاً و<strong>{columns.length}</strong> عموداً. اربط الأعمدة بالحقول
+              (تم تخمين المطابقة تلقائياً حيث أمكن).
+            </p>
 
-            <div className="space-y-3">
-              {COLUMN_FIELDS.map((field) => (
-                <div key={field.key} className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground w-32 flex-shrink-0">
-                    {field.label}
-                    {field.required && <span className="text-destructive mr-0.5">*</span>}
-                  </span>
-                  <Select value={mapping[field.key] || undefined} onValueChange={(v) => setMapping((m) => ({ ...m, [field.key]: v }))}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="اختر العمود" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {columns.map((col) => (
-                        <SelectItem key={col} value={col}>{col}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
+            <div className="space-y-3 rounded-lg border border-border p-3 bg-card/40">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">الحقول الأساسية</p>
+              {CORE_FIELDS.map(renderFieldSelect)}
             </div>
 
-            {/* Preview first 3 rows */}
+            <button
+              type="button"
+              className="flex w-full items-center justify-between text-sm font-medium text-primary py-1"
+              onClick={() => setShowExtraMapping((v) => !v)}
+            >
+              حقول إضافية (عمر، وزن، نوع التدريب…)
+              {showExtraMapping ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {showExtraMapping && (
+              <div className="space-y-3 rounded-lg border border-border p-3 bg-card/40 max-h-64 overflow-y-auto">
+                {EXTRA_FIELDS.map(renderFieldSelect)}
+              </div>
+            )}
+
             {rawData.length > 0 && mapping.name && (
               <div className="rounded-lg bg-secondary p-3">
-                <p className="text-xs font-bold text-muted-foreground mb-2">معاينة (أول 3 سجلات):</p>
+                <p className="text-xs font-bold text-muted-foreground mb-2">معاينة أول 3 صفوف:</p>
                 {rawData.slice(0, 3).map((row, i) => (
                   <p key={i} className="text-xs text-secondary-foreground truncate">
-                    {row[mapping.name]} {mapping.phone ? `• ${row[mapping.phone]}` : ""}
+                    {String(row[mapping.name!] ?? "")}{" "}
+                    {mapping.phone ? `• ${String(row[mapping.phone] ?? "")}` : ""}
                   </p>
                 ))}
               </div>
             )}
 
             <Button className="w-full" disabled={!mapping.name} onClick={applyMapping}>
-              التالي: معاينة البيانات
+              التالي: مراجعة واستيراد
             </Button>
           </div>
         )}
 
-        {/* STEP 3: Preview */}
         {step === "preview" && (
           <div className="space-y-4">
-            <Button variant="ghost" size="sm" className="gap-1" onClick={() => rawData.length > 0 ? setStep("mapping") : setStep("method")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={() => (rawData.length > 0 ? setStep("mapping") : setStep("method"))}
+            >
               <ArrowLeft className="w-4 h-4" /> رجوع
             </Button>
 
-            <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-center">
-              <p className="text-sm font-medium">سيتم إضافة <span className="text-primary font-bold">{mappedClients.filter((c) => c.valid).length}</span> عميل</p>
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-center space-y-1">
+              <p className="text-sm font-medium">
+                جاهز للاستيراد:{" "}
+                <span className="text-primary font-bold">{willImport}</span> عميل
+                {validRows.length !== willImport && (
+                  <span className="text-muted-foreground text-xs block">
+                    من أصل {validRows.length} صف صالح (حد الباقة أو الخطة)
+                  </span>
+                )}
+              </p>
+              {overCap && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  سيتم استيراد أول {willImport} عميل فقط حسب المساحة المتبقة في باقتك.
+                </p>
+              )}
               {mappedClients.filter((c) => !c.valid).length > 0 && (
-                <p className="text-xs text-destructive mt-1">
-                  {mappedClients.filter((c) => !c.valid).length} سجل به أخطاء سيتم تخطيه
+                <p className="text-xs text-destructive">
+                  {mappedClients.filter((c) => !c.valid).length} سطر مرفوض (اسم فارغ أو جوال مكرر)
                 </p>
               )}
             </div>
 
             <div className="space-y-1 max-h-60 overflow-y-auto">
               {mappedClients.map((c, i) => (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded-lg text-sm ${c.valid ? "bg-secondary" : "bg-destructive/5 border border-destructive/20"}`}>
+                <div
+                  key={i}
+                  className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
+                    c.valid ? "bg-secondary" : "bg-destructive/5 border border-destructive/20"
+                  }`}
+                >
                   {c.valid ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-success flex-shrink-0" />
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                   ) : (
                     <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
                   )}
                   <span className={`flex-1 truncate ${c.valid ? "text-secondary-foreground" : "text-destructive"}`}>
                     {c.name || "(بدون اسم)"} {c.phone && `• ${c.phone}`}
+                    {!c.valid && c.error && ` — ${c.error}`}
                   </span>
                   {c.subscription_price > 0 && (
-                    <span className="text-xs text-muted-foreground">{c.subscription_price} ر.س</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{c.subscription_price} ر.س</span>
                   )}
                 </div>
               ))}
             </div>
 
-            <Button className="w-full" onClick={handleImport} disabled={loading || mappedClients.filter((c) => c.valid).length === 0}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : `استيراد ${mappedClients.filter((c) => c.valid).length} عميل`}
+            <Button
+              className="w-full"
+              onClick={handleImport}
+              disabled={loading || willImport === 0}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : `استيراد ${willImport} عميل`}
             </Button>
           </div>
         )}
 
-        {/* STEP 4: Done */}
         {step === "done" && (
           <div className="text-center space-y-4 py-4">
-            <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-8 h-8 text-success" />
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-emerald-500" />
             </div>
-            <p className="text-lg font-bold text-foreground">تم استيراد {importedCount} عميل بنجاح</p>
-            {skippedCount > 0 && (
-              <p className="text-sm text-muted-foreground">تم تخطي {skippedCount} سجل بسبب بيانات ناقصة</p>
+            <p className="text-lg font-bold text-foreground">تم استيراد {importedCount} عميل</p>
+            {(skippedCount > 0 || cappedCount > 0) && (
+              <p className="text-sm text-muted-foreground">
+                {skippedCount > 0 && <>تخطي {skippedCount} سطر (اسم فارغ أو جوال مكرر في الملف)</>}
+                {skippedCount > 0 && cappedCount > 0 && <br />}
+                {cappedCount > 0 && <>لم يُستورد {cappedCount} عميلاً إضافياً بسبب حد الباقة</>}
+              </p>
             )}
-            <Button className="w-full" onClick={handleClose}>إغلاق</Button>
+            <p className="text-xs text-muted-foreground">
+              البرامج والتمارين التفصيلية يمكن بناؤها لاحقاً من ملف كل عميل؛ تم نقل بيانات الملف الشخصي والاشتراك.
+            </p>
+            <Button className="w-full" onClick={handleClose}>
+              إغلاق
+            </Button>
           </div>
         )}
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ImportClientsModal;
+}

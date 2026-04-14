@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, X } from "lucide-react";
 
 import GlobalSearch from "@/components/GlobalSearch";
+import { PricingPlansModal } from "@/components/pricing/PricingPlansModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,7 @@ export function TrainerShellLayout({ children, title, onQuickAdd }: TrainerShell
   const { profile, signOut } = useAuth();
 
   const [searchOpen, setSearchOpen] = useState(false);
+  const [pricingOpen, setPricingOpen] = useState(false);
   const isSidebarCollapsed = useUIStore((s) => s.isSidebarCollapsed);
   const toggleSidebarCollapsed = useUIStore((s) => s.toggleSidebarCollapsed);
   const isMobileDrawerOpen = useUIStore((s) => s.isMobileDrawerOpen);
@@ -89,6 +91,7 @@ export function TrainerShellLayout({ children, title, onQuickAdd }: TrainerShell
   return (
     <div className="min-h-screen bg-background text-foreground">
       <GlobalSearch externalOpen={searchOpen} onExternalClose={() => setSearchOpen(false)} />
+      <PricingPlansModal open={pricingOpen} onOpenChange={setPricingOpen} />
 
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <TrainerSidebar
@@ -108,11 +111,10 @@ export function TrainerShellLayout({ children, title, onQuickAdd }: TrainerShell
             title={title}
             greeting={greeting}
             trainerName={trainerName}
-            avatarFallback={avatarFallback}
-            avatarUrl={profile?.avatar_url ?? null}
             onSearch={() => setSearchOpen(true)}
             onQuickAdd={quick}
             onOpenMobileNav={() => setMobileDrawerOpen(true)}
+            onOpenPricing={() => setPricingOpen(true)}
           />
 
           <main className="flex-1 px-4 pb-24 pt-6 md:px-6 md:pb-10 md:pt-8">{children}</main>

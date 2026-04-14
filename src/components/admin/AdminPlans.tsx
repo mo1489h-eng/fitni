@@ -25,7 +25,7 @@ export function AdminPlans({ data }: AdminPageProps) {
           <CardContent className="space-y-3">
             <p className="text-3xl font-bold text-foreground">99 <span className="text-sm font-normal text-muted-foreground">ريال/شهر</span></p>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>حتى 10 عملاء</p>
+              <p>حتى 20 عميلاً</p>
               <p>جميع الميزات متاحة</p>
               <p>دعم فني</p>
             </div>

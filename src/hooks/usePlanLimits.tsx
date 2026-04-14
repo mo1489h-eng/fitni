@@ -7,7 +7,7 @@ export type PlanType = "free" | "basic" | "pro" | null;
 
 const PLAN_LIMITS: Record<string, { maxClients: number }> = {
   free: { maxClients: 0 },
-  basic: { maxClients: 10 },
+  basic: { maxClients: 20 },
   pro: { maxClients: Infinity },
 };
 

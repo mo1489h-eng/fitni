@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Reveal, SectionHeading } from "./LandingUtils";
 
 const planFeatures = {
-  basic: ["حتى 10 عملاء", "برامج تدريب كاملة", "خطة غذائية لكل عميل", "جلسات وتقويم"],
+  basic: ["حتى 20 عميلاً", "برامج تدريب كاملة", "خطة غذائية لكل عميل", "جلسات وتقويم"],
   pro: ["عملاء غير محدودين", "AI Copilot", "بوابة متدرب كاملة", "مدفوعات ومتابعة متقدمة"],
 };
 
@@ -28,7 +28,7 @@ const PricingSection = () => (
             <CardContent className="p-8">
               <div className="text-sm text-foreground/45">أساسي</div>
               <div className="mt-2 text-5xl font-black text-foreground">99 <span className="text-xl text-foreground/45">ريال/شهر</span></div>
-              <p className="mt-4 text-lg text-foreground/60">حتى 10 عملاء</p>
+              <p className="mt-4 text-lg text-foreground/60">حتى 20 عميلاً</p>
               <div className="mt-8 space-y-4">
                 {planFeatures.basic.map((item) => (
                   <div key={item} className="flex items-center gap-3 text-foreground/78">

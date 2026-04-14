@@ -1,8 +1,7 @@
-import { Menu, Plus, Search } from "lucide-react";
+import { Crown, Menu, Plus, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
 import TrainerNotifications from "@/components/TrainerNotifications";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 import { ThemeToggle } from "./ThemeToggle";
@@ -11,11 +10,11 @@ export interface TrainerTopbarProps {
   title?: string;
   greeting: string;
   trainerName: string;
-  avatarFallback: string;
-  avatarUrl?: string | null;
   onSearch: () => void;
   onQuickAdd: () => void;
   onOpenMobileNav?: () => void;
+  /** Opens pricing / subscription plans */
+  onOpenPricing: () => void;
 }
 
 /**
@@ -26,11 +25,10 @@ export function TrainerTopbar({
   title,
   greeting,
   trainerName,
-  avatarFallback,
-  avatarUrl,
   onSearch,
   onQuickAdd,
   onOpenMobileNav,
+  onOpenPricing,
 }: TrainerTopbarProps) {
   const heading = title?.trim() || greeting;
 
@@ -84,10 +82,17 @@ export function TrainerTopbar({
             <Plus className="h-5 w-5" strokeWidth={1.5} />
           </Button>
 
-          <Avatar className="h-11 w-11 border border-border shadow-sm">
-            <AvatarImage src={avatarUrl ?? undefined} alt={trainerName} />
-            <AvatarFallback className="bg-card text-sm font-bold text-foreground">{avatarFallback}</AvatarFallback>
-          </Avatar>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 rounded-full border-primary/45 bg-card/80 text-primary shadow-sm transition-all duration-300 ease-in-out hover:border-primary/60 hover:bg-primary/12 hover:text-primary hover:shadow-md active:scale-95"
+            onClick={onOpenPricing}
+            aria-label={`الباقات والأسعار — ${trainerName}`}
+            title="الباقات والأسعار"
+          >
+            <Crown className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+          </Button>
         </div>
       </div>
     </motion.header>

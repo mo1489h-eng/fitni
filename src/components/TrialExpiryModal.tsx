@@ -18,7 +18,7 @@ const plans = [
     price: 99,
     icon: BadgeCheck,
     popular: false,
-    features: ["10 عملاء", "البرامج", "التقويم", "المدفوعات"],
+    features: ["20 عميلاً", "البرامج", "التقويم", "المدفوعات"],
   },
   {
     key: "pro" as const,

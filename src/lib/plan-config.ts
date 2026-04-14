@@ -31,9 +31,9 @@ export const TRAINER_PLAN_DETAILS: Record<TrainerPlan, PlanDetails> = {
   basic: {
     name: "أساسي",
     price: 99,
-    clientLimit: 10,
+    clientLimit: 20,
     includedFeatures: [
-      "حتى 10 عملاء",
+      "حتى 20 عميلاً",
       "إدارة العملاء",
       "البرامج التدريبية",
       "الخطط الغذائية",

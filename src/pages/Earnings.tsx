@@ -1,20 +1,26 @@
 import { useState } from "react";
 import usePageTitle from "@/hooks/usePageTitle";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  useTrainerWallet,
+  useTrainerTransactionCount,
+  useTrainerTransactionsPage,
+  useTrainerActiveWithdrawals,
+} from "@/hooks/useTrainerFinance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -34,10 +40,12 @@ import {
 } from "@/components/ui/table";
 import { ArrowDownToLine, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 
 const MIN_WITHDRAWAL = 200;
 const PAGE_SIZE = 10;
+
+type RequestWithdrawalArgs = Database["public"]["Functions"]["request_withdrawal"]["Args"];
 
 const BANKS = [
   { value: "الراجحي", label: "الراجحي" },
@@ -59,31 +67,33 @@ function saIbanValid(iban: string): boolean {
   return /^SA\d{22}$/.test(s);
 }
 
-const TYPE_META: Record<
-  string,
-  { label: string; className: string }
-> = {
+const TYPE_META: Record<string, { label: string; className: string }> = {
   subscription: { label: "اشتراك", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
   program_sale: { label: "بيع برنامج", className: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
   withdrawal: { label: "سحب", className: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
   reward: { label: "مكافأة", className: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
+  bonus: { label: "مكافأة", className: "bg-violet-500/15 text-violet-400 border-violet-500/30" },
 };
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
   completed: { label: "مكتمل", className: "bg-emerald-500/15 text-emerald-400" },
   complete: { label: "مكتمل", className: "bg-emerald-500/15 text-emerald-400" },
   pending: { label: "معلق", className: "bg-amber-500/15 text-amber-400" },
+  failed: { label: "فشل", className: "bg-red-500/15 text-red-400" },
   rejected: { label: "مرفوض", className: "bg-red-500/15 text-red-400" },
 };
 
-type TxRow = Tables<"transactions">;
+function walletAvailableBalance(wallet: { balance_available?: number | null } | null): number {
+  if (!wallet) return 0;
+  return Number(wallet.balance_available ?? 0);
+}
 
 export default function Earnings() {
   usePageTitle("الأرباح");
   useRegisterTrainerShell({ title: "الأرباح" });
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [form, setForm] = useState({
     amount: "",
@@ -92,71 +102,20 @@ export default function Earnings() {
     accountHolder: "",
   });
 
-  const { data: wallet, isLoading: walletLoading } = useQuery({
-    queryKey: ["wallet", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("trainer_id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+  const { data: wallet, isLoading: walletLoading } = useTrainerWallet(user?.id);
+  const { data: pendingWithdrawals = [], isLoading: pendWLoading } = useTrainerActiveWithdrawals(user?.id);
+  const { data: txCount = 0 } = useTrainerTransactionCount(user?.id);
+  const { data: transactions = [], isLoading: txLoading } = useTrainerTransactionsPage(
+    user?.id,
+    page,
+    PAGE_SIZE,
+  );
 
-  const balance = Number(wallet?.balance_available ?? (wallet as { balance?: number } | null)?.balance ?? 0);
+  const balance = walletAvailableBalance(wallet);
   const pendingBal = Number(wallet?.pending_balance ?? 0);
   const totalEarn = Number(wallet?.total_earnings ?? 0);
 
-  const { data: pendingWithdrawals = [], isLoading: pendWLoading } = useQuery({
-    queryKey: ["withdrawals-pending", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("withdrawals")
-        .select("*")
-        .eq("trainer_id", user!.id)
-        .in("status", ["pending", "accepted"])
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: !!user?.id,
-  });
-
   const pendingWithdrawal = pendingWithdrawals[0] ?? null;
-
-  const { data: txCount = 0 } = useQuery({
-    queryKey: ["transactions-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("transactions")
-        .select("*", { count: "exact", head: true })
-        .eq("trainer_id", user!.id);
-      if (error) throw error;
-      return count ?? 0;
-    },
-    enabled: !!user?.id,
-  });
-
-  const { data: transactions = [], isLoading: txLoading } = useQuery({
-    queryKey: ["transactions", user?.id, page],
-    queryFn: async () => {
-      const from = page * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("trainer_id", user!.id)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-      if (error) throw error;
-      return (data ?? []) as TxRow[];
-    },
-    enabled: !!user?.id,
-  });
-
   const totalPages = Math.max(1, Math.ceil(txCount / PAGE_SIZE));
 
   const requestMutation = useMutation({
@@ -167,22 +126,23 @@ export default function Earnings() {
       }
       if (amt > balance) throw new Error("المبلغ أكبر من الرصيد المتاح");
       const iban = form.iban.replace(/\s/g, "").toUpperCase();
-      if (!saIbanValid(iban)) throw new Error("رقم الآيبان يجب أن يكون بصيغة SA متبوعاً بـ 22 رقماً");
+      if (!saIbanValid(iban)) throw new Error("رقم الآيبان يجب أن يكون SA متبوعاً بـ 22 رقماً (24 خانة)");
       if (!form.bankName.trim()) throw new Error("اختر البنك");
       if (!form.accountHolder.trim()) throw new Error("أدخل اسم صاحب الحساب");
 
-      const { data, error } = await supabase.rpc("request_withdrawal", {
+      const payload: RequestWithdrawalArgs = {
         p_amount: amt,
         p_iban: iban,
         p_bank_name: form.bankName.trim(),
         p_account_holder_name: form.accountHolder.trim(),
-      });
+      };
+
+      const { error } = await supabase.rpc("request_withdrawal", payload);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       toast.success("تم إرسال طلب السحب");
-      setSheetOpen(false);
+      setDialogOpen(false);
       setForm({ amount: "", iban: "", bankName: "", accountHolder: "" });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
       void queryClient.invalidateQueries({ queryKey: ["withdrawals-pending"] });
@@ -221,11 +181,10 @@ export default function Earnings() {
     <div className="min-h-[calc(100vh-6rem)] bg-[#0A0A0A] text-foreground" dir="rtl">
       <div className="mx-auto max-w-5xl space-y-8 px-2 pb-12 pt-2">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">الأرباح والسحب</h1>
-          <p className="mt-1 text-sm text-white/45">رصيدك، طلبات السحب، وسجل العمليات</p>
+          <h1 className="text-2xl font-black tracking-tight text-white">الأرباح</h1>
+          <p className="mt-1 text-sm text-white/45">الرصيد، طلبات السحب، وسجل العمليات</p>
         </div>
 
-        {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white/[0.06] bg-[#111111] p-6 shadow-xl">
             <div className="flex items-center gap-2 text-white/50">
@@ -275,12 +234,11 @@ export default function Earnings() {
           </div>
         </div>
 
-        {/* Withdraw CTA */}
         <div className="flex flex-wrap items-center gap-3">
           {showWithdrawCta ? (
             <Button
               className="gap-2 rounded-xl bg-[#22C55E] font-bold text-black hover:bg-[#16a34a]"
-              onClick={() => setSheetOpen(true)}
+              onClick={() => setDialogOpen(true)}
             >
               <ArrowDownToLine className="h-4 w-4" strokeWidth={2} />
               طلب سحب
@@ -295,7 +253,6 @@ export default function Earnings() {
           )}
         </div>
 
-        {/* Active withdrawal */}
         {(pendWLoading || pendingWithdrawal) && (
           <div className="rounded-2xl border border-amber-500/25 bg-[#111111] p-5">
             <h3 className="mb-3 text-sm font-bold text-amber-400">طلب سحب نشط</h3>
@@ -309,9 +266,17 @@ export default function Earnings() {
                     <span className="text-sm text-white/45">ريال</span>
                   </span>
                   <Badge className="border border-amber-500/40 bg-amber-500/10 text-amber-300">
-                    {pendingWithdrawal.status === "pending" ? "معلق" : pendingWithdrawal.status === "accepted" ? "مقبول" : pendingWithdrawal.status}
+                    {pendingWithdrawal.status === "pending"
+                      ? "معلق"
+                      : pendingWithdrawal.status === "accepted"
+                        ? "مقبول"
+                        : pendingWithdrawal.status}
                   </Badge>
                 </div>
+                <p className="text-sm text-white/55">
+                  البنك: {pendingWithdrawal.bank_name} — تاريخ الطلب:{" "}
+                  {new Date(pendingWithdrawal.created_at).toLocaleString("ar-SA")}
+                </p>
                 <ol className="relative me-4 border-s border-white/10 ps-6 text-sm text-white/55">
                   <li className="mb-2">تم استلام الطلب</li>
                   <li className="mb-2">مراجعة الإدارة</li>
@@ -338,7 +303,6 @@ export default function Earnings() {
           </div>
         )}
 
-        {/* Transactions */}
         <div className="rounded-2xl border border-white/[0.06] bg-[#111111] overflow-hidden">
           <div className="border-b border-white/[0.06] px-4 py-3">
             <h2 className="text-base font-bold text-white">سجل العمليات</h2>
@@ -376,9 +340,7 @@ export default function Earnings() {
                           {new Date(tx.created_at).toLocaleString("ar-SA")}
                         </TableCell>
                         <TableCell>{typeBadge(tx.type)}</TableCell>
-                        <TableCell className="tabular-nums text-white">
-                          {formatMoney(Number(tx.amount))}
-                        </TableCell>
+                        <TableCell className="tabular-nums text-white">{formatMoney(Number(tx.amount))}</TableCell>
                         <TableCell className="tabular-nums text-white/60">
                           {tx.commission != null ? formatMoney(Number(tx.commission)) : "—"}
                         </TableCell>
@@ -419,15 +381,19 @@ export default function Earnings() {
         </div>
       </div>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto border-white/10 bg-[#111111] text-right" dir="rtl">
-          <SheetHeader>
-            <SheetTitle className="text-white">طلب سحب</SheetTitle>
-            <SheetDescription className="text-white/50">
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent
+          className="max-w-md border-white/10 bg-[#111111] text-right sm:rounded-2xl"
+          dir="rtl"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-white">طلب سحب</DialogTitle>
+            <DialogDescription className="text-white/50">
               أدخل بيانات الحساب البنكي بدقة. الحد الأدنى {MIN_WITHDRAWAL} ريال.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="grid gap-4 py-6">
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
             <div>
               <Label className="text-white/70">المبلغ (ريال)</Label>
               <Input
@@ -447,14 +413,12 @@ export default function Earnings() {
                 onChange={(e) => setForm((f) => ({ ...f, iban: e.target.value }))}
                 className="mt-1 border-white/10 bg-[#0A0A0A] text-white font-mono"
                 placeholder="SA00..."
+                dir="ltr"
               />
             </div>
             <div>
               <Label className="text-white/70">البنك</Label>
-              <Select
-                value={form.bankName}
-                onValueChange={(v) => setForm((f) => ({ ...f, bankName: v }))}
-              >
+              <Select value={form.bankName} onValueChange={(v) => setForm((f) => ({ ...f, bankName: v }))}>
                 <SelectTrigger className="mt-1 border-white/10 bg-[#0A0A0A] text-white">
                   <SelectValue placeholder="اختر البنك" />
                 </SelectTrigger>
@@ -476,7 +440,7 @@ export default function Earnings() {
               />
             </div>
           </div>
-          <SheetFooter className="gap-2 sm:justify-start">
+          <DialogFooter className="gap-2 sm:justify-start flex-row-reverse">
             <Button
               className="bg-[#22C55E] font-bold text-black hover:bg-[#16a34a]"
               disabled={requestMutation.isPending}
@@ -484,12 +448,12 @@ export default function Earnings() {
             >
               {requestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "إرسال الطلب"}
             </Button>
-            <Button variant="ghost" onClick={() => setSheetOpen(false)}>
+            <Button variant="ghost" className="text-white/80" onClick={() => setDialogOpen(false)}>
               إلغاء
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminDashboard } from "@/lib/adminDashboardInvoke";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,28 +100,33 @@ export default function AdminDashboard() {
   const fetchData = useCallback(async (token: string, filterMonth?: string) => {
     setLoading(true);
     try {
-      const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
-        body: { session_token: token, month: filterMonth || undefined },
+      const { data: result } = await invokeAdminDashboard({
+        session_token: token,
+        month: filterMonth || undefined,
       });
       if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
         clearSession();
         setError("انتهت الجلسة أو بيانات الدخول غير صحيحة");
         return;
       }
-      if (fnError || result?.error) {
-        if (fnError) {
-          toast.error("تعذر الاتصال بلوحة التحكم. تحقق من الشبكة وحاول مجدداً.");
-        } else {
-          toast.error("حدث خطأ في جلب البيانات");
-        }
+      if (!result || (result.error && result.error !== "unauthorized")) {
+        const msg =
+          result?.error === "missing_supabase_env"
+            ? "إعدادات Supabase غير مكتملة"
+            : result?.error === "network"
+              ? "تعذر الاتصال. جرّب تعطيل حظر التتبع لهذا الموقع أو افتح التطبيق في نافذة عادية."
+              : "تعذر الاتصال بلوحة التحكم. تحقق من الشبكة وحاول مجدداً.";
+        toast.error(msg);
         return;
       }
-      if (result?.session_token) {
+      if (typeof result.session_token === "string" && result.session_token) {
         setSession(result.session_token);
         setSessionToken(result.session_token);
       }
       setData(result);
-      setMonth(result.filter_month);
+      if (typeof result.filter_month === "string") {
+        setMonth(result.filter_month);
+      }
     } finally {
       setLoading(false);
     }
@@ -135,27 +140,33 @@ export default function AdminDashboard() {
     setError("");
     const trimmed = password.trim();
     setLoading(true);
-    const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
-      body: { password: trimmed },
-    });
+    const { data: result } = await invokeAdminDashboard({ password: trimmed });
     setLoading(false);
+    if (result?.error === "missing_supabase_env") {
+      setError("إعدادات Supabase غير مكتملة في هذا العرض.");
+      return;
+    }
     if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
       setError("كلمة مرور خاطئة");
       return;
     }
-    if (fnError || !result?.session_token) {
-      if (fnError) {
-        setError("تعذر التحقق من كلمة المرور. تحقق من الشبكة أو أعد المحاولة.");
-      } else {
-        setError("حدث خطأ");
+    if (!result?.session_token) {
+      if (result?.error === "network") {
+        setError(
+          "تعذر الاتصال بالخادم. إذا كنت في معاينة مضمّنة، افتح الموقع في تبويب جديد أو اسمح بالتخزين لـ coachbase.",
+        );
+        return;
       }
+      setError("حدث خطأ أو تعذر الاتصال بالخادم");
       return;
     }
     setSession(result.session_token);
     setSessionToken(result.session_token);
     setAuthed(true);
     setData(result);
-    setMonth(result.filter_month);
+    if (typeof result.filter_month === "string") {
+      setMonth(result.filter_month);
+    }
   };
 
   const handleMonthChange = (m: string) => {
@@ -164,21 +175,19 @@ export default function AdminDashboard() {
   };
 
   const handleAction = async (action: string, payload?: Record<string, unknown>) => {
-    const { data: result, error: fnError } = await supabase.functions.invoke("admin-dashboard", {
-      body: { session_token: sessionToken, action, ...payload },
-    });
+    const { data: result } = await invokeAdminDashboard({ session_token: sessionToken, action, ...payload });
     if (result && typeof result === "object" && "error" in result && result.error === "unauthorized") {
       clearSession();
       setError("انتهت الجلسة");
       return null;
     }
-    if (fnError && (!result || typeof result !== "object")) {
+    if (!result || (result.error && result.error !== "unauthorized")) {
       toast.error("تعذر تنفيذ الإجراء. حاول مجدداً.");
       return null;
     }
-    if (result?.session_token) {
-      setSession(result.session_token as string);
-      setSessionToken(result.session_token as string);
+    if (typeof result.session_token === "string" && result.session_token) {
+      setSession(result.session_token);
+      setSessionToken(result.session_token);
     }
     return result;
   };

@@ -93,10 +93,14 @@ async function verifySessionToken(token: string, secret: string) {
   }
 }
 
-function jsonResponse(body: Record<string, unknown>, status = 200) {
+function jsonResponse(
+  body: Record<string, unknown>,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
@@ -125,8 +129,11 @@ Deno.serve(async (req) => {
     const passwordIsValid =
       typeof password === "string" && password ? isValidAdminPassword(password) : false;
 
+    /** 200 (not 401) so all clients reliably parse JSON; `error` signals auth failure. */
     if (!tokenIsValid && !passwordIsValid) {
-      return jsonResponse({ error: "unauthorized" }, 401);
+      return jsonResponse({ error: "unauthorized" }, 200, {
+        "Cache-Control": "no-store, max-age=0",
+      });
     }
 
     const nextSessionToken = tokenIsValid

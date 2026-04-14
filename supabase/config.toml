@@ -61,5 +61,8 @@ verify_jwt = false
 [functions.exercisedb-proxy]
 verify_jwt = false
 
+[functions.exercise-proxy]
+verify_jwt = false
+
 [functions.exercise-library-sync]
 verify_jwt = true

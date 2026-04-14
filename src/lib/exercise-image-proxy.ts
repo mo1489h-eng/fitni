@@ -10,7 +10,8 @@ export function getExerciseImageUrl(exerciseId: string): string {
   const base = supabaseUrl.replace(/\/$/, "");
   const url = new URL(`${base}/functions/v1/exercise-gif`);
   url.searchParams.set("id", exerciseId);
-  const anon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const anon =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (anon) {
     url.searchParams.set("apikey", anon);
   }

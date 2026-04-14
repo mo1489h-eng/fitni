@@ -100,11 +100,15 @@ const ExerciseDBSearch = ({ open, onOpenChange, onSelect }: Props) => {
       } else {
         params.set("endpoint", "exercises");
       }
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/exercisedb-proxy?${params.toString()}`;
-      const response = await fetch(url, {
+      const base = String(import.meta.env.VITE_SUPABASE_URL ?? "").replace(/\/$/, "");
+      const anonKey =
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const fnUrl = new URL(`${base}/functions/v1/exercisedb-proxy`);
+      fnUrl.search = params.toString();
+      if (anonKey) fnUrl.searchParams.set("apikey", String(anonKey));
+      const response = await fetch(fnUrl.toString(), {
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${anonKey ?? ""}`,
         },
       });
 

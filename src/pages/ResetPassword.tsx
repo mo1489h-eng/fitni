@@ -8,10 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 type RecoveryStatus = "loading" | "ready" | "invalid";
 
-/**
- * Password recovery: Supabase PKCE redirects with ?code=... (primary).
- * Legacy implicit flow may use #access_token=...&type=recovery.
- */
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,89 +20,53 @@ export default function ResetPassword() {
   useEffect(() => {
     let cancelled = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (cancelled || !session) return;
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        setStatus("ready");
-      }
-    });
-
-    const stripRecoveryQueryFromUrl = (pathname: string) => {
-      window.history.replaceState({}, document.title, pathname);
-    };
-
-    const waitForSession = async (maxMs: number, intervalMs: number) => {
-      const deadline = Date.now() + maxMs;
-      while (Date.now() < deadline && !cancelled) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) return session;
-        await new Promise((r) => setTimeout(r, intervalMs));
-      }
-      if (cancelled) return null;
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    };
-
-    void (async () => {
+    const processRecovery = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
 
-      // --- PKCE: `detectSessionInUrl` may already exchange ?code= on client init.
-      // Calling exchangeCodeForSession again consumes the one-time code and fails — so wait for session first, then fall back to manual exchange. ---
+      // --- PKCE flow: ?code= parameter ---
       if (code) {
-        let session = await waitForSession(3500, 100);
+        // Strip the code from URL immediately to prevent double-use
+        window.history.replaceState({}, document.title, url.pathname);
+
+        // detectSessionInUrl may have already exchanged the code.
+        // Check for an existing session first.
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (cancelled) return;
 
-        if (!session) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (cancelled) return;
-          if (error) {
-            console.error("exchangeCodeForSession", error);
-            // Race: auto-exchange may have completed after our failed manual attempt
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            session = retrySession ?? null;
-            if (!session) {
-              setStatus("invalid");
-              return;
-            }
-          } else {
-            const { data: { session: afterExchange } } = await supabase.auth.getSession();
-            session = afterExchange ?? null;
-            if (!session) {
-              setStatus("invalid");
-              return;
-            }
-          }
+        if (existingSession) {
+          setStatus("ready");
+          return;
         }
 
-        stripRecoveryQueryFromUrl(url.pathname);
+        // No session yet — try manual exchange
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (cancelled) return;
+
+        if (error) {
+          console.error("exchangeCodeForSession failed:", error.message);
+          // One more check — auto-exchange may have completed after our attempt
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (retrySession) {
+            setStatus("ready");
+          } else {
+            setStatus("invalid");
+          }
+          return;
+        }
+
         setStatus("ready");
         return;
       }
 
-      // --- No code: maybe implicit hash already parsed by the client ---
-      const trySession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        return session;
-      };
-
-      let session = await trySession();
-      if (cancelled) return;
-      if (session) {
-        setStatus("ready");
-        return;
-      }
-
-      const hasImplicitHash =
-        window.location.hash.includes("type=recovery") ||
-        window.location.hash.includes("access_token");
-
-      if (hasImplicitHash) {
-        for (let i = 0; i < 8; i++) {
-          await new Promise((r) => setTimeout(r, 400));
+      // --- Legacy implicit flow: #access_token=...&type=recovery ---
+      const hash = window.location.hash;
+      if (hash.includes("type=recovery") || hash.includes("access_token")) {
+        // Wait for Supabase client to parse the hash
+        for (let i = 0; i < 10; i++) {
+          await new Promise((r) => setTimeout(r, 300));
           if (cancelled) return;
-          session = await trySession();
+          const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             setStatus("ready");
             return;
@@ -114,9 +74,25 @@ export default function ResetPassword() {
         }
       }
 
-      if (cancelled) return;
+      // --- No code and no hash — check if onAuthStateChange already set a session ---
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setStatus("ready");
+        return;
+      }
+
       setStatus("invalid");
-    })();
+    };
+
+    // Also listen for PASSWORD_RECOVERY event from onAuthStateChange
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (cancelled) return;
+      if (event === "PASSWORD_RECOVERY") {
+        setStatus("ready");
+      }
+    });
+
+    processRecovery();
 
     return () => {
       cancelled = true;
@@ -137,21 +113,32 @@ export default function ResetPassword() {
 
     setSubmitting(true);
     try {
+      // Verify we have an active session before updating
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "انتهت الجلسة", description: "الرابط منتهي الصلاحية. اطلب رابطاً جديداً.", variant: "destructive" });
+        setStatus("invalid");
+        setSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast({
-        title: "تم تغيير كلمة المرور بنجاح",
-        description: "يمكنك الآن تسجيل الدخول بالبريد وكلمة المرور الجديدة.",
-      });
+
+      // Sign out to invalidate old session — user must login with new password
       await supabase.auth.signOut();
-      navigate("/login", { replace: true });
+
+      toast({
+        title: "تم تغيير كلمة المرور بنجاح ✅",
+        description: "سجّل دخولك بكلمة المرور الجديدة",
+      });
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "تعذّر تحديث كلمة المرور";
-      toast({
-        title: "فشل التحديث",
-        description: msg,
-        variant: "destructive",
-      });
+      toast({ title: "فشل التحديث", description: msg, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -223,6 +210,9 @@ export default function ResetPassword() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {password.length > 0 && password.length < 8 && (
+                  <p className="text-xs text-destructive mt-1">يجب أن تكون 8 أحرف على الأقل</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 text-foreground">تأكيد كلمة المرور</label>
@@ -235,9 +225,19 @@ export default function ResetPassword() {
                   minLength={8}
                   autoComplete="new-password"
                 />
+                {confirm.length > 0 && password !== confirm && (
+                  <p className="text-xs text-destructive mt-1">كلمتا المرور غير متطابقتين</p>
+                )}
               </div>
-              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ كلمة المرور"}
+              <Button type="submit" className="w-full" size="lg" disabled={submitting || password.length < 8 || password !== confirm}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                    جاري تحديث كلمة المرور…
+                  </>
+                ) : (
+                  "حفظ كلمة المرور"
+                )}
               </Button>
             </form>
             <p className="text-center text-sm text-muted-foreground mt-6">

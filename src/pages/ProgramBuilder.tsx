@@ -418,6 +418,7 @@ const ProgramBuilder = () => {
       setProgramName(program.name);
       setProgramGoal(program.goal || "");
       setProgramLevel(program.difficulty || "");
+      setProgramEquipment(program.equipment ?? "");
       setProgramWeeks(program.weeks);
       setEditingProgramId(programId);
 

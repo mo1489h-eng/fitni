@@ -1776,6 +1776,7 @@ export type Database = {
           created_at: string
           description: string | null
           difficulty: string | null
+          equipment: string | null
           goal: string | null
           id: string
           is_template: boolean
@@ -1787,6 +1788,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1798,6 +1800,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean

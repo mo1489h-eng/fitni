@@ -18,6 +18,8 @@ export function RoleGuard({ allowed, children }: Props) {
   const { loading, user } = useAuth();
   const fitniRole = useWorkoutStore((s) => s.fitniRole);
 
+  const effectiveRole = useMemo(() => normalizeFitniRole(fitniRole), [fitniRole]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

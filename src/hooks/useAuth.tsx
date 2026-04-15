@@ -7,6 +7,8 @@ import { resolveFitniRole, persistFitniRole, clearStoredFitniRole } from "@/lib/
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
+  /** DB default `coach`; may be `trainee` for linked client accounts */
+  role?: string | null;
   full_name: string;
   created_at: string;
   subscription_plan: string | null;
@@ -50,8 +52,9 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const profileSelectBase =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+/** Full trainer profile row (includes `role` for Fitni routing). */
+const profileSelectColumns =
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role" as const;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -65,12 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProfile = useCallback(async (userId: string) => {
     const fetchId = ++profileFetchRef.current;
     setProfileLoading(true);
-    console.log("[Auth] fetchProfile start", userId);
+    if (import.meta.env.DEV) console.log("[Auth] fetchProfile start", userId);
 
     try {
       let { data, error } = await supabase
         .from("profiles")
-        .select(profileSelectBase)
+        .select(profileSelectColumns)
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -81,11 +84,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("[Auth] fetchProfile query error", error);
         setProfile(null);
       } else if (data) {
-        console.log("[Auth] profile found");
+        if (import.meta.env.DEV) console.log("[Auth] profile found");
         setProfile(data as Profile);
       } else {
         // No profile — try to create one via RPC
-        console.log("[Auth] no profile found, calling ensure_trainer_profile");
+        if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_trainer_profile");
         const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
         if (fetchId !== profileFetchRef.current) return;
 
@@ -95,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           const r2 = await supabase
             .from("profiles")
-            .select(profileSelectBase)
+            .select(profileSelectColumns)
             .eq("user_id", userId)
             .maybeSingle();
           if (fetchId !== profileFetchRef.current) return;
@@ -108,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const r = await resolveFitniRole(userId);
       if (fetchId !== profileFetchRef.current) return;
 
-      console.log("[Auth] resolved role:", r);
+      if (import.meta.env.DEV) console.log("[Auth] resolved role:", r);
       if (r) {
         useWorkoutStore.getState().setFitniRole(r);
         persistFitniRole(r);
@@ -136,7 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
-      console.log("[Auth] onAuthStateChange", {
+      if (import.meta.env.DEV) console.log("[Auth] onAuthStateChange", {
         event: _event,
         userId: nextSession?.user?.id ?? null,
         email: nextSession?.user?.email ?? null,
@@ -160,7 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 2. Restore initial session (after listener is registered)
     supabase.auth.getSession().then(({ data: { session: initial } }) => {
       if (!mounted) return;
-      console.log("[auth] getSession (app load)", {
+      if (import.meta.env.DEV) console.log("[auth] getSession (app load)", {
         hasSession: !!initial,
         userId: initial?.user?.id,
         email: initial?.user?.email ?? null,
@@ -175,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfileLoading(false);
       }
       setLoading(false);
-      console.log("[Auth] initial session hydrate complete", { hasUser: !!initial?.user });
+      if (import.meta.env.DEV) console.log("[Auth] initial session hydrate complete", { hasUser: !!initial?.user });
     });
 
     return () => {
@@ -192,7 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchProfile]);
 
   const signOut = async () => {
-    console.log("[Auth] signOut requested");
+    if (import.meta.env.DEV) console.log("[Auth] signOut requested");
     await supabase.auth.signOut();
     Sentry.setUser(null);
     queryClient.clear();

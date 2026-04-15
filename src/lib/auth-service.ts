@@ -39,33 +39,43 @@ export function clearStoredFitniRole(): void {
 }
 
 /**
- * Resolve role: `profiles` row → coach; else `clients.auth_user_id` → trainee.
- * If no profile row yet (trigger lag / race), calls `ensure_trainer_profile` then re-selects once.
+ * Resolve app role. Order matters:
+ * 1) `clients.auth_user_id` → trainee (even if `profiles` exists — auth trigger may have inserted coach profile).
+ * 2) `profiles.role` when set to trainee → trainee.
+ * 3) `profiles` row → coach.
+ * 4) Else `ensure_trainer_profile` once for trainer signup lag, then re-check profile.
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
-  const selectProfile = async () =>
-    supabase.from("profiles").select("id").eq("user_id", userId).maybeSingle();
+  const { data: clientRow, error: clientErr } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
 
-  let { data: profile, error } = await selectProfile();
-
-  if (error) {
-    console.error("[auth] resolveFitniRole profile select", error);
-  }
-
-  if (profile?.id) {
-    console.log("[auth] resolveFitniRole: coach (profiles row present)");
-    return "coach";
-  }
-
-  const { data: client } = await supabase.from("clients").select("id").eq("auth_user_id", userId).maybeSingle();
-
-  if (client) {
-    console.log("[auth] resolveFitniRole: trainee (clients.auth_user_id)");
+  if (clientErr) console.error("[auth] resolveFitniRole clients select", clientErr);
+  if (clientRow?.id) {
+    if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: trainee (clients.auth_user_id)");
     return "trainee";
   }
 
-  // Trainer signup: profile may not be visible yet — idempotent RPC creates row when authenticated
-  console.log("[auth] resolveFitniRole: no profile/client — trying ensure_trainer_profile");
+  const selectProfile = async () =>
+    supabase.from("profiles").select("id, role").eq("user_id", userId).maybeSingle();
+
+  let { data: profile, error } = await selectProfile();
+
+  if (error) console.error("[auth] resolveFitniRole profile select", error);
+
+  if (profile?.id) {
+    const dbRole = normalizeFitniRole(profile.role as string | null | undefined);
+    if (dbRole === "trainee") {
+      if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: trainee (profiles.role)");
+      return "trainee";
+    }
+    if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: coach (profiles row)");
+    return "coach";
+  }
+
+  if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: no profile — ensure_trainer_profile");
   const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
   if (rpcErr) {
     console.error("[auth] resolveFitniRole ensure_trainer_profile", rpcErr);
@@ -75,7 +85,9 @@ export async function resolveFitniRole(userId: string): Promise<FitniRole | null
     error = retry.error;
     if (error) console.error("[auth] resolveFitniRole profile re-select", error);
     if (profile?.id) {
-      console.log("[auth] resolveFitniRole: coach (after ensure_trainer_profile)");
+      const dbRole = normalizeFitniRole(profile.role as string | null | undefined);
+      if (dbRole === "trainee") return "trainee";
+      if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: coach (after ensure_trainer_profile)");
       return "coach";
     }
   }

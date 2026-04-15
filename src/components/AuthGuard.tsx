@@ -127,7 +127,6 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
           onSubscribe={() => {
             setShowExpiryModal(false);
             setReadOnlyDismissed(false);
-            toast.success("تم تفعيل باقتك بنجاح - مرحبا بعودتك");
           }}
         />
       </>

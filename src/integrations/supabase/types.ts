@@ -1538,6 +1538,7 @@ export type Database = {
           referral_enabled: boolean | null
           referral_reward_text: string | null
           referral_reward_type: string | null
+          role: string
           social_links: Json | null
           specialization: string | null
           subscribed_at: string | null
@@ -1572,6 +1573,7 @@ export type Database = {
           referral_enabled?: boolean | null
           referral_reward_text?: string | null
           referral_reward_type?: string | null
+          role?: string
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
@@ -1606,6 +1608,7 @@ export type Database = {
           referral_enabled?: boolean | null
           referral_reward_text?: string | null
           referral_reward_type?: string | null
+          role?: string
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null

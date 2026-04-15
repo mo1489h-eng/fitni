@@ -4,7 +4,7 @@ import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
-import { resolveFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole, persistFitniRole } from "@/lib/auth-service";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,7 +27,7 @@ const Login = () => {
   const [forgotSending, setForgotSending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshProfile } = useAuth();
   const fitniRole = useWorkoutStore((s) => s.fitniRole);
 
   if (!authLoading && user) {
@@ -82,16 +82,30 @@ const Login = () => {
       }
 
       if (userId) {
-        const r = await resolveFitniRole(userId);
+        let r = await resolveFitniRole(userId);
+        if (!r) {
+          await new Promise((res) => setTimeout(res, 400));
+          r = await resolveFitniRole(userId);
+        }
+        if (!r) {
+          await refreshProfile();
+          r = await resolveFitniRole(userId);
+        }
         if (import.meta.env.DEV) {
           console.log("[Login] resolved role:", r);
         }
         if (r) {
           useWorkoutStore.getState().setFitniRole(r);
+          persistFitniRole(r);
           navigate(r === "trainee" ? CLIENT_HOME : TRAINER_HOME);
         } else {
-          console.warn("[Login] resolveFitniRole returned null — check profiles and clients.auth_user_id", { userId });
-          navigate(TRAINER_HOME);
+          console.warn("[Login] resolveFitniRole returned null after retries", { userId });
+          toast({
+            title: "تعذّر إكمال تسجيل الدخول",
+            description:
+              "لم نتمكن من تحديد نوع حسابك (مدرب أو متدرب). تحقق من الشبكة ثم أعد المحاولة. إذا استمرّت المشكلة، تواصل مع الدعم.",
+            variant: "destructive",
+          });
         }
         if (import.meta.env.DEV) {
           const { data: after } = await supabase.auth.getSession();

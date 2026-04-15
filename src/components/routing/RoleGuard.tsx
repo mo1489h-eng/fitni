@@ -25,7 +25,7 @@ export function RoleGuard({ allowed, children }: Props) {
     const live = normalizeFitniRole(fitniRole) ?? readStoredFitniRole();
     if (live || roleRetryRef.current >= 3) return;
     roleRetryRef.current += 1;
-    console.log("[Auth] RoleGuard: role empty — refreshProfile retry", roleRetryRef.current);
+    if (import.meta.env.DEV) console.log("[Auth] RoleGuard: role empty — refreshProfile retry", roleRetryRef.current);
     void refreshProfile();
   }, [user, profileLoading, fitniRole, refreshProfile]);
 

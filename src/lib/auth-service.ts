@@ -32,59 +32,88 @@ export function clearStoredFitniRole(): void {
   }
 }
 
+async function patchProfileRole(userId: string, role: FitniRole): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ role }).eq("user_id", userId);
+  if (error) {
+    authLogDev("role_patch_failed", { userId, role, message: error.message });
+  }
+}
+
 /**
- * Single source of truth: `profiles.role` only (see DB trigger on `clients` for trainee sync).
- * If no row exists, calls `ensure_user_profile()` then re-reads.
+ * Resolves Fitni role from `profiles.role`, with safe fallbacks:
+ * - `ensure_user_profile` when no profile row exists
+ * - Linked client (`clients.auth_user_id`) → trainee (matches DB trigger intent)
+ * - Otherwise → coach (default app user)
+ *
+ * `ensure_user_profile` only inserts new rows; it does not fix NULL `role` on existing rows — we handle that here.
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
-  const readRole = async () =>
+  const readProfileRole = async () =>
     supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle();
 
-  let { data: row, error } = await readRole();
+  let { data: row, error } = await readProfileRole();
   if (error) {
     console.error("[auth] resolveFitniRole profile select", error);
     authLogDev("role_resolution_error", { userId, code: error.code, message: error.message });
     return null;
   }
 
-  let resolved = normalizeFitniRole(row?.role as string | undefined);
+  const tryNormalize = (roleRaw: string | null | undefined) => normalizeFitniRole(roleRaw as string | undefined);
+
+  let resolved = tryNormalize(row?.role as string | undefined);
   if (resolved) {
     authLogDev("role_resolution", { userId, source: "profiles.role", role: resolved });
     return resolved;
   }
 
-  if (row && row.role != null && !resolved) {
+  // Garbage in role column (non-empty but not coach/trainee)
+  if (row?.role != null && String(row.role).trim() !== "") {
     authLogDev("role_invalid", { userId, rawRole: String(row.role) });
     return null;
   }
 
-  authLogDev("role_resolution", { userId, source: "ensure_user_profile" });
-  const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
-  if (rpcErr) {
-    console.error("[auth] ensure_user_profile", rpcErr);
-    authLogDev("ensure_user_profile_error", { userId, message: rpcErr.message });
+  // No profile row yet
+  if (!row) {
+    authLogDev("role_resolution", { userId, source: "ensure_user_profile" });
+    const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
+    if (rpcErr) {
+      console.error("[auth] ensure_user_profile", rpcErr);
+      authLogDev("ensure_user_profile_error", { userId, message: rpcErr.message });
+    }
+
+    const retry = await readProfileRole();
+    row = retry.data;
+    error = retry.error;
+    if (error) {
+      console.error("[auth] resolveFitniRole profile re-select", error);
+      return null;
+    }
+
+    resolved = tryNormalize(row?.role as string | undefined);
+    if (resolved) {
+      authLogDev("role_resolution", { userId, source: "profiles.role_after_ensure", role: resolved });
+      return resolved;
+    }
   }
 
-  const retry = await readRole();
-  row = retry.data;
-  error = retry.error;
-  if (error) {
-    console.error("[auth] resolveFitniRole profile re-select", error);
-    return null;
+  // Profile exists but role is NULL/empty — infer (cannot rely on ensure_user_profile alone)
+  const { data: clientRow, error: clientErr } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+
+  if (clientErr) {
+    console.error("[auth] resolveFitniRole clients select", clientErr);
   }
 
-  resolved = normalizeFitniRole(row?.role as string | undefined);
-  if (resolved) {
-    authLogDev("role_resolution", { userId, source: "profiles.role_after_ensure", role: resolved });
-    return resolved;
+  if (clientRow?.id) {
+    void patchProfileRole(userId, "trainee");
+    authLogDev("role_resolution", { userId, source: "clients.auth_user_id", role: "trainee" });
+    return "trainee";
   }
 
-  if (row?.role != null && !resolved) {
-    authLogDev("role_invalid_after_ensure", { userId, rawRole: String(row.role) });
-    return null;
-  }
-
-  console.warn("[auth] resolveFitniRole: no profile or role after ensure", { userId });
-  authLogDev("role_resolution_failed", { userId });
-  return null;
+  void patchProfileRole(userId, "coach");
+  authLogDev("role_resolution", { userId, source: "default_coach", role: "coach" });
+  return "coach";
 }

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { normalizeFitniRole } from "@/lib/auth-service";
+import { normalizeFitniRole, readStoredFitniRole } from "@/lib/auth-service";
+import { useWorkoutStore } from "@/store/workout-store";
 import { authLogDev } from "@/lib/auth-log";
 
 const PROFILE_FETCH_MAX_ATTEMPTS = 3;
@@ -17,6 +18,7 @@ function delayMs(): number {
  */
 export function AuthAppGate({ children }: { children: React.ReactNode }) {
   const { user, profile, profileLoading, loading, signOut, refreshProfile } = useAuth();
+  const fitniRoleStore = useWorkoutStore((s) => s.fitniRole);
   const [attempt, setAttempt] = useState(0);
   const enteredLogged = useRef(false);
   const roleLogged = useRef<string | null>(null);
@@ -54,7 +56,10 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(id);
   }, [user, loading, profile, profileLoading, attempt, refreshProfile]);
 
-  const role = profile ? normalizeFitniRole(profile.role) : null;
+  const role =
+    normalizeFitniRole(profile?.role) ??
+    (fitniRoleStore === "coach" || fitniRoleStore === "trainee" ? fitniRoleStore : null) ??
+    readStoredFitniRole();
   useEffect(() => {
     if (!role) return;
     if (roleLogged.current === role) return;

@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { normalizeFitniRole, type FitniRole } from "@/lib/auth-service";
+import { normalizeFitniRole, readStoredFitniRole, type FitniRole } from "@/lib/auth-service";
+import { useWorkoutStore } from "@/store/workout-store";
 import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 type Props = {
@@ -16,11 +17,14 @@ type Props = {
  */
 export function RoleGuard({ allowed, children }: Props) {
   const { loading, profileLoading, user, profile } = useAuth();
+  const fitniRoleStore = useWorkoutStore((s) => s.fitniRole);
 
-  const effectiveRole = useMemo(
-    () => normalizeFitniRole(profile?.role),
-    [profile?.role],
-  );
+  const effectiveRole = useMemo((): FitniRole | null => {
+    const fromProfile = normalizeFitniRole(profile?.role);
+    if (fromProfile) return fromProfile;
+    if (fitniRoleStore === "coach" || fitniRoleStore === "trainee") return fitniRoleStore;
+    return readStoredFitniRole();
+  }, [profile?.role, fitniRoleStore]);
 
   // Wait for auth session to be determined
   if (loading) {

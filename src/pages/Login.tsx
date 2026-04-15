@@ -4,7 +4,7 @@ import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
-import { resolveFitniRole, persistFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole, persistFitniRole, readStoredFitniRole } from "@/lib/auth-service";
 import { authLogDev } from "@/lib/auth-log";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,13 +99,19 @@ const Login = () => {
           persistFitniRole(r);
           navigate(r === "trainee" ? CLIENT_HOME : TRAINER_HOME);
         } else {
-          console.warn("[Login] resolveFitniRole returned null after retries", { userId });
-          toast({
-            title: "تعذّر إكمال تسجيل الدخول",
-            description:
-              "لم نتمكن من تحديد نوع حسابك (مدرب أو متدرب). تحقق من الشبكة ثم أعد المحاولة. إذا استمرّت المشكلة، تواصل مع الدعم.",
-            variant: "destructive",
-          });
+          const stored = readStoredFitniRole();
+          if (stored) {
+            useWorkoutStore.getState().setFitniRole(stored);
+            navigate(stored === "trainee" ? CLIENT_HOME : TRAINER_HOME);
+          } else {
+            console.warn("[Login] resolveFitniRole returned null after retries", { userId });
+            toast({
+              title: "تعذّر إكمال تسجيل الدخول",
+              description:
+                "لم نتمكن من تحديد نوع حسابك (مدرب أو متدرب). تحقق من الشبكة ثم أعد المحاولة. إذا استمرّت المشكلة، تواصل مع الدعم.",
+              variant: "destructive",
+            });
+          }
         }
         if (import.meta.env.DEV) {
           const { data: after } = await supabase.auth.getSession();

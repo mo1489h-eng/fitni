@@ -15,7 +15,7 @@ import ConfirmEmail from "@/pages/ConfirmEmail";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
 import { useWorkoutStore } from "@/store/workout-store";
-import { resolveFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole, readStoredFitniRole, persistFitniRole } from "@/lib/auth-service";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
@@ -70,8 +70,14 @@ function MobileAppContent() {
     void (async () => {
       const r = await resolveFitniRole(user.id);
       if (cancelled) return;
-      if (r) useWorkoutStore.getState().setFitniRole(r);
-      else useWorkoutStore.getState().clearFitniRole();
+      if (r) {
+        useWorkoutStore.getState().setFitniRole(r);
+        persistFitniRole(r);
+      } else {
+        const stored = readStoredFitniRole();
+        if (stored) useWorkoutStore.getState().setFitniRole(stored);
+        else useWorkoutStore.getState().clearFitniRole();
+      }
       setRoleResolved(true);
     })();
 

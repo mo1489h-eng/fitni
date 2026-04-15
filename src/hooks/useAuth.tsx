@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveFitniRole, persistFitniRole, clearStoredFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole, persistFitniRole, clearStoredFitniRole, readStoredFitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -116,13 +116,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         useWorkoutStore.getState().setFitniRole(r);
         persistFitniRole(r);
       } else {
-        useWorkoutStore.getState().clearFitniRole();
+        const stored = readStoredFitniRole();
+        if (stored) {
+          useWorkoutStore.getState().setFitniRole(stored);
+        } else {
+          useWorkoutStore.getState().clearFitniRole();
+        }
       }
     } catch (e) {
       console.error("[Auth] fetchProfile error", e);
       if (fetchId === profileFetchRef.current) {
         setProfile(null);
-        useWorkoutStore.getState().clearFitniRole();
+        useWorkoutStore.getState().setFitniRole(readStoredFitniRole());
       }
     } finally {
       if (fetchId === profileFetchRef.current) {
@@ -137,20 +142,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 1. Set up the listener FIRST (before getSession) to catch all events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
       if (import.meta.env.DEV) console.log("[Auth] onAuthStateChange", {
-        event: _event,
+        event,
         userId: nextSession?.user?.id ?? null,
         email: nextSession?.user?.email ?? null,
       });
+      // INITIAL_SESSION duplicates what getSession() already applied — skipping avoids
+      // duplicate fetchProfile + race conditions on refresh.
+      if (event === "INITIAL_SESSION") return;
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
         Sentry.setUser({ id: nextSession.user.id, email: nextSession.user.email });
-        // Fire and forget — don't await inside callback to avoid deadlocks
-        fetchProfile(nextSession.user.id);
+        void fetchProfile(nextSession.user.id);
       } else {
         Sentry.setUser(null);
         setProfile(null);
@@ -160,8 +168,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // 2. Restore initial session (after listener is registered)
-    supabase.auth.getSession().then(({ data: { session: initial } }) => {
+    // 2. Restore initial session (single source of truth for first paint)
+    void supabase.auth.getSession().then(({ data: { session: initial } }) => {
       if (!mounted) return;
       if (import.meta.env.DEV) console.log("[auth] getSession (app load)", {
         hasSession: !!initial,
@@ -173,7 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(initial?.user ?? null);
       if (initial?.user) {
         Sentry.setUser({ id: initial.user.id, email: initial.user.email });
-        fetchProfile(initial.user.id);
+        void fetchProfile(initial.user.id);
       } else {
         setProfileLoading(false);
       }

@@ -27,15 +27,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+    const { data: userData, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !userData?.user) {
+      console.error("[send-invite-email] auth.getUser failed:", authError?.message);
+      return new Response(JSON.stringify({ error: "Invalid or expired session" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub;
+    const userId = userData.user.id;
 
     const { clientName, clientEmail, trainerName, inviteToken, siteOrigin } = await req.json();
 
@@ -73,10 +73,18 @@ serve(async (req) => {
 
     if (!result.success) {
       console.error("[send-invite-email] inviteClientAuth failed:", result.error);
-      return new Response(JSON.stringify({ success: false, error: result.error }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // 200 so supabase.functions.invoke still populates `data` (non-2xx often clears data in the client).
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: result.error,
+          message: result.message,
+          reason: result.reason,
+          setupLink: result.setupLink,
+          emailSent: false,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(
@@ -86,8 +94,10 @@ serve(async (req) => {
         emailSent: result.emailSent ?? false,
         message: result.message,
         skipped: result.skipped,
+        reason: result.reason,
+        error: result.error,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("Error:", err);

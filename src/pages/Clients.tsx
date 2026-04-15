@@ -235,18 +235,46 @@ const Clients = () => {
           if (emailResult != null) {
             console.log("[send-invite-email] response:", JSON.stringify(emailResult));
           }
-          if (emailResult?.emailSent) {
-            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${emailTrim}` });
-          } else if (emailResult?.setupLink) {
+
+          type InviteFnPayload = {
+            emailSent?: boolean;
+            setupLink?: string;
+            message?: string;
+            reason?: string;
+            error?: string;
+            success?: boolean;
+          };
+          const payload = emailResult as InviteFnPayload | null;
+
+          if (payload?.success === false) {
             toast({
-              title: "تمت إضافة العميل",
-              description: emailResult?.message || "شارك رابط التسجيل يدوياً من ملف العميل",
+              title: "فشل إرسال الإيميل (Resend)",
+              description: [payload.message, payload.error, payload.setupLink ? `رابط التسجيل: ${payload.setupLink}` : null]
+                .filter(Boolean)
+                .join(" — "),
+              variant: "destructive",
+              duration: 22_000,
             });
+          } else if (payload?.emailSent) {
+            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${emailTrim}` });
           } else if (fnError) {
             toast({
               title: "تمت إضافة العميل",
-              description: "تعذّر إرسال البريد تلقائياً — تحقق من RESEND/SMTP أو شارك الرابط يدوياً",
+              description: `تعذّر استدعاء دالة الإيميل: ${fnError.message}. في Supabase: Project Settings → Edge Functions → Secrets → أضف RESEND_API_KEY ثم أعد نشر send-invite-email.`,
               variant: "destructive",
+              duration: 16_000,
+            });
+          } else if (payload?.setupLink) {
+            const why =
+              payload.reason === "missing_resend_api_key"
+                ? " (لم يُضبط مفتاح Resend في أسرار الدوال — أضف RESEND_API_KEY وأعد النشر)"
+                : payload.reason === "missing_invite_token"
+                  ? " (لا يوجد invite_token — تحقق من trigger قاعدة البيانات)"
+                  : "";
+            toast({
+              title: "تمت إضافة العميل — لم يُرسل الإيميل تلقائياً",
+              description: `${payload.message ?? "شارك الرابط يدوياً"}${why} — الرابط: ${payload.setupLink}`,
+              duration: 22_000,
             });
           }
         } catch (e) {

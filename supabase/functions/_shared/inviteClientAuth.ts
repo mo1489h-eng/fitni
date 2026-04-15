@@ -1,5 +1,12 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+/** Why email was not sent (safe to show in UI; no secrets). */
+export type InviteEmailReason =
+  | "missing_resend_api_key"
+  | "missing_invite_token"
+  | "resend_request_failed"
+  | "already_linked";
+
 export type InviteClientAuthResult = {
   success: boolean;
   emailSent?: boolean;
@@ -8,7 +15,14 @@ export type InviteClientAuthResult = {
   skipped?: boolean;
   message?: string;
   error?: string;
+  reason?: InviteEmailReason;
 };
+
+function resendFromAddress(): string {
+  const from = Deno.env.get("RESEND_FROM")?.trim();
+  if (from) return from;
+  return "CoachBase <noreply@coachbase.health>";
+}
 
 function publicAppUrl(siteOrigin?: string): string {
   const trimmed = (siteOrigin ?? "").trim().replace(/\/$/, "");
@@ -46,7 +60,12 @@ export async function inviteClientAuth(
     return { success: false, error: rowErr?.message ?? "Client not found" };
   }
   if (row.auth_user_id) {
-    return { success: true, skipped: true, message: "Already linked to auth" };
+    return {
+      success: true,
+      skipped: true,
+      reason: "already_linked",
+      message: "Already linked to auth",
+    };
   }
 
   const em = (params.email || row.email || "").trim();
@@ -62,7 +81,32 @@ export async function inviteClientAuth(
 
   // Send email via Resend directly — no auth user creation
   const resendKey = Deno.env.get("RESEND_API_KEY") || Deno.env.get("RESEND_API_KEY_1");
-  if (resendKey && inviteToken) {
+
+  if (!inviteToken) {
+    console.warn("[inviteClientAuth] No invite_token — cannot send invite email");
+    return {
+      success: true,
+      emailSent: false,
+      setupLink,
+      reason: "missing_invite_token",
+      message:
+        "لا يوجد رمز دعوة للعميل. تحقق من تفعيل trigger توليد invite_token على جدول clients.",
+    };
+  }
+
+  if (!resendKey) {
+    console.warn("[inviteClientAuth] RESEND_API_KEY not set — email not sent. setupLink:", setupLink);
+    return {
+      success: true,
+      emailSent: false,
+      setupLink,
+      reason: "missing_resend_api_key",
+      message:
+        "لم يُضبط إرسال البريد: أضف سر RESEND_API_KEY في Supabase (Edge Functions → Secrets) ثم أعد نشر send-invite-email. يمكنك نسخ رابط التسجيل أدناه لمشاركته يدوياً.",
+    };
+  }
+
+  {
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -70,7 +114,7 @@ export async function inviteClientAuth(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CoachBase <noreply@coachbase.health>",
+        from: resendFromAddress(),
         to: [em],
         subject: `مرحباً ${clientName} 👋 - دعوة من ${trainerName}`,
         html: `
@@ -99,21 +143,22 @@ export async function inviteClientAuth(
     if (!emailRes.ok) {
       const errText = await emailRes.text();
       console.error("[inviteClientAuth] Resend HTTP error:", emailRes.status, errText);
-      return { success: false, error: `Resend ${emailRes.status}: ${errText.slice(0, 200)}`, setupLink };
+      let detail = errText.slice(0, 400);
+      try {
+        const j = JSON.parse(errText) as { message?: string };
+        if (j?.message) detail = j.message;
+      } catch {
+        /* keep raw */
+      }
+      return {
+        success: false,
+        reason: "resend_request_failed",
+        error: `Resend ${emailRes.status}: ${detail}`,
+        setupLink,
+        message:
+          "فشل إرسال الإيميل عبر Resend. تحقق من صحة المفتاح، ومن أن عنوان المرسل (RESEND_FROM) والنطاق مفعّلان في لوحة Resend.",
+      };
     }
     return { success: true, emailSent: true, setupLink };
   }
-
-  if (!resendKey) {
-    console.warn("[inviteClientAuth] RESEND_API_KEY not set — email not sent. PUBLIC_APP_URL / setup link:", setupLink);
-  }
-
-  return {
-    success: true,
-    emailSent: false,
-    setupLink,
-    message: resendKey
-      ? "لم يتم إرسال الإيميل"
-      : "لم يتم إعداد خدمة الإيميل. شارك الرابط يدوياً",
-  };
 }

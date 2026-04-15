@@ -1,19 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * Official CoachBase admin password when `ADMIN_DASHBOARD_SECRET` is not set in Edge secrets.
- * Must remain exactly: fitni@2026@!Asa (fitni, @, 2026, @, !, Asa).
+ * Admin dashboard authentication uses ADMIN_DASHBOARD_SECRET env var.
+ * No hardcoded fallback — the secret MUST be configured in Edge Function secrets.
  */
-const DEFAULT_ADMIN_SECRET = "fitni@2026@!Asa" as const;
-// Guard against accidental edits breaking login (same literal).
-if (DEFAULT_ADMIN_SECRET !== "fitni@2026@!Asa") {
-  throw new Error("admin-dashboard: DEFAULT_ADMIN_SECRET must be fitni@2026@!Asa");
+const ADMIN_SECRET = Deno.env.get("ADMIN_DASHBOARD_SECRET")?.trim();
+if (!ADMIN_SECRET) {
+  console.error("[admin-dashboard] ADMIN_DASHBOARD_SECRET is not set. Admin dashboard is disabled.");
 }
-/** Empty/whitespace-only env counts as unset (avoids accidental blank secret in dashboard). */
-const ADMIN_SECRET =
-  Deno.env.get("ADMIN_DASHBOARD_SECRET")?.trim() || DEFAULT_ADMIN_SECRET;
-/** If `"true"`, only `ADMIN_DASHBOARD_SECRET` (or unset default) is accepted — not the bundled fallback when a custom secret differs. */
-const DEFAULT_PASSWORD_DISABLED = Deno.env.get("DISABLE_DEFAULT_ADMIN_PASSWORD") === "true";
+
 const SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
 
 function constantTimeCompare(a: string, b: string): boolean {
@@ -25,18 +20,11 @@ function constantTimeCompare(a: string, b: string): boolean {
   return result === 0;
 }
 
-/** Strip accidental leading/trailing spaces from pasted input. */
-function normalizeAdminPassword(s: string): string {
-  return s.trim();
-}
-
-/** Password matches configured secret, or the documented default (unless disabled). Fixes mismatch when Edge secret was set to something else but ops still use the documented password. */
 function isValidAdminPassword(raw: string): boolean {
-  const password = normalizeAdminPassword(String(raw));
+  if (!ADMIN_SECRET) return false;
+  const password = String(raw).trim();
   if (!password) return false;
-  if (constantTimeCompare(password, normalizeAdminPassword(ADMIN_SECRET))) return true;
-  if (DEFAULT_PASSWORD_DISABLED) return false;
-  return constantTimeCompare(password, normalizeAdminPassword(DEFAULT_ADMIN_SECRET));
+  return constantTimeCompare(password, ADMIN_SECRET);
 }
 
 const corsHeaders = {
@@ -109,6 +97,11 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // If secret is not configured, admin dashboard is completely disabled
+  if (!ADMIN_SECRET) {
+    return jsonResponse({ error: "Admin dashboard is not configured. Set ADMIN_DASHBOARD_SECRET." }, 503);
+  }
+
   try {
     const body = await req.json();
     const {
@@ -129,7 +122,6 @@ Deno.serve(async (req) => {
     const passwordIsValid =
       typeof password === "string" && password ? isValidAdminPassword(password) : false;
 
-    /** 200 (not 401) so all clients reliably parse JSON; `error` signals auth failure. */
     if (!tokenIsValid && !passwordIsValid) {
       return jsonResponse({ error: "unauthorized" }, 200, {
         "Cache-Control": "no-store, max-age=0",
@@ -197,7 +189,6 @@ Deno.serve(async (req) => {
     const founderDiscountRemaining = founderCount - founderDiscountUsed;
     const spotsRemaining = Math.max(0, 100 - allProfiles.length);
 
-    /** Canonical key is auth.users.id (= profiles.user_id). Also alias profiles.id for legacy FKs. */
     const trainerMap: Record<string, any> = {};
     const mapTrainer = (p: Record<string, unknown>) => ({
       id: p.user_id,
@@ -309,7 +300,6 @@ Deno.serve(async (req) => {
     const detractors = npsItems.filter((n: any) => n.score <= 6).length;
     const npsScore = npsCount > 0 ? Math.round(((promoters - detractors) / npsCount) * 100) : 0;
 
-    // Map trainer names for NPS
     const npsWithNames = npsItems.slice(0, 50).map((n: any) => ({
       ...n,
       trainer_name: trainerMap[n.trainer_id]?.name || "مدرب",
@@ -391,7 +381,6 @@ Deno.serve(async (req) => {
         total_clients: (clients || []).length,
         month_revenue: monthRevenue,
         total_revenue: totalRevenue,
-        /** Aggregated trainer wallet balances (platform owes trainers / pending / lifetime). */
         trainer_wallets_available: walletTotals.bal,
         trainer_wallets_pending: walletTotals.pend,
         trainer_wallets_lifetime_earnings: walletTotals.earn,
@@ -423,6 +412,6 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Internal server error";
     console.error("[admin-dashboard]", msg);
-    return jsonResponse({ error: "Internal server error", detail: msg }, 500);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

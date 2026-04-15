@@ -15,7 +15,10 @@
     "deploy:exercise-gif": "npx supabase functions deploy exercise-gif",
     "deploy:exercise-library-sync": "npx supabase functions deploy exercise-library-sync",
     "deploy:exercisedb-proxy": "npx supabase functions deploy exercisedb-proxy",
-    "deploy:exercise-functions": "npx supabase functions deploy exercise-gif && npx supabase functions deploy exercise-library-sync && npx supabase functions deploy exercisedb-proxy"
+    "deploy:exercise-functions": "npx supabase functions deploy exercise-gif && npx supabase functions deploy exercise-library-sync && npx supabase functions deploy exercisedb-proxy",
+    "deploy:send-invite-email": "npx supabase functions deploy send-invite-email",
+    "deploy:trainer-delete-client": "npx supabase functions deploy trainer-delete-client",
+    "deploy:trainer-client-functions": "npx supabase functions deploy send-invite-email && npx supabase functions deploy trainer-delete-client"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",

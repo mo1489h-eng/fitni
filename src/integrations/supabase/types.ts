@@ -1774,8 +1774,10 @@ export type Database = {
       programs: {
         Row: {
           created_at: string
+          delivery_mode: string
           description: string | null
           difficulty: string | null
+          equipment: string
           goal: string | null
           id: string
           is_template: boolean
@@ -1785,8 +1787,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_mode?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1796,8 +1800,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_mode?: string
           description?: string | null
           difficulty?: string | null
+          equipment?: string
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -2185,6 +2191,42 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          status: string
+          trainer_id: string
+          type: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string
+          trainer_id: string
+          type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          status?: string
+          trainer_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       vault_lessons: {
         Row: {
           content_text: string | null
@@ -2311,6 +2353,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wallets: {
+        Row: {
+          balance_available: number
+          created_at: string
+          id: string
+          pending_balance: number
+          total_earnings: number
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance_available?: number
+          created_at?: string
+          id?: string
+          pending_balance?: number
+          total_earnings?: number
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance_available?: number
+          created_at?: string
+          id?: string
+          pending_balance?: number
+          total_earnings?: number
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_holder_name: string
+          admin_notes: string | null
+          amount: number
+          bank_name: string
+          created_at: string
+          iban: string
+          id: string
+          processed_at: string | null
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          account_holder_name?: string
+          admin_notes?: string | null
+          amount?: number
+          bank_name?: string
+          created_at?: string
+          iban?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          admin_notes?: string | null
+          amount?: number
+          bank_name?: string
+          created_at?: string
+          iban?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: []
       }
       workout_logs: {
         Row: {
@@ -2529,6 +2640,10 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_withdrawal: {
+        Args: { p_withdrawal_id: string }
+        Returns: undefined
+      }
       cleanup_copilot_messages: { Args: never; Returns: undefined }
       complete_trainer_session: {
         Args: { p_session_id: string }
@@ -2802,6 +2917,15 @@ export type Database = {
           p_token: string
         }
         Returns: string
+      }
+      request_withdrawal: {
+        Args: {
+          p_account_holder_name: string
+          p_amount: number
+          p_bank_name: string
+          p_iban: string
+        }
+        Returns: undefined
       }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }

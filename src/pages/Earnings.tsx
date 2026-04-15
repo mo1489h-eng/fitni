@@ -342,10 +342,10 @@ export default function Earnings() {
                         <TableCell>{typeBadge(tx.type)}</TableCell>
                         <TableCell className="tabular-nums text-white">{formatMoney(Number(tx.amount))}</TableCell>
                         <TableCell className="tabular-nums text-white/60">
-                          {tx.commission != null ? formatMoney(Number(tx.commission)) : "—"}
+                          {(tx as any).commission != null ? formatMoney(Number((tx as any).commission)) : "—"}
                         </TableCell>
                         <TableCell className="tabular-nums text-[#22C55E]">
-                          {tx.net_amount != null ? formatMoney(Number(tx.net_amount)) : "—"}
+                          {(tx as any).net_amount != null ? formatMoney(Number((tx as any).net_amount)) : "—"}
                         </TableCell>
                         <TableCell>{statusBadge(tx.status)}</TableCell>
                       </TableRow>

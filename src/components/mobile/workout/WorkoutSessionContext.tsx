@@ -324,7 +324,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   });
 
   const completeSet = useCallback(
-    async (weight: number, reps: number, opts?: { extraRestSeconds?: number }) => {
+    async (weight: number, reps: number, opts?: { extraRestSeconds?: number; rpe?: number }) => {
       const ex = plan[exerciseIndex];
       if (!ex) return;
       const k = setKey(ex.exerciseId, setWithinExercise);

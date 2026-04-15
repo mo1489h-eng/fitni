@@ -42,30 +42,53 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      toast({ title: "خطأ في تسجيل الدخول", description: "البريد أو كلمة المرور غير صحيحة", variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-    // Check if user is a client — redirect to client portal
-    const userId = signInData.user?.id;
-    if (userId) {
-      const { data: clientProfile } = await supabase.rpc("get_my_client_profile");
-      if (clientProfile && clientProfile.length > 0 && clientProfile[0].portal_token) {
-        navigate(`/client-portal/${clientProfile[0].portal_token}`);
+    try {
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) {
+        const m = error.message.toLowerCase();
+        let description = "البريد أو كلمة المرور غير صحيحة";
+        if (m.includes("email not confirmed") || m.includes("not confirmed")) {
+          description = "لم يتم تأكيد البريد الإلكتروني. تحقق من بريدك وافتح رابط التأكيد.";
+        } else if (m.includes("invalid login credentials") || m.includes("invalid")) {
+          description = "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.";
+        } else if (m.includes("too many") || m.includes("rate")) {
+          description = "تجاوزت عدد المحاولات. انتظر قليلاً ثم حاول مرة أخرى.";
+        } else if (m.includes("network") || m.includes("fetch")) {
+          description = "تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت.";
+        }
+        console.error("[Login] signIn error:", error.message);
+        toast({ title: "خطأ في تسجيل الدخول", description, variant: "destructive" });
         setLoading(false);
         return;
       }
+
+      console.log("[Login] signIn success, user:", signInData.user?.id);
+
+      // Resolve role for immediate routing (auth listener will also fire)
+      const userId = signInData.user?.id;
+      if (userId) {
+        const r = await resolveFitniRole(userId);
+        console.log("[Login] resolved role:", r);
+        if (r) {
+          useWorkoutStore.getState().setFitniRole(r);
+          // Let the auth listener handle profile fetch
+          navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
+        } else {
+          // Fallback: assume coach (profile will be created by trigger/RPC)
+          console.warn("[Login] role null — defaulting to coach dashboard");
+          navigate("/dashboard");
+        }
+      }
+    } catch (e) {
+      console.error("[Login] unexpected error:", e);
+      toast({
+        title: "خطأ غير متوقع",
+        description: "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    const r = userId ? await resolveFitniRole(userId) : null;
-    if (r) {
-      useWorkoutStore.getState().setFitniRole(r);
-    } else {
-      console.warn("[Login] resolveFitniRole returned null — check profiles.role and clients.auth_user_id", { userId });
-    }
-    navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
-    setLoading(false);
   };
 
   const handleForgotPassword = async () => {

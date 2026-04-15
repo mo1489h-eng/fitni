@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
 
 interface TrainerPageSEOProps {
   fullName: string;
@@ -28,8 +29,9 @@ const TrainerPageSEO = ({
     clientCount > 0 ? `ساعد ${clientCount} عميل على تحقيق أهدافهم. ` : ""
   }${specsText}. احجز جلستك الأولى الآن.`;
 
-  const canonicalUrl = `https://fitni.lovable.app/t/${username}`;
-  const ogImage = avatarUrl || "https://fitni.lovable.app/placeholder.svg";
+  const site = getAuthSiteOrigin();
+  const canonicalUrl = `${site}/t/${username}`;
+  const ogImage = avatarUrl || `${site}/placeholder.svg`;
 
   const keywords = [
     `مدرب شخصي${city ? ` ${city}` : ""}`,

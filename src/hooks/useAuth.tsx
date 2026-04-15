@@ -3,7 +3,13 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveFitniRole, persistFitniRole, clearStoredFitniRole, readStoredFitniRole } from "@/lib/auth-service";
+import {
+  resolveFitniRole,
+  persistFitniRole,
+  clearStoredFitniRole,
+  readStoredFitniRole,
+  isMissingProfilesRoleColumn,
+} from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -56,6 +62,10 @@ export const useAuth = () => useContext(AuthContext);
 const profileSelectColumns =
   "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role" as const;
 
+/** Same row without `role` — used when remote DB has not run role migration yet (42703). */
+const profileSelectColumnsNoRole =
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -80,6 +90,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Stale check
       if (fetchId !== profileFetchRef.current) return;
 
+      if (error && isMissingProfilesRoleColumn(error)) {
+        if (import.meta.env.DEV) console.warn("[Auth] profiles.role missing — falling back to select without role");
+        const r0 = await supabase
+          .from("profiles")
+          .select(profileSelectColumnsNoRole)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (fetchId !== profileFetchRef.current) return;
+        data = r0.data as typeof data;
+        error = r0.error;
+      }
+
       if (error) {
         console.error("[Auth] fetchProfile query error", error);
         setProfile(null);
@@ -96,11 +118,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.error("[Auth] ensure_user_profile failed", ensureErr);
           setProfile(null);
         } else {
-          const r2 = await supabase
+          let r2 = await supabase
             .from("profiles")
             .select(profileSelectColumns)
             .eq("user_id", userId)
             .maybeSingle();
+          if (r2.error && isMissingProfilesRoleColumn(r2.error)) {
+            r2 = await supabase
+              .from("profiles")
+              .select(profileSelectColumnsNoRole)
+              .eq("user_id", userId)
+              .maybeSingle();
+          }
           if (fetchId !== profileFetchRef.current) return;
           if (r2.data) setProfile(r2.data as Profile);
           else setProfile(null);

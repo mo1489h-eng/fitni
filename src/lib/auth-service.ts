@@ -32,11 +32,36 @@ export function clearStoredFitniRole(): void {
   }
 }
 
+/** PostgREST / Postgres when `profiles.role` was never migrated */
+export function isMissingProfilesRoleColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const c = String(error.code ?? "");
+  const m = (error.message ?? "").toLowerCase();
+  return c === "42703" || (m.includes("profiles.role") && m.includes("does not exist"));
+}
+
 async function patchProfileRole(userId: string, role: FitniRole): Promise<void> {
   const { error } = await supabase.from("profiles").update({ role }).eq("user_id", userId);
   if (error) {
+    if (isMissingProfilesRoleColumn(error)) return;
     authLogDev("role_patch_failed", { userId, role, message: error.message });
   }
+}
+
+/** When DB has no `profiles.role` column yet — infer only (no UPDATE). */
+async function inferRoleWithoutRoleColumn(userId: string): Promise<FitniRole> {
+  const { data: clientRow, error: clientErr } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+  if (clientErr) console.error("[auth] inferRoleWithoutRoleColumn clients", clientErr);
+  if (clientRow?.id) {
+    authLogDev("role_resolution", { userId, source: "clients.auth_user_id (no role column)", role: "trainee" });
+    return "trainee";
+  }
+  authLogDev("role_resolution", { userId, source: "default_coach (no role column)", role: "coach" });
+  return "coach";
 }
 
 /**
@@ -84,6 +109,9 @@ export async function resolveFitniRole(userId: string): Promise<FitniRole | null
     const retry = await readProfileRole();
     row = retry.data;
     error = retry.error;
+    if (error && isMissingProfilesRoleColumn(error)) {
+      return inferRoleWithoutRoleColumn(userId);
+    }
     if (error) {
       console.error("[auth] resolveFitniRole profile re-select", error);
       return null;

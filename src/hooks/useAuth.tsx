@@ -121,6 +121,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const {
         data: { session: initial },
       } = await supabase.auth.getSession();
+      if (import.meta.env.DEV) {
+        console.log("[auth] getSession (app load)", {
+          hasSession: !!initial,
+          userId: initial?.user?.id,
+          emailConfirmed: !!(initial?.user?.email_confirmed_at || initial?.user?.confirmed_at),
+        });
+      }
       setSession(initial);
       setUser(initial?.user ?? null);
       if (initial?.user) {

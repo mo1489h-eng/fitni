@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { TrendingUp, User, Mail, Lock, Loader2, CheckCircle, Users, ClipboardList, CreditCard, Gift, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib/auth-email-errors";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutStore } from "@/store/workout-store";
@@ -139,14 +140,24 @@ const Register = () => {
         }
       }
 
+      const emailNorm = email.trim().toLowerCase();
       const { data: signUpData, error } = await supabase.auth.signUp({
-        email,
+        email: emailNorm,
         password,
         options: {
           data: { full_name: name },
-          emailRedirectTo: "https://coachbase.health/dashboard",
+          emailRedirectTo: `${getAuthSiteOrigin()}/dashboard`,
         },
       });
+
+      if (import.meta.env.DEV) {
+        console.log("[auth] signUp response", {
+          hasUser: !!signUpData?.user,
+          userId: signUpData?.user?.id,
+          hasSession: !!signUpData?.session,
+          identities: signUpData?.user?.identities?.length,
+        });
+      }
 
       if (error) {
         if (isEmailAlreadyRegisteredError(error.message)) {
@@ -163,21 +174,31 @@ const Register = () => {
         return;
       }
 
-      // If user needs to confirm email (no session returned) — trigger should have created profiles row.
+      // Email confirmation required (Supabase Auth): user exists but no session until link is clicked.
+      // Login before confirming typically yields "Invalid login credentials" — see Login.tsx messaging.
       if (signUpData?.user && !signUpData.session) {
         if (validatedPromo?.valid && promoCode.trim() && signUpData.user.id) {
           await supabase.rpc("validate_and_redeem_promo" as any, {
             p_code: promoCode.trim(),
-            p_email: email,
+            p_email: emailNorm,
             p_trainer_id: signUpData.user.id,
           });
         }
-        navigate(`/confirm-email?email=${encodeURIComponent(email)}`);
+        toast({
+          title: "تحقق من بريدك",
+          description: "أرسلنا رابط التأكيد. يجب الضغط عليه قبل أول تسجيل دخول.",
+        });
+        navigate(`/confirm-email?email=${encodeURIComponent(emailNorm)}`);
         return;
       }
 
       // Session present: ensure profiles row (backup if DB trigger did not run).
       if (signUpData?.user && signUpData.session) {
+        if (import.meta.env.DEV) {
+          const { data: sess } = await supabase.auth.getSession();
+          console.log("[auth] post-signUp getSession", { hasSession: !!sess.session, uid: sess.session?.user?.id });
+        }
+
         const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
         if (rpcErr) {
           const { error: insertErr } = await supabase.from("profiles").insert({
@@ -197,7 +218,7 @@ const Register = () => {
         if (validatedPromo?.valid && promoCode.trim()) {
           await supabase.rpc("validate_and_redeem_promo" as any, {
             p_code: promoCode.trim(),
-            p_email: email,
+            p_email: emailNorm,
             p_trainer_id: signUpData.user.id,
           });
         }

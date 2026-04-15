@@ -42,11 +42,32 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+    const emailTrim = email.trim().toLowerCase();
+    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email: emailTrim, password });
+
     if (error) {
-      toast({ title: "خطأ في تسجيل الدخول", description: "البريد أو كلمة المرور غير صحيحة", variant: "destructive" });
+      // Supabase often returns "Invalid login credentials" for wrong password OR unconfirmed email (anti-enumeration).
+      console.error("[auth] signInWithPassword failed", {
+        message: error.message,
+        status: (error as { status?: number }).status,
+        name: error.name,
+      });
+      const hint =
+        /not\s*confirmed|confirm.*email|verify.*email|email.*confirm/i.test(error.message) ||
+        (error as { code?: string }).code === "email_not_confirmed"
+          ? " إذا سجّلت للتو، افتح رابط التأكيد من بريدك أولاً (تحقق من Spam)، أو استخدم «إعادة إرسال» من صفحة تأكيد البريد."
+          : "";
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: `${error.message}${hint}`,
+        variant: "destructive",
+      });
       setLoading(false);
       return;
+    }
+
+    if (import.meta.env.DEV) {
+      console.log("[auth] signInWithPassword ok", { userId: signInData.user?.id, hasSession: !!signInData.session });
     }
     // Check if user is a client — redirect to client portal
     const userId = signInData.user?.id;
@@ -63,6 +84,10 @@ const Login = () => {
       useWorkoutStore.getState().setFitniRole(r);
     } else {
       console.warn("[Login] resolveFitniRole returned null — check profiles.role and clients.auth_user_id", { userId });
+    }
+    if (import.meta.env.DEV) {
+      const { data: after } = await supabase.auth.getSession();
+      console.log("[auth] post-login getSession", { hasSession: !!after.session, uid: after.session?.user?.id });
     }
     navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
     setLoading(false);
@@ -232,6 +257,9 @@ const Login = () => {
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "تسجيل الدخول"}
               </Button>
             </form>
+            <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground">
+              إذا أنشأت حساباً للتو، قد تحتاج تأكيد البريد من الرابط المرسل قبل أول تسجيل دخول.
+            </p>
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">

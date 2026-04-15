@@ -12,6 +12,25 @@ if (import.meta.env.DEV && (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY)) {
   );
 }
 
+/** Confirm which Supabase project the bundle uses (Vite injects env at build/dev start). */
+if (import.meta.env.DEV && SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+  let refFromJwt: string | undefined;
+  try {
+    const part = SUPABASE_PUBLISHABLE_KEY.split(".")[1];
+    if (part) refFromJwt = JSON.parse(atob(part)).ref as string | undefined;
+  } catch {
+    /* ignore */
+  }
+  console.info("[CoachBase] Supabase env active", {
+    VITE_SUPABASE_URL: SUPABASE_URL,
+    VITE_SUPABASE_PROJECT_ID: import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "(unset)",
+    refInAnonKey: refFromJwt ?? "(could not parse)",
+  });
+  if (refFromJwt && import.meta.env.VITE_SUPABASE_PROJECT_ID && refFromJwt !== import.meta.env.VITE_SUPABASE_PROJECT_ID) {
+    console.warn("[CoachBase] Mismatch: anon key `ref` vs VITE_SUPABASE_PROJECT_ID — check .env and restart `npm run dev`.");
+  }
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 

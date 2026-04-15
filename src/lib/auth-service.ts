@@ -32,12 +32,21 @@ export function clearStoredFitniRole(): void {
   }
 }
 
-/** PostgREST / Postgres when `profiles.role` was never migrated */
-export function isMissingProfilesRoleColumn(error: { code?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  const c = String(error.code ?? "");
-  const m = (error.message ?? "").toLowerCase();
-  return c === "42703" || (m.includes("profiles.role") && m.includes("does not exist"));
+/**
+ * PostgREST / Postgres when `profiles.role` was never migrated.
+ * Accepts any thrown/shape from @supabase/supabase-js (code string|number, message variants).
+ */
+export function isMissingProfilesRoleColumn(error: unknown): boolean {
+  if (error == null || typeof error !== "object") return false;
+  const e = error as Record<string, unknown>;
+  const code = String(e.code ?? "");
+  const msg = String(e.message ?? "");
+  const details = String(e.details ?? "");
+  const hint = String(e.hint ?? "");
+  const all = `${msg} ${details} ${hint}`.toLowerCase();
+  if (code === "42703") return true;
+  if (all.includes("does not exist") && (all.includes("role") || all.includes("profiles.role"))) return true;
+  return false;
 }
 
 async function patchProfileRole(userId: string, role: FitniRole): Promise<void> {
@@ -77,9 +86,17 @@ export async function resolveFitniRole(userId: string): Promise<FitniRole | null
     supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle();
 
   let { data: row, error } = await readProfileRole();
+  if (error && isMissingProfilesRoleColumn(error)) {
+    authLogDev("role_column_absent", { userId, message: String((error as Error).message ?? "") });
+    return inferRoleWithoutRoleColumn(userId);
+  }
   if (error) {
     console.error("[auth] resolveFitniRole profile select", error);
-    authLogDev("role_resolution_error", { userId, code: error.code, message: error.message });
+    authLogDev("role_resolution_error", {
+      userId,
+      code: (error as { code?: string }).code,
+      message: (error as Error).message,
+    });
     return null;
   }
 

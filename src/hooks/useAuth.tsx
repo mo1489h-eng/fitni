@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { normalizeFitniRole, resolveFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {

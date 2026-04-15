@@ -245,6 +245,7 @@ const Clients = () => {
         try {
           const { data: emailResult, error: fnError } = await supabase.functions.invoke("send-invite-email", {
             body: {
+              clientId: newClient.id,
               clientName: form.name,
               clientEmail: emailTrim,
               trainerName: profile?.full_name || "مدربك",
@@ -296,6 +297,11 @@ const Clients = () => {
                 .join(" — "),
               variant: "destructive",
               duration: 22_000,
+            });
+          } else if (payload?.skipped && payload?.reason === "already_linked") {
+            toast({
+              title: "العميل لديه حساب بالفعل",
+              description: "لا حاجة لإرسال دعوة بالإيميل.",
             });
           } else if (payload?.emailSent) {
             toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${emailTrim}` });

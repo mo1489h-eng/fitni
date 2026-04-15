@@ -16,6 +16,12 @@ function jsonOk(body: Record<string, unknown>) {
   });
 }
 
+/** Compare UUIDs from DB vs JWT (string-normalized). */
+function sameId(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (a == null || b == null) return false;
+  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -76,54 +82,88 @@ serve(async (req) => {
     }
 
     const clientName = body.clientName as string | undefined;
-    const clientEmail = body.clientEmail as string | undefined;
+    const clientEmail = typeof body.clientEmail === "string" ? body.clientEmail.trim() : "";
     const trainerName = body.trainerName as string | undefined;
-    const inviteToken = body.inviteToken as string | undefined;
+    const inviteTokenBody = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
+    const clientIdBody = typeof body.clientId === "string" ? body.clientId.trim() : "";
     const siteOrigin = body.siteOrigin;
 
-    if (!clientEmail || !inviteToken) {
+    if (!clientEmail) {
       return jsonOk({
         success: false,
         emailSent: false,
         code: "bad_request",
-        error: "Missing required fields (clientEmail, inviteToken)",
+        error: "Missing clientEmail",
+      });
+    }
+
+    if (!clientIdBody && !inviteTokenBody) {
+      return jsonOk({
+        success: false,
+        emailSent: false,
+        code: "bad_request",
+        error: "Missing clientId or inviteToken",
       });
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data: client, error: clientErr } = await supabase
-      .from("clients")
-      .select("id, trainer_id")
-      .eq("invite_token", inviteToken)
-      .maybeSingle();
+    let client: { id: string; trainer_id: string | null; invite_token: string | null } | null = null;
 
-    if (clientErr) {
-      console.error("[send-invite-email] client lookup:", clientErr);
-      return jsonOk({
-        success: false,
-        emailSent: false,
-        code: "server_error",
-        error: clientErr.message,
-      });
+    if (clientIdBody) {
+      const { data: row, error: rowErr } = await supabase
+        .from("clients")
+        .select("id, trainer_id, invite_token")
+        .eq("id", clientIdBody)
+        .maybeSingle();
+
+      if (rowErr) {
+        console.error("[send-invite-email] client by id:", rowErr);
+        return jsonOk({
+          success: false,
+          emailSent: false,
+          code: "server_error",
+          error: rowErr.message,
+        });
+      }
+      client = row;
+    } else {
+      const { data: row, error: rowErr } = await supabase
+        .from("clients")
+        .select("id, trainer_id, invite_token")
+        .eq("invite_token", inviteTokenBody)
+        .maybeSingle();
+
+      if (rowErr) {
+        console.error("[send-invite-email] client by token:", rowErr);
+        return jsonOk({
+          success: false,
+          emailSent: false,
+          code: "server_error",
+          error: rowErr.message,
+        });
+      }
+      client = row;
     }
 
-    if (!client || client.trainer_id !== userId) {
+    if (!client || !sameId(client.trainer_id, userId)) {
       return jsonOk({
         success: false,
         emailSent: false,
         code: "forbidden",
         error:
-          "Access denied — رمز الدعوة لا يطابق عميلاً تابعاً لك. جرّب إعادة إرسال الدعوة من ملف العميل.",
+          "Access denied — العميل غير مرتبط بحسابك كمدرب. تأكد من نشر آخر نسخة من الدالة وأن clientId صحيح.",
       });
     }
+
+    const tokenForEmail = client.invite_token?.trim() || inviteTokenBody || "";
 
     const result = await inviteClientAuth(supabase, {
       clientId: client.id,
       email: clientEmail,
       clientName: clientName ?? "عميل",
       trainerName: trainerName || "مدربك",
-      inviteToken,
+      inviteToken: tokenForEmail,
       siteOrigin: typeof siteOrigin === "string" ? siteOrigin : null,
     });
 
@@ -147,6 +187,7 @@ serve(async (req) => {
       skipped: result.skipped,
       reason: result.reason,
       error: result.error,
+      resendId: result.resendId,
     });
   } catch (err) {
     console.error("Error:", err);

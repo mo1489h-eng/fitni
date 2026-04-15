@@ -7,6 +7,8 @@ export type SendInviteEmailPayload = {
   error?: string;
   reason?: string;
   code?: string;
+  skipped?: boolean;
+  resendId?: string;
 };
 
 /**

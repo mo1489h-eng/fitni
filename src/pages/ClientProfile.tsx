@@ -500,6 +500,7 @@ const ClientProfile = () => {
                   await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
                   const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
                     body: {
+                      clientId: id!,
                       clientName: client.name,
                       clientEmail: client.email,
                       trainerName: "",
@@ -530,6 +531,7 @@ const ClientProfile = () => {
                 await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
                 const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
                   body: {
+                    clientId: id!,
                     clientName: client.name,
                     clientEmail: client.email,
                     trainerName: "",

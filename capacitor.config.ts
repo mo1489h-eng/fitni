@@ -8,16 +8,21 @@ const config: CapacitorConfig = {
     contentInset: 'always',
   },
   android: {
-    backgroundColor: '#000000',
+    backgroundColor: '#050505',
   },
   plugins: {
     CapacitorUpdater: {
       appId: 'com.coachbase.coachbase'
     },
     SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: '#000000',
+      /** Native layer stays up until JS calls SplashScreen.hide() (see `hideNativeSplashAfterPaint`). */
+      launchShowDuration: 0,
+      launchAutoHide: false,
+      launchFadeOutDuration: 280,
+      backgroundColor: '#050505',
       showSpinner: false,
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'FIT_CENTER',
     },
   }
 };

@@ -7,10 +7,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import Onboarding from "@/pages/Onboarding";
+import Splash from "@/pages/Splash";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ConfirmEmail from "@/pages/ConfirmEmail";
 import { isOnboardingComplete } from "@/lib/onboarding";
+import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
@@ -32,6 +34,18 @@ function RegisterGate() {
 function MobileAppGate() {
   if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
   return <MobileAppContent />;
+}
+
+/** Cold start: animated splash once per session before home. */
+function MobileHomeEntry() {
+  try {
+    if (sessionStorage.getItem(SPLASH_SESSION_KEY) !== "1") {
+      return <Navigate to="/splash" replace />;
+    }
+  } catch {
+    return <Navigate to="/splash" replace />;
+  }
+  return <MobileAppGate />;
 }
 
 const MobileAppContent = () => {
@@ -87,11 +101,13 @@ const MobileAppContent = () => {
 function MobileRoutes() {
   return (
     <Routes>
+      <Route path="/splash" element={<Splash />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/login" element={<LoginGate />} />
       <Route path="/register" element={<RegisterGate />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<MobileHomeEntry />} />
       <Route path="/*" element={<MobileAppGate />} />
     </Routes>
   );

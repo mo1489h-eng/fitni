@@ -26,8 +26,6 @@ interface Profile {
   username: string | null;
   is_founder: boolean;
   founder_discount_used: boolean;
-  /** Fitni: coach | trainee (see profiles.role) */
-  role?: string | null;
 }
 
 interface AuthContextType {
@@ -61,31 +59,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
 
   const fetchProfile = useCallback(async (userId: string) => {
-    let { data, error } = await supabase.from("profiles").select(`${profileSelectBase}, role`).eq("user_id", userId).maybeSingle();
-
-    if (error && /role|column/i.test(String(error.message))) {
-      const retry = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
-      data = retry.data;
-      error = retry.error;
-    }
+    let { data, error } = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
 
     if (error) {
       console.error("fetchProfile", error);
       setProfile(null);
     } else if (data) {
       setProfile(data as Profile);
-      const fromColumn = normalizeFitniRole((data as Profile).role);
-      if (fromColumn) useWorkoutStore.getState().setFitniRole(fromColumn);
     } else {
       const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
       if (ensureErr) {
         console.error("ensure_trainer_profile", ensureErr);
         setProfile(null);
       } else {
-        let r2 = await supabase.from("profiles").select(`${profileSelectBase}, role`).eq("user_id", userId).maybeSingle();
-        if (r2.error && /role|column/i.test(String(r2.error.message))) {
-          r2 = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
-        }
+        const r2 = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
         if (r2.data) setProfile(r2.data as Profile);
         else setProfile(null);
       }

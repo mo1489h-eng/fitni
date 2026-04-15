@@ -16,6 +16,7 @@ import TrialBanner from "@/components/TrialBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadImage } from "@/lib/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { TRAINER_HOME } from "@/lib/app-routes";
 import {
   Camera, Lock, Loader2, Trash2, User, Bell, Palette, Shield,
    LogOut, CreditCard, KeyRound, Save, CheckCircle, Globe, MapPin,
@@ -1300,7 +1301,7 @@ const Settings = () => {
                 await supabase.from("profiles").update({ onboarding_steps_completed: [], onboarding_completed: false } as any).eq("user_id", user.id);
                 localStorage.removeItem("onboarding-dismissed");
                 toast({ title: "تم إعادة تعيين خطوات الإعداد" });
-                navigate("/dashboard");
+                navigate(TRAINER_HOME);
               }
             }}
           >

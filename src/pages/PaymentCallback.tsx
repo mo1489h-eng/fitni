@@ -45,7 +45,7 @@ const PaymentCallback = () => {
             setStatus("success");
             const planName = plan === "basic" ? "أساسي" : "احترافي";
             toast({ title: "تم الترقية بنجاح 🎉", description: `تم تفعيل باقة ${planName}` });
-            setTimeout(() => navigate("/dashboard"), 2000);
+            setTimeout(() => navigate("/trainer-dashboard"), 2000);
             return;
           } catch (e: any) {
             lastError = e;
@@ -58,7 +58,7 @@ const PaymentCallback = () => {
             if (e.message?.includes("Payment already used")) {
               setStatus("success");
               toast({ title: "تم الترقية بنجاح 🎉" });
-              setTimeout(() => navigate("/dashboard"), 2000);
+              setTimeout(() => navigate("/trainer-dashboard"), 2000);
               return;
             }
             throw e;

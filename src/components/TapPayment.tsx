@@ -37,7 +37,7 @@ const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
       sessionStorage.setItem("tap_payment_context", JSON.stringify({
         type: "trainer_subscription",
         plan,
-        return_url: window.location.origin + "/dashboard",
+        return_url: window.location.origin + "/trainer-dashboard",
       }));
 
       const { payment_url } = await createPaymentSession({

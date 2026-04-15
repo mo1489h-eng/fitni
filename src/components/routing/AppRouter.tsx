@@ -60,6 +60,7 @@ import PortalLessonPlayer from "@/pages/portal/PortalLessonPlayer";
 import { TrainerAppLayout } from "@/components/layout/TrainerAppLayout";
 import { TraineeAppLayout } from "@/components/layout/TraineeAppLayout";
 import TraineeDashboard from "@/pages/TraineeDashboard";
+import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const WEB_ONBOARDING_LANDING_GATE = false;
 
@@ -81,11 +82,12 @@ export function AppRouter() {
       <Route path="/register" element={<Register />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
 
-      <Route path="/coach/dashboard" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard/coach" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/coach/dashboard" element={<Navigate to={TRAINER_HOME} replace />} />
+      <Route path="/dashboard/coach" element={<Navigate to={TRAINER_HOME} replace />} />
 
       <Route element={<AuthGuard><RoleGuard allowed="coach"><TrainerAppLayout /></RoleGuard></AuthGuard>}>
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path={TRAINER_HOME.replace(/^\//, "")} element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientProfile />} />
         <Route path="programs" element={<ProgramBuilder />} />
@@ -113,6 +115,10 @@ export function AppRouter() {
       <Route path="/trainee" element={<AuthGuard><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthGuard>}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<TraineeDashboard />} />
+      </Route>
+
+      <Route path={CLIENT_HOME} element={<AuthGuard><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthGuard>}>
+        <Route index element={<TraineeDashboard />} />
       </Route>
 
       <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />

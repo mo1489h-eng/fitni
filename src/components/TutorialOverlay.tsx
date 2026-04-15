@@ -40,7 +40,10 @@ const TutorialOverlay = () => {
     if (!user || !profile || checkedRef.current) return;
     checkedRef.current = true;
 
-    if (!(profile as any).onboarding_completed && location.pathname === "/dashboard") {
+    if (
+      !(profile as any).onboarding_completed &&
+      (location.pathname === "/trainer-dashboard" || location.pathname === "/dashboard")
+    ) {
       const timer = window.setTimeout(() => startTutorial(), 1000);
       return () => window.clearTimeout(timer);
     }

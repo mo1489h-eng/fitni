@@ -7,6 +7,7 @@ import {
   Dumbbell, X, ArrowLeft, ArrowRight, Users, ClipboardList,
   CreditCard, Rocket, UtensilsCrossed, CalendarDays,
 } from "lucide-react";
+import { TRAINER_HOME } from "@/lib/app-routes";
 
 interface Step {
   title: string;
@@ -21,13 +22,13 @@ const steps: Step[] = [
     title: "أهلاً بك في CoachBase",
     description: "جولة سريعة تريك كل شيء",
     icon: Dumbbell,
-    route: "/dashboard",
+    route: TRAINER_HOME,
   },
   {
     title: "لوحة التحكم",
     description: "إحصائياتك اليومية دايماً هنا — عملاء، إيرادات، ونشاط",
     icon: Dumbbell,
-    route: "/dashboard",
+    route: TRAINER_HOME,
     spotlightSelector: ".grid.grid-cols-2",
   },
   {
@@ -68,7 +69,7 @@ const steps: Step[] = [
     title: "أنت جاهز للبدء",
     description: "ابدأ بإضافة أول عميل الحين",
     icon: Rocket,
-    route: "/dashboard",
+    route: TRAINER_HOME,
   },
 ];
 
@@ -103,7 +104,11 @@ const OnboardingTour = ({ forceShow, onForceClose }: OnboardingTourProps) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (data && !(data as any).onboarding_completed && location.pathname === "/dashboard") {
+      if (
+        data &&
+        !(data as any).onboarding_completed &&
+        (location.pathname === TRAINER_HOME || location.pathname === "/dashboard")
+      ) {
         setTimeout(() => setActive(true), 800);
       }
     };

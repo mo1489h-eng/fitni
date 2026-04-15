@@ -17,6 +17,7 @@ import Footer from "@/components/landing/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, Gift, Loader2, Shield, Users } from "lucide-react";
 import { useWorkoutStore } from "@/store/workout-store";
+import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -57,8 +58,8 @@ const Landing = () => {
   const heroParallax = useMemo(() => (prefersReducedMotion ? 0 : Math.min(scrollY * 0.08, 30)), [prefersReducedMotion, scrollY]);
 
   if (!loading && user) {
-    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
-    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    if (fitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
+    if (fitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { TRAINER_HOME } from "@/lib/app-routes";
 
 const RESEND_COOLDOWN = 60;
 
@@ -20,7 +21,7 @@ const ConfirmEmail = () => {
   useEffect(() => {
     if (user && (user.email_confirmed_at || user.confirmed_at)) {
       toast.success("تم تأكيد بريدك الإلكتروني بنجاح");
-      navigate("/dashboard", { replace: true });
+      navigate(TRAINER_HOME, { replace: true });
     }
   }, [user, navigate]);
 

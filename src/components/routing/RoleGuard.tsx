@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutStore } from "@/store/workout-store";
 import { normalizeFitniRole, readStoredFitniRole, type FitniRole } from "@/lib/auth-service";
+import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 type Props = {
   allowed: FitniRole;
@@ -56,7 +57,7 @@ export function RoleGuard({ allowed, children }: Props) {
 
   // Wrong role → redirect to correct area
   if (effectiveRole !== allowed) {
-    return <Navigate to={effectiveRole === "coach" ? "/dashboard" : "/trainee/dashboard"} replace />;
+    return <Navigate to={effectiveRole === "coach" ? TRAINER_HOME : CLIENT_HOME} replace />;
   }
 
   return <>{children}</>;

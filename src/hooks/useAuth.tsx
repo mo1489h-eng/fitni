@@ -136,7 +136,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
-      console.log("[Auth] onAuthStateChange event:", _event);
+      console.log("[Auth] onAuthStateChange", {
+        event: _event,
+        userId: nextSession?.user?.id ?? null,
+        email: nextSession?.user?.email ?? null,
+      });
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
@@ -172,6 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfileLoading(false);
       }
       setLoading(false);
+      console.log("[Auth] initial session hydrate complete", { hasUser: !!initial?.user });
     });
 
     return () => {
@@ -185,6 +190,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    console.log("[Auth] signOut requested");
     await supabase.auth.signOut();
     Sentry.setUser(null);
     queryClient.clear();

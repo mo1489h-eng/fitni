@@ -174,7 +174,9 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
             <p className="text-[11px] text-emerald-400/90">
               الحالة: {tip.status} ({Math.round(tip.fatigue * 100)}% إجهاد)
             </p>
-            <p className="mt-1 text-[11px] text-white/55">متوقع الجاهزية: {tip.eta}</p>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              وقت الاستشفاء المتوقع: {tip.eta}
+            </p>
           </div>
         )}
       </div>
@@ -276,7 +278,7 @@ function FrontPaths({
         d="M 88 70 Q 100 62 112 70 L 110 100 Q 100 108 90 100 Z"
         fill={fillFor("chest")}
         opacity={opFor("chest")}
-        filter={opFor("chest") > 0.55 ? `url(#${inflamedId})` : undefined}
+        filter={opFor("chest") > 0.5 ? `url(#${inflamedId})` : undefined}
         className="cursor-pointer"
         onClick={() => onTap("chest")}
       />
@@ -339,7 +341,7 @@ function BackPaths({
         d="M 82 64 Q 100 52 118 64 L 116 110 Q 100 118 84 110 Z"
         fill={fillFor("back")}
         opacity={opFor("back")}
-        filter={opFor("back") > 0.55 ? `url(#${inflamedId})` : undefined}
+        filter={opFor("back") > 0.5 ? `url(#${inflamedId})` : undefined}
         onClick={() => onTap("back")}
         className="cursor-pointer"
       />

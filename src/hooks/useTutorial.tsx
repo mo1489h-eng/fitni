@@ -6,6 +6,7 @@ import {
   UtensilsCrossed, Settings, Dumbbell, Rocket,
   Store, Globe, PlusCircle, BarChart3, Bell, Search,
 } from "lucide-react";
+import { TRAINER_HOME } from "@/lib/app-routes";
 
 export interface TutorialStep {
   id: string;
@@ -22,14 +23,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "أهلاً بك في CoachBase",
     description: "جولة سريعة تعرّفك على كل شيء — خلّنا نبدأ",
     icon: Dumbbell,
-    route: "/dashboard",
+    route: TRAINER_HOME,
   },
   {
     id: "dashboard-stats",
     title: "لوحة الإحصائيات",
     description: "هنا تشوف عدد عملاءك، إيراداتك، ومعدل النشاط في نظرة واحدة",
     icon: Hexagon,
-    route: "/dashboard",
+    route: TRAINER_HOME,
     spotlightSelector: "[data-tour='stats']",
   },
   {
@@ -37,7 +38,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "التنبيهات الذكية",
     description: "النظام ينبهك تلقائياً عن العملاء غير النشطين والاشتراكات القريبة من الانتهاء",
     icon: Bell,
-    route: "/dashboard",
+    route: TRAINER_HOME,
   },
   {
     id: "clients-page",
@@ -153,7 +154,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "أنت جاهز للبدء",
     description: "ابدأ الحين بإضافة أول عميل — بالتوفيق!",
     icon: Rocket,
-    route: "/dashboard",
+    route: TRAINER_HOME,
   },
 ];
 

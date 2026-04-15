@@ -9,6 +9,7 @@ import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutStore } from "@/store/workout-store";
+import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -89,8 +90,8 @@ const Register = () => {
   }, []);
 
   if (!authLoading && user) {
-    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
-    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    if (fitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
+    if (fitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -146,7 +147,7 @@ const Register = () => {
         password,
         options: {
           data: { full_name: name },
-          emailRedirectTo: `${getAuthSiteOrigin()}/dashboard`,
+          emailRedirectTo: `${getAuthSiteOrigin()}${TRAINER_HOME}`,
         },
       });
 
@@ -223,7 +224,7 @@ const Register = () => {
           });
         }
         toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
-        navigate("/dashboard");
+        navigate(TRAINER_HOME);
       }
     } catch (e: unknown) {
       toast({

@@ -80,7 +80,9 @@ export function TrainerShellLayout({ children, title, onQuickAdd }: TrainerShell
 
   const isActive = useCallback(
     (href: string) => {
-      if (href === "/dashboard") return location.pathname === href;
+      if (href === "/trainer-dashboard" || href === "/dashboard") {
+        return location.pathname === "/trainer-dashboard" || location.pathname === "/dashboard";
+      }
       return location.pathname.startsWith(href);
     },
     [location.pathname],

@@ -23,7 +23,7 @@ export interface TrainerNavItem {
 }
 
 export const desktopNavItems: TrainerNavItem[] = [
-  { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
+  { label: "الرئيسية", href: "/trainer-dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "البرامج", href: "/programs", icon: ClipboardList },
   { label: "القوالب", href: "/templates", icon: BookOpen },
@@ -38,7 +38,7 @@ export const desktopNavItems: TrainerNavItem[] = [
 ];
 
 export const mobileDockItems: TrainerNavItem[] = [
-  { label: "الرئيسية", href: "/dashboard", icon: LayoutDashboard },
+  { label: "الرئيسية", href: "/trainer-dashboard", icon: LayoutDashboard },
   { label: "العملاء", href: "/clients", icon: Users },
   { label: "إضافة", href: "/clients", icon: Plus },
   { label: "التقويم", href: "/calendar", icon: CalendarDays },

@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
 import ImportClientsModal from "@/components/ImportClientsModal";
 import { isValidSignupEmail } from "@/lib/email-validation";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -225,6 +226,7 @@ const Clients = () => {
               clientEmail: emailTrim,
               trainerName: profile?.full_name || "مدربك",
               inviteToken: newClient.invite_token,
+              siteOrigin: getAuthSiteOrigin(),
             },
           });
           if (fnError) {

@@ -1,14 +1,17 @@
 /** Logical muscle buckets: heatmap paths + recovery engine (aligned with MuscleRecoveryMap). */
 export type MuscleGroupId = "chest" | "back" | "shoulders" | "arms" | "core" | "legs";
 
-/** Per-muscle baseline recovery window (hours) before linear decay completes. */
+/**
+ * Per-muscle baseline recovery window (hours) before linear decay completes.
+ * Tuned to product spec: legs/back 72h, chest/shoulders 48h, arms/core 24h (biceps/abs family).
+ */
 export const BASE_RECOVERY_HOURS: Record<MuscleGroupId, number> = {
-  chest: 36,
-  back: 48,
-  shoulders: 42,
-  arms: 30,
+  legs: 72,
+  back: 72,
+  chest: 48,
+  shoulders: 48,
+  arms: 24,
   core: 24,
-  legs: 60,
 };
 
 export type MuscleRecoveryState = {
@@ -24,7 +27,7 @@ const RPE_HIGH_MULTIPLIER = 1.25;
  * Total recovery window for a stimulus: scales with tonnage, extends when RPE > 8.
  */
 export function calculateRecoveryTime(muscleId: MuscleGroupId, volume: number, rpe: number): number {
-  const base = BASE_RECOVERY_HOURS[muscleId] ?? 36;
+  const base = BASE_RECOVERY_HOURS[muscleId] ?? 48;
   const v = Math.max(0, volume);
   const volumeScale = 1 + Math.log10(10 + v) / 12;
   let total = base * volumeScale;
@@ -42,7 +45,7 @@ export function fatigueDeltaFromVolume(volumeLoad: number, rpe: number): number 
 }
 
 /**
- * Linear recovery toward fresh: CurrentFatigue = InitialFatigue × (1 − hours/T).
+ * Linear recovery toward fresh: CurrentFatigue = MaxFatigue × (1 − hoursSinceStimulus / RecoveryWindow).
  */
 export function getCurrentFatigue(muscleId: MuscleGroupId, state: MuscleRecoveryState | undefined, nowMs: number): number {
   void muscleId;
@@ -80,23 +83,30 @@ export function recoveryStatusLabel(fatigue01: number): string {
   return "إجهاد عالٍ";
 }
 
-/** Heatmap color: rested flesh → yellow → orange → crimson. */
+/**
+ * Heatmap color bands (fatigue 0–1):
+ * ~0–20% healthy / neutral greens, 50–80% inflamed orange, 90%+ critical crimson.
+ */
 export function fatigueHeatColor(t: number): string {
   const x = Math.max(0, Math.min(1, t));
-  if (x < 0.12) {
-    const k = x / 0.12;
-    return `rgb(${210 + k * 15}, ${175 - k * 40}, ${155 - k * 35})`;
+  if (x <= 0.2) {
+    const k = x / 0.2;
+    return `rgb(${34 + k * 40}, ${160 + k * 35}, ${110 + k * 30})`;
   }
-  if (x < 0.35) {
-    const k = (x - 0.12) / 0.23;
-    return `rgb(${225 - k * 40}, ${175 - k * 55}, ${120 - k * 60})`;
+  if (x < 0.5) {
+    const k = (x - 0.2) / 0.3;
+    return `rgb(${74 + k * 90}, ${195 - k * 45}, ${140 - k * 50})`;
   }
-  if (x < 0.65) {
-    const k = (x - 0.35) / 0.3;
-    return `rgb(${185 - k * 50}, ${120 - k * 40}, ${60 - k * 20})`;
+  if (x < 0.8) {
+    const k = (x - 0.5) / 0.3;
+    return `rgb(${164 + k * 55}, ${150 - k * 70}, ${90 - k * 40})`;
   }
-  const k = (x - 0.65) / 0.35;
-  return `rgb(${135 - k * 35}, ${40 - k * 10}, ${40 - k * 15})`;
+  if (x < 0.9) {
+    const k = (x - 0.8) / 0.1;
+    return `rgb(${219 - k * 25}, ${80 - k * 30}, ${50 - k * 10})`;
+  }
+  const k = (x - 0.9) / 0.1;
+  return `rgb(${194 - k * 70}, ${50 - k * 15}, ${40 - k * 10})`;
 }
 
 export const SECONDARY_FATIGUE_FACTOR = 0.42;

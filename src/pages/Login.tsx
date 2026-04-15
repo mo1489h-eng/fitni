@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutStore } from "@/store/workout-store";
+import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -30,8 +31,8 @@ const Login = () => {
   const fitniRole = useWorkoutStore((s) => s.fitniRole);
 
   if (!authLoading && user) {
-    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
-    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    if (fitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
+    if (fitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -107,10 +108,10 @@ const Login = () => {
         }
         if (r) {
           useWorkoutStore.getState().setFitniRole(r);
-          navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
+          navigate(r === "trainee" ? CLIENT_HOME : TRAINER_HOME);
         } else {
           console.warn("[Login] resolveFitniRole returned null — check profiles and clients.auth_user_id", { userId });
-          navigate("/dashboard");
+          navigate(TRAINER_HOME);
         }
         if (import.meta.env.DEV) {
           const { data: after } = await supabase.auth.getSession();

@@ -20,8 +20,16 @@ type Props = {
 export function EliteCard({ children, className, glow = "none" }: Props) {
   return (
     <div
-      className={cn("relative overflow-hidden rounded-[20px] border border-white/[0.05] bg-[#0A0A0A]", className)}
-      style={{ boxShadow: ELITE.innerShadow }}
+      className={cn(
+        "relative overflow-hidden rounded-[20px] border border-white/[0.05] backdrop-blur-[12px]",
+        className
+      )}
+      style={{
+        boxShadow: ELITE.innerShadow,
+        background: ELITE.glassBg,
+        WebkitBackdropFilter: ELITE.glassBlur,
+        backdropFilter: ELITE.glassBlur,
+      }}
     >
       {glow !== "none" && (
         <div

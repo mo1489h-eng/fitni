@@ -102,7 +102,7 @@ export function TrainerSidebar({
       aria-label="التنقل الرئيسي"
     >
       <div className="border-b border-border px-4 py-6">
-        <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
+        <Link to="/trainer-dashboard" className="flex items-center gap-3 overflow-hidden">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 shadow-[0_0_28px_hsl(var(--primary)/0.18)] transition-all duration-300 ease-in-out hover:shadow-[0_12px_40px_-16px_hsl(var(--primary)/0.35)]">
             <span className="text-lg font-black text-primary">CB</span>
           </div>

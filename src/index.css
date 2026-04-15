@@ -108,9 +108,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-tajawal antialiased;
+    /* IBM Plex Sans Arabic + Inter (see tailwind fontFamily.arabic / index.html) */
+    @apply bg-background text-foreground font-arabic antialiased;
     direction: rtl;
     scroll-behavior: smooth;
+  }
+
+  /* English / LTR microcopy */
+  .font-latin {
+    font-family: Inter, system-ui, sans-serif;
   }
 
   html {

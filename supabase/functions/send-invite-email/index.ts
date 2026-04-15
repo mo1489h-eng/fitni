@@ -37,7 +37,7 @@ serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const { clientName, clientEmail, trainerName, inviteToken } = await req.json();
+    const { clientName, clientEmail, trainerName, inviteToken, siteOrigin } = await req.json();
 
     if (!clientEmail || !inviteToken) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
@@ -68,6 +68,7 @@ serve(async (req) => {
       clientName,
       trainerName: trainerName || "مدربك",
       inviteToken,
+      siteOrigin: typeof siteOrigin === "string" ? siteOrigin : null,
     });
 
     if (!result.success) {

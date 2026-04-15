@@ -39,8 +39,9 @@ export function clearStoredFitniRole(): void {
 }
 
 /**
- * Resolve role after login: profiles.role when present; profile row without role → coach;
- * no profile but clients row for auth user → trainee.
+ * Resolve role after login: trainer profile row in `profiles` → coach; else linked row in
+ * `clients.auth_user_id` → trainee. (No separate `profiles.role` column in current schema —
+ * presence of a trainer profile implies coach.)
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
   const { data: profile, error } = await supabase

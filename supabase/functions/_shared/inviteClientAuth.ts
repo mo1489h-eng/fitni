@@ -10,7 +10,9 @@ export type InviteClientAuthResult = {
   error?: string;
 };
 
-function publicAppUrl(): string {
+function publicAppUrl(siteOrigin?: string): string {
+  const trimmed = (siteOrigin ?? "").trim().replace(/\/$/, "");
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
   return (Deno.env.get("PUBLIC_APP_URL") ?? "https://coachbase.health").replace(/\/$/, "");
 }
 
@@ -27,6 +29,8 @@ export async function inviteClientAuth(
     clientName: string;
     trainerName?: string;
     inviteToken?: string | null;
+    /** Optional absolute site origin from client (`getAuthSiteOrigin()`) so dev/staging links match the environment */
+    siteOrigin?: string | null;
   }
 ): Promise<InviteClientAuthResult> {
   const trainerName = params.trainerName ?? "مدربك";
@@ -51,7 +55,7 @@ export async function inviteClientAuth(
   }
 
   const inviteToken = params.inviteToken ?? row.invite_token;
-  const base = publicAppUrl();
+  const base = publicAppUrl(params.siteOrigin ?? undefined);
   const setupLink = inviteToken
     ? `${base}/client-register/${inviteToken}`
     : `${base}/client-login`;

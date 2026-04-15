@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { isOnboardingComplete } from "@/lib/onboarding";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import { useIsNativePlatform } from "@/hooks/useNativePlatform";
 import AuthGuard from "@/components/AuthGuard";
 import MobileApp from "@/components/mobile/MobileApp";
 import Landing from "./pages/Landing";
+import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import ConfirmEmail from "./pages/ConfirmEmail";
@@ -66,6 +68,19 @@ import { TrainerAppLayout } from "./components/layout/TrainerAppLayout";
 
 const queryClient = new QueryClient();
 
+/**
+ * When true, `/` redirects to `/onboarding` until `onboarding_done` is set (same key as native).
+ * Native (Capacitor) always gates via `MobileApp`. Keep false if the marketing site must stay first on web.
+ */
+const WEB_ONBOARDING_LANDING_GATE = false;
+
+function WebLandingOrOnboarding() {
+  if (WEB_ONBOARDING_LANDING_GATE && !isOnboardingComplete()) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  return <Landing />;
+}
+
 const App = () => {
   const isNative = useIsNativePlatform();
 
@@ -83,7 +98,8 @@ const App = () => {
           <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={<WebLandingOrOnboarding />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/register" element={<Register />} />

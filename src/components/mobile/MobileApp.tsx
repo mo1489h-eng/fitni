@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import Onboarding from "@/pages/Onboarding";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ConfirmEmail from "@/pages/ConfirmEmail";
+import { isOnboardingComplete } from "@/lib/onboarding";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
@@ -9,6 +18,21 @@ import ClientMobileShell from "./client/ClientMobileShell";
 const queryClient = new QueryClient();
 
 type MobileRole = "trainer" | "client" | null;
+
+function LoginGate() {
+  if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
+  return <Login />;
+}
+
+function RegisterGate() {
+  if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
+  return <Register />;
+}
+
+function MobileAppGate() {
+  if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
+  return <MobileAppContent />;
+}
 
 const MobileAppContent = () => {
   const { session, user, profile, loading } = useAuth();
@@ -35,7 +59,10 @@ const MobileAppContent = () => {
   if (!ready || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: "#0A0A0A" }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-transparent" style={{ borderTopColor: "#22C55E" }} />
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-transparent"
+          style={{ borderTopColor: "#22C55E" }}
+        />
       </div>
     );
   }
@@ -57,14 +84,33 @@ const MobileAppContent = () => {
   return <ClientMobileShell />;
 };
 
+function MobileRoutes() {
+  return (
+    <Routes>
+      <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/login" element={<LoginGate />} />
+      <Route path="/register" element={<RegisterGate />} />
+      <Route path="/confirm-email" element={<ConfirmEmail />} />
+      <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path="/*" element={<MobileAppGate />} />
+    </Routes>
+  );
+}
+
 const MobileApp = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <MobileAppContent />
-        </AuthProvider>
-      </BrowserRouter>
+      <ThemeProvider defaultTheme="dark" enableSystem={false}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <MobileRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

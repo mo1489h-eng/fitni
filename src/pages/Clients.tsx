@@ -34,6 +34,7 @@ import ImportClientsModal from "@/components/ImportClientsModal";
 import { isValidSignupEmail } from "@/lib/email-validation";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
+import { isUndefinedColumnError } from "@/lib/postgrestErrors";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -198,7 +199,7 @@ const Clients = () => {
       const startDate = form.startDate ? new Date(form.startDate) : new Date();
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30);
-      const { data: newClient, error } = await supabase.from("clients").insert({
+      const insertPayload: Record<string, unknown> = {
         trainer_id: user!.id,
         name: form.name,
         phone: form.phone,
@@ -217,9 +218,24 @@ const Clients = () => {
         client_type: form.clientType,
         training_type: (form.clientType === "in_person" ? "in_person" : "online") as ClientTrainingType,
         sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
-      } as any)
+      };
+
+      let { data: newClient, error } = await supabase
+        .from("clients")
+        .insert(insertPayload as any)
         .select("id, invite_token")
         .single();
+
+      if (error && isUndefinedColumnError(error, "training_type")) {
+        const { training_type: _drop, ...withoutTrainingType } = insertPayload;
+        const retry = await supabase
+          .from("clients")
+          .insert(withoutTrainingType as any)
+          .select("id, invite_token")
+          .single();
+        newClient = retry.data;
+        error = retry.error;
+      }
       if (error) throw error;
       if (newClient?.invite_token) {
         try {
@@ -301,7 +317,13 @@ const Clients = () => {
       setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
       setShowAdvanced(false);
     },
-    onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
+    onError: (err: Error) => {
+      toast({
+        title: "تعذّر إضافة العميل",
+        description: err?.message || "تحقق من الاتصال أو صلاحيات قاعدة البيانات.",
+        variant: "destructive",
+      });
+    },
   });
 
   const activeCount = clients.filter(c => getPaymentStatus(c.subscription_end_date) !== "overdue").length;

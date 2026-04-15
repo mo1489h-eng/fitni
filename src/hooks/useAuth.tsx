@@ -1,9 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from "react";
 import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveFitniRole } from "@/lib/auth-service";
+import { resolveFitniRole, persistFitniRole, clearStoredFitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -33,6 +33,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  profileLoading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -42,82 +43,135 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  profileLoading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
+const profileSelectBase =
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const queryClient = useQueryClient();
-
-  const profileSelectBase =
-    "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+  const profileFetchRef = useRef(0);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    let { data, error } = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
-
-    if (error) {
-      console.error("fetchProfile", error);
-      setProfile(null);
-    } else if (data) {
-      setProfile(data as Profile);
-    } else {
-      const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
-      if (ensureErr) {
-        console.error("ensure_trainer_profile", ensureErr);
-        setProfile(null);
-      } else {
-        const r2 = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
-        if (r2.data) setProfile(r2.data as Profile);
-        else setProfile(null);
-      }
-    }
+    const fetchId = ++profileFetchRef.current;
+    setProfileLoading(true);
+    console.log("[Auth] fetchProfile start", userId);
 
     try {
+      let { data, error } = await supabase
+        .from("profiles")
+        .select(profileSelectBase)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      // Stale check
+      if (fetchId !== profileFetchRef.current) return;
+
+      if (error) {
+        console.error("[Auth] fetchProfile query error", error);
+        setProfile(null);
+      } else if (data) {
+        console.log("[Auth] profile found");
+        setProfile(data as Profile);
+      } else {
+        // No profile — try to create one via RPC
+        console.log("[Auth] no profile found, calling ensure_trainer_profile");
+        const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
+        if (fetchId !== profileFetchRef.current) return;
+
+        if (ensureErr) {
+          console.error("[Auth] ensure_trainer_profile failed", ensureErr);
+          setProfile(null);
+        } else {
+          const r2 = await supabase
+            .from("profiles")
+            .select(profileSelectBase)
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (fetchId !== profileFetchRef.current) return;
+          if (r2.data) setProfile(r2.data as Profile);
+          else setProfile(null);
+        }
+      }
+
+      // Resolve role
       const r = await resolveFitniRole(userId);
-      if (r) useWorkoutStore.getState().setFitniRole(r);
-      else useWorkoutStore.getState().clearFitniRole();
+      if (fetchId !== profileFetchRef.current) return;
+
+      console.log("[Auth] resolved role:", r);
+      if (r) {
+        useWorkoutStore.getState().setFitniRole(r);
+        persistFitniRole(r);
+      } else {
+        useWorkoutStore.getState().clearFitniRole();
+      }
     } catch (e) {
-      console.error("resolveFitniRole", e);
-      useWorkoutStore.getState().clearFitniRole();
+      console.error("[Auth] fetchProfile error", e);
+      if (fetchId === profileFetchRef.current) {
+        setProfile(null);
+        useWorkoutStore.getState().clearFitniRole();
+      }
+    } finally {
+      if (fetchId === profileFetchRef.current) {
+        setProfileLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+    // 1. Set up the listener FIRST (before getSession) to catch all events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      console.log("[Auth] onAuthStateChange event:", _event);
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
+
       if (nextSession?.user) {
         Sentry.setUser({ id: nextSession.user.id, email: nextSession.user.email });
-        await fetchProfile(nextSession.user.id);
+        // Fire and forget — don't await inside callback to avoid deadlocks
+        fetchProfile(nextSession.user.id);
       } else {
         Sentry.setUser(null);
         setProfile(null);
+        setProfileLoading(false);
         useWorkoutStore.getState().clearFitniRole();
+        clearStoredFitniRole();
       }
     });
 
-    void (async () => {
-      const {
-        data: { session: initial },
-      } = await supabase.auth.getSession();
+    // 2. Then restore session
+    supabase.auth.getSession().then(({ data: { session: initial } }) => {
+      if (!mounted) return;
+      console.log("[Auth] getSession result:", initial ? "session found" : "no session");
       setSession(initial);
       setUser(initial?.user ?? null);
       if (initial?.user) {
         Sentry.setUser({ id: initial.user.id, email: initial.user.email });
-        await fetchProfile(initial.user.id);
+        fetchProfile(initial.user.id);
+      } else {
+        setProfileLoading(false);
       }
       setLoading(false);
-    })();
+    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const refreshProfile = async () => {
@@ -129,13 +183,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     Sentry.setUser(null);
     queryClient.clear();
     useWorkoutStore.getState().clearFitniRole();
+    clearStoredFitniRole();
     setSession(null);
     setUser(null);
     setProfile(null);
+    setProfileLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, profileLoading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

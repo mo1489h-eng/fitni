@@ -227,7 +227,10 @@ const Clients = () => {
         .single();
 
       if (error && isUndefinedColumnError(error, "training_type")) {
-        const { training_type: _drop, ...withoutTrainingType } = insertPayload;
+        const { training_type: _tt, trainer_type: _tr, ...withoutTrainingType } = insertPayload as Record<
+          string,
+          unknown
+        >;
         const retry = await supabase
           .from("clients")
           .insert(withoutTrainingType as any)

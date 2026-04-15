@@ -35,6 +35,7 @@ import { isValidSignupEmail } from "@/lib/email-validation";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 import { isUndefinedColumnError } from "@/lib/postgrestErrors";
+import { parseSendInviteEmailInvoke } from "@/lib/sendInviteEmailResult";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -251,24 +252,43 @@ const Clients = () => {
               siteOrigin: getAuthSiteOrigin(),
             },
           });
-          if (fnError) {
-            console.error("[send-invite-email] Edge function invoke failed:", fnError.message, fnError);
+          const { payload, invokeError } = await parseSendInviteEmailInvoke(emailResult, fnError);
+          if (fnError && !payload) {
+            console.error("[send-invite-email] Edge function invoke failed:", fnError);
           }
-          if (emailResult != null) {
-            console.log("[send-invite-email] response:", JSON.stringify(emailResult));
+          if (payload != null) {
+            console.log("[send-invite-email] response:", JSON.stringify(payload));
           }
 
-          type InviteFnPayload = {
-            emailSent?: boolean;
-            setupLink?: string;
-            message?: string;
-            reason?: string;
-            error?: string;
-            success?: boolean;
-          };
-          const payload = emailResult as InviteFnPayload | null;
-
-          if (payload?.success === false) {
+          if (!payload && invokeError) {
+            toast({
+              title: "تمت إضافة العميل",
+              description: `تعذّر قراءة رد دالة الإيميل: ${invokeError}. أعد نشر send-invite-email من مجلد supabase/functions.`,
+              variant: "destructive",
+              duration: 16_000,
+            });
+          } else if (payload?.code === "unauthorized") {
+            toast({
+              title: "انتهت الجلسة",
+              description: payload.error ?? "أعد تسجيل الدخول ثم أعد إرسال الدعوة من ملف العميل.",
+              variant: "destructive",
+              duration: 14_000,
+            });
+          } else if (payload?.code === "forbidden") {
+            toast({
+              title: "تعذّر التحقق من الدعوة",
+              description: payload.error ?? "افتح ملف العميل وأعد إرسال الدعوة.",
+              variant: "destructive",
+              duration: 16_000,
+            });
+          } else if (payload?.code === "bad_request" || payload?.code === "server_error") {
+            toast({
+              title: "تعذّر إرسال الإيميل",
+              description: payload.error ?? invokeError ?? "تحقق من أسرار الدالة في Supabase.",
+              variant: "destructive",
+              duration: 16_000,
+            });
+          } else if (payload?.success === false) {
             toast({
               title: "فشل إرسال الإيميل (Resend)",
               description: [payload.message, payload.error, payload.setupLink ? `رابط التسجيل: ${payload.setupLink}` : null]
@@ -279,13 +299,6 @@ const Clients = () => {
             });
           } else if (payload?.emailSent) {
             toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${emailTrim}` });
-          } else if (fnError) {
-            toast({
-              title: "تمت إضافة العميل",
-              description: `تعذّر استدعاء دالة الإيميل: ${fnError.message}. في Supabase: Project Settings → Edge Functions → Secrets → أضف RESEND_API_KEY ثم أعد نشر send-invite-email.`,
-              variant: "destructive",
-              duration: 16_000,
-            });
           } else if (payload?.setupLink) {
             const why =
               payload.reason === "missing_resend_api_key"

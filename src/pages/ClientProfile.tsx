@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ClientAnalyticsPanel } from "@/components/analytics/ClientAnalyticsPanel";
 import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
 
 type TabKey = "overview" | "analytics" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string; icon: any }[] = [
@@ -498,7 +499,13 @@ const ClientProfile = () => {
                   const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
                   await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
                   const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
-                    body: { clientName: client.name, clientEmail: client.email, trainerName: "", inviteToken: newToken },
+                    body: {
+                      clientName: client.name,
+                      clientEmail: client.email,
+                      trainerName: "",
+                      inviteToken: newToken,
+                      siteOrigin: getAuthSiteOrigin(),
+                    },
                   });
                   queryClient.invalidateQueries({ queryKey: ["client", id] });
                   toast({ title: emailResult?.emailSent ? "تم إعادة إرسال الدعوة بالإيميل" : "تم تجديد الرابط" });
@@ -522,7 +529,13 @@ const ClientProfile = () => {
                 const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
                 await supabase.from("clients").update({ invite_token: newToken }).eq("id", id!);
                 const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
-                  body: { clientName: client.name, clientEmail: client.email, trainerName: "", inviteToken: newToken },
+                  body: {
+                    clientName: client.name,
+                    clientEmail: client.email,
+                    trainerName: "",
+                    inviteToken: newToken,
+                    siteOrigin: getAuthSiteOrigin(),
+                  },
                 });
                 queryClient.invalidateQueries({ queryKey: ["client", id] });
                 toast({ title: emailResult?.emailSent ? "تم إرسال الدعوة بالإيميل" : "تم إنشاء رابط الدعوة" });

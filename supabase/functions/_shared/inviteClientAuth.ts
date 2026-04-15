@@ -31,13 +31,14 @@ export function getResendApiKey(): string | null {
 }
 
 /**
- * "From" must be a domain verified in Resend (Domains), or Resend test sender.
+ * "From" must use a domain verified in Resend (Domains).
  * Set Edge secret RESEND_FROM e.g. `CoachBase <noreply@your-verified-domain.com>`.
+ * Avoid onboarding@resend.dev — Resend only delivers those to your account email (403 for real clients).
  */
 function resendFromAddress(): string {
   const from = Deno.env.get("RESEND_FROM")?.trim();
   if (from) return from;
-  return "CoachBase <onboarding@resend.dev>";
+  return "CoachBase <noreply@coachbase.health>";
 }
 
 function publicAppUrl(siteOrigin?: string): string {
@@ -174,8 +175,8 @@ export async function inviteClientAuth(
       /* keep raw */
     }
     const domainHint =
-      /domain|verify|not valid|from/i.test(detail)
-        ? " في لوحة Resend: Domains → تحقق من نطاقك، ثم أضف سر RESEND_FROM في الدالة بصيغة: الاسم <noreply@نطاقك>."
+      /domain|verify|not valid|from|testing emails|own email address|only send/i.test(detail)
+        ? " في Resend: Domains — تحقّق من نطاقك (مثل coachbase.health) وأضف سجلات DNS، ثم في Supabase → Edge Functions → Secrets عيّن RESEND_FROM بصيغة: CoachBase <noreply@نطاقك-المُحقَّق>."
         : "";
     return {
       success: false,

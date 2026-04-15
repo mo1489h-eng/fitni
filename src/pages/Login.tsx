@@ -42,55 +42,94 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const emailTrim = email.trim().toLowerCase();
-    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email: emailTrim, password });
-
-    if (error) {
-      // Supabase often returns "Invalid login credentials" for wrong password OR unconfirmed email (anti-enumeration).
-      console.error("[auth] signInWithPassword failed", {
-        message: error.message,
-        status: (error as { status?: number }).status,
-        name: error.name,
+    try {
+      const emailTrim = email.trim().toLowerCase();
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
+        email: emailTrim,
+        password,
       });
-      const hint =
-        /not\s*confirmed|confirm.*email|verify.*email|email.*confirm/i.test(error.message) ||
-        (error as { code?: string }).code === "email_not_confirmed"
-          ? " إذا سجّلت للتو، افتح رابط التأكيد من بريدك أولاً (تحقق من Spam)، أو استخدم «إعادة إرسال» من صفحة تأكيد البريد."
-          : "";
-      toast({
-        title: "خطأ في تسجيل الدخول",
-        description: `${error.message}${hint}`,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
 
-    if (import.meta.env.DEV) {
-      console.log("[auth] signInWithPassword ok", { userId: signInData.user?.id, hasSession: !!signInData.session });
-    }
-    // Check if user is a client — redirect to client portal
-    const userId = signInData.user?.id;
-    if (userId) {
-      const { data: clientProfile } = await supabase.rpc("get_my_client_profile");
-      if (clientProfile && clientProfile.length > 0 && clientProfile[0].portal_token) {
-        navigate(`/client-portal/${clientProfile[0].portal_token}`);
-        setLoading(false);
+      if (error) {
+        // Supabase often returns "Invalid login credentials" for wrong password OR unconfirmed email (anti-enumeration).
+        console.error("[auth] signInWithPassword failed", {
+          message: error.message,
+          status: (error as { status?: number }).status,
+          name: error.name,
+        });
+        const m = error.message.toLowerCase();
+        const code = (error as { code?: string }).code;
+        const looksUnconfirmed =
+          /not\s*confirmed|confirm.*email|verify.*email|email.*confirm/i.test(error.message) ||
+          code === "email_not_confirmed";
+
+        let description: string;
+        if (looksUnconfirmed || m.includes("email not confirmed") || m.includes("not confirmed")) {
+          description =
+            "لم يتم تأكيد البريد الإلكتروني. تحقق من بريدك وافتح رابط التأكيد. إذا سجّلت للتو، تحقق من مجلد Spam أو استخدم «إعادة إرسال» من صفحة تأكيد البريد.";
+        } else if (m.includes("invalid login credentials") || (m.includes("invalid") && m.includes("credential"))) {
+          description = "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.";
+        } else if (m.includes("too many") || m.includes("rate")) {
+          description = "تجاوزت عدد المحاولات. انتظر قليلاً ثم حاول مرة أخرى.";
+        } else if (m.includes("network") || m.includes("fetch")) {
+          description = "تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت.";
+        } else {
+          description = error.message;
+        }
+
+        toast({
+          title: "خطأ في تسجيل الدخول",
+          description,
+          variant: "destructive",
+        });
         return;
       }
+
+      if (import.meta.env.DEV) {
+        console.log("[auth] signInWithPassword ok", {
+          userId: signInData.user?.id,
+          hasSession: !!signInData.session,
+        });
+      }
+
+      const userId = signInData.user?.id;
+      if (userId) {
+        const { data: clientProfile } = await supabase.rpc("get_my_client_profile");
+        if (clientProfile && clientProfile.length > 0 && clientProfile[0].portal_token) {
+          navigate(`/client-portal/${clientProfile[0].portal_token}`);
+          return;
+        }
+      }
+
+      if (userId) {
+        const r = await resolveFitniRole(userId);
+        if (import.meta.env.DEV) {
+          console.log("[Login] resolved role:", r);
+        }
+        if (r) {
+          useWorkoutStore.getState().setFitniRole(r);
+          navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
+        } else {
+          console.warn("[Login] resolveFitniRole returned null — check profiles and clients.auth_user_id", { userId });
+          navigate("/dashboard");
+        }
+        if (import.meta.env.DEV) {
+          const { data: after } = await supabase.auth.getSession();
+          console.log("[auth] post-login getSession", {
+            hasSession: !!after.session,
+            uid: after.session?.user?.id,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[Login] unexpected error:", e);
+      toast({
+        title: "خطأ غير متوقع",
+        description: "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    const r = userId ? await resolveFitniRole(userId) : null;
-    if (r) {
-      useWorkoutStore.getState().setFitniRole(r);
-    } else {
-      console.warn("[Login] resolveFitniRole returned null — check profiles.role and clients.auth_user_id", { userId });
-    }
-    if (import.meta.env.DEV) {
-      const { data: after } = await supabase.auth.getSession();
-      console.log("[auth] post-login getSession", { hasSession: !!after.session, uid: after.session?.user?.id });
-    }
-    navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
-    setLoading(false);
   };
 
   const handleForgotPassword = async () => {

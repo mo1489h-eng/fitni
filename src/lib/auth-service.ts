@@ -45,17 +45,12 @@ export function clearStoredFitniRole(): void {
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("id")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error) {
     console.error("resolveFitniRole profile", error);
-  }
-
-  if (profile?.role) {
-    const n = normalizeFitniRole(profile.role);
-    if (n) return n;
   }
 
   if (profile?.id) return "coach";

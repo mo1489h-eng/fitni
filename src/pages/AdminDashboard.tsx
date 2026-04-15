@@ -301,7 +301,7 @@ export default function AdminDashboard() {
           {activePage === "reports" && <AdminReports {...pageProps} />}
           {activePage === "withdrawals" && (
             <AdminWithdrawals
-              withdrawals={(data?.withdrawals as Record<string, unknown>[]) ?? []}
+              withdrawals={(data?.withdrawals ?? []) as any}
               loading={loading}
               onProcess={processWithdrawal}
               onRefresh={() => fetchData(sessionToken, month)}
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
           )}
           {activePage === "wallets" && (
             <AdminWallets
-              wallets={(data?.wallets as Record<string, unknown>[]) ?? []}
+              wallets={(data?.wallets ?? []) as any}
               walletTotals={data?.wallet_totals as { bal: number; pend: number; earn: number } | undefined}
               loading={loading}
             />

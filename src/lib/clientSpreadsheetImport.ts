@@ -166,7 +166,7 @@ export function parseOptionalInt(raw: unknown, fallback: number): number {
 export async function parseSpreadsheetToRows(file: File): Promise<Record<string, unknown>[]> {
   const XLSX = await import("xlsx");
   const name = file.name.toLowerCase();
-  let sheet: XLSX.WorkSheet;
+  let sheet: any;
 
   if (name.endsWith(".csv")) {
     const text = (await file.text()).replace(/^\uFEFF/, "");

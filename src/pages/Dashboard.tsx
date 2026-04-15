@@ -123,7 +123,11 @@ const Dashboard = () => {
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["dashboard-clients", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("trainer_id", user!.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Client[];
     },
@@ -133,7 +137,14 @@ const Dashboard = () => {
   const { data: measurements = [], isLoading: measurementsLoading } = useQuery({
     queryKey: ["dashboard-measurements", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("measurements").select("client_id, weight, recorded_at").order("recorded_at", { ascending: false });
+      const { data: clientIds } = await supabase.from("clients").select("id").eq("trainer_id", user!.id);
+      const ids = (clientIds ?? []).map((c) => c.id);
+      if (!ids.length) return [];
+      const { data, error } = await supabase
+        .from("measurements")
+        .select("client_id, weight, recorded_at")
+        .in("client_id", ids)
+        .order("recorded_at", { ascending: false });
       if (error) throw error;
       return data as Measurement[];
     },
@@ -143,7 +154,11 @@ const Dashboard = () => {
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ["dashboard-sessions", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("trainer_sessions").select("id, client_id, session_date, start_time, session_type, notes").order("session_date", { ascending: true });
+      const { data, error } = await supabase
+        .from("trainer_sessions")
+        .select("id, client_id, session_date, start_time, session_type, notes")
+        .eq("trainer_id", user!.id)
+        .order("session_date", { ascending: true });
       if (error) throw error;
       return data as SessionItem[];
     },
@@ -153,7 +168,11 @@ const Dashboard = () => {
   const { data: pendingCopilotCount = 0 } = useQuery({
     queryKey: ["dashboard-copilot-pending-count", user?.id],
     queryFn: async () => {
-      const { count, error } = await supabase.from("copilot_recommendations").select("*", { head: true, count: "exact" }).eq("status", "pending");
+      const { count, error } = await supabase
+        .from("copilot_recommendations")
+        .select("*", { head: true, count: "exact" })
+        .eq("trainer_id", user!.id)
+        .eq("status", "pending");
       if (error) throw error;
       return count ?? 0;
     },

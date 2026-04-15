@@ -17,6 +17,7 @@ import {
 import TrainerLiveSession from "../workout/TrainerLiveSession";
 import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
 import SessionMode from "@/pages/SessionMode";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
 
 type Props = {
   clientId: string;
@@ -36,7 +37,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .from("clients")
         .select(
           `
-          id, name, goal, phone, email, program_id, week_number, days_per_week,
+          id, name, goal, phone, email, program_id, week_number, days_per_week, training_type,
           programs ( id, name, weeks, delivery_mode )
         `
         )
@@ -53,6 +54,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         program_id: string | null;
         week_number: number | null;
         days_per_week: number | null;
+        training_type?: string;
         programs: { id: string; name: string; weeks: number | null; delivery_mode?: string } | null;
       };
     },
@@ -111,6 +113,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
+  const trainingType = parseClientTrainingType(client.training_type);
 
   if (sessionModeOpen) {
     return <SessionMode clientId={client.id} onClose={() => setSessionModeOpen(false)} />;
@@ -148,9 +151,20 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         </div>
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-white">{client.name}</h1>
-          <p className="text-xs" style={{ color: "#666" }}>
-            الأسبوع {client.week_number ?? 1}
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <span
+              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{
+                background: trainingType === "in_person" ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.2)",
+                color: trainingType === "in_person" ? "#22C55E" : "#94a3b8",
+              }}
+            >
+              {TRAINING_TYPE_LABEL_AR[trainingType]}
+            </span>
+            <p className="text-xs" style={{ color: "#666" }}>
+              الأسبوع {client.week_number ?? 1}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -191,7 +205,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
 
       <MuscleRecoveryMap clientId={client.id} />
 
-      {program?.delivery_mode === "in_person" && client.program_id && (
+      {trainingType === "in_person" && client.program_id && (
         <button
           type="button"
           onClick={() => setSessionModeOpen(true)}

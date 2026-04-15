@@ -1,17 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { authLogDev } from "@/lib/auth-log";
+import { normalizeFitniRole, type FitniRole } from "@/lib/auth-role";
 
-/** Canonical Fitni roles (DB + routing) */
-export type FitniRole = "coach" | "trainee";
+export type { FitniRole } from "@/lib/auth-role";
+export { normalizeFitniRole } from "@/lib/auth-role";
 
 export const FITNI_ROLE_STORAGE_KEY = "fitni.user_role_v1";
-
-export function normalizeFitniRole(raw: string | null | undefined): FitniRole | null {
-  if (!raw) return null;
-  const r = raw.toLowerCase().trim();
-  if (r === "coach" || r === "trainer") return "coach";
-  if (r === "trainee" || r === "client") return "trainee";
-  return null;
-}
 
 export function readStoredFitniRole(): FitniRole | null {
   try {
@@ -39,59 +33,58 @@ export function clearStoredFitniRole(): void {
 }
 
 /**
- * Resolve app role. Order matters:
- * 1) `clients.auth_user_id` → trainee (even if `profiles` exists — auth trigger may have inserted coach profile).
- * 2) `profiles.role` when set to trainee → trainee.
- * 3) `profiles` row → coach.
- * 4) Else `ensure_trainer_profile` once for trainer signup lag, then re-check profile.
+ * Single source of truth: `profiles.role` only (see DB trigger on `clients` for trainee sync).
+ * If no row exists, calls `ensure_user_profile()` then re-reads.
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
-  const { data: clientRow, error: clientErr } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("auth_user_id", userId)
-    .maybeSingle();
+  const readRole = async () =>
+    supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle();
 
-  if (clientErr) console.error("[auth] resolveFitniRole clients select", clientErr);
-  if (clientRow?.id) {
-    if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: trainee (clients.auth_user_id)");
-    return "trainee";
+  let { data: row, error } = await readRole();
+  if (error) {
+    console.error("[auth] resolveFitniRole profile select", error);
+    authLogDev("role_resolution_error", { userId, code: error.code, message: error.message });
+    return null;
   }
 
-  const selectProfile = async () =>
-    supabase.from("profiles").select("id, role").eq("user_id", userId).maybeSingle();
-
-  let { data: profile, error } = await selectProfile();
-
-  if (error) console.error("[auth] resolveFitniRole profile select", error);
-
-  if (profile?.id) {
-    const dbRole = normalizeFitniRole(profile.role as string | null | undefined);
-    if (dbRole === "trainee") {
-      if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: trainee (profiles.role)");
-      return "trainee";
-    }
-    if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: coach (profiles row)");
-    return "coach";
+  let resolved = normalizeFitniRole(row?.role as string | undefined);
+  if (resolved) {
+    authLogDev("role_resolution", { userId, source: "profiles.role", role: resolved });
+    return resolved;
   }
 
-  if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: no profile — ensure_trainer_profile");
-  const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
+  if (row && row.role != null && !resolved) {
+    authLogDev("role_invalid", { userId, rawRole: String(row.role) });
+    return null;
+  }
+
+  authLogDev("role_resolution", { userId, source: "ensure_user_profile" });
+  const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
   if (rpcErr) {
-    console.error("[auth] resolveFitniRole ensure_trainer_profile", rpcErr);
-  } else {
-    const retry = await selectProfile();
-    profile = retry.data;
-    error = retry.error;
-    if (error) console.error("[auth] resolveFitniRole profile re-select", error);
-    if (profile?.id) {
-      const dbRole = normalizeFitniRole(profile.role as string | null | undefined);
-      if (dbRole === "trainee") return "trainee";
-      if (import.meta.env.DEV) console.log("[auth] resolveFitniRole: coach (after ensure_trainer_profile)");
-      return "coach";
-    }
+    console.error("[auth] ensure_user_profile", rpcErr);
+    authLogDev("ensure_user_profile_error", { userId, message: rpcErr.message });
   }
 
-  console.warn("[auth] resolveFitniRole: still no role after ensure — returning null", { userId });
+  const retry = await readRole();
+  row = retry.data;
+  error = retry.error;
+  if (error) {
+    console.error("[auth] resolveFitniRole profile re-select", error);
+    return null;
+  }
+
+  resolved = normalizeFitniRole(row?.role as string | undefined);
+  if (resolved) {
+    authLogDev("role_resolution", { userId, source: "profiles.role_after_ensure", role: resolved });
+    return resolved;
+  }
+
+  if (row?.role != null && !resolved) {
+    authLogDev("role_invalid_after_ensure", { userId, rawRole: String(row.role) });
+    return null;
+  }
+
+  console.warn("[auth] resolveFitniRole: no profile or role after ensure", { userId });
+  authLogDev("role_resolution_failed", { userId });
   return null;
 }

@@ -527,6 +527,7 @@ export type Database = {
           subscription_end_date: string
           subscription_price: number
           trainer_id: string | null
+          training_type: string
           week_number: number
           weight: number | null
         }
@@ -563,6 +564,7 @@ export type Database = {
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
+          training_type?: string
           week_number?: number
           weight?: number | null
         }
@@ -599,6 +601,7 @@ export type Database = {
           subscription_end_date?: string
           subscription_price?: number
           trainer_id?: string | null
+          training_type?: string
           week_number?: number
           weight?: number | null
         }
@@ -2499,6 +2502,60 @@ export type Database = {
           },
         ]
       }
+      session_logs: {
+        Row: {
+          id: string
+          session_id: string
+          exercise_id: string
+          set_number: number
+          reps: number | null
+          weight: number | null
+          completed: boolean
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          exercise_id: string
+          set_number: number
+          reps?: number | null
+          weight?: number | null
+          completed?: boolean
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          exercise_id?: string
+          set_number?: number
+          reps?: number | null
+          weight?: number | null
+          completed?: boolean
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_logs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "program_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workout_session_exercises: {
         Row: {
           completed_at: string
@@ -2648,6 +2705,8 @@ export type Database = {
         Returns: undefined
       }
       cleanup_copilot_messages: { Args: never; Returns: undefined }
+      ensure_trainer_profile: { Args: never; Returns: undefined }
+      ensure_user_profile: { Args: never; Returns: undefined }
       complete_trainer_session: {
         Args: { p_session_id: string }
         Returns: boolean

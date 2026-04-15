@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import AuthGuard from "@/components/AuthGuard";
 import { RoleGuard } from "@/components/routing/RoleGuard";
+import { AuthAppGate } from "@/components/routing/AuthAppGate";
 import { PortalTokenProvider } from "@/hooks/usePortalToken";
 import Landing from "@/pages/Landing";
 import Onboarding from "@/pages/Onboarding";
@@ -61,6 +62,7 @@ import { TrainerAppLayout } from "@/components/layout/TrainerAppLayout";
 import { TraineeAppLayout } from "@/components/layout/TraineeAppLayout";
 import TraineeDashboard from "@/pages/TraineeDashboard";
 import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
+import TrainerSessionPage from "@/pages/TrainerSessionPage";
 
 const WEB_ONBOARDING_LANDING_GATE = false;
 
@@ -85,7 +87,7 @@ export function AppRouter() {
       <Route path="/coach/dashboard" element={<Navigate to={TRAINER_HOME} replace />} />
       <Route path="/dashboard/coach" element={<Navigate to={TRAINER_HOME} replace />} />
 
-      <Route element={<AuthGuard><RoleGuard allowed="coach"><TrainerAppLayout /></RoleGuard></AuthGuard>}>
+      <Route element={<AuthGuard><AuthAppGate><RoleGuard allowed="coach"><TrainerAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path={TRAINER_HOME.replace(/^\//, "")} element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
@@ -110,14 +112,15 @@ export function AppRouter() {
         <Route path="gulf-foods" element={<GulfFoods />} />
         <Route path="templates" element={<Templates />} />
         <Route path="leads" element={<LeadsInbox />} />
+        <Route path="trainer/session" element={<TrainerSessionPage />} />
       </Route>
 
-      <Route path="/trainee" element={<AuthGuard><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthGuard>}>
+      <Route path="/trainee" element={<AuthGuard><AuthAppGate><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<TraineeDashboard />} />
       </Route>
 
-      <Route path={CLIENT_HOME} element={<AuthGuard><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthGuard>}>
+      <Route path={CLIENT_HOME} element={<AuthGuard><AuthAppGate><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
         <Route index element={<TraineeDashboard />} />
       </Route>
 

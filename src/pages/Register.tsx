@@ -202,12 +202,13 @@ const Register = () => {
         const { data: sess } = await supabase.auth.getSession();
         console.log("[auth] post-signUp getSession", { hasSession: !!sess.session, uid: sess.session?.user?.id });
 
-        const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
+        const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
         if (rpcErr) {
-          console.error("[auth] ensure_trainer_profile RPC failed", rpcErr);
+          console.error("[auth] ensure_user_profile RPC failed", rpcErr);
           const { error: insertErr } = await supabase.from("profiles").insert({
             user_id: signUpData.user.id,
             full_name: name.trim() || "",
+            role: "coach",
           } as any);
           if (insertErr && insertErr.code !== "23505") {
             toast({

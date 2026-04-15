@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { ClientAnalyticsPanel } from "@/components/analytics/ClientAnalyticsPanel";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 
 type TabKey = "overview" | "analytics" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string; icon: any }[] = [
@@ -261,6 +262,21 @@ const ClientProfile = () => {
     },
   });
 
+  const updateTrainingType = useMutation({
+    mutationFn: async (training_type: ClientTrainingType) => {
+      const { error } = await supabase.from("clients").update({ training_type }).eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client", id] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      toast({ title: "تم حفظ نوع التدريب" });
+    },
+    onError: () => {
+      toast({ title: "تعذّر الحفظ", variant: "destructive" });
+    },
+  });
+
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   }
@@ -328,6 +344,15 @@ const ClientProfile = () => {
               <h1 className="text-xl font-bold text-foreground truncate">{client.name}</h1>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{client.goal}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium border ${
+                    parseClientTrainingType((client as { training_type?: string }).training_type) === "in_person"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                      : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                  }`}
+                >
+                  {TRAINING_TYPE_LABEL_AR[parseClientTrainingType((client as { training_type?: string }).training_type)]}
+                </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-[hsl(0_0%_10%)] text-muted-foreground font-medium">
                   الأسبوع {client.week_number}
                 </span>
@@ -366,6 +391,36 @@ const ClientProfile = () => {
               <span>{Math.round(progressPercent)}%</span>
             </div>
             <Progress value={progressPercent} className="h-2" />
+          </div>
+
+          <div className="mb-4 rounded-xl border border-[hsl(0_0%_10%)] bg-[hsl(0_0%_5%)] p-3 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">نوع التدريب</p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+              <Select
+                value={parseClientTrainingType((client as { training_type?: string }).training_type)}
+                onValueChange={(v) => updateTrainingType.mutate(v as ClientTrainingType)}
+                disabled={updateTrainingType.isPending}
+              >
+                <SelectTrigger className="w-full sm:max-w-[220px] bg-[hsl(0_0%_8%)] border-[hsl(0_0%_12%)]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">{TRAINING_TYPE_LABEL_AR.online}</SelectItem>
+                  <SelectItem value="in_person">{TRAINING_TYPE_LABEL_AR.in_person}</SelectItem>
+                </SelectContent>
+              </Select>
+              {parseClientTrainingType((client as { training_type?: string }).training_type) === "in_person" && client.program_id && (
+                <Button variant="default" size="sm" className="gap-1 shrink-0" asChild>
+                  <Link to={`/trainer/session?clientId=${id}`}>
+                    <Dumbbell className="w-4 h-4" strokeWidth={1.5} />
+                    وضع الجلسة الحضورية
+                  </Link>
+                </Button>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              التدريب الأونلاين يخفي وضع الجلسة الحضورية عن المدرب؛ المتدرب يتابع تمارينه من تطبيقه كالمعتاد.
+            </p>
           </div>
 
           <div className={`grid ${(client as any).client_type === 'in_person' ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>

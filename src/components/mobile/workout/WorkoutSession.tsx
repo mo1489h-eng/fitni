@@ -85,6 +85,10 @@ export default function WorkoutSession() {
     goPrevExercise,
     awaitingNextExercise,
     phase,
+    highlightedSetKey,
+    lastLiveAction,
+    trainerOnline,
+    traineeOnline,
   } = useWorkoutSession();
 
   const [exitOpen, setExitOpen] = useState(false);
@@ -305,6 +309,29 @@ export default function WorkoutSession() {
               )}
             </div>
 
+            <div className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] text-white/55">
+              <span>
+                {trainerOnline ? "🟢" : "⚪"} المدرب {trainerOnline ? "متصل الآن" : "غير متصل"}
+              </span>
+              <span>
+                {traineeOnline ? "🟢" : "⚪"} المتدرب {traineeOnline ? "متصل الآن" : "غير متصل"}
+              </span>
+            </div>
+            <AnimatePresence>
+              {lastLiveAction ? (
+                <motion.p
+                  key={lastLiveAction}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="mb-2 text-center text-[11px] font-medium text-emerald-400/95"
+                >
+                  {lastLiveAction}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+
             {/* Logging table */}
             <div className="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]">
               <div className="grid grid-cols-4 gap-0 border-b border-white/[0.06] px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
@@ -318,12 +345,28 @@ export default function WorkoutSession() {
                 const active = n === setWithinExercise;
                 const prevW = lastSet?.actual_weight;
                 const prevR = lastSet?.actual_reps;
+                const flash = highlightedSetKey === `${ex.exerciseId}:${n}`;
                 return (
-                  <div
+                  <motion.div
                     key={n}
-                    className="grid grid-cols-4 items-center gap-0 border-b border-white/[0.04] px-2 py-2.5 text-sm last:border-0"
+                    animate={
+                      flash
+                        ? {
+                            scale: [1, 1.02, 1],
+                            boxShadow: [
+                              "inset 0 0 0 0px transparent",
+                              "inset 0 0 0 1px rgba(34,197,94,0.5), 0 0 14px rgba(34,197,94,0.22)",
+                              "inset 0 0 0 1px rgba(34,197,94,0.2)",
+                            ],
+                          }
+                        : { scale: 1, boxShadow: "none" }
+                    }
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className={`grid grid-cols-4 items-center gap-0 border-b border-white/[0.04] px-2 py-2.5 text-sm last:border-0 ${
+                      flash ? "" : ""
+                    }`}
                     style={{
-                      background: active ? "rgba(34,197,94,0.06)" : "transparent",
+                      background: active ? "rgba(34,197,94,0.06)" : flash ? "rgba(34,197,94,0.1)" : "transparent",
                     }}
                   >
                     <span className="font-bold text-white">{n}</span>
@@ -333,7 +376,7 @@ export default function WorkoutSession() {
                     <span className="col-span-2 text-center font-semibold text-white">
                       {done ? `${done.weight}×${done.reps}` : active ? "…" : "—"}
                     </span>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>

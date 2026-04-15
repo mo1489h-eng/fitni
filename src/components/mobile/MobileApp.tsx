@@ -19,6 +19,7 @@ import { resolveFitniRole } from "@/lib/auth-service";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
+import TrainerSessionPage from "@/pages/TrainerSessionPage";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,13 @@ function MobileAppContent() {
     return <Navigate to="/trainee/dashboard" replace />;
   }
 
+  if (location.pathname === "/trainer/session") {
+    if (fitniRole !== "coach") {
+      return <Navigate to={fitniRole === "trainee" ? "/trainee/dashboard" : "/coach/dashboard"} replace />;
+    }
+    return <TrainerSessionPage />;
+  }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -149,6 +157,7 @@ function MobileRoutes() {
       <Route path="/register" element={<RegisterGate />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path="/trainer/session" element={<MobileAppGate />} />
       <Route path="/coach/dashboard" element={<MobileAppGate />} />
       <Route path="/trainee/dashboard" element={<MobileAppGate />} />
       <Route path="/" element={<MobileHomeEntry />} />

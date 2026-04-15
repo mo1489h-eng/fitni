@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProgramRealtimeSync } from "@/hooks/useProgramRealtimeSync";
 import TrainerWorkoutSession from "@/components/mobile/trainer/TrainerWorkoutSession";
 import { Loader2 } from "lucide-react";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
 
 type Props = {
   clientId: string;
@@ -11,8 +12,8 @@ type Props = {
 };
 
 /**
- * In-person session shell: full workout UI only when the assigned program is `delivery_mode === "in_person"`.
- * Online programs use the standard client workout flow without this trainer-led session surface.
+ * Trainer-led in-person session surface: only when `clients.training_type === 'in_person'`
+ * and a program is assigned. Online clients use the standard trainee workout flow.
  */
 export default function SessionMode({ clientId, onClose }: Props) {
   const { user } = useAuth();
@@ -27,17 +28,18 @@ export default function SessionMode({ clientId, onClose }: Props) {
           `
           id,
           program_id,
-          programs ( id, name, delivery_mode )
+          training_type,
+          programs ( id, name )
         `
         )
         .eq("id", clientId)
         .eq("trainer_id", user.id)
         .maybeSingle();
       if (e) throw e;
-      const prog = row?.programs as { id: string; name: string; delivery_mode?: string } | null;
+      const prog = row?.programs as { id: string; name: string } | null;
       return {
         programId: row?.program_id ?? null,
-        deliveryMode: prog?.delivery_mode === "in_person" ? "in_person" as const : "online" as const,
+        trainingType: parseClientTrainingType((row as { training_type?: string } | null)?.training_type),
         programName: prog?.name ?? "",
       };
     },
@@ -81,13 +83,13 @@ export default function SessionMode({ clientId, onClose }: Props) {
     );
   }
 
-  if (data.deliveryMode !== "in_person") {
+  if (data.trainingType !== "in_person") {
     return (
       <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 px-6" style={{ background: "#050505" }} dir="rtl">
         <p className="text-center text-sm leading-relaxed text-white/85">
-          وضع الجلسة الحضورية متاح فقط للبرامج المعرّفة كـ <span className="text-[#22C55E] font-semibold">حضوري</span>.
-          <br />
-          <span className="text-white/55 text-xs mt-2 block">غيّر نوع التسليم في إعدادات البرنامج إلى حضوري لتفعيل هذه الشاشة.</span>
+          وضع الجلسة الحضورية متاح فقط عندما يكون نوع التدريب للعميل{" "}
+          <span className="text-[#22C55E] font-semibold">{TRAINING_TYPE_LABEL_AR.in_person}</span>{" "}
+          (حاليًا: {TRAINING_TYPE_LABEL_AR[data.trainingType]}).
         </p>
         <button type="button" onClick={onClose} className="rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: "#222" }}>
           إغلاق

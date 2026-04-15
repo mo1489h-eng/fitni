@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { upsertSessionLog } from "@/lib/sessionLogs";
+import { finishSession, startSession, validateSessionStartArgs, validateSessionState } from "@/lib/session-engine";
+import { useSessionLogsRealtime } from "@/hooks/useSessionLogsRealtime";
+import { useSessionPresence } from "@/hooks/useSessionPresence";
+import { useSessionLogRetryAutoFlush } from "@/hooks/useSessionLogRetry";
 import {
   buildWorkoutPlanFromDay,
   totalSetsInPlan,
@@ -50,11 +56,21 @@ export default function WorkoutSessionView({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [setNote, setSetNote] = useState("");
-  const [liveInsertCount, setLiveInsertCount] = useState(0);
+  const [liveSyncCount, setLiveSyncCount] = useState(0);
+  const [partnerActionLine, setPartnerActionLine] = useState<string | null>(null);
+  const { user } = useAuth();
   const startMsRef = useRef<number>(Date.now());
   const volumeRef = useRef(0);
   const completedRef = useRef(0);
+  const loggingSetRef = useRef(false);
   const isTrainer = variant === "trainer";
+
+  useSessionLogRetryAutoFlush();
+  const { trainerOnline, traineeOnline } = useSessionPresence(
+    sessionId,
+    isTrainer ? "trainer" : "trainee",
+    !!sessionId,
+  );
 
   const totalSets = useMemo(() => (plan ? totalSetsInPlan(plan) : 0), [plan]);
   const progressPct = totalSets > 0 ? Math.min(100, Math.round((completedSets / totalSets) * 100)) : 0;
@@ -106,25 +122,21 @@ export default function WorkoutSessionView({
     };
   }, [portalToken, planProp]);
 
+  useSessionLogsRealtime(
+    sessionId,
+    (rows) => {
+      if (!isTrainer) return;
+      setLiveSyncCount((c) => c + rows.length);
+      if (rows.length) setPartnerActionLine("المتدرب سجل مجموعة");
+    },
+    { enabled: !!sessionId && isTrainer },
+  );
+
   useEffect(() => {
-    if (!isTrainer) return;
-    const ch = supabase
-      .channel(`workout-logs-live-${clientId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "workout_logs",
-          filter: `client_id=eq.${clientId}`,
-        },
-        () => setLiveInsertCount((n) => n + 1)
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [clientId, isTrainer]);
+    if (!partnerActionLine) return;
+    const t = window.setTimeout(() => setPartnerActionLine(null), 3000);
+    return () => window.clearTimeout(t);
+  }, [partnerActionLine]);
 
   useEffect(() => {
     if (!currentExercise) return;
@@ -140,19 +152,24 @@ export default function WorkoutSessionView({
 
   useEffect(() => {
     if (!plan?.length || !programDayIdForSession || sessionId) return;
+    if (!validateSessionStartArgs({ programDayId: programDayIdForSession, planLength: plan.length })) return;
+    let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .insert({
-          client_id: clientId,
-          program_day_id: programDayIdForSession,
-          started_at: new Date().toISOString(),
-        })
-        .select("id")
-        .single();
-      if (!error && data?.id) setSessionId(data.id);
+      try {
+        const { id } = await startSession({
+          clientId,
+          programDayId: programDayIdForSession,
+          trainerId: isTrainer ? user?.id ?? null : null,
+        });
+        if (!cancelled) setSessionId(id);
+      } catch {
+        /* ignore */
+      }
     })();
-  }, [plan, clientId, programDayIdForSession, sessionId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [plan, clientId, programDayIdForSession, sessionId, isTrainer, user?.id]);
 
   useEffect(() => {
     if (phase !== "rest" || restRemaining <= 0) return;
@@ -179,15 +196,11 @@ export default function WorkoutSessionView({
       }
       const durationMin = Math.max(1, Math.round((Date.now() - startMsRef.current) / 60000));
       setSaving(true);
-      await supabase
-        .from("workout_sessions")
-        .update({
-          completed_at: new Date().toISOString(),
-          duration_minutes: durationMin,
-          total_volume: vol,
-          total_sets: sets,
-        })
-        .eq("id", sessionId);
+      await finishSession(sessionId, {
+        duration_minutes: durationMin,
+        total_volume: vol,
+        total_sets: sets,
+      });
       setSaving(false);
       setPhase("summary");
     },
@@ -195,7 +208,17 @@ export default function WorkoutSessionView({
   );
 
   const logSetAndAdvance = async () => {
-    if (!plan?.length || !currentExercise) return;
+    if (!plan?.length || !currentExercise || !sessionId) return;
+    if (
+      !validateSessionState({
+        sessionId,
+        programDayId: programDayIdForSession ?? null,
+        planLength: plan.length,
+      })
+    )
+      return;
+    if (loggingSetRef.current) return;
+    loggingSetRef.current = true;
     const w = parseFloat(actualWeight) || 0;
     const r = parseInt(actualReps, 10) || 0;
     const vol = w * r;
@@ -207,18 +230,42 @@ export default function WorkoutSessionView({
     setCompletedSets(nextCompleted);
 
     const noteTrim = setNote.trim();
-    await supabase.from("workout_logs").insert({
-      client_id: clientId,
-      program_day_id: currentExercise.programDayId,
-      exercise_id: currentExercise.exerciseId,
-      set_number: setWithinExercise,
-      planned_reps: currentExercise.reps,
-      planned_weight: currentExercise.weight,
-      actual_reps: r,
-      actual_weight: w,
-      completed: true,
-      ...(noteTrim ? { notes: noteTrim } : {}),
-    });
+    try {
+      const result = await upsertSessionLog({
+        sessionId,
+        exerciseId: currentExercise.exerciseId,
+        setNumber: setWithinExercise,
+        weight: w,
+        reps: r,
+        completed: true,
+      });
+      const wl = {
+        client_id: clientId,
+        program_day_id: currentExercise.programDayId,
+        exercise_id: currentExercise.exerciseId,
+        set_number: setWithinExercise,
+        planned_reps: currentExercise.reps,
+        planned_weight: currentExercise.weight,
+        actual_reps: r,
+        actual_weight: w,
+        completed: true,
+        ...(noteTrim ? { notes: noteTrim } : {}),
+      };
+      if (result.status === "synced") {
+        const ins = await supabase.from("workout_logs").insert(wl);
+        if (ins.error) throw ins.error;
+      } else {
+        void supabase.from("workout_logs").insert(wl).catch(() => {});
+      }
+    } catch {
+      volumeRef.current -= vol;
+      completedRef.current -= 1;
+      setVolumeTotal(volumeRef.current);
+      setCompletedSets(completedRef.current);
+      return;
+    } finally {
+      loggingSetRef.current = false;
+    }
     void hapticSuccess();
     if (isTrainer) setSetNote("");
 
@@ -380,6 +427,21 @@ export default function WorkoutSessionView({
   return (
     <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: BG }} dir="rtl">
       <header className="shrink-0 px-4 pt-[max(8px,env(safe-area-inset-top))] pb-3">
+        {sessionId ? (
+          <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] text-white/55">
+            <span>
+              {trainerOnline ? "🟢" : "⚪"} المدرب {trainerOnline ? "متصل الآن" : "غير متصل"}
+            </span>
+            <span>
+              {traineeOnline ? "🟢" : "⚪"} المتدرب {traineeOnline ? "متصل الآن" : "غير متصل"}
+            </span>
+          </div>
+        ) : null}
+        {isTrainer && partnerActionLine ? (
+          <p className="mb-2 text-center text-[11px] font-medium" style={{ color: ACCENT }}>
+            {partnerActionLine}
+          </p>
+        ) : null}
         {isTrainer && (
           <div
             className="mb-2 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-medium"
@@ -388,7 +450,7 @@ export default function WorkoutSessionView({
             <Radio className="h-3.5 w-3.5 shrink-0 animate-pulse" style={{ color: ACCENT }} />
             <span style={{ color: "#888" }}>مباشر</span>
             <span className="tabular-nums font-semibold" style={{ color: ACCENT }}>
-              {liveInsertCount} تحديث
+              {liveSyncCount} تحديث
             </span>
           </div>
         )}

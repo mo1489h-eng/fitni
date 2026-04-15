@@ -10,6 +10,11 @@ import {
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sessionLogSyncTs, upsertSessionLog } from "@/lib/sessionLogs";
+import { finishSession, startSession } from "@/lib/session-engine";
+import { useSessionLogsRealtime } from "@/hooks/useSessionLogsRealtime";
+import { useSessionPresence, type SessionPresenceRole } from "@/hooks/useSessionPresence";
+import { useSessionLogRetryAutoFlush } from "@/hooks/useSessionLogRetry";
 import { buildWorkoutPlanFromDay, type PlanExercise } from "@/lib/workoutDayPlan";
 import type { CompletedSetValue, WorkoutPhase } from "./types";
 import { STORAGE_KEY, type PersistedWorkoutV1 } from "./types";
@@ -72,6 +77,11 @@ type Ctx = {
   finalizeAndExit: () => Promise<void>;
   finalizeWorkout: () => Promise<void>;
   onClose: () => void;
+  /** Flash key `exerciseId:setNum` when coach updates a set remotely */
+  highlightedSetKey: string | null;
+  lastLiveAction: string | null;
+  trainerOnline: boolean;
+  traineeOnline: boolean;
 };
 
 const WorkoutSessionContext = createContext<Ctx | null>(null);
@@ -80,11 +90,20 @@ type ProviderProps = {
   clientId: string;
   portalToken: string;
   onClose: () => void;
+  /** Presence role for Realtime Presence (default trainee / client flow). */
+  sessionPresenceRole?: SessionPresenceRole;
   children: ReactNode;
 };
 
-export function WorkoutSessionProvider({ clientId, portalToken, onClose, children }: ProviderProps) {
+export function WorkoutSessionProvider({
+  clientId,
+  portalToken,
+  onClose,
+  sessionPresenceRole = "trainee",
+  children,
+}: ProviderProps) {
   const queryClient = useQueryClient();
+  useSessionLogRetryAutoFlush();
   const [phase, setPhase] = useState<WorkoutPhase>("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -104,12 +123,17 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [previewOffset, setPreviewOffset] = useState(0);
   const [awaitingNextExercise, setAwaitingNextExercise] = useState(false);
+  const [highlightedSetKey, setHighlightedSetKey] = useState<string | null>(null);
+  const [lastLiveAction, setLastLiveAction] = useState<string | null>(null);
   const startedAtRef = useRef<number>(Date.now());
   const volumeRef = useRef(0);
   const setsRef = useRef(0);
   const sessionCreating = useRef(false);
   const restHandledRef = useRef(false);
   const completedRef = useRef<Record<string, CompletedSetValue>>({});
+  const hydrationAppliedRef = useRef(false);
+
+  const { trainerOnline, traineeOnline } = useSessionPresence(sessionId, sessionPresenceRole, !!sessionId);
 
   const { data: bootstrap } = useQuery({
     queryKey: ["workout-bootstrap", clientId, portalToken],
@@ -162,22 +186,100 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     setLoadError(null);
   }, [bootstrap]);
 
+  const { data: hydratedLogs } = useQuery({
+    queryKey: ["session-logs-hydrate", sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      const { data: sl, error: e1 } = await supabase.from("session_logs").select("*").eq("session_id", sessionId);
+      if (e1) throw e1;
+      if (sl?.length) return { kind: "logs" as const, rows: sl };
+      const { data: wse, error: e2 } = await supabase.from("workout_session_exercises").select("*").eq("session_id", sessionId);
+      if (e2) throw e2;
+      return { kind: "legacy" as const, rows: wse ?? [] };
+    },
+    enabled: !!sessionId,
+  });
+
+  useEffect(() => {
+    hydrationAppliedRef.current = false;
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!hydratedLogs?.rows.length || hydrationAppliedRef.current) return;
+    hydrationAppliedRef.current = true;
+    setCompleted((prev) => {
+      const next = { ...prev };
+      if (hydratedLogs.kind === "logs") {
+        for (const row of hydratedLogs.rows) {
+          const k = setKey(row.exercise_id, row.set_number);
+          const w = Number(row.weight ?? 0);
+          const r = Number(row.reps ?? 0);
+          const at = sessionLogSyncTs(row);
+          const prevVal = next[k];
+          if (prevVal?.syncedAt && new Date(prevVal.syncedAt).getTime() > new Date(at).getTime()) continue;
+          next[k] = { weight: w, reps: r, syncedAt: at };
+        }
+      } else {
+        for (const row of hydratedLogs.rows) {
+          const k = setKey(row.exercise_id, row.set_number);
+          const w = Number(row.weight_used ?? 0);
+          const r = Number(row.reps_completed ?? 0);
+          const at = row.completed_at;
+          const prevVal = next[k];
+          if (prevVal?.syncedAt && new Date(prevVal.syncedAt).getTime() > new Date(at).getTime()) continue;
+          next[k] = { weight: w, reps: r, syncedAt: at };
+        }
+      }
+      return next;
+    });
+  }, [hydratedLogs]);
+
+  useSessionLogsRealtime(
+    sessionId,
+    (rows) => {
+      setCompleted((prev) => {
+        const next = { ...prev };
+        for (const row of rows) {
+          const k = setKey(row.exercise_id, row.set_number);
+          const w = Number(row.weight ?? 0);
+          const r = Number(row.reps ?? 0);
+          const at = sessionLogSyncTs(row);
+          const prevVal = next[k];
+          if (prevVal?.syncedAt && new Date(prevVal.syncedAt).getTime() > new Date(at).getTime()) continue;
+          next[k] = { weight: w, reps: r, syncedAt: at };
+        }
+        return next;
+      });
+      if (rows.length > 0) {
+        const row = rows[rows.length - 1]!;
+        const trainerWrote = !!(trainerId && row.updated_by === trainerId);
+        setLastLiveAction(trainerWrote ? "المدرب سجل مجموعة" : "المتدرب سجل مجموعة");
+        setHighlightedSetKey(`${row.exercise_id}:${row.set_number}`);
+      }
+    },
+    { debounceMs: 80, enabled: !!sessionId },
+  );
+
+  useEffect(() => {
+    if (!highlightedSetKey) return;
+    const t = window.setTimeout(() => setHighlightedSetKey(null), 1000);
+    return () => window.clearTimeout(t);
+  }, [highlightedSetKey]);
+
+  useEffect(() => {
+    if (!lastLiveAction) return;
+    const t = window.setTimeout(() => setLastLiveAction(null), 3000);
+    return () => window.clearTimeout(t);
+  }, [lastLiveAction]);
+
   const createSessionMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("workout_sessions")
-        .insert({
-          client_id: clientId,
-          program_day_id: programDayId,
-          trainer_id: trainerId,
-          started_at: new Date().toISOString(),
-          is_active: true,
-          current_exercise_index: 0,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return (data as { id: string }).id;
+      const { id } = await startSession({
+        clientId,
+        programDayId,
+        trainerId,
+      });
+      return id;
     },
     onSuccess: (id) => {
       setSessionId(id);
@@ -289,37 +391,45 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       reps: number;
       exercise: PlanExercise;
       setNum: number;
-    }) => {
+    }): Promise<{ syncedAt: string } | null> => {
       const { weight, reps, exercise, setNum } = payload;
       const vol = weight * reps;
-      if (sessionId) {
-        await (supabase as any).from("workout_session_exercises").insert({
-          session_id: sessionId,
-          exercise_id: exercise.exerciseId,
-          program_day_id: exercise.programDayId,
-          set_number: setNum,
-          weight_used: weight,
-          reps_completed: reps,
-          completed_at: new Date().toISOString(),
-        });
-        await supabase.from("workout_logs").insert({
-          client_id: clientId,
-          program_day_id: exercise.programDayId,
-          exercise_id: exercise.exerciseId,
-          set_number: setNum,
-          planned_reps: exercise.reps,
-          planned_weight: exercise.weight,
-          actual_reps: reps,
-          actual_weight: weight,
-          completed: true,
-        });
-        await (supabase as any)
-          .from("workout_sessions")
-          .update({ current_exercise_index: exerciseIndex })
-          .eq("id", sessionId);
+      if (!sessionId) {
+        volumeRef.current += vol;
+        setsRef.current += 1;
+        return null;
       }
+      const result = await upsertSessionLog({
+        sessionId,
+        exerciseId: exercise.exerciseId,
+        setNumber: setNum,
+        weight,
+        reps,
+        completed: true,
+      });
+      const wl = {
+        client_id: clientId,
+        program_day_id: exercise.programDayId,
+        exercise_id: exercise.exerciseId,
+        set_number: setNum,
+        planned_reps: exercise.reps,
+        planned_weight: exercise.weight,
+        actual_reps: reps,
+        actual_weight: weight,
+        completed: true,
+      };
+      if (result.status === "synced") {
+        const ins = await supabase.from("workout_logs").insert(wl);
+        if (ins.error) throw ins.error;
+      } else {
+        void supabase.from("workout_logs").insert(wl).catch(() => {});
+      }
+      await (supabase as any).from("workout_sessions").update({ current_exercise_index: exerciseIndex }).eq("id", sessionId);
       volumeRef.current += vol;
       setsRef.current += 1;
+      return {
+        syncedAt: result.status === "synced" ? sessionLogSyncTs(result.row) : new Date().toISOString(),
+      };
     },
   });
 
@@ -332,7 +442,13 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       setCompleted((prev) => ({ ...prev, [k]: { weight, reps } }));
 
       try {
-        await insertSetMutation.mutateAsync({ weight, reps, exercise: ex, setNum: setWithinExercise });
+        const sync = await insertSetMutation.mutateAsync({ weight, reps, exercise: ex, setNum: setWithinExercise });
+        if (sync?.syncedAt) {
+          setCompleted((prev) => ({
+            ...prev,
+            [k]: { weight, reps, syncedAt: sync.syncedAt },
+          }));
+        }
         const rpe =
           opts?.rpe ??
           useWorkoutStore.getState().rpeByExerciseId[ex.exerciseId] ??
@@ -439,16 +555,11 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
   const finalizeWorkout = useCallback(async () => {
     if (!sessionId) return;
     const durationMin = Math.max(1, Math.round(elapsedMs / 60000));
-    await (supabase as any)
-      .from("workout_sessions")
-      .update({
-        completed_at: new Date().toISOString(),
-        duration_minutes: durationMin,
-        total_volume: volumeRef.current,
-        total_sets: setsRef.current,
-        is_active: false,
-      })
-      .eq("id", sessionId);
+    await finishSession(sessionId, {
+      duration_minutes: durationMin,
+      total_volume: volumeRef.current,
+      total_sets: setsRef.current,
+    });
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -507,6 +618,10 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       finalizeAndExit,
       finalizeWorkout,
       onClose,
+      highlightedSetKey,
+      lastLiveAction,
+      trainerOnline,
+      traineeOnline,
     }),
     [
       phase,
@@ -541,6 +656,10 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       finalizeAndExit,
       finalizeWorkout,
       onClose,
+      highlightedSetKey,
+      lastLiveAction,
+      trainerOnline,
+      traineeOnline,
     ]
   );
 

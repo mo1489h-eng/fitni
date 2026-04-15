@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
 import TrainerMobileClientDetail from "./TrainerMobileClientDetail";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
 
 type ClientRow = {
   id: string;
@@ -24,6 +25,7 @@ type ClientRow = {
   phone: string | null;
   last_active_at: string | null;
   email: string | null;
+  training_type?: string;
 };
 
 const TrainerMobileClients = () => {
@@ -42,7 +44,7 @@ const TrainerMobileClients = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, goal, phone, last_active_at, email")
+        .select("id, name, goal, phone, last_active_at, email, training_type")
         .eq("trainer_id", user.id)
         .order("name");
       if (error) throw error;
@@ -147,7 +149,18 @@ const TrainerMobileClients = () => {
                   {client.name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-white">{client.name}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-white">{client.name}</p>
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{
+                        background: parseClientTrainingType(client.training_type) === "in_person" ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.2)",
+                        color: parseClientTrainingType(client.training_type) === "in_person" ? "#22C55E" : "#94a3b8",
+                      }}
+                    >
+                      {TRAINING_TYPE_LABEL_AR[parseClientTrainingType(client.training_type)]}
+                    </span>
+                  </div>
                   <p className="truncate text-xs" style={{ color: "#666" }}>
                     {client.goal || client.phone || ""}
                   </p>

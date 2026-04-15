@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
 import { resolveFitniRole, persistFitniRole } from "@/lib/auth-service";
+import { authLogDev } from "@/lib/auth-log";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,11 +52,10 @@ const Login = () => {
       });
 
       if (error) {
-        console.error("[auth] signInWithPassword RAW", {
+        authLogDev("login_failure", {
           message: error.message,
           status: (error as { status?: number }).status,
           code: (error as { code?: string }).code,
-          name: error.name,
         });
         // Surface Supabase message verbatim (same string often used for wrong password AND unconfirmed email).
         toast({
@@ -66,7 +66,7 @@ const Login = () => {
         return;
       }
 
-      console.log("[auth] signInWithPassword ok", {
+      authLogDev("login_success", {
         userId: signInData.user?.id,
         hasSession: !!signInData.session,
         emailConfirmed: !!(signInData.user?.email_confirmed_at || signInData.user?.confirmed_at),
@@ -109,7 +109,7 @@ const Login = () => {
         }
         if (import.meta.env.DEV) {
           const { data: after } = await supabase.auth.getSession();
-          console.log("[auth] post-login getSession", {
+          authLogDev("post_login_session", {
             hasSession: !!after.session,
             uid: after.session?.user?.id,
           });

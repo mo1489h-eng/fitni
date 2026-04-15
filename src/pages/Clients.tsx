@@ -33,6 +33,7 @@ import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
 import ImportClientsModal from "@/components/ImportClientsModal";
 import { isValidSignupEmail } from "@/lib/email-validation";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -48,6 +49,7 @@ type ClientListRow = {
   sessions_per_month?: number | null;
   sessions_used?: number | null;
   last_active_at?: string | null;
+  training_type?: string;
 };
 
 function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "expiring" {
@@ -213,6 +215,7 @@ const Clients = () => {
         injuries: form.injuries || null,
         preferred_equipment: form.equipment || null,
         client_type: form.clientType,
+        training_type: (form.clientType === "in_person" ? "in_person" : "online") as ClientTrainingType,
         sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
       } as any)
         .select("id, invite_token")
@@ -443,11 +446,11 @@ const Clients = () => {
                           {client.goal}
                         </span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                          (client as any).client_type === "in_person"
+                          parseClientTrainingType(client.training_type) === "in_person"
                             ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
                             : "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
                         }`}>
-                          {(client as any).client_type === "in_person" ? "حضوري" : "أونلاين"}
+                          {TRAINING_TYPE_LABEL_AR[parseClientTrainingType(client.training_type)]}
                         </span>
                         {(client as any).client_type === "in_person" && (client as any).sessions_per_month > 0 && (
                           <span className="text-[10px] text-muted-foreground">

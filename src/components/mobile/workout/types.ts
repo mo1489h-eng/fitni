@@ -9,6 +9,8 @@ export type CompletedSetKey = string;
 export type CompletedSetValue = {
   weight: number;
   reps: number;
+  /** ISO timestamp from `session_logs.updated_at` (fallback `created_at`) for last-write-wins merges */
+  syncedAt?: string;
 };
 
 export type LastSetInfo = {

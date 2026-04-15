@@ -88,12 +88,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(data as Profile);
       } else {
         // No profile — try to create one via RPC
-        if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_trainer_profile");
-        const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
+        if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_user_profile");
+        const { error: ensureErr } = await supabase.rpc("ensure_user_profile");
         if (fetchId !== profileFetchRef.current) return;
 
         if (ensureErr) {
-          console.error("[Auth] ensure_trainer_profile failed", ensureErr);
+          console.error("[Auth] ensure_user_profile failed", ensureErr);
           setProfile(null);
         } else {
           const r2 = await supabase

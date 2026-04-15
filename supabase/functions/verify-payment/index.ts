@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getResendApiKey, resendFromAddress } from "../_shared/resendConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -143,7 +144,7 @@ serve(async (req) => {
     console.log("Subscription upgraded:", userId, "plan:", plan, "end:", endDate.toISOString());
 
     // Send confirmation email
-    const resendKey = Deno.env.get("RESEND_API_KEY");
+    const resendKey = getResendApiKey();
     if (resendKey && userEmail) {
       const planName = plan === "basic" ? "أساسي" : "احترافي";
       const renewDate = endDate.toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
@@ -159,7 +160,7 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "CoachBase <noreply@coachbase.health>",
+            from: resendFromAddress(),
             to: [userEmail],
             subject: isFounderDiscount ? "تم تفعيل عرض المؤسسين 🎉" : "شكراً لاشتراكك في CoachBase 🎉",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">

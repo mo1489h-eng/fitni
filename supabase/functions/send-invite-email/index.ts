@@ -1,5 +1,5 @@
 /// <reference types="deno" />
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { inviteClientAuth } from "../_shared/inviteClientAuth.ts";
 
 const corsHeaders = {

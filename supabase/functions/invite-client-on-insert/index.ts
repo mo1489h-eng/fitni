@@ -9,7 +9,7 @@
  * Returns HTTP 200 for all handled outcomes so Supabase does not retry on Resend/business failures
  * (5xx would trigger webhook retries and duplicate attempts).
  */
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { inviteClientAuth } from "../_shared/inviteClientAuth.ts";
 
 const corsHeaders = {

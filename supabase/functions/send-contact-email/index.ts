@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getResendApiKey, resendFromAddress } from "../_shared/resendConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,8 +47,8 @@ Deno.serve(async (req) => {
       console.log("Contact saved to DB successfully");
     }
 
-    // Send email via Resend
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY_1") || Deno.env.get("RESEND_API_KEY");
+    // Send email via Resend (same API key as other Edge Functions / Supabase secrets)
+    const RESEND_API_KEY = getResendApiKey();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!RESEND_API_KEY) {
@@ -90,7 +91,7 @@ Deno.serve(async (req) => {
         "X-Connection-Api-Key": RESEND_API_KEY,
       },
       body: JSON.stringify({
-        from: "CoachBase <noreply@coachbase.health>",
+        from: resendFromAddress(),
         to: ["coachbase.health@gmail.com"],
         reply_to: email,
         subject: `رسالة جديدة من ${name} — ${inquiry_type || "استفسار عام"}`,

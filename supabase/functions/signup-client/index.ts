@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getResendApiKey, resendFromAddress } from "../_shared/resendConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -188,7 +189,7 @@ serve(async (req) => {
     }
 
     // 6. Send welcome email
-    const resendKey = Deno.env.get("RESEND_API_KEY");
+    const resendKey = getResendApiKey();
     if (resendKey) {
       // Get trainer name
       const { data: trainerProfile } = await supabase
@@ -202,7 +203,7 @@ serve(async (req) => {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "CoachBase <noreply@coachbase.health>",
+            from: resendFromAddress(),
             to: [client_email],
             subject: `مرحباً ${client_name}! 💪 — اشتراكك جاهز`,
             html: `

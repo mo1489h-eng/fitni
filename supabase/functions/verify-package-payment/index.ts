@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
+import { getResendApiKey, resendFromAddress } from "../_shared/resendConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -192,14 +193,14 @@ serve(async (req) => {
       .update({ used_at: new Date().toISOString() }).eq("id", session.id);
 
     // Send receipt
-    const resendKey = Deno.env.get("RESEND_API_KEY");
+    const resendKey = getResendApiKey();
     if (resendKey && client_email) {
       try {
         await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "CoachBase <noreply@coachbase.health>",
+            from: resendFromAddress(),
             to: [client_email],
             subject: "إيصال دفع — CoachBase 🧾",
             html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#1a1a2e;color:#fff;border-radius:16px;">

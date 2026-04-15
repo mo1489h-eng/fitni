@@ -1,4 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getResendApiKey, resendFromAddress } from "./resendConfig.ts";
 
 /** Why email was not sent (safe to show in UI; no secrets). */
 export type InviteEmailReason =
@@ -19,27 +20,6 @@ export type InviteClientAuthResult = {
   /** Resend message id when send succeeded (for support logs). */
   resendId?: string;
 };
-
-/** Supabase Edge secrets — try common names / trim whitespace. */
-export function getResendApiKey(): string | null {
-  const names = ["RESEND_API_KEY", "RESEND_API_KEY_1", "RESEND_KEY", "RESEND_SECRET"] as const;
-  for (const n of names) {
-    const v = Deno.env.get(n)?.trim();
-    if (v) return v;
-  }
-  return null;
-}
-
-/**
- * "From" must use a domain verified in Resend (Domains).
- * Set Edge secret RESEND_FROM e.g. `CoachBase <noreply@your-verified-domain.com>`.
- * Avoid onboarding@resend.dev — Resend only delivers those to your account email (403 for real clients).
- */
-function resendFromAddress(): string {
-  const from = Deno.env.get("RESEND_FROM")?.trim();
-  if (from) return from;
-  return "CoachBase <noreply@coachbase.health>";
-}
 
 function publicAppUrl(siteOrigin?: string): string {
   const trimmed = (siteOrigin ?? "").trim().replace(/\/$/, "");

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { runCoachBaseAICommands } from "@/ai/runCoachCommands";
 
 export type CopilotRole = "trainer" | "client";
 export type CopilotContextKind = "post_workout" | "pre_workout" | "general" | "program_review";
@@ -143,6 +144,23 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
       setStreamingText("");
 
       try {
+        if (role === "trainer" && effectiveScopeClientId) {
+          const { data: u } = await supabase.auth.getUser();
+          if (u.user) {
+            const exec = await runCoachBaseAICommands(u.user.id, effectiveScopeClientId, trimmed);
+            if (exec.executed && exec.assistantNote) {
+              setMessages((m) => [
+                ...m,
+                { id: `cbai-${Date.now()}`, role: "assistant", content: exec.assistantNote },
+              ]);
+              void queryClient.invalidateQueries({ queryKey: ["trainer-mobile-programs"] });
+              void queryClient.invalidateQueries({ queryKey: ["trainer-program-detail"] });
+              void queryClient.invalidateQueries({ queryKey: ["trainer-client-detail"] });
+              void queryClient.invalidateQueries({ queryKey: ["trainer-workout-plan"] });
+            }
+          }
+        }
+
         const { data: sess } = await supabase.auth.getSession();
         const token = sess.session?.access_token;
         if (!token) throw new Error("انتهت الجلسة — سجّل الدخول مجدداً");

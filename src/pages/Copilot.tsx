@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Lock, Sparkles, MessageSquare, ClipboardList, FileText,
+  Lock, MessageSquare, ClipboardList, FileText,
 } from "lucide-react";
+import { CoachBaseAIMark } from "@/components/brand/CoachBaseAIMark";
 
 import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import UpgradeModal from "@/components/UpgradeModal";
@@ -16,8 +17,8 @@ import CopilotChat from "@/components/copilot/CopilotChat";
 import CopilotReports from "@/components/copilot/CopilotReports";
 
 const Copilot = () => {
-  usePageTitle("AI كوبايلت");
-  useRegisterTrainerShell({ title: "AI كوبايلت" });
+  usePageTitle("CoachBase AI");
+  useRegisterTrainerShell({ title: "CoachBase AI" });
   const { hasCopilotAccess } = usePlanLimits();
   const navigate = useNavigate();
   const [showUpgrade, setShowUpgrade] = useState(false);
@@ -30,23 +31,26 @@ const Copilot = () => {
           </div>
           <h2 className="mt-6 text-2xl font-bold text-foreground">هذه الميزة للباقة الاحترافية</h2>
           <p className="mt-3 max-w-md text-muted-foreground">
-            كوبايلت الذكاء الاصطناعي يساعدك على إنشاء برامج تدريب متكاملة وتوصيات أسبوعية ذكية لكل عميل
+            CoachBase AI يساعدك على إنشاء برامج تدريب وتنفيذ تعديلات ذكية لكل عميل — مدعوم بالذكاء
           </p>
           <Button className="mt-8 rounded-full px-8" size="lg" onClick={() => setShowUpgrade(true)}>
-            <Sparkles className="ml-2 h-4 w-4" strokeWidth={1.5} />
             ترقية الآن - 179 ر.س/شهر
           </Button>
-          <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title="هذه الميزة للباقة الاحترافية" description="كوبايلت الذكاء الاصطناعي متاح فقط في الباقة الاحترافية" onUpgrade={() => { setShowUpgrade(false); navigate("/subscription"); }} />
+          <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} title="هذه الميزة للباقة الاحترافية" description="CoachBase AI متاح فقط في الباقة الاحترافية" onUpgrade={() => { setShowUpgrade(false); navigate("/subscription"); }} />
         </div>
     );
   }
 
   return (
       <div className="space-y-4 page-enter">
+        <div className="flex items-center gap-3 pb-2">
+          <CoachBaseAIMark size="md" />
+          <p className="text-xs text-muted-foreground">CoachBase AI Assistant · مدعوم بالذكاء</p>
+        </div>
         <FeatureTooltip
           id="copilot-agent"
           targetSelector="[value='chat']"
-          message="الكوبايلت يقدر يعدّل بياناتك مباشرة — جرّب قل له: عدّل برنامج عميل"
+          message="CoachBase AI يقدر يعدّل برنامج العميل مباشرة عند اختياره — جرّب: عدّل البرنامج وخفّف الكارديو"
         />
         <Tabs defaultValue="programs" dir="rtl">
           <TabsList className="grid w-full grid-cols-3 bg-card border border-border">

@@ -107,7 +107,7 @@ export default function CopilotAlerts() {
 
   return (
     <div className="mb-4 space-y-2">
-      <p className="text-sm font-bold text-white">تنبيهات كوتش</p>
+      <p className="text-sm font-bold text-white">تنبيهات CoachBase AI</p>
       {list.map((a) => (
         <button
           key={a.id}

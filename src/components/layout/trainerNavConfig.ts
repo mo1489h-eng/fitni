@@ -33,7 +33,7 @@ export const desktopNavItems: TrainerNavItem[] = [
   { label: "الاشتراكات", href: "/payments", icon: CreditCard },
   { label: "التحديات", href: "/challenges", icon: Trophy },
   { label: "المكتبة التعليمية", href: "/vault", icon: GraduationCap },
-  { label: "AI كوبايلت", href: "/copilot", icon: Sparkles },
+  { label: "CoachBase AI", href: "/copilot", icon: Sparkles },
   { label: "الإعدادات", href: "/settings", icon: Settings2 },
 ];
 

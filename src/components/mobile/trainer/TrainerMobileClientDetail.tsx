@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import TrainerLiveSession from "../workout/TrainerLiveSession";
 import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
+import SessionMode from "@/pages/SessionMode";
 
 type Props = {
   clientId: string;
@@ -25,6 +26,7 @@ type Props = {
 const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   const { user } = useAuth();
   const [liveSessionOpen, setLiveSessionOpen] = useState(false);
+  const [sessionModeOpen, setSessionModeOpen] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["trainer-client-detail", clientId, user?.id],
@@ -35,7 +37,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .select(
           `
           id, name, goal, phone, email, program_id, week_number, days_per_week,
-          programs ( id, name, weeks )
+          programs ( id, name, weeks, delivery_mode )
         `
         )
         .eq("id", clientId)
@@ -51,7 +53,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         program_id: string | null;
         week_number: number | null;
         days_per_week: number | null;
-        programs: { id: string; name: string; weeks: number | null } | null;
+        programs: { id: string; name: string; weeks: number | null; delivery_mode?: string } | null;
       };
     },
     enabled: !!user && !!clientId,
@@ -109,6 +111,10 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
+
+  if (sessionModeOpen) {
+    return <SessionMode clientId={client.id} onClose={() => setSessionModeOpen(false)} />;
+  }
 
   if (liveSessionOpen) {
     return (
@@ -185,17 +191,32 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
 
       <MuscleRecoveryMap clientId={client.id} />
 
+      {program?.delivery_mode === "in_person" && client.program_id && (
+        <button
+          type="button"
+          onClick={() => setSessionModeOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-black transition active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #22C55E, #16A34A)",
+            boxShadow: "0 8px 32px rgba(34,197,94,0.35)",
+          }}
+        >
+          <Dumbbell className="h-5 w-5" strokeWidth={2.5} />
+          وضع الجلسة الحضورية
+        </button>
+      )}
+
       <button
         type="button"
         onClick={() => setLiveSessionOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-black transition active:scale-95"
+        className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-white transition active:scale-95"
         style={{
-          background: "linear-gradient(135deg, #22C55E, #16A34A)",
-          boxShadow: "0 8px 24px rgba(34,197,94,0.25)",
+          background: "#1a1a1a",
+          border: "1px solid rgba(255,255,255,0.08)",
         }}
       >
         <Play className="h-4 w-4" strokeWidth={2.5} />
-        جلسة مباشرة
+        متابعة مباشرة (مزامنة)
       </button>
 
       <button

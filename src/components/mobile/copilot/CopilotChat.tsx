@@ -7,6 +7,7 @@ import {
 } from "./useCopilot";
 import SimpleArabicMarkdown from "./SimpleArabicMarkdown";
 import { CB } from "../workout/designTokens";
+import { CoachBaseAIMark } from "@/components/brand/CoachBaseAIMark";
 
 export default function CopilotChat() {
   const {
@@ -69,7 +70,8 @@ export default function CopilotChat() {
         style={{ borderColor: "rgba(255,255,255,0.08)", paddingTop: "max(12px, env(safe-area-inset-top))" }}
       >
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold text-white">كوتش 🤖</h1>
+          <CoachBaseAIMark size="sm" className="!gap-1.5" />
+          <p className="mt-1 text-[10px] text-white/45">CoachBase AI Assistant</p>
           {role === "trainer" && (
             <select
               className="mt-2 w-full max-w-[220px] rounded-lg border-0 px-3 py-2 text-sm text-white outline-none"

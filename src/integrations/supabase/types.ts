@@ -1774,6 +1774,7 @@ export type Database = {
       programs: {
         Row: {
           created_at: string
+          delivery_mode: "online" | "in_person"
           description: string | null
           difficulty: string | null
           equipment: string | null
@@ -1786,6 +1787,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_mode?: "online" | "in_person"
           description?: string | null
           difficulty?: string | null
           equipment?: string | null
@@ -1798,6 +1800,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_mode?: "online" | "in_person"
           description?: string | null
           difficulty?: string | null
           equipment?: string | null

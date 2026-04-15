@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { runCoachBaseAICommands } from "@/ai/runCoachCommands";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -208,6 +209,18 @@ const CopilotChat = () => {
     await saveMessage("user", userMsg.content);
 
     try {
+      if (selectedClient?.id && user?.id) {
+        const exec = await runCoachBaseAICommands(user.id, selectedClient.id, userMsg.content);
+        if (exec.executed && exec.assistantNote) {
+          setMessages((prev) => [...prev, { role: "assistant", content: exec.assistantNote }]);
+          await saveMessage("assistant", exec.assistantNote.replace(/\*\*/g, ""));
+          void queryClient.invalidateQueries({ queryKey: ["trainer-mobile-programs"] });
+          void queryClient.invalidateQueries({ queryKey: ["trainer-program-detail"] });
+          void queryClient.invalidateQueries({ queryKey: ["trainer-client-detail"] });
+          void queryClient.invalidateQueries({ queryKey: ["trainer-workout-plan"] });
+        }
+      }
+
       const headers = await getAuthHeaders();
       const contextPrefix = selectedClient
         ? `[السياق: العميل المحدد هو "${selectedClient.name}" بمعرف ${selectedClient.id}]\n`

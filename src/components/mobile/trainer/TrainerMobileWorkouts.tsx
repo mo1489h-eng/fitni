@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type ProgramExercise = {
   id: string;
@@ -25,6 +25,7 @@ type ProgramDay = {
 
 const TrainerMobileWorkouts = () => {
   const { user } = useAuth();
+  const qc = useQueryClient();
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const { data: programs = [], isLoading } = useQuery({
@@ -33,7 +34,7 @@ const TrainerMobileWorkouts = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from("programs")
-        .select("id, name, description, weeks, difficulty, created_at")
+        .select("id, name, description, weeks, difficulty, created_at, delivery_mode")
         .eq("trainer_id", user.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -50,7 +51,7 @@ const TrainerMobileWorkouts = () => {
         .from("programs")
         .select(
           `
-          id, name, description, weeks, difficulty,
+          id, name, description, weeks, difficulty, delivery_mode,
           program_days (
             id, day_name, day_order,
             program_exercises (
@@ -68,14 +69,28 @@ const TrainerMobileWorkouts = () => {
         description: string | null;
         weeks: number | null;
         difficulty: string | null;
+        delivery_mode?: "online" | "in_person";
         program_days: ProgramDay[] | null;
       };
     },
     enabled: !!detailId,
   });
 
+  const deliveryMutation = useMutation({
+    mutationFn: async (mode: "online" | "in_person") => {
+      if (!detailId) return;
+      const { error } = await supabase.from("programs").update({ delivery_mode: mode }).eq("id", detailId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["trainer-program-detail", detailId] });
+      void qc.invalidateQueries({ queryKey: ["trainer-mobile-programs", user?.id] });
+    },
+  });
+
   if (detailId && programDetail) {
     const days = [...(programDetail.program_days || [])].sort((a, b) => a.day_order - b.day_order);
+    const dm = programDetail.delivery_mode === "in_person" ? "in_person" : "online";
     return (
       <div className="space-y-4">
         <button
@@ -94,6 +109,37 @@ const TrainerMobileWorkouts = () => {
               {programDetail.description}
             </p>
           )}
+          <p className="mt-2 text-[10px] font-medium uppercase tracking-wide" style={{ color: "#666" }}>
+            نوع التسليم
+          </p>
+          <div className="mt-1 flex gap-2">
+            <button
+              type="button"
+              disabled={deliveryMutation.isPending}
+              onClick={() => deliveryMutation.mutate("online")}
+              className="flex-1 rounded-xl py-2.5 text-xs font-bold transition"
+              style={{
+                background: dm === "online" ? "rgba(34,197,94,0.2)" : "#1a1a1a",
+                color: dm === "online" ? "#22C55E" : "#888",
+                border: `1px solid ${dm === "online" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`,
+              }}
+            >
+              أونلاين
+            </button>
+            <button
+              type="button"
+              disabled={deliveryMutation.isPending}
+              onClick={() => deliveryMutation.mutate("in_person")}
+              className="flex-1 rounded-xl py-2.5 text-xs font-bold transition"
+              style={{
+                background: dm === "in_person" ? "rgba(34,197,94,0.2)" : "#1a1a1a",
+                color: dm === "in_person" ? "#22C55E" : "#888",
+                border: `1px solid ${dm === "in_person" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`,
+              }}
+            >
+              حضوري (وضع الجلسة)
+            </button>
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <span
               className="rounded-lg px-2 py-1 text-[10px] font-medium"
@@ -197,7 +243,7 @@ const TrainerMobileWorkouts = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {programs.map((p: { id: string; name: string; description: string | null; weeks: number | null; difficulty: string | null }) => (
+          {programs.map((p: { id: string; name: string; description: string | null; weeks: number | null; difficulty: string | null; delivery_mode?: string }) => (
             <button
               key={p.id}
               type="button"
@@ -213,7 +259,15 @@ const TrainerMobileWorkouts = () => {
                       {p.description}
                     </p>
                   )}
-                  <div className="mt-3 flex items-center gap-3">
+                  <div className="mt-3 flex items-center gap-3 flex-wrap">
+                    {p.delivery_mode === "in_person" && (
+                      <span
+                        className="rounded-lg px-2 py-1 text-[10px] font-medium"
+                        style={{ background: "rgba(34,197,94,0.15)", color: "#22C55E" }}
+                      >
+                        حضوري
+                      </span>
+                    )}
                     <span
                       className="rounded-lg px-2 py-1 text-[10px] font-medium"
                       style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}

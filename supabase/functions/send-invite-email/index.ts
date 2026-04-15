@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+/// <reference types="deno" />
+import { createClient } from "@supabase/supabase-js";
 import { inviteClientAuth } from "../_shared/inviteClientAuth.ts";
 
 const corsHeaders = {
@@ -22,7 +22,7 @@ function sameId(a: string | null | undefined, b: string | null | undefined): boo
   return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -198,11 +198,4 @@ serve(async (req) => {
       error: (err as Error).message,
     });
   }
-});
-const { data, error } = await resend.emails.send({
-  // التعديل هنا: استخدم أي اسم قبل @coachbase.health
-  from: "CoachBase <noreply@coachbase.health>", 
-  to: [email],
-  subject: "دعوة للانضمام إلى CoachBase",
-  html: `<h1>مرحباً بك في CoachBase</h1>...`,
 });

@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Why email was not sent (safe to show in UI; no secrets). */
 export type InviteEmailReason =

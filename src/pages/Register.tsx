@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib/auth-email-errors";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkoutStore } from "@/store/workout-store";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -73,6 +74,7 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const fitniRole = useWorkoutStore((s) => s.fitniRole);
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   // Fetch remaining founder spots
@@ -85,7 +87,15 @@ const Register = () => {
       });
   }, []);
 
-  if (!authLoading && user) return <Navigate to="/dashboard" replace />;
+  if (!authLoading && user) {
+    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
+    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const validateEmail = (value: string) => {
     setEmail(value);

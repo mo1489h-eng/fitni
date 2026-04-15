@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,13 +14,13 @@ import Register from "@/pages/Register";
 import ConfirmEmail from "@/pages/ConfirmEmail";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
+import { useWorkoutStore } from "@/store/workout-store";
+import { resolveFitniRole } from "@/lib/auth-service";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
 
 const queryClient = new QueryClient();
-
-type MobileRole = "trainer" | "client" | null;
 
 function LoginGate() {
   if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
@@ -36,7 +37,6 @@ function MobileAppGate() {
   return <MobileAppContent />;
 }
 
-/** Cold start: animated splash once per session before home. */
 function MobileHomeEntry() {
   try {
     if (sessionStorage.getItem(SPLASH_SESSION_KEY) !== "1") {
@@ -48,31 +48,48 @@ function MobileHomeEntry() {
   return <MobileAppGate />;
 }
 
-const MobileAppContent = () => {
-  const { session, user, profile, loading } = useAuth();
-  const [role, setRole] = useState<MobileRole>(null);
-  const [ready, setReady] = useState(false);
+function MobileAppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { session, user, loading } = useAuth();
+  const fitniRole = useWorkoutStore((s) => s.fitniRole);
+  const [roleResolved, setRoleResolved] = useState(false);
 
   useEffect(() => {
     if (loading) return;
 
     if (!session || !user) {
-      setRole(null);
-      setReady(true);
+      useWorkoutStore.getState().clearFitniRole();
+      setRoleResolved(true);
       return;
     }
 
-    if (profile) {
-      setRole("trainer");
-      setReady(true);
-    } else {
-      setReady(true);
-    }
-  }, [session, user, profile, loading]);
+    setRoleResolved(false);
+    let cancelled = false;
+    void (async () => {
+      const r = await resolveFitniRole(user.id);
+      if (cancelled) return;
+      if (r) useWorkoutStore.getState().setFitniRole(r);
+      else useWorkoutStore.getState().clearFitniRole();
+      setRoleResolved(true);
+    })();
 
-  if (!ready || loading) {
+    return () => {
+      cancelled = true;
+    };
+  }, [session, user, loading]);
+
+  useEffect(() => {
+    if (!fitniRole || !session) return;
+    const path = fitniRole === "coach" ? "/coach/dashboard" : "/trainee/dashboard";
+    if (window.location.pathname !== path) {
+      navigate(path, { replace: true });
+    }
+  }, [fitniRole, session, navigate]);
+
+  if (!roleResolved || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: "#0A0A0A" }}>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "#000000" }}>
         <div
           className="h-8 w-8 animate-spin rounded-full border-2 border-transparent"
           style={{ borderTopColor: "#22C55E" }}
@@ -81,22 +98,47 @@ const MobileAppContent = () => {
     );
   }
 
-  if (!session || !role) {
+  if (!session || !fitniRole) {
     return (
       <MobileLogin
-        onLoginSuccess={(detectedRole) => {
-          setRole(detectedRole);
+        onLoginSuccess={async () => {
+          const { supabase } = await import("@/integrations/supabase/client");
+          const id = (await supabase.auth.getUser()).data.user?.id;
+          if (id) {
+            const r = await resolveFitniRole(id);
+            if (r) useWorkoutStore.getState().setFitniRole(r);
+          }
         }}
       />
     );
   }
 
-  if (role === "trainer") {
-    return <TrainerMobileShell onLogout={() => setRole(null)} />;
+  if (fitniRole === "coach" && location.pathname.startsWith("/trainee")) {
+    return <Navigate to="/coach/dashboard" replace />;
+  }
+  if (fitniRole === "trainee" && location.pathname.startsWith("/coach")) {
+    return <Navigate to="/trainee/dashboard" replace />;
   }
 
-  return <ClientMobileShell />;
-};
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={fitniRole}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+        className="min-h-screen"
+      >
+        {fitniRole === "coach" ? (
+          <TrainerMobileShell onLogout={() => useWorkoutStore.getState().clearFitniRole()} />
+        ) : (
+          <ClientMobileShell />
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function MobileRoutes() {
   return (
@@ -107,6 +149,8 @@ function MobileRoutes() {
       <Route path="/register" element={<RegisterGate />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route path="/coach/dashboard" element={<MobileAppGate />} />
+      <Route path="/trainee/dashboard" element={<MobileAppGate />} />
       <Route path="/" element={<MobileHomeEntry />} />
       <Route path="/*" element={<MobileAppGate />} />
     </Routes>

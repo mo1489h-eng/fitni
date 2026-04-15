@@ -6,6 +6,7 @@ import {
   type PlanExercise,
 } from "@/lib/workoutDayPlan";
 import { playRestCompleteBeep, vibrateRestComplete } from "@/lib/workoutFeedback";
+import { hapticSuccess } from "../workout/haptics";
 import { ChevronRight, Check, Timer, X, Trophy, Dumbbell, Radio } from "lucide-react";
 
 const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
@@ -218,6 +219,7 @@ export default function WorkoutSessionView({
       completed: true,
       ...(noteTrim ? { notes: noteTrim } : {}),
     });
+    void hapticSuccess();
     if (isTrainer) setSetNote("");
 
     const ex = currentExercise;

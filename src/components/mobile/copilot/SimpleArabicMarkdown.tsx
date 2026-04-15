@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /** Minimal markdown: **bold**, newlines — RTL-friendly */
-export default function SimpleArabicMarkdown({ text }: { text: string }) {
+export default function SimpleArabicMarkdown({ text, className }: { text: string; className?: string }) {
   const lines = text.split("\n");
   return (
-    <div className="space-y-2 text-right leading-relaxed" dir="rtl">
+    <div className={cn("space-y-2 text-right leading-relaxed", className)} dir="rtl">
       {lines.map((line, i) => {
         const t = line.trim();
         if (!t) return <div key={i} className="h-1" />;

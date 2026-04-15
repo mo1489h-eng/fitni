@@ -17,8 +17,8 @@ interface TrainerMobileShellProps {
 const tabs = [
   { key: "home", label: "الرئيسية", icon: LayoutDashboard },
   { key: "clients", label: "العملاء", icon: Users },
-  { key: "schedule", label: "الجدول", icon: CalendarDays },
   { key: "workouts", label: "البرامج", icon: Dumbbell },
+  { key: "schedule", label: "الجدول", icon: CalendarDays },
   { key: "profile", label: "حسابي", icon: User },
 ];
 
@@ -28,15 +28,15 @@ const TrainerMobileShell = ({ onLogout }: TrainerMobileShellProps) => {
   return (
     <CopilotProvider role="trainer">
       <div
-        className="min-h-screen"
+        className="min-h-screen font-arabic antialiased"
         dir="rtl"
         style={{
-          background: "#0A0A0A",
+          background: "#000000",
           paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <div className="px-5 pt-4 pb-28">
-          {activeTab === "home" && <TrainerMobileHome />}
+        <div className="px-4 pt-4 pb-28">
+          {activeTab === "home" && <TrainerMobileHome onGoSchedule={() => setActiveTab("schedule")} />}
           {activeTab === "clients" && <TrainerMobileClients />}
           {activeTab === "schedule" && <TrainerMobileSchedule />}
           {activeTab === "workouts" && <TrainerMobileWorkouts />}

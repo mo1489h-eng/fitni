@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, Eye, EyeOff } from "lucide-react";
 
 interface MobileLoginProps {
-  onLoginSuccess: (role: "trainer" | "client") => void;
+  onLoginSuccess: () => void | Promise<void>;
 }
 
 const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
@@ -43,9 +43,8 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
           .maybeSingle();
 
         if (profile) {
-          onLoginSuccess("trainer");
+          await onLoginSuccess();
         } else {
-          // Check if user is a client
           const { data: client } = await supabase
             .from("clients")
             .select("id, portal_token")
@@ -56,7 +55,7 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
             if (client.portal_token) {
               sessionStorage.setItem("portal_token", client.portal_token);
             }
-            onLoginSuccess("client");
+            await onLoginSuccess();
           } else {
             setError("لم يتم العثور على حساب مرتبط");
           }

@@ -14,3 +14,16 @@ export const CB = {
   font: { display: 32, title: 24, body: 16, caption: 12 },
   gradient: "linear-gradient(135deg, #22C55E, #16A34A)",
 } as const;
+
+/** Elite tier: 8pt grid alignment, OLED blacks, zinc hierarchy */
+export const ELITE = {
+  textPrimary: "#FFFFFF",
+  textSecondary: "#A1A1AA",
+  textTertiary: "#71717A",
+  cardBg: "#0A0A0A",
+  border: "1px solid rgba(255,255,255,0.05)",
+  radiusCard: 20,
+  innerShadow: "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.45)",
+  glassBg: "rgba(10,10,10,0.72)",
+  glassBlur: "blur(24px)",
+} as const;

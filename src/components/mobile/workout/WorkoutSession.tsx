@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, List, Info, Dumbbell } from "lucide-react";
@@ -17,7 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { countExercisesFullyDone, setKey, useWorkoutSession } from "./WorkoutSessionContext";
 import { muscleChipColor } from "./muscleColors";
 import { hapticSuccess } from "./haptics";
-import { totalSetsInPlan } from "@/lib/workoutDayPlan";
+import { totalSetsInPlan, type PlanExercise } from "@/lib/workoutDayPlan";
+import { resolveExerciseMuscleGroups } from "@/lib/exerciseMuscleMapping";
 import { ExerciseGifImage } from "@/components/program/ExerciseGifImage";
 import { CustomKeypad } from "./CustomKeypad";
 import SmartRestTimer from "./SmartRestTimer";
@@ -25,6 +26,37 @@ import { useExerciseGifUrl } from "./useExerciseGifResolver";
 import { useWorkoutStore } from "@/store/workout-store";
 
 const OLED = "#000000";
+
+function MuscleRiskStrip({ plan }: { plan: PlanExercise[] }) {
+  const fatigueState = useWorkoutStore((s) => s.muscleFatigueState);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const show = useMemo(() => {
+    const derived = useWorkoutStore.getState().getDerivedFatigueLevels();
+    for (const ex of plan) {
+      const { primary, secondary } = resolveExerciseMuscleGroups({ muscleGroup: ex.muscleGroup, name: ex.name });
+      if ((derived[primary] ?? 0) >= 0.72) return true;
+      for (const s of secondary) {
+        if ((derived[s] ?? 0) >= 0.75) return true;
+      }
+    }
+    return false;
+  }, [plan, fatigueState, tick]);
+
+  if (!show) return null;
+  return (
+    <div
+      className="mb-3 rounded-2xl border border-amber-500/30 px-3 py-2.5 text-center text-[11px] leading-relaxed"
+      style={{ background: "rgba(245,158,11,0.08)", color: "rgba(254,243,199,0.95)" }}
+    >
+      <span className="font-bold">عضلة تحت ضغط:</span> جدول اليوم يضرب عضلات ما زالت تحت إجهاد عالٍ — راقب الحجم أو خفّف التكرار.
+    </div>
+  );
+}
 
 function formatMmSs(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -143,7 +175,7 @@ export default function WorkoutSession() {
       useWorkoutStore.getState().setRpeForExercise(ex.exerciseId, rpe);
     }
     await hapticSuccess();
-    await completeSet(w, r);
+    await completeSet(w, r, { rpe });
     setInputsLockedFromHistory(false);
   };
 
@@ -218,6 +250,7 @@ export default function WorkoutSession() {
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-28">
+        <MuscleRiskStrip plan={plan} />
         <AnimatePresence mode="wait">
           <motion.div
             key={ex.exerciseId}

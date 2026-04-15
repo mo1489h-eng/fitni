@@ -131,7 +131,7 @@ export default function WorkoutSessionScreen() {
     const w = parseFloat(weight) || 0;
     const r = parseInt(reps, 10) || 0;
     await hapticSuccess();
-    await completeSet(w, r);
+    await completeSet(w, r, { rpe: 7 });
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, Dumbbell, TrendingUp, MessageCircle } from "lucide-react";
+import { Dumbbell, TrendingUp, CalendarDays, MessageCircle, User } from "lucide-react";
 import { useMobilePortalToken } from "@/hooks/useMobilePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import MobileTabBar from "../MobileTabBar";
@@ -11,17 +11,20 @@ import ClientMobileHome from "./ClientMobileHome";
 import ClientMobileProgram from "./ClientMobileProgram";
 import ClientMobileProgress from "./ClientMobileProgress";
 import ClientMobileChat from "./ClientMobileChat";
+import ClientMobileSchedule from "./ClientMobileSchedule";
+import ClientMobileAccount from "./ClientMobileAccount";
 import WorkoutSessionFlow from "../workout/WorkoutSessionFlow";
 
 const tabs = [
-  { key: "home", label: "الرئيسية", icon: LayoutDashboard },
-  { key: "program", label: "برنامجي", icon: Dumbbell },
-  { key: "progress", label: "تقدمي", icon: TrendingUp },
+  { key: "workout", label: "تمريني", icon: Dumbbell },
+  { key: "achievements", label: "إنجازاتي", icon: TrendingUp },
+  { key: "schedule", label: "الجدول", icon: CalendarDays },
   { key: "chat", label: "المحادثة", icon: MessageCircle },
+  { key: "account", label: "حسابي", icon: User },
 ];
 
 const ClientMobileShell = () => {
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState("workout");
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const token = useMobilePortalToken();
 
@@ -40,23 +43,24 @@ const ClientMobileShell = () => {
   return (
     <CopilotProvider role="client" clientId={clientRow?.id ?? null} clientReady={!!clientRow?.id}>
       <div
-        className="min-h-screen"
+        className="min-h-screen font-arabic antialiased"
         dir="rtl"
         style={{
-          background: "#0A0A0A",
+          background: "#000000",
           paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
-        <div className="px-5 pt-4 pb-28">
-          {activeTab === "home" && (
+        <div className="px-4 pt-4 pb-28">
+          {activeTab === "workout" && (
             <ClientMobileHome
               onStartWorkout={() => setWorkoutOpen(true)}
               canStartWorkout={!!clientRow?.id && !!token}
             />
           )}
-          {activeTab === "program" && <ClientMobileProgram />}
-          {activeTab === "progress" && <ClientMobileProgress />}
+          {activeTab === "achievements" && <ClientMobileProgress />}
+          {activeTab === "schedule" && <ClientMobileSchedule />}
           {activeTab === "chat" && <ClientMobileChat />}
+          {activeTab === "account" && <ClientMobileAccount />}
         </div>
 
         <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

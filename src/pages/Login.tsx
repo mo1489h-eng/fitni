@@ -4,9 +4,11 @@ import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
+import { resolveFitniRole } from "@/lib/auth-service";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkoutStore } from "@/store/workout-store";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -25,8 +27,17 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const fitniRole = useWorkoutStore((s) => s.fitniRole);
 
-  if (!authLoading && user) return <Navigate to="/dashboard" replace />;
+  if (!authLoading && user) {
+    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
+    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +58,9 @@ const Login = () => {
         return;
       }
     }
-    navigate("/dashboard");
+    const r = userId ? await resolveFitniRole(userId) : null;
+    if (r) useWorkoutStore.getState().setFitniRole(r);
+    navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
     setLoading(false);
   };
 

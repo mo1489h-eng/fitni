@@ -11,18 +11,23 @@
 import { create } from "zustand";
 import { idbGet, idbSet, idbDel } from "@/lib/workout-idb";
 import type { PersistedWorkoutV1 } from "@/components/mobile/workout/types";
+import type { FitniRole } from "@/lib/auth-service";
+import { FITNI_ROLE_STORAGE_KEY, clearStoredFitniRole, persistFitniRole } from "@/lib/auth-service";
+import {
+  calculateRecoveryTime,
+  fatigueDeltaFromVolume,
+  getCurrentFatigue,
+  SECONDARY_FATIGUE_FACTOR,
+  type MuscleGroupId,
+  type MuscleRecoveryState,
+} from "@/lib/muscle-fatigue-engine";
+import { upsertUserMuscleStatusBatch } from "@/lib/user-muscle-status";
+
+export type { MuscleGroupId, MuscleRecoveryState } from "@/lib/muscle-fatigue-engine";
 
 const IDB_SNAPSHOT_KEY = "fitni_active_workout_snapshot_v1";
 const QUEUE_KEY = "fitni_workout_sync_queue_v1";
-
-/** Logical muscle buckets used by heatmap + decay (aligned with MuscleRecoveryMap groups). */
-export type MuscleGroupId =
-  | "chest"
-  | "back"
-  | "shoulders"
-  | "arms"
-  | "core"
-  | "legs";
+const MUSCLE_LOCAL_PREFIX = "fitni_muscle_v2_";
 
 export type SyncJobKind = "session_exercise" | "workout_log" | "session_update";
 
@@ -39,21 +44,37 @@ type WorkoutStoreState = {
   rpeByExerciseId: Record<string, number>;
   /** Extra rest seconds suggested because last RPE > threshold */
   pendingExtraRestSeconds: number;
-  /** Muscle fatigue 0 = fresh, 1 = max cumulative load */
-  muscleFatigue01: Partial<Record<MuscleGroupId, number>>;
-  /** ISO timestamps of last stimulus per muscle (for decay) */
-  lastStimulusAt: Partial<Record<MuscleGroupId, string>>;
+  /** Linear recovery model (persisted per muscle) */
+  muscleFatigueState: Partial<Record<MuscleGroupId, MuscleRecoveryState>>;
+  /** Client whose muscle rows are loaded / synced */
+  activeClientIdForFatigue: string | null;
   /** Failed / offline Supabase mutations */
   syncQueue: SyncJob[];
   /** Last persisted snapshot revision (monotonic) */
   snapshotRev: number;
+  /** Fitni app role — hydrated from localStorage to avoid UI flicker; synced from auth-service */
+  fitniRole: FitniRole | null;
+  setFitniRole: (role: FitniRole | null) => void;
+  clearFitniRole: () => void;
 
   setRpeForExercise: (exerciseId: string, rpe: number) => void;
   consumePendingExtraRest: () => number;
-  /** Map Arabic/English muscle label to group and bump fatigue from tonnage */
-  applyFatigueFromExercise: (muscleLabel: string, volumeLoad: number) => void;
-  /** Call on app boot + periodically — decays fatigue toward 0 */
+  setActiveClientForFatigue: (clientId: string | null) => void;
+  hydrateMuscleState: (clientId: string, partial: Partial<Record<MuscleGroupId, MuscleRecoveryState>>) => void;
+  /** Primary + secondary muscle load from one logged set */
+  applyFatigueFromSet: (
+    clientId: string,
+    primary: MuscleGroupId,
+    secondary: MuscleGroupId[],
+    volumeLoad: number,
+    rpe: number
+  ) => void;
+  getDerivedFatigueLevels: (nowMs?: number) => Partial<Record<MuscleGroupId, number>>;
+  /** Legacy name — reapplies linear model (no-op if state empty); kept for boot hooks */
   applyDecay: (nowMs?: number) => void;
+  syncMuscleStatusToSupabase: (clientId: string) => Promise<void>;
+  persistMuscleStateLocal: (clientId: string) => void;
+  loadMuscleStateLocal: (clientId: string) => void;
   enqueueSyncJob: (job: Omit<SyncJob, "retries" | "createdAt"> & { retries?: number }) => void;
   dequeueSyncJob: (id: string) => void;
   bumpRetry: (id: string) => void;
@@ -66,37 +87,54 @@ type WorkoutStoreState = {
 const RPE_REST_BONUS_THRESHOLD = 8;
 const RPE_REST_BONUS_SECONDS = 30;
 
-function matchMuscleGroup(label: string): MuscleGroupId {
-  const k = label.toLowerCase();
-  if (k.includes("صدر") || k.includes("chest") || k.includes("pect")) return "chest";
-  if (k.includes("ظهر") || k.includes("back") || k.includes("lats") || k.includes("ترابيس")) return "back";
-  if (k.includes("كتف") || k.includes("shoulder") || k.includes("delt")) return "shoulders";
-  if (k.includes("ذراع") || k.includes("arm") || k.includes("biceps") || k.includes("triceps")) return "arms";
-  if (k.includes("بطن") || k.includes("core") || k.includes("abs") || k.includes("وسط")) return "core";
-  if (k.includes("رجل") || k.includes("leg") || k.includes("ساق") || k.includes("فخذ") || k.includes("quad")) {
-    return "legs";
+function muscleLocalKey(clientId: string): string {
+  return `${MUSCLE_LOCAL_PREFIX}${clientId}`;
+}
+
+function applyStimulusToMuscle(
+  prev: MuscleRecoveryState | undefined,
+  muscleId: MuscleGroupId,
+  volumeLoad: number,
+  rpe: number,
+  nowMs: number
+): MuscleRecoveryState {
+  const nowIso = new Date(nowMs).toISOString();
+  const cur = getCurrentFatigue(muscleId, prev, nowMs);
+  const delta = fatigueDeltaFromVolume(volumeLoad, rpe);
+  const peak = Math.min(1, cur + delta);
+  const T = calculateRecoveryTime(muscleId, volumeLoad, rpe);
+  return { initialFatigue: peak, totalRecoveryHours: T, lastStimulusAt: nowIso };
+}
+
+function readInitialFitniRole(): FitniRole | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const s = localStorage.getItem(FITNI_ROLE_STORAGE_KEY);
+    return s === "coach" || s === "trainee" ? s : null;
+  } catch {
+    return null;
   }
-  return "chest";
-}
-
-/** Diminishing returns: volume maps to fatigue increment */
-function volumeToDelta(v: number): number {
-  if (v <= 0) return 0;
-  return Math.min(0.35, Math.log10(10 + v) / 12);
-}
-
-/** Exponential decay: half-life style per 24h */
-function decayFactor(hours: number): number {
-  return Math.pow(0.5, hours / 48);
 }
 
 export const useWorkoutStore = create<WorkoutStoreState>()((set, get) => ({
     rpeByExerciseId: {},
     pendingExtraRestSeconds: 0,
-    muscleFatigue01: {},
-    lastStimulusAt: {},
+    muscleFatigueState: {},
+    activeClientIdForFatigue: null,
     syncQueue: [],
     snapshotRev: 0,
+    fitniRole: readInitialFitniRole(),
+
+    setFitniRole: (role) => {
+      set({ fitniRole: role });
+      if (role) persistFitniRole(role);
+      else clearStoredFitniRole();
+    },
+
+    clearFitniRole: () => {
+      set({ fitniRole: null });
+      clearStoredFitniRole();
+    },
 
     setRpeForExercise: (exerciseId, rpe) => {
       const clamped = Math.max(1, Math.min(10, Math.round(rpe)));
@@ -112,39 +150,81 @@ export const useWorkoutStore = create<WorkoutStoreState>()((set, get) => ({
       return n;
     },
 
-    applyFatigueFromExercise: (muscleLabel, volumeLoad) => {
-      const g = matchMuscleGroup(muscleLabel);
-      const delta = volumeToDelta(volumeLoad);
-      const now = new Date().toISOString();
-      set((s) => {
-        const prev = s.muscleFatigue01[g] ?? 0;
-        const next = Math.min(1, prev + delta * (1 - prev * 0.5));
-        return {
-          muscleFatigue01: { ...s.muscleFatigue01, [g]: next },
-          lastStimulusAt: { ...s.lastStimulusAt, [g]: now },
-        };
-      });
+    setActiveClientForFatigue: (clientId) => set({ activeClientIdForFatigue: clientId }),
+
+    hydrateMuscleState: (clientId, partial) => {
+      set((s) => ({
+        activeClientIdForFatigue: clientId,
+        muscleFatigueState: { ...s.muscleFatigueState, ...partial },
+      }));
     },
 
-    applyDecay: (nowMs = Date.now()) => {
+    applyFatigueFromSet: (clientId, primary, secondary, volumeLoad, rpe) => {
+      const nowMs = Date.now();
       set((s) => {
-        const nextFatigue = { ...s.muscleFatigue01 };
-        const nextStimulus = { ...s.lastStimulusAt };
-        for (const g of Object.keys(nextFatigue) as MuscleGroupId[]) {
-          const iso = nextStimulus[g];
-          if (!iso) continue;
-          const hours = (nowMs - new Date(iso).getTime()) / 3600000;
-          const factor = decayFactor(hours);
-          const v = (nextFatigue[g] ?? 0) * factor;
-          if (v < 0.02) {
-            delete nextFatigue[g];
-            delete nextStimulus[g];
-          } else {
-            nextFatigue[g] = v;
-          }
+        const next = { ...s.muscleFatigueState };
+        next[primary] = applyStimulusToMuscle(next[primary], primary, volumeLoad, rpe, nowMs);
+        for (const sec of secondary) {
+          const v = volumeLoad * SECONDARY_FATIGUE_FACTOR;
+          next[sec] = applyStimulusToMuscle(next[sec], sec, v, rpe, nowMs);
         }
-        return { muscleFatigue01: nextFatigue, lastStimulusAt: nextStimulus };
+        return { muscleFatigueState: next, activeClientIdForFatigue: clientId };
       });
+      get().persistMuscleStateLocal(clientId);
+      void get().syncMuscleStatusToSupabase(clientId);
+    },
+
+    getDerivedFatigueLevels: (nowMs = Date.now()) => {
+      const s = get().muscleFatigueState;
+      const out: Partial<Record<MuscleGroupId, number>> = {};
+      for (const g of Object.keys(s) as MuscleGroupId[]) {
+        const st = s[g];
+        if (!st) continue;
+        const v = getCurrentFatigue(g, st, nowMs);
+        if (v > 0.004) out[g] = v;
+      }
+      return out;
+    },
+
+    applyDecay: () => {
+      /* Linear model derives fatigue from timestamps — no mutation needed. */
+    },
+
+    persistMuscleStateLocal: (clientId) => {
+      try {
+        const raw = JSON.stringify(get().muscleFatigueState);
+        localStorage.setItem(muscleLocalKey(clientId), raw);
+      } catch {
+        /* ignore */
+      }
+    },
+
+    loadMuscleStateLocal: (clientId) => {
+      try {
+        const raw = localStorage.getItem(muscleLocalKey(clientId));
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as Partial<Record<MuscleGroupId, MuscleRecoveryState>>;
+        if (parsed && typeof parsed === "object") {
+          set({ muscleFatigueState: parsed, activeClientIdForFatigue: clientId });
+        }
+      } catch {
+        /* ignore */
+      }
+    },
+
+    syncMuscleStatusToSupabase: async (clientId) => {
+      const state = get().muscleFatigueState;
+      const entries: Array<{ muscle: MuscleGroupId; state: MuscleRecoveryState }> = [];
+      for (const g of Object.keys(state) as MuscleGroupId[]) {
+        const st = state[g];
+        if (st && st.initialFatigue > 0.002) entries.push({ muscle: g, state: st });
+      }
+      if (!entries.length) return;
+      try {
+        await upsertUserMuscleStatusBatch(clientId, entries);
+      } catch {
+        /* offline / RLS — local cache still valid */
+      }
     },
 
     enqueueSyncJob: (job) => {

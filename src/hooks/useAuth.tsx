@@ -3,6 +3,8 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveFitniRole } from "@/lib/auth-service";
+import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
   full_name: string;
@@ -24,6 +26,8 @@ interface Profile {
   username: string | null;
   is_founder: boolean;
   founder_discount_used: boolean;
+  /** Fitni: coach | trainee (see profiles.role) */
+  role?: string | null;
 }
 
 interface AuthContextType {
@@ -53,63 +57,79 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        Sentry.setUser({ id: session.user.id, email: session.user.email });
-        setTimeout(() => fetchProfile(session.user.id), 0);
-      } else {
-        Sentry.setUser(null);
-        setProfile(null);
-      }
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const profileSelect =
+  const profileSelectBase =
     "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(profileSelect)
-      .eq("user_id", userId)
-      .maybeSingle();
+  const fetchProfile = useCallback(async (userId: string) => {
+    let { data, error } = await supabase.from("profiles").select(`${profileSelectBase}, role`).eq("user_id", userId).maybeSingle();
+
+    if (error && /role|column/i.test(String(error.message))) {
+      const retry = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       console.error("fetchProfile", error);
       setProfile(null);
-      return;
-    }
-
-    if (data) {
+    } else if (data) {
       setProfile(data as Profile);
-      return;
+    } else {
+      const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
+      if (ensureErr) {
+        console.error("ensure_trainer_profile", ensureErr);
+        setProfile(null);
+      } else {
+        let r2 = await supabase.from("profiles").select(`${profileSelectBase}, role`).eq("user_id", userId).maybeSingle();
+        if (r2.error && /role|column/i.test(String(r2.error.message))) {
+          r2 = await supabase.from("profiles").select(profileSelectBase).eq("user_id", userId).maybeSingle();
+        }
+        if (r2.data) setProfile(r2.data as Profile);
+        else setProfile(null);
+      }
     }
 
-    const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
-    if (ensureErr) {
-      console.error("ensure_trainer_profile", ensureErr);
-      setProfile(null);
-      return;
+    try {
+      const r = await resolveFitniRole(userId);
+      if (r) useWorkoutStore.getState().setFitniRole(r);
+      else useWorkoutStore.getState().clearFitniRole();
+    } catch (e) {
+      console.error("resolveFitniRole", e);
+      useWorkoutStore.getState().clearFitniRole();
     }
+  }, []);
 
-    const { data: retry } = await supabase.from("profiles").select(profileSelect).eq("user_id", userId).maybeSingle();
-    if (retry) setProfile(retry as Profile);
-    else setProfile(null);
-  };
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      if (nextSession?.user) {
+        Sentry.setUser({ id: nextSession.user.id, email: nextSession.user.email });
+        await fetchProfile(nextSession.user.id);
+      } else {
+        Sentry.setUser(null);
+        setProfile(null);
+        useWorkoutStore.getState().clearFitniRole();
+      }
+    });
+
+    void (async () => {
+      const {
+        data: { session: initial },
+      } = await supabase.auth.getSession();
+      setSession(initial);
+      setUser(initial?.user ?? null);
+      if (initial?.user) {
+        Sentry.setUser({ id: initial.user.id, email: initial.user.email });
+        await fetchProfile(initial.user.id);
+      }
+      setLoading(false);
+    })();
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
 
   const refreshProfile = async () => {
     if (user) await fetchProfile(user.id);
@@ -119,6 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     Sentry.setUser(null);
     queryClient.clear();
+    useWorkoutStore.getState().clearFitniRole();
     setSession(null);
     setUser(null);
     setProfile(null);

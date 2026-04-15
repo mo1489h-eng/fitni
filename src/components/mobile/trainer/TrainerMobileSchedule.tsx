@@ -5,6 +5,13 @@ import { ChevronLeft, ChevronRight, CalendarDays, Check, Loader2 } from "lucide-
 import { format, addDays, subDays } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { EliteCard } from "../elite/EliteCard";
+import { Pressable } from "../elite/Pressable";
+import { EmptyStateIllustration } from "../elite/EmptyStateIllustration";
+import { eliteSpring } from "../elite/spring";
+import { ELITE } from "../workout/designTokens";
+import { hapticImpact } from "../workout/haptics";
 
 type SessionRow = {
   id: string;
@@ -19,6 +26,27 @@ function clientName(s: SessionRow) {
   const c = s.clients;
   if (c && typeof c === "object" && "name" in c && c.name) return c.name;
   return "عميل";
+}
+
+const ACCENT = "#22C55E";
+
+function ScheduleSessionSkeleton() {
+  return (
+    <EliteCard className="p-4">
+      <div className="flex animate-pulse items-center gap-4">
+        <div className="w-12 shrink-0 space-y-2">
+          <div className="mx-auto h-4 w-10 rounded bg-white/[0.08]" />
+          <div className="mx-auto h-3 w-8 rounded bg-white/[0.05]" />
+        </div>
+        <div className="h-10 w-0.5 shrink-0 rounded-full bg-white/[0.06]" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-white/[0.08]" />
+          <div className="h-3 w-1/2 rounded bg-white/[0.05]" />
+        </div>
+        <div className="h-10 w-20 shrink-0 rounded-2xl bg-white/[0.06]" />
+      </div>
+    </EliteCard>
+  );
 }
 
 const TrainerMobileSchedule = () => {
@@ -65,101 +93,144 @@ const TrainerMobileSchedule = () => {
   });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">الجدول</h1>
-        <span className="text-sm" style={{ color: "#666" }}>
+        <h1 className="text-2xl font-bold" style={{ color: ELITE.textPrimary }}>
+          الجدول
+        </h1>
+        <span className="text-sm" style={{ color: ELITE.textSecondary }}>
           {format(selectedDate, "MMMM yyyy", { locale: ar })}
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
-        <button type="button" onClick={() => setSelectedDate(subDays(selectedDate, 7))} className="p-1">
-          <ChevronRight className="h-4 w-4" style={{ color: "#555" }} />
-        </button>
-        <div className="flex flex-1 justify-between">
+      <div
+        className="flex items-center gap-2 rounded-[999px] border border-white/[0.06] px-2 py-2"
+        style={{
+          background: ELITE.glassBg,
+          backdropFilter: ELITE.glassBlur,
+          WebkitBackdropFilter: ELITE.glassBlur,
+          boxShadow: ELITE.innerShadow,
+        }}
+      >
+        <Pressable
+          type="button"
+          onClick={() => setSelectedDate(subDays(selectedDate, 7))}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+          style={{ background: "rgba(255,255,255,0.06)" }}
+          aria-label="الأسبوع السابق"
+        >
+          <ChevronRight className="h-4 w-4" style={{ color: ELITE.textSecondary }} />
+        </Pressable>
+        <div className="flex min-w-0 flex-1 justify-between gap-1">
           {weekDays.map((d) => {
             const isSelected = format(d, "yyyy-MM-dd") === dateStr;
             const isToday = format(d, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
             return (
-              <button
+              <motion.button
                 key={d.toISOString()}
                 type="button"
+                whileTap={{ scale: 0.96 }}
+                transition={eliteSpring}
+                onPointerDown={() => void hapticImpact("light")}
                 onClick={() => setSelectedDate(d)}
-                className="flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-all"
+                className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-[999px] px-1 py-2"
                 style={{
-                  background: isSelected ? "rgba(34,197,94,0.15)" : "transparent",
+                  background: isSelected ? "rgba(34,197,94,0.22)" : "transparent",
+                  boxShadow: isSelected ? "0 0 0 1px rgba(34,197,94,0.45)" : undefined,
                 }}
               >
-                <span className="text-[10px]" style={{ color: "#666" }}>
+                <span className="text-[10px] font-medium uppercase" style={{ color: ELITE.textSecondary }}>
                   {format(d, "EEE", { locale: ar }).slice(0, 2)}
                 </span>
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold"
                   style={{
-                    color: isSelected ? "#22C55E" : isToday ? "#fff" : "#888",
-                    background: isToday && !isSelected ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: isSelected ? "#FFFFFF" : isToday ? ELITE.textPrimary : ELITE.textTertiary,
+                    background:
+                      isToday && !isSelected ? "rgba(255,255,255,0.1)" : isSelected ? ACCENT : "transparent",
                   }}
                 >
                   {format(d, "d")}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
-        <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="p-1">
-          <ChevronLeft className="h-4 w-4" style={{ color: "#555" }} />
-        </button>
+        <Pressable
+          type="button"
+          onClick={() => setSelectedDate(addDays(selectedDate, 7))}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+          style={{ background: "rgba(255,255,255,0.06)" }}
+          aria-label="الأسبوع التالي"
+        >
+          <ChevronLeft className="h-4 w-4" style={{ color: ELITE.textSecondary }} />
+        </Pressable>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#22C55E" }} />
+        <div className="space-y-4">
+          <ScheduleSessionSkeleton />
+          <ScheduleSessionSkeleton />
+          <ScheduleSessionSkeleton />
         </div>
       ) : sessions.length === 0 ? (
-        <div className="rounded-2xl p-8 text-center" style={{ background: "#111111" }}>
-          <CalendarDays className="mx-auto mb-2 h-8 w-8" style={{ color: "#333" }} strokeWidth={1.5} />
-          <p className="text-sm" style={{ color: "#666" }}>
-            لا توجد جلسات في هذا اليوم
-          </p>
-        </div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={eliteSpring}>
+          <EliteCard className="px-6 py-10 text-center">
+            <EmptyStateIllustration className="mb-6" />
+            <p className="text-sm font-medium" style={{ color: ELITE.textPrimary }}>
+              لا توجد جلسات في هذا اليوم
+            </p>
+            <p className="mt-2 text-xs leading-relaxed" style={{ color: ELITE.textSecondary }}>
+              اختر يوماً آخر أو خطّط جلساتك من لوحة الويب.
+            </p>
+          </EliteCard>
+        </motion.div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {sessions.map((s) => (
-            <div
+            <motion.div
               key={s.id}
-              className="flex items-center gap-3 rounded-xl p-4"
-              style={{ background: "#111111" }}
+              layout
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={eliteSpring}
             >
-              <div className="text-center" style={{ minWidth: 48 }}>
-                <p className="text-sm font-bold text-white">{s.start_time?.slice(0, 5)}</p>
-                <p className="text-[10px]" style={{ color: "#555" }}>{s.duration_minutes ?? 60} د</p>
-              </div>
-              <div className="h-10 w-0.5 rounded-full" style={{ background: "#22C55E" }} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{clientName(s)}</p>
-                <p className="truncate text-xs" style={{ color: "#666" }}>
-                  {s.session_type || "جلسة"}
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={toggleMutation.isPending}
-                onClick={() => toggleMutation.mutate({ id: s.id, next: !s.is_completed })}
-                className="flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all active:scale-95"
-                style={{
-                  background: s.is_completed ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
-                  color: s.is_completed ? "#22C55E" : "#888",
-                }}
-              >
-                {toggleMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" strokeWidth={2} />
-                )}
-                {s.is_completed ? "حضور" : "تسجيل حضور"}
-              </button>
-            </div>
+              <EliteCard className="flex items-center gap-4 p-4">
+                <div className="shrink-0 text-center" style={{ minWidth: 48 }}>
+                  <p className="text-sm font-bold tabular-nums" style={{ color: ELITE.textPrimary }}>
+                    {s.start_time?.slice(0, 5)}
+                  </p>
+                  <p className="text-[10px]" style={{ color: ELITE.textTertiary }}>
+                    {s.duration_minutes ?? 60} د
+                  </p>
+                </div>
+                <div className="h-10 w-0.5 shrink-0 rounded-full" style={{ background: ACCENT }} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold" style={{ color: ELITE.textPrimary }}>
+                    {clientName(s)}
+                  </p>
+                  <p className="truncate text-xs" style={{ color: ELITE.textSecondary }}>
+                    {s.session_type || "جلسة"}
+                  </p>
+                </div>
+                <Pressable
+                  disabled={toggleMutation.isPending}
+                  onClick={() => toggleMutation.mutate({ id: s.id, next: !s.is_completed })}
+                  className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-xs font-semibold"
+                  style={{
+                    background: s.is_completed ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
+                    color: s.is_completed ? ACCENT : ELITE.textSecondary,
+                  }}
+                >
+                  {toggleMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" strokeWidth={2} />
+                  )}
+                  {s.is_completed ? "حضور" : "تسجيل حضور"}
+                </Pressable>
+              </EliteCard>
+            </motion.div>
           ))}
         </div>
       )}

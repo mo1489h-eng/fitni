@@ -7,6 +7,7 @@ import {
   filterLocalUnified,
   normalizeExerciseSearchQuery,
 } from "@/lib/localExercisesDb";
+export { resolveExerciseMuscleGroups, mapLabelToMuscleGroup } from "@/lib/exerciseMuscleMapping";
 
 /** Maps `exercisedb_cache` / loose Supabase rows into the UI `ExerciseDBItem` shape. */
 export type ExerciseLibraryRow = {

@@ -15,10 +15,12 @@ import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Gift, Shield, Users } from "lucide-react";
+import { Clock, Gift, Loader2, Shield, Users } from "lucide-react";
+import { useWorkoutStore } from "@/store/workout-store";
 
 const Landing = () => {
   const { user, loading } = useAuth();
+  const fitniRole = useWorkoutStore((s) => s.fitniRole);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -54,7 +56,15 @@ const Landing = () => {
 
   const heroParallax = useMemo(() => (prefersReducedMotion ? 0 : Math.min(scrollY * 0.08, 30)), [prefersReducedMotion, scrollY]);
 
-  if (!loading && user) return <Navigate to="/dashboard" replace />;
+  if (!loading && user) {
+    if (fitniRole === "trainee") return <Navigate to="/trainee/dashboard" replace />;
+    if (fitniRole === "coach") return <Navigate to="/dashboard" replace />;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">

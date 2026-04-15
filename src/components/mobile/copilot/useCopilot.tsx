@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -50,6 +51,10 @@ type CopilotCtx = {
 const Ctx = createContext<CopilotCtx | null>(null);
 
 const FN = import.meta.env.VITE_SUPABASE_URL + "/functions/v1/ai-copilot";
+
+function copilotStorageKey(role: CopilotRole, scope: string | null) {
+  return `fitni.copilot.v1:${role}:${scope ?? "all"}`;
+}
 
 type ProviderProps = {
   role: CopilotRole;
@@ -104,6 +109,7 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
     const raw = loadedConv.messages as { role: string; content: string }[] | null;
     if (!Array.isArray(raw)) return;
     const last = raw.slice(-10);
+    if (last.length === 0) return;
     setMessages(
       last.map((m, i) => ({
         id: `db-${i}-${m.role}`,
@@ -113,12 +119,50 @@ export function CopilotProvider({ role, clientId: fixedClientId, clientReady = t
     );
   }, [loadedConv?.id, loadedConv?.messages, isSending]);
 
+  /** Hydrate from localStorage when opening or switching scope — runs before paint to avoid clearing storage */
+  useLayoutEffect(() => {
+    if (!open) return;
+    const key = copilotStorageKey(role, effectiveScopeClientId);
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) {
+        setMessages([]);
+        return;
+      }
+      const parsed = JSON.parse(raw) as CopilotChatMessage[];
+      if (!Array.isArray(parsed)) {
+        setMessages([]);
+        return;
+      }
+      setMessages(parsed);
+    } catch {
+      setMessages([]);
+    }
+  }, [open, role, effectiveScopeClientId]);
+
+  /** Persist transcript (skip empty so we never wipe cache before hydration) */
+  useEffect(() => {
+    if (!open) return;
+    if (messages.length === 0) return;
+    const key = copilotStorageKey(role, effectiveScopeClientId);
+    try {
+      localStorage.setItem(key, JSON.stringify(messages));
+    } catch {
+      /* quota */
+    }
+  }, [messages, open, role, effectiveScopeClientId]);
+
   const persistClear = useCallback(async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     let q = (supabase as any).from("copilot_conversations").delete().eq("user_id", u.user.id).eq("role", role);
     q = effectiveScopeClientId ? q.eq("client_id", effectiveScopeClientId) : q.is("client_id", null);
     await q;
+    try {
+      localStorage.removeItem(copilotStorageKey(role, effectiveScopeClientId));
+    } catch {
+      /* ignore */
+    }
     setMessages([]);
     setConversationId(null);
     queryClient.invalidateQueries({ queryKey: loadKey });

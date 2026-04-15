@@ -14,6 +14,7 @@ import { buildWorkoutPlanFromDay, type PlanExercise } from "@/lib/workoutDayPlan
 import type { CompletedSetValue, WorkoutPhase } from "./types";
 import { STORAGE_KEY, type PersistedWorkoutV1 } from "./types";
 import { useWorkoutStore } from "@/store/workout-store";
+import { resolveExerciseMuscleGroups } from "@/lib/exerciseMuscleMapping";
 
 const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
 
@@ -62,7 +63,7 @@ type Ctx = {
   setDrawerOpen: (v: boolean) => void;
   previewOffset: number;
   setPreviewOffset: (n: number) => void;
-  completeSet: (weight: number, reps: number, opts?: { extraRestSeconds?: number }) => Promise<void>;
+  completeSet: (weight: number, reps: number, opts?: { extraRestSeconds?: number; rpe?: number }) => Promise<void>;
   skipRest: () => void;
   addRestSeconds: (n: number) => void;
   goNextExercise: () => void;
@@ -140,6 +141,12 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
     },
     enabled: !!clientId && !!portalToken,
   });
+
+  useEffect(() => {
+    if (!clientId) return;
+    useWorkoutStore.getState().setActiveClientForFatigue(clientId);
+    useWorkoutStore.getState().loadMuscleStateLocal(clientId);
+  }, [clientId]);
 
   useEffect(() => {
     if (!bootstrap) return;
@@ -326,7 +333,15 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
 
       try {
         await insertSetMutation.mutateAsync({ weight, reps, exercise: ex, setNum: setWithinExercise });
-        useWorkoutStore.getState().applyFatigueFromExercise(ex.muscleGroup, weight * reps);
+        const rpe =
+          opts?.rpe ??
+          useWorkoutStore.getState().rpeByExerciseId[ex.exerciseId] ??
+          7;
+        const { primary, secondary } = resolveExerciseMuscleGroups({
+          muscleGroup: ex.muscleGroup,
+          name: ex.name,
+        });
+        useWorkoutStore.getState().applyFatigueFromSet(clientId, primary, secondary, weight * reps, rpe);
       } catch {
         setCompleted(rollback);
         return;
@@ -359,7 +374,7 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
         setPhase("complete");
       }
     },
-    [plan, exerciseIndex, setWithinExercise, insertSetMutation, scheduleRestPhase]
+    [plan, exerciseIndex, setWithinExercise, insertSetMutation, scheduleRestPhase, clientId]
   );
 
   const skipRest = useCallback(() => {
@@ -440,7 +455,10 @@ export function WorkoutSessionProvider({ clientId, portalToken, onClose, childre
       /* ignore */
     }
     void useWorkoutStore.getState().persistIndexedSnapshot(null);
-  }, [sessionId, elapsedMs]);
+    await useWorkoutStore.getState().syncMuscleStatusToSupabase(clientId);
+    queryClient.invalidateQueries({ queryKey: ["user-muscle-status", clientId] });
+    queryClient.invalidateQueries({ queryKey: ["muscle-recovery", clientId] });
+  }, [sessionId, elapsedMs, clientId, queryClient]);
 
   const finalizeAndExit = useCallback(async () => {
     await finalizeWorkout();

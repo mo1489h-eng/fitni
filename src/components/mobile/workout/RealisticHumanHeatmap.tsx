@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkoutStore, type MuscleGroupId } from "@/store/workout-store";
+import { ELITE } from "./designTokens";
 
 const OLED = "#000000";
 
@@ -45,17 +46,30 @@ export function RealisticHumanHeatmap({
     return `rgb(${180 - x * 60}, ${40}, ${40})`;
   };
 
+  const maxFatigue = useMemo(() => {
+    const vals = Object.values(fatigueLevels).filter((v): v is number => typeof v === "number");
+    return vals.length ? Math.max(...vals) : 0;
+  }, [fatigueLevels]);
+
+  const fatigueGlow = heatColor(maxFatigue);
+
   return (
     <div
       className={className}
-      style={{ background: OLED }}
       dir="rtl"
+      style={{
+        background: ELITE.cardBg,
+        borderRadius: ELITE.radiusCard,
+        border: ELITE.border,
+        boxShadow: `${ELITE.innerShadow}, 0 0 56px -12px ${fatigueGlow}`,
+        padding: 16,
+      }}
     >
-      <div className="mb-3 flex justify-center gap-2">
+      <div className="mb-4 flex justify-center gap-2">
         <button
           type="button"
           onClick={() => setView("front")}
-          className="rounded-full px-4 py-1.5 text-xs font-bold transition"
+          className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
             background: view === "front" ? "rgba(34,197,94,0.2)" : "#111",
             color: view === "front" ? "#4ade80" : "#666",
@@ -66,7 +80,7 @@ export function RealisticHumanHeatmap({
         <button
           type="button"
           onClick={() => setView("back")}
-          className="rounded-full px-4 py-1.5 text-xs font-bold transition"
+          className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
             background: view === "back" ? "rgba(34,197,94,0.2)" : "#111",
             color: view === "back" ? "#4ade80" : "#666",
@@ -76,7 +90,10 @@ export function RealisticHumanHeatmap({
         </button>
       </div>
 
-      <div className="relative mx-auto aspect-[3/5] w-full max-w-[280px]">
+      <div
+        className="relative mx-auto aspect-[3/5] w-full max-w-[280px] overflow-hidden rounded-2xl"
+        style={{ background: OLED, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)" }}
+      >
         <svg viewBox="0 0 200 360" className="h-full w-full" role="img" aria-label="خريطة العضلات">
           <defs>
             <filter id="heatBloom" x="-40%" y="-40%" width="180%" height="180%">
@@ -291,10 +308,30 @@ function BackMuscles({
   );
 }
 
-/** Connected variant: reads Zustand fatigue + decay on mount */
+/** Connected variant: linear recovery model from Zustand */
 export function RealisticHumanHeatmapConnected(props: Omit<Props, "fatigueLevels" | "lastStimulusAt">) {
-  const fatigueLevels = useWorkoutStore((s) => s.muscleFatigue01);
-  const lastStimulusAt = useWorkoutStore((s) => s.lastStimulusAt);
+  const [tick, setTick] = useState(0);
+  const muscleState = useWorkoutStore((s) => s.muscleFatigueState);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const fatigueLevels = useMemo(
+    () => useWorkoutStore.getState().getDerivedFatigueLevels(),
+    [muscleState, tick]
+  );
+
+  const lastStimulusAt = useMemo(() => {
+    const o: Partial<Record<MuscleGroupId, string>> = {};
+    for (const g of Object.keys(muscleState) as MuscleGroupId[]) {
+      const st = muscleState[g];
+      if (st) o[g] = st.lastStimulusAt;
+    }
+    return o;
+  }, [muscleState]);
+
   return (
     <RealisticHumanHeatmap
       {...props}

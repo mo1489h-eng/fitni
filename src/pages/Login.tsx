@@ -59,7 +59,11 @@ const Login = () => {
       }
     }
     const r = userId ? await resolveFitniRole(userId) : null;
-    if (r) useWorkoutStore.getState().setFitniRole(r);
+    if (r) {
+      useWorkoutStore.getState().setFitniRole(r);
+    } else {
+      console.warn("[Login] resolveFitniRole returned null — check profiles.role and clients.auth_user_id", { userId });
+    }
     navigate(r === "trainee" ? "/trainee/dashboard" : "/dashboard");
     setLoading(false);
   };

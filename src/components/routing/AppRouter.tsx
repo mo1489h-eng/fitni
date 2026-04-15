@@ -82,6 +82,7 @@ export function AppRouter() {
       <Route path="/confirm-email" element={<ConfirmEmail />} />
 
       <Route path="/coach/dashboard" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/dashboard/coach" element={<Navigate to="/dashboard" replace />} />
 
       <Route element={<AuthGuard><RoleGuard allowed="coach"><TrainerAppLayout /></RoleGuard></AuthGuard>}>
         <Route path="dashboard" element={<Dashboard />} />

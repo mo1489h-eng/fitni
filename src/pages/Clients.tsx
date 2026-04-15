@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import FeatureTooltip from "@/components/FeatureTooltip";
 import usePageTitle from "@/hooks/usePageTitle";
 import { Link } from "react-router-dom";
@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { deleteTrainerClient } from "@/lib/deleteTrainerClient";
 import ImportClientsModal from "@/components/ImportClientsModal";
+import { isValidSignupEmail } from "@/lib/email-validation";
 
 type FilterStatus = "all" | "active" | "overdue" | "no_program";
 
@@ -105,6 +106,8 @@ const Clients = () => {
   const [blockReason, setBlockReason] = useState<{ title: string; description: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClientListRow | null>(null);
   const [showImport, setShowImport] = useState(false);
+
+  const emailValid = useMemo(() => isValidSignupEmail(form.email), [form.email]);
 
   const handleAddClick = () => {
     const reason = getAddClientBlockReason();
@@ -185,30 +188,71 @@ const Clients = () => {
 
   const addMutation = useMutation({
     mutationFn: async () => {
+      const emailTrim = form.email.trim();
+      if (!isValidSignupEmail(emailTrim)) {
+        throw new Error("البريد الإلكتروني غير صالح");
+      }
       const startDate = form.startDate ? new Date(form.startDate) : new Date();
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 30);
       const { data: newClient, error } = await supabase.from("clients").insert({
-        trainer_id: user!.id, name: form.name, phone: form.phone, goal: form.goal, email: form.email || null,
-        subscription_price: Number(form.price) || 0, subscription_end_date: endDate.toISOString().split("T")[0],
+        trainer_id: user!.id,
+        name: form.name,
+        phone: form.phone,
+        goal: form.goal,
+        email: emailTrim,
+        subscription_price: Number(form.price) || 0,
+        subscription_end_date: endDate.toISOString().split("T")[0],
         last_workout_date: new Date().toISOString().split("T")[0],
-        age: form.age ? parseInt(form.age) : null, weight: form.weight ? parseFloat(form.weight) : null,
-        height: form.height ? parseFloat(form.height) : null, experience: form.experience || "مبتدئ",
-        days_per_week: parseInt(form.daysPerWeek) || 4, injuries: form.injuries || null, preferred_equipment: form.equipment || null,
-        client_type: form.clientType, sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
-      } as any).select("id, invite_token").single();
+        age: form.age ? parseInt(form.age) : null,
+        weight: form.weight ? parseFloat(form.weight) : null,
+        height: form.height ? parseFloat(form.height) : null,
+        experience: form.experience || "مبتدئ",
+        days_per_week: parseInt(form.daysPerWeek) || 4,
+        injuries: form.injuries || null,
+        preferred_equipment: form.equipment || null,
+        client_type: form.clientType,
+        sessions_per_month: form.clientType === "in_person" ? (parseInt(form.sessionsPerMonth) || 0) : 0,
+      } as any)
+        .select("id, invite_token")
+        .single();
       if (error) throw error;
-      if (form.email && newClient?.invite_token) {
+      if (newClient?.invite_token) {
         try {
-          const { data: emailResult } = await supabase.functions.invoke("send-invite-email", {
-            body: { clientName: form.name, clientEmail: form.email, trainerName: profile?.full_name || "مدربك", inviteToken: newClient.invite_token },
+          const { data: emailResult, error: fnError } = await supabase.functions.invoke("send-invite-email", {
+            body: {
+              clientName: form.name,
+              clientEmail: emailTrim,
+              trainerName: profile?.full_name || "مدربك",
+              inviteToken: newClient.invite_token,
+            },
           });
-          if (emailResult?.emailSent) toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${form.email}` });
-          else if (emailResult?.setupLink) toast({ title: "تمت إضافة العميل", description: "شارك رابط التسجيل يدويا من ملف العميل" });
+          if (fnError) {
+            console.error("[send-invite-email] Edge function invoke failed:", fnError.message, fnError);
+          }
+          if (emailResult != null) {
+            console.log("[send-invite-email] response:", JSON.stringify(emailResult));
+          }
+          if (emailResult?.emailSent) {
+            toast({ title: "تم إرسال الدعوة بالإيميل", description: `تم إرسال رابط التسجيل إلى ${emailTrim}` });
+          } else if (emailResult?.setupLink) {
+            toast({
+              title: "تمت إضافة العميل",
+              description: emailResult?.message || "شارك رابط التسجيل يدوياً من ملف العميل",
+            });
+          } else if (fnError) {
+            toast({
+              title: "تمت إضافة العميل",
+              description: "تعذّر إرسال البريد تلقائياً — تحقق من RESEND/SMTP أو شارك الرابط يدوياً",
+              variant: "destructive",
+            });
+          }
         } catch (e) {
-          console.error("Email send error:", e);
-          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدويا" });
+          console.error("[send-invite-email] Email send error:", e);
+          toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً من ملف العميل" });
         }
+      } else {
+        console.warn("[Clients] New client missing invite_token — trigger generate_invite_token may not have run; email was:", emailTrim);
       }
       if (newClient?.id && form.goal && (form.weight || form.height)) {
         try {
@@ -223,7 +267,6 @@ const Clients = () => {
       setOpen(false);
       setForm({ name: "", phone: "", goal: "", price: "", startDate: "", email: "", age: "", weight: "", height: "", experience: "مبتدئ", daysPerWeek: "4", injuries: "", equipment: "", clientType: "online", sessionsPerMonth: "0" });
       setShowAdvanced(false);
-      if (!form.email) toast({ title: "تمت إضافة العميل بنجاح" });
     },
     onError: () => toast({ title: "حدث خطأ", variant: "destructive" }),
   });
@@ -538,9 +581,22 @@ const Clients = () => {
                 <Input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} type="number" dir="ltr" placeholder="800" />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground">البريد الإلكتروني (اختياري)</label>
-                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" dir="ltr" placeholder="client@email.com" />
-                <p className="text-xs text-muted-foreground mt-1">لإرسال رابط تسجيل الدخول للمتدرب</p>
+                <label className="text-sm font-medium text-foreground">
+                  البريد الإلكتروني <span className="text-destructive" aria-hidden="true">*</span>
+                </label>
+                <Input
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  required
+                  dir="ltr"
+                  placeholder="client@email.com"
+                  aria-invalid={form.email.length > 0 && !emailValid}
+                  className={form.email.length > 0 && !emailValid ? "border-destructive/60" : undefined}
+                />
+                <p className="text-xs text-muted-foreground mt-1">يُستخدم لإرسال رابط إنشاء الحساب وربط المتدرب بالمنصة</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-foreground">تاريخ البدء</label>
@@ -604,7 +660,7 @@ const Clients = () => {
               </div>
 
               <div className="shrink-0 border-t border-[hsl(0_0%_10%)] bg-[hsl(0_0%_6%)] px-6 py-4">
-                <Button type="submit" className="w-full" disabled={addMutation.isPending}>
+                <Button type="submit" className="w-full" disabled={addMutation.isPending || !emailValid}>
                   {addMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "حفظ"}
                 </Button>
               </div>

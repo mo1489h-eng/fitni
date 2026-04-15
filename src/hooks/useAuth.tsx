@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveFitniRole } from "@/lib/auth-service";
+import { normalizeFitniRole, resolveFitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -74,6 +74,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfile(null);
     } else if (data) {
       setProfile(data as Profile);
+      const fromColumn = normalizeFitniRole((data as Profile).role);
+      if (fromColumn) useWorkoutStore.getState().setFitniRole(fromColumn);
     } else {
       const { error: ensureErr } = await supabase.rpc("ensure_trainer_profile" as any);
       if (ensureErr) {

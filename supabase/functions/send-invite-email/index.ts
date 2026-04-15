@@ -71,6 +71,7 @@ serve(async (req) => {
     });
 
     if (!result.success) {
+      console.error("[send-invite-email] inviteClientAuth failed:", result.error);
       return new Response(JSON.stringify({ success: false, error: result.error }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

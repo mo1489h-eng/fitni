@@ -1,8 +1,9 @@
+import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutStore } from "@/store/workout-store";
-import type { FitniRole } from "@/lib/auth-service";
+import { normalizeFitniRole, type FitniRole } from "@/lib/auth-service";
 
 type Props = {
   allowed: FitniRole;
@@ -29,12 +30,12 @@ export function RoleGuard({ allowed, children }: Props) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!fitniRole) {
+  if (!effectiveRole) {
     return <Navigate to="/login" replace />;
   }
 
-  if (fitniRole !== allowed) {
-    return <Navigate to={fitniRole === "coach" ? "/dashboard" : "/trainee/dashboard"} replace />;
+  if (effectiveRole !== allowed) {
+    return <Navigate to={effectiveRole === "coach" ? "/dashboard" : "/trainee/dashboard"} replace />;
   }
 
   return <>{children}</>;

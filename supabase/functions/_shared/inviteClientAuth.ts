@@ -94,14 +94,14 @@ export async function inviteClientAuth(
 
     if (!emailRes.ok) {
       const errText = await emailRes.text();
-      console.error("Resend error:", errText);
-      return { success: false, error: "Failed to send email", setupLink };
+      console.error("[inviteClientAuth] Resend HTTP error:", emailRes.status, errText);
+      return { success: false, error: `Resend ${emailRes.status}: ${errText.slice(0, 200)}`, setupLink };
     }
     return { success: true, emailSent: true, setupLink };
   }
 
   if (!resendKey) {
-    console.log("No RESEND_API_KEY; manual link:", setupLink);
+    console.warn("[inviteClientAuth] RESEND_API_KEY not set — email not sent. PUBLIC_APP_URL / setup link:", setupLink);
   }
 
   return {

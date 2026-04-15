@@ -160,13 +160,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 2. Restore initial session (after listener is registered)
     supabase.auth.getSession().then(({ data: { session: initial } }) => {
       if (!mounted) return;
-      if (import.meta.env.DEV) {
-        console.log("[auth] getSession (app load)", {
-          hasSession: !!initial,
-          userId: initial?.user?.id,
-          emailConfirmed: !!(initial?.user?.email_confirmed_at || initial?.user?.confirmed_at),
-        });
-      }
+      console.log("[auth] getSession (app load)", {
+        hasSession: !!initial,
+        userId: initial?.user?.id,
+        email: initial?.user?.email ?? null,
+        emailConfirmed: !!initial?.user?.email_confirmed_at,
+      });
       setSession(initial);
       setUser(initial?.user ?? null);
       if (initial?.user) {
@@ -185,9 +184,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [fetchProfile]);
 
-  const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
-  };
+  const refreshProfile = useCallback(async () => {
+    const {
+      data: { session: s },
+    } = await supabase.auth.getSession();
+    if (s?.user) await fetchProfile(s.user.id);
+  }, [fetchProfile]);
 
   const signOut = async () => {
     console.log("[Auth] signOut requested");

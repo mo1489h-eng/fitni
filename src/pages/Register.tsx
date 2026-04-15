@@ -151,14 +151,15 @@ const Register = () => {
         },
       });
 
-      if (import.meta.env.DEV) {
-        console.log("[auth] signUp response", {
-          hasUser: !!signUpData?.user,
-          userId: signUpData?.user?.id,
-          hasSession: !!signUpData?.session,
-          identities: signUpData?.user?.identities?.length,
-        });
-      }
+      console.log("[auth] signUp response", {
+        hasUser: !!signUpData?.user,
+        userId: signUpData?.user?.id,
+        email: signUpData?.user?.email,
+        hasSession: !!signUpData?.session,
+        emailConfirmedAt: signUpData?.user?.email_confirmed_at ?? null,
+        identities: signUpData?.user?.identities?.length,
+        error: error?.message ?? null,
+      });
 
       if (error) {
         if (isEmailAlreadyRegisteredError(error.message)) {
@@ -175,9 +176,12 @@ const Register = () => {
         return;
       }
 
-      // Email confirmation required (Supabase Auth): user exists but no session until link is clicked.
-      // Login before confirming typically yields "Invalid login credentials" — see Login.tsx messaging.
+      // Email confirmation required: user exists but no session until link is clicked.
+      // signInWithPassword before confirming returns the same "Invalid login credentials" as wrong password (Supabase).
       if (signUpData?.user && !signUpData.session) {
+        console.warn(
+          "[auth] SIGNUP: email confirmation required — no session returned. User must open confirmation link before login will succeed.",
+        );
         if (validatedPromo?.valid && promoCode.trim() && signUpData.user.id) {
           await supabase.rpc("validate_and_redeem_promo" as any, {
             p_code: promoCode.trim(),
@@ -193,19 +197,18 @@ const Register = () => {
         return;
       }
 
-      // Session present: ensure profiles row (backup if DB trigger did not run).
+      // Session present: ensure profiles row (backup if DB trigger did not run), then go to dashboard.
       if (signUpData?.user && signUpData.session) {
-        if (import.meta.env.DEV) {
-          const { data: sess } = await supabase.auth.getSession();
-          console.log("[auth] post-signUp getSession", { hasSession: !!sess.session, uid: sess.session?.user?.id });
-        }
+        const { data: sess } = await supabase.auth.getSession();
+        console.log("[auth] post-signUp getSession", { hasSession: !!sess.session, uid: sess.session?.user?.id });
 
         const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
         if (rpcErr) {
+          console.error("[auth] ensure_trainer_profile RPC failed", rpcErr);
           const { error: insertErr } = await supabase.from("profiles").insert({
             user_id: signUpData.user.id,
             full_name: name.trim() || "",
-          });
+          } as any);
           if (insertErr && insertErr.code !== "23505") {
             toast({
               title: "تعذّر إكمال إنشاء حساب المدرب",
@@ -216,6 +219,16 @@ const Register = () => {
           }
         }
 
+        const { data: profileRow, error: profErr } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", signUpData.user.id)
+          .maybeSingle();
+        console.log("[auth] post-signUp profile check", {
+          hasProfileRow: !!profileRow?.id,
+          error: profErr?.message ?? null,
+        });
+
         if (validatedPromo?.valid && promoCode.trim()) {
           await supabase.rpc("validate_and_redeem_promo" as any, {
             p_code: promoCode.trim(),
@@ -224,7 +237,7 @@ const Register = () => {
           });
         }
         toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
-        navigate(TRAINER_HOME);
+        navigate(TRAINER_HOME, { replace: true });
       }
     } catch (e: unknown) {
       toast({

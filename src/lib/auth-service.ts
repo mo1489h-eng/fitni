@@ -39,26 +39,47 @@ export function clearStoredFitniRole(): void {
 }
 
 /**
- * Resolve role after login: trainer profile row in `profiles` → coach; else linked row in
- * `clients.auth_user_id` → trainee. (No separate `profiles.role` column in current schema —
- * presence of a trainer profile implies coach.)
+ * Resolve role: `profiles` row → coach; else `clients.auth_user_id` → trainee.
+ * If no profile row yet (trigger lag / race), calls `ensure_trainer_profile` then re-selects once.
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const selectProfile = async () =>
+    supabase.from("profiles").select("id").eq("user_id", userId).maybeSingle();
+
+  let { data: profile, error } = await selectProfile();
 
   if (error) {
-    console.error("resolveFitniRole profile", error);
+    console.error("[auth] resolveFitniRole profile select", error);
   }
 
-  if (profile?.id) return "coach";
+  if (profile?.id) {
+    console.log("[auth] resolveFitniRole: coach (profiles row present)");
+    return "coach";
+  }
 
   const { data: client } = await supabase.from("clients").select("id").eq("auth_user_id", userId).maybeSingle();
 
-  if (client) return "trainee";
+  if (client) {
+    console.log("[auth] resolveFitniRole: trainee (clients.auth_user_id)");
+    return "trainee";
+  }
 
+  // Trainer signup: profile may not be visible yet — idempotent RPC creates row when authenticated
+  console.log("[auth] resolveFitniRole: no profile/client — trying ensure_trainer_profile");
+  const { error: rpcErr } = await supabase.rpc("ensure_trainer_profile" as any);
+  if (rpcErr) {
+    console.error("[auth] resolveFitniRole ensure_trainer_profile", rpcErr);
+  } else {
+    const retry = await selectProfile();
+    profile = retry.data;
+    error = retry.error;
+    if (error) console.error("[auth] resolveFitniRole profile re-select", error);
+    if (profile?.id) {
+      console.log("[auth] resolveFitniRole: coach (after ensure_trainer_profile)");
+      return "coach";
+    }
+  }
+
+  console.warn("[auth] resolveFitniRole: still no role after ensure — returning null", { userId });
   return null;
 }

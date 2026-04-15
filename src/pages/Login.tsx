@@ -51,46 +51,26 @@ const Login = () => {
       });
 
       if (error) {
-        // Supabase often returns "Invalid login credentials" for wrong password OR unconfirmed email (anti-enumeration).
-        console.error("[auth] signInWithPassword failed", {
+        console.error("[auth] signInWithPassword RAW", {
           message: error.message,
           status: (error as { status?: number }).status,
+          code: (error as { code?: string }).code,
           name: error.name,
         });
-        const m = error.message.toLowerCase();
-        const code = (error as { code?: string }).code;
-        const looksUnconfirmed =
-          /not\s*confirmed|confirm.*email|verify.*email|email.*confirm/i.test(error.message) ||
-          code === "email_not_confirmed";
-
-        let description: string;
-        if (looksUnconfirmed || m.includes("email not confirmed") || m.includes("not confirmed")) {
-          description =
-            "لم يتم تأكيد البريد الإلكتروني. تحقق من بريدك وافتح رابط التأكيد. إذا سجّلت للتو، تحقق من مجلد Spam أو استخدم «إعادة إرسال» من صفحة تأكيد البريد.";
-        } else if (m.includes("invalid login credentials") || (m.includes("invalid") && m.includes("credential"))) {
-          description = "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.";
-        } else if (m.includes("too many") || m.includes("rate")) {
-          description = "تجاوزت عدد المحاولات. انتظر قليلاً ثم حاول مرة أخرى.";
-        } else if (m.includes("network") || m.includes("fetch")) {
-          description = "تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت.";
-        } else {
-          description = error.message;
-        }
-
+        // Surface Supabase message verbatim (same string often used for wrong password AND unconfirmed email).
         toast({
           title: "خطأ في تسجيل الدخول",
-          description,
+          description: error.message,
           variant: "destructive",
         });
         return;
       }
 
-      if (import.meta.env.DEV) {
-        console.log("[auth] signInWithPassword ok", {
-          userId: signInData.user?.id,
-          hasSession: !!signInData.session,
-        });
-      }
+      console.log("[auth] signInWithPassword ok", {
+        userId: signInData.user?.id,
+        hasSession: !!signInData.session,
+        emailConfirmed: !!(signInData.user?.email_confirmed_at || signInData.user?.confirmed_at),
+      });
 
       const userId = signInData.user?.id;
       if (userId) {

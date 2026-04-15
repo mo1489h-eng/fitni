@@ -199,3 +199,10 @@ serve(async (req) => {
     });
   }
 });
+const { data, error } = await resend.emails.send({
+  // التعديل هنا: استخدم أي اسم قبل @coachbase.health
+  from: "CoachBase <noreply@coachbase.health>", 
+  to: [email],
+  subject: "دعوة للانضمام إلى CoachBase",
+  html: `<h1>مرحباً بك في CoachBase</h1>...`,
+});

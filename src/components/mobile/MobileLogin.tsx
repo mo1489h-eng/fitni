@@ -23,8 +23,9 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
     setError(null);
 
     try {
+      const emailNorm = email.trim().toLowerCase();
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailNorm,
         password,
       });
 

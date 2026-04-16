@@ -33,7 +33,9 @@ const ClientLogin = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      // Must match ClientRegister / Login: same normalization as auth.admin.createUser(email)
+      const emailNorm = email.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signInWithPassword({ email: emailNorm, password });
       if (error) throw error;
       const { data: profile, error: profileError } = await supabase.rpc("get_my_client_profile");
       if (profileError) throw profileError;
@@ -56,7 +58,7 @@ const ClientLogin = () => {
   };
 
   const handleForgotPassword = async () => {
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     if (!trimmed) {
       toast({
         title: "أدخل بريدك الإلكتروني أولاً",

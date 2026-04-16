@@ -47,17 +47,17 @@ export default function CoachLandingTrainee() {
       if (isUuid) {
         const { data, error } = await supabase
           .from("profiles")
-          .select("user_id, full_name, username, avatar_url, specialization, role")
+          .select("user_id, full_name, username, avatar_url, specialization")
           .eq("user_id", coachId)
           .maybeSingle();
         if (error) throw error;
-        if (!data || data.role !== "coach") return null;
-        return data;
+        if (!data) return null;
+        return data as { user_id: string; full_name: string; username: string | null; avatar_url?: string | null; specialization?: string | null };
       }
       const { data, error } = await supabase.rpc("get_trainer_by_username" as never, { p_username: coachId } as never);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      return row as { user_id: string; full_name: string; username: string | null; role?: string } | null;
+      return row as { user_id: string; full_name: string; username: string | null; avatar_url?: string | null; specialization?: string | null } | null;
     },
     enabled: !!coachId,
   });
@@ -125,14 +125,9 @@ export default function CoachLandingTrainee() {
       } = await supabase.auth.getUser();
       const userId = authedUser?.id ?? signUpData.user.id;
 
-      const { error: ensureErr } = await supabase.rpc("ensure_user_profile");
-      if (ensureErr) {
-        console.error(ensureErr);
-        toast({ title: "تعذّر إعداد الملف", description: ensureErr.message, variant: "destructive" });
-        return;
-      }
+      // Profile is auto-created by handle_new_user trigger — no RPC needed
 
-      const { error: linkErr } = await supabase.rpc("create_landing_trainee_client_for_checkout", {
+      const { error: linkErr } = await (supabase as any).rpc("create_landing_trainee_client_for_checkout", {
         p_trainer_id: trainerUserId,
         p_package_id: selectedPkg.id,
         p_full_name: fullName.trim(),

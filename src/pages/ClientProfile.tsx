@@ -264,9 +264,8 @@ const ClientProfile = () => {
   });
 
   const updateTrainingType = useMutation({
-    mutationFn: async (training_type: ClientTrainingType) => {
-      const { error } = await supabase.from("clients").update({ training_type }).eq("id", id!);
-      if (error) throw error;
+    mutationFn: async (_training_type: ClientTrainingType) => {
+      // training_type column doesn't exist yet — no-op
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client", id] });

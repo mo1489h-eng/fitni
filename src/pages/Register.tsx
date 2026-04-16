@@ -205,18 +205,7 @@ const Register = () => {
 
       const signUpUserId = activeSession.user.id;
 
-      const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
-      if (rpcErr) {
-        console.error("[auth] ensure_user_profile RPC failed", rpcErr);
-        toast({
-          title: accountTab === "trainee" ? "تعذّر إكمال ملف المتدرب" : "تعذّر إكمال إنشاء حساب المدرب",
-          description: describeProfileSetupFailure(rpcErr),
-          variant: "destructive",
-        });
-        return;
-      }
-
-      await supabase.rpc("sync_profile_email_verification_from_auth");
+      // Profile is auto-created by handle_new_user trigger — no ensure_user_profile RPC needed
 
       if (!isTrainee && validatedPromo?.valid && promoCode.trim()) {
         await supabase.rpc("validate_and_redeem_promo" as any, {

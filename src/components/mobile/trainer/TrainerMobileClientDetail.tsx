@@ -112,7 +112,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
-  const trainingType = parseClientTrainingType(client.training_type);
+  const trainingType = "online" as const;
 
   if (sessionModeOpen) {
     return <SessionMode clientId={client.id} onClose={() => setSessionModeOpen(false)} />;

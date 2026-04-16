@@ -13,7 +13,7 @@ import { Pressable } from "../elite/Pressable";
 import { eliteSpring } from "../elite/spring";
 import { hapticImpact } from "../workout/haptics";
 import { cn } from "@/lib/utils";
-import { useWorkoutStore } from "@/store/workout-store";
+import { useAuth } from "@/hooks/useAuth";
 
 const BUBBLE_TEXT = "text-[15px] leading-[1.6]";
 
@@ -104,7 +104,7 @@ export default function CopilotChat() {
   } = useCopilot();
 
   const { data: clients = [] } = useTrainerClientsForCopilot();
-  const fitniRole = useWorkoutStore((s) => s.fitniRole);
+  const { resolvedFitniRole: fitniRole } = useAuth();
   const [input, setInput] = useState("");
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);

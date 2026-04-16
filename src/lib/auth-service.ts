@@ -5,24 +5,8 @@ import { normalizeFitniRole, type FitniRole } from "@/lib/auth-role";
 export type { FitniRole } from "@/lib/auth-role";
 export { normalizeFitniRole } from "@/lib/auth-role";
 
+/** Legacy key — cleared on logout; role is never read from localStorage for access control. */
 export const FITNI_ROLE_STORAGE_KEY = "fitni.user_role_v1";
-
-export function readStoredFitniRole(): FitniRole | null {
-  try {
-    const s = localStorage.getItem(FITNI_ROLE_STORAGE_KEY);
-    return s === "coach" || s === "trainee" ? s : null;
-  } catch {
-    return null;
-  }
-}
-
-export function persistFitniRole(role: FitniRole): void {
-  try {
-    localStorage.setItem(FITNI_ROLE_STORAGE_KEY, role);
-  } catch {
-    /* ignore */
-  }
-}
 
 export function clearStoredFitniRole(): void {
   try {

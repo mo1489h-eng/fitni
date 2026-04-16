@@ -4,12 +4,10 @@ import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
-import { resolveFitniRole, persistFitniRole, readStoredFitniRole } from "@/lib/auth-service";
 import { authLogDev } from "@/lib/auth-log";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useWorkoutStore } from "@/store/workout-store";
 import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const benefits = [
@@ -28,12 +26,11 @@ const Login = () => {
   const [forgotSending, setForgotSending] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading, refreshProfile } = useAuth();
-  const fitniRole = useWorkoutStore((s) => s.fitniRole);
+  const { user, loading: authLoading, refreshProfile, resolvedFitniRole } = useAuth();
 
   if (!authLoading && user) {
-    if (fitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
-    if (fitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
+    if (resolvedFitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
+    if (resolvedFitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -82,36 +79,24 @@ const Login = () => {
       }
 
       if (userId) {
-        let r = await resolveFitniRole(userId);
+        let r = await refreshProfile();
         if (!r) {
           await new Promise((res) => setTimeout(res, 400));
-          r = await resolveFitniRole(userId);
-        }
-        if (!r) {
-          await refreshProfile();
-          r = await resolveFitniRole(userId);
+          r = await refreshProfile();
         }
         if (import.meta.env.DEV) {
           console.log("[Login] resolved role:", r);
         }
         if (r) {
-          useWorkoutStore.getState().setFitniRole(r);
-          persistFitniRole(r);
           navigate(r === "trainee" ? CLIENT_HOME : TRAINER_HOME);
         } else {
-          const stored = readStoredFitniRole();
-          if (stored) {
-            useWorkoutStore.getState().setFitniRole(stored);
-            navigate(stored === "trainee" ? CLIENT_HOME : TRAINER_HOME);
-          } else {
-            console.warn("[Login] resolveFitniRole returned null after retries", { userId });
-            toast({
-              title: "تعذّر إكمال تسجيل الدخول",
-              description:
-                "لم نتمكن من تحديد نوع حسابك (مدرب أو متدرب). تحقق من الشبكة ثم أعد المحاولة. إذا استمرّت المشكلة، تواصل مع الدعم.",
-              variant: "destructive",
-            });
-          }
+          console.warn("[Login] resolveFitniRole returned null after retries", { userId });
+          toast({
+            title: "تعذّر إكمال تسجيل الدخول",
+            description:
+              "لم نتمكن من تحديد نوع حسابك (مدرب أو متدرب). تحقق من الشبكة ثم أعد المحاولة. إذا استمرّت المشكلة، تواصل مع الدعم.",
+            variant: "destructive",
+          });
         }
         if (import.meta.env.DEV) {
           const { data: after } = await supabase.auth.getSession();

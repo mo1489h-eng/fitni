@@ -3,13 +3,8 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  resolveFitniRole,
-  persistFitniRole,
-  clearStoredFitniRole,
-  readStoredFitniRole,
-  isMissingProfilesRoleColumn,
-} from "@/lib/auth-service";
+import { resolveFitniRole, clearStoredFitniRole, isMissingProfilesRoleColumn } from "@/lib/auth-service";
+import type { FitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -40,20 +35,23 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  /** Server-resolved coach/trainee from `resolveFitniRole` only — never from localStorage. */
+  resolvedFitniRole: FitniRole | null;
   loading: boolean;
   profileLoading: boolean;
   signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<FitniRole | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   profile: null,
+  resolvedFitniRole: null,
   loading: true,
   profileLoading: true,
   signOut: async () => {},
-  refreshProfile: async () => {},
+  refreshProfile: async () => null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -70,12 +68,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [resolvedFitniRole, setResolvedFitniRole] = useState<FitniRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
   const queryClient = useQueryClient();
   const profileFetchRef = useRef(0);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string): Promise<FitniRole | null> => {
     const fetchId = ++profileFetchRef.current;
     setProfileLoading(true);
     if (import.meta.env.DEV) console.log("[Auth] fetchProfile start", userId);
@@ -88,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .maybeSingle();
 
       // Stale check
-      if (fetchId !== profileFetchRef.current) return;
+      if (fetchId !== profileFetchRef.current) return null;
 
       if (error && isMissingProfilesRoleColumn(error)) {
         if (import.meta.env.DEV) console.warn("[Auth] profiles.role missing — falling back to select without role");
@@ -97,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .select(profileSelectColumnsNoRole)
           .eq("user_id", userId)
           .maybeSingle();
-        if (fetchId !== profileFetchRef.current) return;
+        if (fetchId !== profileFetchRef.current) return null;
         data = r0.data as typeof data;
         error = r0.error;
       }
@@ -112,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // No profile — try to create one via RPC
         if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_user_profile");
         const { error: ensureErr } = await supabase.rpc("ensure_user_profile");
-        if (fetchId !== profileFetchRef.current) return;
+        if (fetchId !== profileFetchRef.current) return null;
 
         if (ensureErr) {
           console.error("[Auth] ensure_user_profile failed", ensureErr);
@@ -130,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .eq("user_id", userId)
               .maybeSingle();
           }
-          if (fetchId !== profileFetchRef.current) return;
+          if (fetchId !== profileFetchRef.current) return null;
           if (r2.data) setProfile(r2.data as Profile);
           else setProfile(null);
         }
@@ -138,26 +137,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Resolve role
       const r = await resolveFitniRole(userId);
-      if (fetchId !== profileFetchRef.current) return;
+      if (fetchId !== profileFetchRef.current) return null;
 
       if (import.meta.env.DEV) console.log("[Auth] resolved role:", r);
       if (r) {
+        setResolvedFitniRole(r);
         useWorkoutStore.getState().setFitniRole(r);
-        persistFitniRole(r);
+        setProfile((prev) => (prev ? { ...prev, role: r } : prev));
       } else {
-        const stored = readStoredFitniRole();
-        if (stored) {
-          useWorkoutStore.getState().setFitniRole(stored);
-        } else {
-          useWorkoutStore.getState().clearFitniRole();
-        }
+        setResolvedFitniRole(null);
+        useWorkoutStore.getState().clearFitniRole();
       }
+      return r;
     } catch (e) {
       console.error("[Auth] fetchProfile error", e);
       if (fetchId === profileFetchRef.current) {
         setProfile(null);
-        useWorkoutStore.getState().setFitniRole(readStoredFitniRole());
+        setResolvedFitniRole(null);
+        useWorkoutStore.getState().clearFitniRole();
       }
+      return null;
     } finally {
       if (fetchId === profileFetchRef.current) {
         setProfileLoading(false);
@@ -192,6 +191,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         Sentry.setUser(null);
         setProfile(null);
         setProfileLoading(false);
+        setResolvedFitniRole(null);
         useWorkoutStore.getState().clearFitniRole();
         clearStoredFitniRole();
       }
@@ -224,11 +224,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [fetchProfile]);
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (): Promise<FitniRole | null> => {
     const {
       data: { session: s },
     } = await supabase.auth.getSession();
-    if (s?.user) await fetchProfile(s.user.id);
+    if (s?.user) return await fetchProfile(s.user.id);
+    return null;
   }, [fetchProfile]);
 
   const signOut = async () => {
@@ -241,11 +242,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setUser(null);
     setProfile(null);
+    setResolvedFitniRole(null);
     setProfileLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, profileLoading, signOut, refreshProfile }}>
+    <AuthContext.Provider
+      value={{ session, user, profile, resolvedFitniRole, loading, profileLoading, signOut, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

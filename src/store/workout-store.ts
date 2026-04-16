@@ -12,7 +12,7 @@ import { create } from "zustand";
 import { idbGet, idbSet, idbDel } from "@/lib/workout-idb";
 import type { PersistedWorkoutV1 } from "@/components/mobile/workout/types";
 import type { FitniRole } from "@/lib/auth-service";
-import { FITNI_ROLE_STORAGE_KEY, clearStoredFitniRole, persistFitniRole } from "@/lib/auth-service";
+import { clearStoredFitniRole } from "@/lib/auth-service";
 import {
   calculateRecoveryTime,
   fatigueDeltaFromVolume,
@@ -52,7 +52,7 @@ type WorkoutStoreState = {
   syncQueue: SyncJob[];
   /** Last persisted snapshot revision (monotonic) */
   snapshotRev: number;
-  /** Fitni app role — hydrated from localStorage to avoid UI flicker; synced from auth-service */
+  /** Fitni app role — memory only; set from `useAuth` after server resolution (never trust localStorage). */
   fitniRole: FitniRole | null;
   setFitniRole: (role: FitniRole | null) => void;
   clearFitniRole: () => void;
@@ -106,16 +106,6 @@ function applyStimulusToMuscle(
   return { initialFatigue: peak, totalRecoveryHours: T, lastStimulusAt: nowIso };
 }
 
-function readInitialFitniRole(): FitniRole | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const s = localStorage.getItem(FITNI_ROLE_STORAGE_KEY);
-    return s === "coach" || s === "trainee" ? s : null;
-  } catch {
-    return null;
-  }
-}
-
 export const useWorkoutStore = create<WorkoutStoreState>()((set, get) => ({
     rpeByExerciseId: {},
     pendingExtraRestSeconds: 0,
@@ -123,12 +113,11 @@ export const useWorkoutStore = create<WorkoutStoreState>()((set, get) => ({
     activeClientIdForFatigue: null,
     syncQueue: [],
     snapshotRev: 0,
-    fitniRole: readInitialFitniRole(),
+    fitniRole: null,
 
     setFitniRole: (role) => {
       set({ fitniRole: role });
-      if (role) persistFitniRole(role);
-      else clearStoredFitniRole();
+      if (!role) clearStoredFitniRole();
     },
 
     clearFitniRole: () => {

@@ -8,7 +8,6 @@ import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useWorkoutStore } from "@/store/workout-store";
 import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
 
 const benefits = [
@@ -75,8 +74,7 @@ const Register = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
-  const fitniRole = useWorkoutStore((s) => s.fitniRole);
+  const { user, loading: authLoading, resolvedFitniRole } = useAuth();
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   // Fetch remaining founder spots
@@ -90,8 +88,8 @@ const Register = () => {
   }, []);
 
   if (!authLoading && user) {
-    if (fitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
-    if (fitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
+    if (resolvedFitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
+    if (resolvedFitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

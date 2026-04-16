@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,7 +15,6 @@ import ConfirmEmail from "@/pages/ConfirmEmail";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
 import { useWorkoutStore } from "@/store/workout-store";
-import { resolveFitniRole, readStoredFitniRole, persistFitniRole } from "@/lib/auth-service";
 import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
@@ -52,39 +51,14 @@ function MobileHomeEntry() {
 function MobileAppContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, user, loading } = useAuth();
-  const fitniRole = useWorkoutStore((s) => s.fitniRole);
-  const [roleResolved, setRoleResolved] = useState(false);
+  const { session, user, loading, profileLoading, resolvedFitniRole, refreshProfile } = useAuth();
+  const fitniRole = resolvedFitniRole;
 
   useEffect(() => {
-    if (loading) return;
-
     if (!session || !user) {
       useWorkoutStore.getState().clearFitniRole();
-      setRoleResolved(true);
-      return;
     }
-
-    setRoleResolved(false);
-    let cancelled = false;
-    void (async () => {
-      const r = await resolveFitniRole(user.id);
-      if (cancelled) return;
-      if (r) {
-        useWorkoutStore.getState().setFitniRole(r);
-        persistFitniRole(r);
-      } else {
-        const stored = readStoredFitniRole();
-        if (stored) useWorkoutStore.getState().setFitniRole(stored);
-        else useWorkoutStore.getState().clearFitniRole();
-      }
-      setRoleResolved(true);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session, user, loading]);
+  }, [session, user]);
 
   useEffect(() => {
     if (!fitniRole || !session) return;
@@ -94,7 +68,7 @@ function MobileAppContent() {
     }
   }, [fitniRole, session, navigate]);
 
-  if (!roleResolved || loading) {
+  if (loading || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: "#000000" }}>
         <div
@@ -105,18 +79,31 @@ function MobileAppContent() {
     );
   }
 
-  if (!session || !fitniRole) {
+  if (!session || !user) {
     return (
       <MobileLogin
         onLoginSuccess={async () => {
-          const { supabase } = await import("@/integrations/supabase/client");
-          const id = (await supabase.auth.getUser()).data.user?.id;
-          if (id) {
-            const r = await resolveFitniRole(id);
-            if (r) useWorkoutStore.getState().setFitniRole(r);
-          }
+          await refreshProfile();
         }}
       />
+    );
+  }
+
+  if (!fitniRole) {
+    return (
+      <div
+        className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center"
+        style={{ background: "#000000", color: "#e5e5e5" }}
+      >
+        <p className="text-sm">تعذّر تحديد نوع حسابك. تحقق من الشبكة ثم أعد المحاولة.</p>
+        <button
+          type="button"
+          className="rounded-lg border border-neutral-600 px-4 py-2 text-sm"
+          onClick={() => void refreshProfile()}
+        >
+          إعادة المحاولة
+        </button>
+      </div>
     );
   }
 

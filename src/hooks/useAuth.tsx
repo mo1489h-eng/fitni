@@ -104,32 +104,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
       } else if (data) {
         if (import.meta.env.DEV) console.log("[Auth] profile found");
-        setProfile(data as Profile);
+        setProfile(data as unknown as Profile);
       } else {
-        // No profile — try to create one via RPC
-        if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_user_profile");
-        const { error: ensureErr } = await supabase.rpc("ensure_user_profile");
-        if (fetchId !== profileFetchRef.current) return null;
-
-        if (ensureErr) {
-          console.error("[Auth] ensure_user_profile failed", ensureErr);
-          setProfile(null);
-        } else {
-          const r2 = await selectProfileRow(userId);
-          if (fetchId !== profileFetchRef.current) return null;
-          if (r2.data) setProfile(r2.data as Profile);
-          else setProfile(null);
-        }
-      }
-
-      const { error: syncErr } = await supabase.rpc("sync_profile_email_verification_from_auth");
-      if (syncErr && import.meta.env.DEV) {
-        console.warn("[Auth] sync_profile_email_verification_from_auth", syncErr.message);
-      }
-      if (!syncErr) {
-        const ref = await selectProfileRow(userId);
-        if (fetchId !== profileFetchRef.current) return null;
-        if (ref.data) setProfile(ref.data as Profile);
+        // No profile row — handle_new_user trigger should have created it.
+        // Just set null; the user can still use the app.
+        if (import.meta.env.DEV) console.log("[Auth] no profile found");
+        setProfile(null);
       }
 
       // Resolve role

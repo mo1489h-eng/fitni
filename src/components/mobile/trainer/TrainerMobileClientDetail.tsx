@@ -37,7 +37,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .from("clients")
         .select(
           `
-          id, name, goal, phone, email, program_id, week_number, days_per_week, training_type,
+          id, name, goal, phone, email, program_id, week_number, days_per_week,
           programs ( id, name, weeks, delivery_mode )
         `
         )
@@ -45,7 +45,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .eq("trainer_id", user.id)
         .single();
       if (error) throw error;
-      return data as {
+      return data as unknown as {
         id: string;
         name: string;
         goal: string;
@@ -54,7 +54,6 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         program_id: string | null;
         week_number: number | null;
         days_per_week: number | null;
-        training_type?: string;
         programs: { id: string; name: string; weeks: number | null; delivery_mode?: string } | null;
       };
     },

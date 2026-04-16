@@ -17,10 +17,10 @@ export function TraineeAppLayout() {
       if (!user?.id) return null;
       const { data: row } = await supabase
         .from("clients")
-        .select("id, payment_pending, trainer_id")
+        .select("id, trainer_id")
         .eq("auth_user_id", user.id)
         .maybeSingle();
-      if (!row?.payment_pending) return null;
+      if (!row) return null;
       const { data: coach } = await supabase
         .from("profiles")
         .select("username")

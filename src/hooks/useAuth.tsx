@@ -66,46 +66,16 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-/** Full trainer profile row (includes `role` for Fitni routing). */
+/** Profile columns that actually exist on the DB table. */
 const profileSelectColumns =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role, source, email_verified" as const;
-
-/** Same row without `role` — used when remote DB has not run role migration yet (42703). */
-const profileSelectColumnsNoRole =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, email_verified" as const;
-
-/** Oldest-compatible row — no `role`, `source`, or `email_verified` (optional migrations not applied). */
-const profileSelectColumnsLegacy =
   "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
 
 async function selectProfileRow(userId: string) {
-  let r = await supabase
+  return supabase
     .from("profiles")
     .select(profileSelectColumns)
     .eq("user_id", userId)
     .maybeSingle();
-
-  if (!r.error) return r;
-
-  const shouldTryNarrower =
-    isMissingProfilesRoleColumn(r.error) || isPostgrestMissingColumnError(r.error);
-  if (shouldTryNarrower) {
-    r = await supabase
-      .from("profiles")
-      .select(profileSelectColumnsNoRole)
-      .eq("user_id", userId)
-      .maybeSingle();
-  }
-
-  if (!r.error) return r;
-  if (isPostgrestMissingColumnError(r.error)) {
-    r = await supabase
-      .from("profiles")
-      .select(profileSelectColumnsLegacy)
-      .eq("user_id", userId)
-      .maybeSingle();
-  }
-  return r;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

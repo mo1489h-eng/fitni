@@ -255,7 +255,7 @@ export default function WorkoutSessionView({
         const ins = await supabase.from("workout_logs").insert(wl);
         if (ins.error) throw ins.error;
       } else {
-        void supabase.from("workout_logs").insert(wl).catch(() => {});
+        void (supabase as any).from("workout_logs").insert(wl).then(() => {}).catch(() => {});
       }
     } catch {
       volumeRef.current -= vol;

@@ -23,12 +23,12 @@ export default function TrainerSessionPage() {
       if (!user || !clientId) return null;
       const { data: row, error: e } = await supabase
         .from("clients")
-        .select("id, training_type, trainer_id")
+        .select("id, trainer_id")
         .eq("id", clientId)
         .eq("trainer_id", user.id)
         .maybeSingle();
       if (e) throw e;
-      return row as { id: string; training_type?: string; trainer_id: string | null } | null;
+      return row as unknown as { id: string; training_type?: string; trainer_id: string | null } | null;
     },
     enabled: !!user && !!clientId,
   });

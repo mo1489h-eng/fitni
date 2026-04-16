@@ -37,7 +37,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .from("clients")
         .select(
           `
-          id, name, goal, phone, email, program_id, week_number, days_per_week, training_type,
+          id, name, goal, phone, email, program_id, week_number, days_per_week,
           programs ( id, name, weeks, delivery_mode )
         `
         )
@@ -45,7 +45,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .eq("trainer_id", user.id)
         .single();
       if (error) throw error;
-      return data as {
+      return data as unknown as {
         id: string;
         name: string;
         goal: string;
@@ -54,7 +54,6 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         program_id: string | null;
         week_number: number | null;
         days_per_week: number | null;
-        training_type?: string;
         programs: { id: string; name: string; weeks: number | null; delivery_mode?: string } | null;
       };
     },
@@ -113,7 +112,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
-  const trainingType = parseClientTrainingType(client.training_type);
+  const trainingType = "online" as const;
 
   if (sessionModeOpen) {
     return <SessionMode clientId={client.id} onClose={() => setSessionModeOpen(false)} />;
@@ -155,8 +154,8 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
             <span
               className="text-[10px] px-2 py-0.5 rounded-full font-medium"
               style={{
-                background: trainingType === "in_person" ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.2)",
-                color: trainingType === "in_person" ? "#22C55E" : "#94a3b8",
+                background: "rgba(100,116,139,0.2)",
+                color: "#94a3b8",
               }}
             >
               {TRAINING_TYPE_LABEL_AR[trainingType]}
@@ -205,7 +204,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
 
       <MuscleRecoveryMap clientId={client.id} />
 
-      {trainingType === "in_person" && client.program_id && (
+      {client.program_id && (
         <button
           type="button"
           onClick={() => setSessionModeOpen(true)}

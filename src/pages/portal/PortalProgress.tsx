@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const PortalProgress = () => {
   const { token } = usePortalToken();
+  const path = usePortalPath();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showWeightModal, setShowWeightModal] = useState(false);
@@ -40,7 +41,7 @@ const PortalProgress = () => {
             toast({ title: "تعذر قراءة التقرير", description: data.error, variant: "destructive" });
           } else {
             toast({ title: "تم قراءة التقرير بنجاح" });
-            navigate("/portal/body-scan");
+            navigate(path("body-scan"));
           }
         } catch (err: any) {
           toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -178,7 +179,7 @@ const PortalProgress = () => {
               size="sm"
               variant="outline"
               className="gap-1 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 text-xs"
-              onClick={() => navigate("/portal/body-scan")}
+              onClick={() => navigate(path("body-scan"))}
             >
               عرض الكل
               <ChevronLeft className="w-3 h-3" strokeWidth={1.5} />
@@ -223,7 +224,7 @@ const PortalProgress = () => {
           <Button
             variant="outline"
             className="w-full gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)] hover:border-primary/30 hover:text-white"
-            onClick={() => navigate("/portal/body-scan")}
+            onClick={() => navigate(path("body-scan"))}
           >
             <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
             إدخال بيانات يدوياً

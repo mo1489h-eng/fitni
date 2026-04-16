@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import { useQuery } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import PortalPrivacySettings from "@/components/PortalPrivacySettings";
@@ -104,7 +104,7 @@ const PortalAccount = () => {
           </div>
 
           <Button className="w-full" variant={isActive ? "outline" : "default"} size="sm"
-            onClick={() => navigate("/portal/subscription")}>
+            onClick={() => navigate(path("subscription"))}>
             <RefreshCw className="w-4 h-4 ml-1" strokeWidth={1.5} />
             {isActive ? "تجديد مبكر" : "جدد اشتراكك"}
           </Button>

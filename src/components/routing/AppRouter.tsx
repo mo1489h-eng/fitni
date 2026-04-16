@@ -60,7 +60,6 @@ import PortalVault from "@/pages/portal/PortalVault";
 import PortalLessonPlayer from "@/pages/portal/PortalLessonPlayer";
 import { TrainerAppLayout } from "@/components/layout/TrainerAppLayout";
 import { TraineeAppLayout } from "@/components/layout/TraineeAppLayout";
-import TraineeDashboard from "@/pages/TraineeDashboard";
 import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 import TrainerSessionPage from "@/pages/TrainerSessionPage";
 import CoachLandingTrainee from "@/pages/CoachLandingTrainee";
@@ -173,7 +172,17 @@ export function AppRouter() {
 
       <Route path="/trainee" element={traineeAuth}>
         <Route index element={<Navigate to="home" replace />} />
-        <Route path="home" element={<TraineeDashboard />} />
+        <Route path="home" element={<PortalHome />} />
+        <Route path="workout" element={<PortalWorkout />} />
+        <Route path="progress" element={<PortalProgress />} />
+        <Route path="nutrition" element={<PortalNutrition />} />
+        <Route path="body-scan" element={<PortalBodyScan />} />
+        <Route path="content" element={<PortalContent />} />
+        <Route path="subscription" element={<PortalSubscription />} />
+        <Route path="account" element={<PortalAccount />} />
+        <Route path="challenges" element={<PortalChallenges />} />
+        <Route path="vault" element={<PortalVault />} />
+        <Route path="vault/:unitId/:lessonId" element={<PortalLessonPlayer />} />
         <Route path="dashboard" element={<Navigate to={TRAINEE_HOME} replace />} />
       </Route>
 

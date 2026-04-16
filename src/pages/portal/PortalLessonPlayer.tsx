@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import { useParams, useNavigate } from "react-router-dom";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,7 @@ const getEmbedUrl = (url: string): string | null => {
 
 const PortalLessonPlayer = () => {
   const { token } = usePortalToken();
+  const path = usePortalPath();
   const { unitId, lessonId } = useParams();
   const navigate = useNavigate();
 
@@ -103,14 +104,14 @@ const PortalLessonPlayer = () => {
       toast.success(data ? "تم تسجيل المشاهدة" : "تم الغاء التسجيل");
       // Auto-advance on complete
       if (data && nextLesson) {
-        navigate(`/portal/vault/${unitId}/${nextLesson.id}`, { replace: true });
+        navigate(path(`vault/${unitId}/${nextLesson.id}`), { replace: true });
       }
       fetchData();
     }
   };
 
   const navigateToLesson = (id: string) => {
-    navigate(`/portal/vault/${unitId}/${id}`, { replace: true });
+    navigate(path(`vault/${unitId}/${id}`), { replace: true });
   };
 
   return (
@@ -119,7 +120,7 @@ const PortalLessonPlayer = () => {
         {/* Top bar */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/portal/vault")}
+            onClick={() => navigate(path("vault"))}
             className="flex items-center gap-2 text-sm text-[hsl(0_0%_40%)] hover:text-white transition-colors"
           >
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} />

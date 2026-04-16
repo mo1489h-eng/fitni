@@ -5,9 +5,18 @@ import { PageWrapper } from "./PageWrapper";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TraineePortalTokenProvider } from "@/hooks/usePortalToken";
 
-/** Minimal shell for trainee web routes (performance hub). */
+/** مساحة المتدرب على الويب: نفس صفحات البوابة (تمارين، تغذية، تقدم، حساب، مكتبة، …) تحت `/trainee/*`. */
 export function TraineeAppLayout() {
+  return (
+    <TraineePortalTokenProvider>
+      <TraineeAppLayoutInner />
+    </TraineePortalTokenProvider>
+  );
+}
+
+function TraineeAppLayoutInner() {
   const location = useLocation();
   const { user } = useAuth();
 
@@ -34,9 +43,8 @@ export function TraineeAppLayout() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <header className="border-b border-border px-4 py-3 space-y-3">
-        <p className="text-sm font-semibold text-foreground">مساحة المتدرب</p>
-        {pendingPay && (
+      {pendingPay && (
+        <div className="border-b border-border px-4 py-3">
           <Alert>
             <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span>اشتراكك غير مكتمل — أكمل الدفع للوصول الكامل.</span>
@@ -45,8 +53,8 @@ export function TraineeAppLayout() {
               </Link>
             </AlertDescription>
           </Alert>
-        )}
-      </header>
+        </div>
+      )}
       <AnimatePresence mode="wait" initial={false}>
         <PageWrapper key={location.pathname}>
           <Outlet />

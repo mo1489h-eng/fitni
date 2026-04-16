@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import { useNavigate } from "react-router-dom";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ const defaultGradients = [
 
 const PortalVault = () => {
   const { token } = usePortalToken();
+  const path = usePortalPath();
   const navigate = useNavigate();
   const [units, setUnits] = useState<PortalUnit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +109,7 @@ const PortalVault = () => {
                   <Button
                     size="sm"
                     className="gap-1.5 text-xs"
-                    onClick={() => navigate(`/portal/vault/${nextLesson.unitId}/${nextLesson.lessonId}`)}
+                    onClick={() => navigate(path(`vault/${nextLesson.unitId}/${nextLesson.lessonId}`))}
                   >
                     <ArrowLeft className="h-3 w-3" strokeWidth={1.5} />
                     كمّل من حيث توقفت
@@ -130,7 +131,7 @@ const PortalVault = () => {
                 return (
                   <div
                     key={unit.id}
-                    onClick={() => !isLocked && total > 0 && navigate(`/portal/vault/${unit.id}/${unit.lessons.sort((a, b) => a.lesson_order - b.lesson_order)[0]?.id}`)}
+                    onClick={() => !isLocked && total > 0 && navigate(path(`vault/${unit.id}/${unit.lessons.sort((a, b) => a.lesson_order - b.lesson_order)[0]?.id}`))}
                     className={`rounded-2xl border overflow-hidden transition-all duration-300 ${
                       isLocked
                         ? "border-[hsl(0_0%_8%)] opacity-50 cursor-not-allowed"

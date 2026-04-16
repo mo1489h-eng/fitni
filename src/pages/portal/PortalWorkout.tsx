@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خم�
 
 const PortalWorkout = () => {
   const navigate = useNavigate();
+  const path = usePortalPath();
   const { token } = usePortalToken();
   const [workoutStarted, setWorkoutStarted] = useState(false);
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
@@ -232,7 +233,7 @@ const PortalWorkout = () => {
             <Button variant="outline" className="w-full h-11 gap-2 border-[hsl(0_0%_15%)] text-[hsl(0_0%_60%)]">
               <Share2 className="w-4 h-4" strokeWidth={1.5} /> مشاركة
             </Button>
-            <Button className="w-full h-12 text-base" onClick={() => { setWorkoutStarted(false); setCompleted(false); navigate("/portal"); }}>
+            <Button className="w-full h-12 text-base" onClick={() => { setWorkoutStarted(false); setCompleted(false); navigate(path("")); }}>
               العودة للرئيسية
             </Button>
           </div>

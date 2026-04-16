@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePortalToken } from "@/hooks/usePortalToken";
+import { usePortalToken, usePortalPath } from "@/hooks/usePortalToken";
 import ClientPortalLayout from "@/components/ClientPortalLayout";
 import {
   AlertCircle, Dumbbell, Flame, Play, Loader2, CheckCircle, Calendar, Moon,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 
 const PortalHome = () => {
   const navigate = useNavigate();
+  const path = usePortalPath();
   const { token } = usePortalToken();
   const queryClient = useQueryClient();
 
@@ -134,7 +135,7 @@ const PortalHome = () => {
               <p className="text-sm text-[hsl(0_0%_40%)] mb-4">
                 {program?.exerciseCount} تمرين
               </p>
-              <Button className="w-full h-12 text-base gap-2" onClick={() => navigate("/portal/workout")}>
+              <Button className="w-full h-12 text-base gap-2" onClick={() => navigate(path("workout"))}>
                 <Play className="w-5 h-5" strokeWidth={1.5} />
                 ابدأ التمرين
               </Button>
@@ -243,21 +244,21 @@ const PortalHome = () => {
         {/* Quick Access Cards */}
         <div className="grid grid-cols-3 gap-3">
           <button
-            onClick={() => navigate("/portal/body-scan")}
+            onClick={() => navigate(path("body-scan"))}
             className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
           >
             <ScanLine className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
             <p className="text-xs font-bold text-white">سكان جسمي</p>
           </button>
           <button
-            onClick={() => navigate("/portal/content")}
+            onClick={() => navigate(path("content"))}
             className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
           >
             <Megaphone className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />
             <p className="text-xs font-bold text-white">محتوى مدربك</p>
           </button>
           <button
-            onClick={() => navigate("/portal/challenges")}
+            onClick={() => navigate(path("challenges"))}
             className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 text-right transition-colors hover:border-primary/20"
           >
             <Trophy className="w-5 h-5 text-primary mb-2" strokeWidth={1.5} />

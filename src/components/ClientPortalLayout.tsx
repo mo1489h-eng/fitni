@@ -1,20 +1,26 @@
+import { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Dumbbell, Utensils, TrendingUp, User, BookOpen } from "lucide-react";
 import ClientPortalNotifications from "@/components/ClientPortalNotifications";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import { PortalBasePathContext, portalPath } from "@/hooks/usePortalToken";
 
 const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const base = useContext(PortalBasePathContext) ?? "portal";
 
+  const homeHref = portalPath(base, "");
   const navItems = [
-    { label: "الرئيسية", href: `/portal`, icon: LayoutDashboard },
-    { label: "تمريني", href: `/portal/workout`, icon: Dumbbell },
-    { label: "تغذيتي", href: `/portal/nutrition`, icon: Utensils },
-    { label: "المكتبة", href: `/portal/vault`, icon: BookOpen },
-    { label: "تقدمي", href: `/portal/progress`, icon: TrendingUp },
-    { label: "حسابي", href: `/portal/account`, icon: User },
+    { label: "الرئيسية", href: homeHref, icon: LayoutDashboard },
+    { label: "تمريني", href: portalPath(base, "workout"), icon: Dumbbell },
+    { label: "تغذيتي", href: portalPath(base, "nutrition"), icon: Utensils },
+    { label: "المكتبة", href: portalPath(base, "vault"), icon: BookOpen },
+    { label: "تقدمي", href: portalPath(base, "progress"), icon: TrendingUp },
+    { label: "حسابي", href: portalPath(base, "account"), icon: User },
   ];
 
+  const homeActive =
+    base === "portal" ? location.pathname === "/portal" : location.pathname === "/trainee/home";
 
   return (
     <div className="min-h-screen bg-[hsl(0_0%_2%)] flex flex-col" dir="rtl">
@@ -30,9 +36,7 @@ const ClientPortalLayout = ({ children }: { children: React.ReactNode }) => {
       <nav className="fixed bottom-0 inset-x-0 bg-[hsl(0_0%_4%)] border-t border-[hsl(0_0%_8%)] z-50 safe-area-bottom">
         <div className="max-w-lg mx-auto flex">
           {navItems.map((item) => {
-            const active = item.href === "/portal" 
-              ? location.pathname === "/portal" 
-              : location.pathname.startsWith(item.href);
+            const active = item.href === homeHref ? homeActive : location.pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}

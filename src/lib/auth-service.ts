@@ -34,6 +34,24 @@ export function isMissingProfilesRoleColumn(error: unknown): boolean {
 }
 
 /**
+ * PostgREST returns 400 when the select list references a column that does not exist on the remote DB
+ * (e.g. migrations not applied yet). Used to fall back to a narrower `profiles` select in useAuth.
+ */
+export function isPostgrestMissingColumnError(error: unknown): boolean {
+  if (error == null || typeof error !== "object") return false;
+  const e = error as Record<string, unknown>;
+  const code = String(e.code ?? "");
+  const msg = String(e.message ?? "").toLowerCase();
+  const details = String(e.details ?? "").toLowerCase();
+  const hint = String(e.hint ?? "").toLowerCase();
+  const all = `${msg} ${details} ${hint}`;
+  if (code === "42703" || code === "PGRST204") return true;
+  if (all.includes("column") && all.includes("does not exist")) return true;
+  if (msg.includes("could not find") && msg.includes("column")) return true;
+  return false;
+}
+
+/**
  * Single source of truth: `profiles.role` ("coach" | "trainee") from Postgres only.
  * `ensure_user_profile` / `repair_profile_role_from_metadata` run server `compute_profile_role` (clients + app_metadata + signup hints).
  */

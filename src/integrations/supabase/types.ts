@@ -445,7 +445,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
-          moyasar_payment_id: string | null
+          tap_charge_id: string | null
           notes: string | null
           payment_method: string | null
           period_end: string
@@ -460,7 +460,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
-          moyasar_payment_id?: string | null
+          tap_charge_id?: string | null
           notes?: string | null
           payment_method?: string | null
           period_end?: string
@@ -475,7 +475,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
-          moyasar_payment_id?: string | null
+          tap_charge_id?: string | null
           notes?: string | null
           payment_method?: string | null
           period_end?: string
@@ -511,6 +511,7 @@ export type Database = {
           last_active_at: string | null
           last_workout_date: string
           name: string
+          payment_pending: boolean
           phone: string
           portal_token: string | null
           portal_token_expires_at: string | null
@@ -548,6 +549,7 @@ export type Database = {
           last_active_at?: string | null
           last_workout_date?: string
           name: string
+          payment_pending?: boolean
           phone?: string
           portal_token?: string | null
           portal_token_expires_at?: string | null
@@ -585,6 +587,7 @@ export type Database = {
           last_active_at?: string | null
           last_workout_date?: string
           name?: string
+          payment_pending?: boolean
           phone?: string
           portal_token?: string | null
           portal_token_expires_at?: string | null
@@ -1523,6 +1526,7 @@ export type Database = {
           bio: string | null
           brand_color: string | null
           created_at: string
+          email_verified: boolean
           founder_discount_used: boolean
           full_name: string
           gallery_images: string[] | null
@@ -1543,6 +1547,7 @@ export type Database = {
           referral_reward_type: string | null
           role: string
           social_links: Json | null
+          source: string | null
           specialization: string | null
           subscribed_at: string | null
           subscription_end_date: string | null
@@ -1558,6 +1563,7 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          email_verified?: boolean
           founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
@@ -1578,6 +1584,7 @@ export type Database = {
           referral_reward_type?: string | null
           role?: string
           social_links?: Json | null
+          source?: string | null
           specialization?: string | null
           subscribed_at?: string | null
           subscription_end_date?: string | null
@@ -1593,6 +1600,7 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          email_verified?: boolean
           founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
@@ -1613,6 +1621,7 @@ export type Database = {
           referral_reward_type?: string | null
           role?: string
           social_links?: Json | null
+          source?: string | null
           specialization?: string | null
           subscribed_at?: string | null
           subscription_end_date?: string | null
@@ -2707,6 +2716,9 @@ export type Database = {
       cleanup_copilot_messages: { Args: never; Returns: undefined }
       ensure_trainer_profile: { Args: never; Returns: undefined }
       ensure_user_profile: { Args: never; Returns: undefined }
+      repair_profile_role_from_metadata: { Args: never; Returns: boolean }
+      repair_all_roles: { Args: never; Returns: number }
+      sync_profile_email_verification_from_auth: { Args: never; Returns: boolean }
       complete_trainer_session: {
         Args: { p_session_id: string }
         Returns: boolean
@@ -2717,6 +2729,7 @@ export type Database = {
       }
       create_package_checkout_session: {
         Args: {
+          p_auth_user_id?: string | null
           p_client_email?: string
           p_client_name: string
           p_client_phone: string
@@ -2727,6 +2740,15 @@ export type Database = {
           token: string
         }[]
       }
+      create_landing_trainee_client_for_checkout: {
+        Args: {
+          p_full_name: string
+          p_package_id: string
+          p_phone: string
+          p_trainer_id: string
+        }
+        Returns: string
+      }
       create_session_reminders: { Args: never; Returns: number }
       get_client_by_invite_token: {
         Args: { p_token: string }
@@ -2736,6 +2758,7 @@ export type Database = {
           name: string
           phone: string
           trainer_name: string
+          trainer_username: string | null
         }[]
       }
       get_client_by_portal_token: {

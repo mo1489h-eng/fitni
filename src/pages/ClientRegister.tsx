@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,9 @@ import {
 } from "@/lib/auth-email-errors";
 
 const ClientRegister = () => {
-  const { token } = useParams();
+  const { token: tokenFromPath } = useParams();
+  const [searchParams] = useSearchParams();
+  const token = (tokenFromPath ?? searchParams.get("token") ?? "").trim();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,12 @@ const ClientRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [expired, setExpired] = useState(false);
   const [clientData, setClientData] = useState<{
-    id: string; name: string; email: string; phone: string; trainer_name: string;
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    trainer_name: string;
+    trainer_username: string | null;
   } | null>(null);
   const [form, setForm] = useState({
     name: "", phone: "", email: "", password: "", confirmPassword: "",
@@ -35,8 +42,18 @@ const ClientRegister = () => {
         setLoading(false);
         return;
       }
-      const c = data[0];
-      setClientData(c);
+      const c = data[0] as {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+        trainer_name: string;
+        trainer_username?: string | null;
+      };
+      setClientData({
+        ...c,
+        trainer_username: c.trainer_username ?? null,
+      });
       setForm(f => ({ ...f, name: c.name || "", email: c.email || "", phone: c.phone || "" }));
       setLoading(false);
     };
@@ -130,6 +147,11 @@ const ClientRegister = () => {
 
       // Step 3: Redirect to client portal
       toast({ title: "أهلاً بك! تم إنشاء حسابك بنجاح 🎉" });
+
+      if (clientData?.trainer_username) {
+        navigate(`/pay/${clientData.trainer_username}`);
+        return;
+      }
 
       const { data: profile } = await supabase.rpc("get_my_client_profile");
       if (profile && profile.length > 0 && profile[0].portal_token) {

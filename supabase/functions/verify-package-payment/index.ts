@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // Duplicate Tap charge: if already paid, complete wallet + session if a prior run failed mid-way
     const { data: existingPayment } = await supabase
-      .from("client_payments").select("id, client_id").eq("moyasar_payment_id", payment_id).maybeSingle();
+      .from("client_payments").select("id, client_id").eq("tap_charge_id", payment_id).maybeSingle();
 
     if (existingPayment) {
       const { data: settled } = await supabase
@@ -126,24 +126,108 @@ serve(async (req) => {
     else if (pkg.billing_cycle === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
     else endDate.setMonth(endDate.getMonth() + 1);
 
-    const { data: newClient, error: clientError } = await supabase
-      .from("clients").insert({
-        trainer_id, name: client_name, phone: client_phone || "",
-        email: client_email || null, subscription_price: pkg.price,
-        subscription_end_date: endDate.toISOString().split("T")[0],
-        billing_cycle: pkg.billing_cycle, goal: pkg.name,
-      }).select("id").single();
+    const sessionAuthUserId =
+      (session as { auth_user_id?: string | null }).auth_user_id ?? null;
 
-    if (clientError) {
-      console.error("Client creation error:", clientError);
-      return new Response(JSON.stringify({ error: "Failed to create client" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let newClient: { id: string };
+
+    if (sessionAuthUserId) {
+      const { data: linkedClient, error: findLinkErr } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("trainer_id", trainer_id)
+        .eq("auth_user_id", sessionAuthUserId)
+        .maybeSingle();
+
+      if (findLinkErr) {
+        console.error("find linked client:", findLinkErr);
+        return new Response(JSON.stringify({ error: "Failed to resolve trainee client" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (linkedClient?.id) {
+        const { error: updErr } = await supabase
+          .from("clients")
+          .update({
+            name: client_name,
+            phone: client_phone || "",
+            email: client_email || null,
+            subscription_price: pkg.price,
+            subscription_end_date: endDate.toISOString().split("T")[0],
+            billing_cycle: pkg.billing_cycle,
+            goal: pkg.name,
+            payment_pending: false,
+          })
+          .eq("id", linkedClient.id);
+
+        if (updErr) {
+          console.error("Client update error:", updErr);
+          return new Response(JSON.stringify({ error: "Failed to update client subscription" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        newClient = { id: linkedClient.id };
+      } else {
+        const { data: inserted, error: insErr } = await supabase
+          .from("clients")
+          .insert({
+            trainer_id,
+            name: client_name,
+            phone: client_phone || "",
+            email: client_email || null,
+            auth_user_id: sessionAuthUserId,
+            subscription_price: pkg.price,
+            subscription_end_date: endDate.toISOString().split("T")[0],
+            billing_cycle: pkg.billing_cycle,
+            goal: pkg.name,
+            payment_pending: false,
+          })
+          .select("id")
+          .single();
+
+        if (insErr || !inserted) {
+          console.error("Client insert (auth checkout) error:", insErr);
+          return new Response(JSON.stringify({ error: "Failed to create client" }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        newClient = { id: inserted.id };
+      }
+    } else {
+      const { data: inserted, error: clientError } = await supabase
+        .from("clients")
+        .insert({
+          trainer_id,
+          name: client_name,
+          phone: client_phone || "",
+          email: client_email || null,
+          subscription_price: pkg.price,
+          subscription_end_date: endDate.toISOString().split("T")[0],
+          billing_cycle: pkg.billing_cycle,
+          goal: pkg.name,
+        })
+        .select("id")
+        .single();
+
+      if (clientError || !inserted) {
+        console.error("Client creation error:", clientError);
+        return new Response(JSON.stringify({ error: "Failed to create client" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      newClient = { id: inserted.id };
     }
 
     await supabase.from("client_payments").insert({
-      client_id: newClient.id, trainer_id, amount: pkg.price,
-      moyasar_payment_id: payment_id, status: "paid", billing_cycle: pkg.billing_cycle,
+      client_id: newClient.id,
+      trainer_id,
+      amount: pkg.price,
+      tap_charge_id: payment_id,
+      payment_method: "tap",
+      status: "paid",
+      billing_cycle: pkg.billing_cycle,
       period_start: now.toISOString().split("T")[0],
       period_end: endDate.toISOString().split("T")[0],
     });

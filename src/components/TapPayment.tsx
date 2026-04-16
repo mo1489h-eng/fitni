@@ -4,6 +4,7 @@ import { createPaymentSession } from "@/services/payments";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { COACH_DASHBOARD } from "@/lib/app-routes";
 
 interface TapPaymentProps {
   plan: "basic" | "pro";
@@ -37,7 +38,7 @@ const TapPayment = ({ plan, onBack }: TapPaymentProps) => {
       sessionStorage.setItem("tap_payment_context", JSON.stringify({
         type: "trainer_subscription",
         plan,
-        return_url: window.location.origin + "/trainer-dashboard",
+        return_url: window.location.origin + COACH_DASHBOARD,
       }));
 
       const { payment_url } = await createPaymentSession({

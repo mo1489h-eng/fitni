@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -45,7 +47,7 @@ const PaymentCallback = () => {
             setStatus("success");
             const planName = plan === "basic" ? "أساسي" : "احترافي";
             toast({ title: "تم الترقية بنجاح 🎉", description: `تم تفعيل باقة ${planName}` });
-            setTimeout(() => navigate("/trainer-dashboard"), 2000);
+            setTimeout(() => navigate(COACH_DASHBOARD), 2000);
             return;
           } catch (e: any) {
             lastError = e;
@@ -58,7 +60,7 @@ const PaymentCallback = () => {
             if (e.message?.includes("Payment already used")) {
               setStatus("success");
               toast({ title: "تم الترقية بنجاح 🎉" });
-              setTimeout(() => navigate("/trainer-dashboard"), 2000);
+              setTimeout(() => navigate(COACH_DASHBOARD), 2000);
               return;
             }
             throw e;
@@ -100,10 +102,15 @@ const PaymentCallback = () => {
         toast({ title: "تم الدفع بنجاح" });
 
         const regContext = sessionStorage.getItem("tap_register_context");
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (regContext) {
-          const ctx = JSON.parse(regContext);
+          const ctx = JSON.parse(regContext) as { username?: string };
           sessionStorage.removeItem("tap_register_context");
           navigate(`/t/${ctx.username}?step=register&payment_id=${tapId}&package_id=${packageId}`);
+        } else if (session?.user) {
+          setTimeout(() => navigate(TRAINEE_HOME), 2000);
         } else {
           setTimeout(() => navigate("/"), 2000);
         }

@@ -42,7 +42,9 @@ const TutorialOverlay = () => {
 
     if (
       !(profile as any).onboarding_completed &&
-      (location.pathname === "/trainer-dashboard" || location.pathname === "/dashboard")
+      (location.pathname === "/trainer-dashboard" ||
+        location.pathname === "/dashboard" ||
+        location.pathname === "/coach/dashboard")
     ) {
       const timer = window.setTimeout(() => startTutorial(), 1000);
       return () => window.clearTimeout(timer);

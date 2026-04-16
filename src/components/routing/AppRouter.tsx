@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import AuthGuard from "@/components/AuthGuard";
 import { RoleGuard } from "@/components/routing/RoleGuard";
@@ -61,8 +61,9 @@ import PortalLessonPlayer from "@/pages/portal/PortalLessonPlayer";
 import { TrainerAppLayout } from "@/components/layout/TrainerAppLayout";
 import { TraineeAppLayout } from "@/components/layout/TraineeAppLayout";
 import TraineeDashboard from "@/pages/TraineeDashboard";
-import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
+import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 import TrainerSessionPage from "@/pages/TrainerSessionPage";
+import CoachLandingTrainee from "@/pages/CoachLandingTrainee";
 
 const WEB_ONBOARDING_LANDING_GATE = false;
 
@@ -72,6 +73,36 @@ function WebLandingOrOnboarding() {
   }
   return <Landing />;
 }
+
+function LegacyCoachClientsId() {
+  const { id } = useParams();
+  return <Navigate to={`/coach/clients/${id ?? ""}`} replace />;
+}
+
+function LegacyCoachVaultUnit() {
+  const { unitId } = useParams();
+  return <Navigate to={`/coach/vault/${unitId ?? ""}`} replace />;
+}
+
+const coachAuth = (
+  <AuthGuard>
+    <AuthAppGate>
+      <RoleGuard allowed="coach">
+        <TrainerAppLayout />
+      </RoleGuard>
+    </AuthAppGate>
+  </AuthGuard>
+);
+
+const traineeAuth = (
+  <AuthGuard>
+    <AuthAppGate>
+      <RoleGuard allowed="trainee">
+        <TraineeAppLayout />
+      </RoleGuard>
+    </AuthAppGate>
+  </AuthGuard>
+);
 
 /** Web application routes (not used in Capacitor — see MobileApp). */
 export function AppRouter() {
@@ -84,16 +115,41 @@ export function AppRouter() {
       <Route path="/register" element={<Register />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
 
-      <Route path="/coach/dashboard" element={<Navigate to={TRAINER_HOME} replace />} />
-      <Route path="/dashboard/coach" element={<Navigate to={TRAINER_HOME} replace />} />
+      {/* Legacy coach URLs → /coach/* */}
+      <Route path="/dashboard" element={<Navigate to={COACH_DASHBOARD} replace />} />
+      <Route path="/trainer-dashboard" element={<Navigate to={COACH_DASHBOARD} replace />} />
+      <Route path="/dashboard/coach" element={<Navigate to={COACH_DASHBOARD} replace />} />
+      <Route path="/clients" element={<Navigate to="/coach/clients" replace />} />
+      <Route path="/clients/:id" element={<LegacyCoachClientsId />} />
+      <Route path="/programs" element={<Navigate to="/coach/programs" replace />} />
+      <Route path="/workout-builder" element={<Navigate to="/coach/programs" replace />} />
+      <Route path="/earnings" element={<Navigate to="/coach/earnings" replace />} />
+      <Route path="/payments" element={<Navigate to="/coach/payments" replace />} />
+      <Route path="/reports" element={<Navigate to="/coach/reports" replace />} />
+      <Route path="/nutrition" element={<Navigate to="/coach/nutrition" replace />} />
+      <Route path="/calendar" element={<Navigate to="/coach/calendar" replace />} />
+      <Route path="/content" element={<Navigate to="/coach/content" replace />} />
+      <Route path="/settings" element={<Navigate to="/coach/settings" replace />} />
+      <Route path="/subscription" element={<Navigate to="/coach/subscription" replace />} />
+      <Route path="/packages" element={<Navigate to="/coach/packages" replace />} />
+      <Route path="/settings/page" element={<Navigate to="/coach/settings/page" replace />} />
+      <Route path="/vault" element={<Navigate to="/coach/vault" replace />} />
+      <Route path="/vault/:unitId" element={<LegacyCoachVaultUnit />} />
+      <Route path="/copilot" element={<Navigate to="/coach/copilot" replace />} />
+      <Route path="/marketplace" element={<Navigate to="/coach/marketplace" replace />} />
+      <Route path="/challenges" element={<Navigate to="/coach/challenges" replace />} />
+      <Route path="/gulf-foods" element={<Navigate to="/coach/gulf-foods" replace />} />
+      <Route path="/templates" element={<Navigate to="/coach/templates" replace />} />
+      <Route path="/leads" element={<Navigate to="/coach/leads" replace />} />
+      <Route path="/trainer/session" element={<Navigate to="/coach/trainer/session" replace />} />
 
-      <Route element={<AuthGuard><AuthAppGate><RoleGuard allowed="coach"><TrainerAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
+      <Route path="/coach" element={coachAuth}>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path={TRAINER_HOME.replace(/^\//, "")} element={<Dashboard />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientProfile />} />
         <Route path="programs" element={<ProgramBuilder />} />
-        <Route path="workout-builder" element={<Navigate to="/programs" replace />} />
+        <Route path="workout-builder" element={<Navigate to="/coach/programs" replace />} />
         <Route path="earnings" element={<Earnings />} />
         <Route path="payments" element={<Payments />} />
         <Route path="reports" element={<Reports />} />
@@ -115,19 +171,20 @@ export function AppRouter() {
         <Route path="trainer/session" element={<TrainerSessionPage />} />
       </Route>
 
-      <Route path="/trainee" element={<AuthGuard><AuthAppGate><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<TraineeDashboard />} />
+      <Route path="/trainee" element={traineeAuth}>
+        <Route index element={<Navigate to="home" replace />} />
+        <Route path="home" element={<TraineeDashboard />} />
+        <Route path="dashboard" element={<Navigate to={TRAINEE_HOME} replace />} />
       </Route>
 
-      <Route path={CLIENT_HOME} element={<AuthGuard><AuthAppGate><RoleGuard allowed="trainee"><TraineeAppLayout /></RoleGuard></AuthAppGate></AuthGuard>}>
-        <Route index element={<TraineeDashboard />} />
-      </Route>
+      <Route path="/client-home" element={<Navigate to={TRAINEE_HOME} replace />} />
 
       <Route path="/trainer/:trainerId" element={<TrainerPublicPage />} />
       <Route path="/t/:username" element={<TrainerPublicPage />} />
+      <Route path="/coach/:coachId" element={<CoachLandingTrainee />} />
       <Route path="/client-login" element={<ClientLogin />} />
       <Route path="/client-register/:token" element={<ClientRegister />} />
+      <Route path="/invite" element={<ClientRegister />} />
 
       <Route path="/pay/:trainerSlug" element={<PublicPayment />} />
       <Route path="/pay/:trainerSlug/:packageId" element={<PublicPayment />} />

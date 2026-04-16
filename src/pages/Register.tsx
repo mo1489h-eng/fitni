@@ -8,7 +8,8 @@ import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
+import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
+import type { FitniRole } from "@/lib/auth-service";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -62,6 +63,7 @@ function getPasswordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string;
 }
 
 const Register = () => {
+  const [accountTab, setAccountTab] = useState<FitniRole>("coach");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -88,8 +90,8 @@ const Register = () => {
   }, []);
 
   if (!authLoading && user) {
-    if (resolvedFitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
-    if (resolvedFitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
+    if (resolvedFitniRole === "trainee") return <Navigate to={TRAINEE_HOME} replace />;
+    if (resolvedFitniRole === "coach") return <Navigate to={COACH_DASHBOARD} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -131,8 +133,11 @@ const Register = () => {
     setLoading(true);
 
     try {
+      const selectedRole: FitniRole = accountTab;
+      const isTrainee = selectedRole === "trainee";
+
       let validatedPromo: { valid: boolean; days?: number; message: string } | null = null;
-      if (promoCode.trim()) {
+      if (!isTrainee && promoCode.trim()) {
         validatedPromo = await validatePromo(promoCode, email);
         if (validatedPromo && !validatedPromo.valid) {
           return;
@@ -140,23 +145,18 @@ const Register = () => {
       }
 
       const emailNorm = email.trim().toLowerCase();
+      const postAuthPath = isTrainee ? TRAINEE_HOME : COACH_DASHBOARD;
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: emailNorm,
         password,
         options: {
-          data: { full_name: name },
-          emailRedirectTo: `${getAuthSiteOrigin()}${TRAINER_HOME}`,
+          data: {
+            full_name: name.trim(),
+            role: selectedRole,
+            is_client: isTrainee,
+          },
+          emailRedirectTo: `${getAuthSiteOrigin()}${postAuthPath}`,
         },
-      });
-
-      console.log("[auth] signUp response", {
-        hasUser: !!signUpData?.user,
-        userId: signUpData?.user?.id,
-        email: signUpData?.user?.email,
-        hasSession: !!signUpData?.session,
-        emailConfirmedAt: signUpData?.user?.email_confirmed_at ?? null,
-        identities: signUpData?.user?.identities?.length,
-        error: error?.message ?? null,
       });
 
       if (error) {
@@ -174,70 +174,66 @@ const Register = () => {
         return;
       }
 
-      // Email confirmation required: user exists but no session until link is clicked.
-      // signInWithPassword before confirming returns the same "Invalid login credentials" as wrong password (Supabase).
-      if (signUpData?.user && !signUpData.session) {
-        console.warn(
-          "[auth] SIGNUP: email confirmation required — no session returned. User must open confirmation link before login will succeed.",
-        );
-        if (validatedPromo?.valid && promoCode.trim() && signUpData.user.id) {
-          await supabase.rpc("validate_and_redeem_promo" as any, {
-            p_code: promoCode.trim(),
-            p_email: emailNorm,
-            p_trainer_id: signUpData.user.id,
-          });
-        }
-        toast({
-          title: "تحقق من بريدك",
-          description: "أرسلنا رابط التأكيد. يجب الضغط عليه قبل أول تسجيل دخول.",
-        });
-        navigate(`/confirm-email?email=${encodeURIComponent(emailNorm)}`);
+      if (!signUpData?.user) {
+        toast({ title: "فشل التسجيل", description: "لم يُرجَع مستخدم من الخادم.", variant: "destructive" });
         return;
       }
 
-      // Session present: ensure profiles row (backup if DB trigger did not run), then go to dashboard.
-      if (signUpData?.user && signUpData.session) {
-        const { data: sess } = await supabase.auth.getSession();
-        console.log("[auth] post-signUp getSession", { hasSession: !!sess.session, uid: sess.session?.user?.id });
-
-        const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
-        if (rpcErr) {
-          console.error("[auth] ensure_user_profile RPC failed", rpcErr);
-          const { error: insertErr } = await supabase.from("profiles").insert({
-            user_id: signUpData.user.id,
-            full_name: name.trim() || "",
-            role: "coach",
-          } as any);
-          if (insertErr && insertErr.code !== "23505") {
-            toast({
-              title: "تعذّر إكمال إنشاء حساب المدرب",
-              description: describeProfileSetupFailure(insertErr),
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-
-        const { data: profileRow, error: profErr } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", signUpData.user.id)
-          .maybeSingle();
-        console.log("[auth] post-signUp profile check", {
-          hasProfileRow: !!profileRow?.id,
-          error: profErr?.message ?? null,
+      if (!signUpData.session) {
+        const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+          email: emailNorm,
+          password,
         });
-
-        if (validatedPromo?.valid && promoCode.trim()) {
-          await supabase.rpc("validate_and_redeem_promo" as any, {
-            p_code: promoCode.trim(),
-            p_email: emailNorm,
-            p_trainer_id: signUpData.user.id,
+        if (signInErr || !signInData.session) {
+          toast({
+            title: "تم إنشاء الحساب",
+            description:
+              "لم نتمكن من تسجيل الدخول تلقائياً. افتح رابط التأكيد من بريدك إن وُجد، ثم سجّل الدخول من صفحة الدخول.",
           });
+          navigate(`/login?email=${encodeURIComponent(emailNorm)}`);
+          return;
         }
-        toast({ title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح" });
-        navigate(TRAINER_HOME, { replace: true });
       }
+
+      const {
+        data: { session: activeSession },
+      } = await supabase.auth.getSession();
+      if (!activeSession?.user) {
+        toast({ title: "تعذّر إكمال الجلسة", description: "حاول تسجيل الدخول يدوياً.", variant: "destructive" });
+        return;
+      }
+
+      const signUpUserId = activeSession.user.id;
+
+      const { error: rpcErr } = await supabase.rpc("ensure_user_profile");
+      if (rpcErr) {
+        console.error("[auth] ensure_user_profile RPC failed", rpcErr);
+        toast({
+          title: accountTab === "trainee" ? "تعذّر إكمال ملف المتدرب" : "تعذّر إكمال إنشاء حساب المدرب",
+          description: describeProfileSetupFailure(rpcErr),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await supabase.rpc("sync_profile_email_verification_from_auth");
+
+      if (!isTrainee && validatedPromo?.valid && promoCode.trim()) {
+        await supabase.rpc("validate_and_redeem_promo" as any, {
+          p_code: promoCode.trim(),
+          p_email: emailNorm,
+          p_trainer_id: signUpUserId,
+        });
+      }
+      toast({
+        title:
+          validatedPromo?.valid && !isTrainee
+            ? validatedPromo.message
+            : isTrainee
+              ? "تم إنشاء حساب المتدرب"
+              : "تم إنشاء الحساب بنجاح",
+      });
+      navigate(postAuthPath, { replace: true });
     } catch (e: unknown) {
       toast({
         title: "فشل التسجيل",
@@ -303,10 +299,35 @@ const Register = () => {
 
           <div className="rounded-2xl border border-border bg-card p-8 md:p-10">
             <h2 className="text-2xl font-bold text-foreground text-center mb-2">إنشاء حساب جديد</h2>
-            <p className="text-muted-foreground text-center text-sm mb-8">
+            <p className="text-muted-foreground text-center text-sm mb-6">
               لديك حساب؟{" "}
               <Link to="/login" className="text-primary hover:underline font-semibold">سجّل دخولك</Link>
             </p>
+
+            <div className="flex rounded-xl border border-border p-1 mb-8 bg-muted/30" role="tablist" aria-label="نوع الحساب">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountTab === "coach"}
+                onClick={() => setAccountTab("coach")}
+                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+                  accountTab === "coach" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                مدرب
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountTab === "trainee"}
+                onClick={() => setAccountTab("trainee")}
+                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+                  accountTab === "trainee" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                متدرب
+              </button>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -380,18 +401,20 @@ const Register = () => {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-foreground flex items-center gap-1.5">
-                  <Gift className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                  كود ترويجي (اختياري)
-                </label>
-                <Input placeholder="أدخل الكود هنا" value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setPromoResult(null); }} dir="ltr" />
-                {promoResult ? (
-                  <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-primary" : "text-destructive"}`}>{promoResult.message}</p>
-                ) : (
-                  <p className="text-xs mt-1.5 text-muted-foreground">الكود يُرسل لك شخصياً من فريق فتني</p>
-                )}
-              </div>
+              {accountTab === "coach" ? (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground flex items-center gap-1.5">
+                    <Gift className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                    كود ترويجي (اختياري)
+                  </label>
+                  <Input placeholder="أدخل الكود هنا" value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setPromoResult(null); }} dir="ltr" />
+                  {promoResult ? (
+                    <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-primary" : "text-destructive"}`}>{promoResult.message}</p>
+                  ) : (
+                    <p className="text-xs mt-1.5 text-muted-foreground">الكود يُرسل لك شخصياً من فريق فتني</p>
+                  )}
+                </div>
+              ) : null}
 
               <label className="flex items-start gap-2.5 text-sm text-muted-foreground cursor-pointer pt-1">
                 <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="rounded border-border bg-background h-4 w-4 accent-primary mt-0.5" />

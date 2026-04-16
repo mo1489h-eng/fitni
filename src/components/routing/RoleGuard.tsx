@@ -12,14 +12,12 @@ type Props = {
 
 /**
  * Blocks wrong-role access to coach vs trainee areas.
- * Role comes from `profiles.role` and/or server `resolvedFitniRole` only (never localStorage).
+ * Role comes from `profiles.role` only (never localStorage).
  */
 export function RoleGuard({ allowed, children }: Props) {
-  const { loading, profileLoading, user, profile, resolvedFitniRole } = useAuth();
+  const { loading, profileLoading, user, profile } = useAuth();
 
-  const effectiveRole = useMemo((): FitniRole | null => {
-    return normalizeFitniRole(profile?.role) ?? resolvedFitniRole;
-  }, [profile?.role, resolvedFitniRole]);
+  const effectiveRole = useMemo((): FitniRole | null => normalizeFitniRole(profile?.role), [profile?.role]);
 
   // Wait for auth session to be determined
   if (loading) {

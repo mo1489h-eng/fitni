@@ -6,7 +6,9 @@ import {
   UtensilsCrossed, Settings, Dumbbell, Rocket,
   Store, Globe, PlusCircle, BarChart3, Bell, Search,
 } from "lucide-react";
-import { TRAINER_HOME } from "@/lib/app-routes";
+import { COACH_PREFIX, TRAINER_HOME } from "@/lib/app-routes";
+
+const C = COACH_PREFIX;
 
 export interface TutorialStep {
   id: string;
@@ -45,14 +47,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "إدارة العملاء",
     description: "أضف عملاءك، تابع تقدمهم، وتواصل معهم بضغطة واحدة",
     icon: UserCheck,
-    route: "/clients",
+    route: `${C}/clients`,
   },
   {
     id: "clients-add",
     title: "إضافة عميل جديد",
     description: "اضغط هنا لإضافة عميل جديد — أدخل اسمه ورقمه وهدفه وخلاص",
     icon: PlusCircle,
-    route: "/clients",
+    route: `${C}/clients`,
     spotlightSelector: "[data-tour='add-client']",
   },
   {
@@ -60,7 +62,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "البحث والفلترة",
     description: "ابحث عن أي عميل بالاسم أو فلتر حسب الحالة",
     icon: Search,
-    route: "/clients",
+    route: `${C}/clients`,
     spotlightSelector: "[data-tour='search']",
   },
   {
@@ -68,14 +70,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "البرامج التدريبية",
     description: "ابنِ برامج تدريبية احترافية — أيام، تمارين، تكرارات، وفيديوهات",
     icon: Zap,
-    route: "/programs",
+    route: `${C}/programs`,
   },
   {
     id: "programs-templates",
     title: "قوالب جاهزة",
     description: "ابدأ بقالب جاهز أو ابنِ برنامجك من الصفر وخصصه لكل عميل",
     icon: Zap,
-    route: "/programs",
+    route: `${C}/programs`,
     spotlightSelector: "[data-tour='program-templates']",
   },
   {
@@ -83,14 +85,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "خطط التغذية",
     description: "صمّم جداول غذائية مخصصة لكل عميل مع حساب السعرات والماكروز",
     icon: Leaf,
-    route: "/nutrition",
+    route: `${C}/nutrition`,
   },
   {
     id: "nutrition-create",
     title: "إنشاء خطة تغذية",
     description: "اضغط هنا لإنشاء خطة جديدة — أضف وجبات ومكونات لكل يوم",
     icon: Leaf,
-    route: "/nutrition",
+    route: `${C}/nutrition`,
     spotlightSelector: "[data-tour='create-plan']",
   },
   {
@@ -98,56 +100,56 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: "المدفوعات والإيرادات",
     description: "تابع كل المدفوعات — من دفع، من تأخر، وإجمالي إيراداتك",
     icon: DollarSign,
-    route: "/payments",
+    route: `${C}/payments`,
   },
   {
     id: "packages-page",
     title: "باقاتي",
     description: "أنشئ باقات بأسعار مختلفة وشاركها مع عملاءك المحتملين عبر رابط مباشر",
     icon: Package,
-    route: "/packages",
+    route: `${C}/packages`,
   },
   {
     id: "challenges-page",
     title: "التحديات",
     description: "أنشئ تحديات لعملاءك — خسارة وزن، خطوات، وأكثر — مع ترتيب ومتابعة",
     icon: Trophy,
-    route: "/challenges",
+    route: `${C}/challenges`,
   },
   {
     id: "gulf-foods",
     title: "الأطعمة الخليجية",
     description: "قاعدة بيانات شاملة للأطعمة الخليجية مع السعرات والقيم الغذائية",
     icon: UtensilsCrossed,
-    route: "/gulf-foods",
+    route: `${C}/gulf-foods`,
   },
   {
     id: "marketplace",
     title: "سوق البرامج",
     description: "بيع برامجك أو اشترِ برامج من مدربين آخرين",
     icon: Store,
-    route: "/marketplace",
+    route: `${C}/marketplace`,
   },
   {
     id: "reports-page",
     title: "التقارير",
     description: "تقارير مفصلة عن أداء عملاءك وإيراداتك وإحصائياتك",
     icon: BarChart3,
-    route: "/reports",
+    route: `${C}/reports`,
   },
   {
     id: "settings-page",
     title: "الإعدادات",
     description: "خصص ملفك، اسم المستخدم، صفحتك الشخصية، وبيانات الدفع",
     icon: Settings,
-    route: "/settings",
+    route: `${C}/settings`,
   },
   {
     id: "settings-public-page",
     title: "صفحتك الشخصية العامة",
     description: "أنشئ صفحة احترافية وشارك رابطها في السوشيال — أي شخص يضغطه يشوف خدماتك وباقاتك",
     icon: Globe,
-    route: "/settings",
+    route: `${C}/settings`,
   },
   {
     id: "done",

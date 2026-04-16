@@ -36,7 +36,7 @@ function escapeHtml(s: string): string {
 }
 
 /**
- * Sends a Resend invite email with a link to /client-register/:token.
+ * Sends a Resend invite email with a link to /invite?token=… (also /client-register/:token supported).
  * Does NOT create an auth user — that happens when the client submits the registration form
  * via the register-client-account edge function.
  */
@@ -80,7 +80,9 @@ export async function inviteClientAuth(
 
   const inviteToken = params.inviteToken ?? row.invite_token;
   const base = publicAppUrl(params.siteOrigin ?? undefined);
-  const setupLink = inviteToken ? `${base}/client-register/${inviteToken}` : `${base}/client-login`;
+  const setupLink = inviteToken
+    ? `${base}/invite?token=${encodeURIComponent(inviteToken)}`
+    : `${base}/client-login`;
 
   const resendKey = getResendApiKey();
 

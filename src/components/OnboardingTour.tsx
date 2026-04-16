@@ -7,7 +7,9 @@ import {
   Dumbbell, X, ArrowLeft, ArrowRight, Users, ClipboardList,
   CreditCard, Rocket, UtensilsCrossed, CalendarDays,
 } from "lucide-react";
-import { TRAINER_HOME } from "@/lib/app-routes";
+import { COACH_PREFIX, TRAINER_HOME } from "@/lib/app-routes";
+
+const C = COACH_PREFIX;
 
 interface Step {
   title: string;
@@ -35,35 +37,35 @@ const steps: Step[] = [
     title: "إدارة العملاء",
     description: "من هنا تضيف وتدير كل عملاءك",
     icon: Users,
-    route: "/clients",
+    route: `${C}/clients`,
     spotlightSelector: "[data-tour='add-client']",
   },
   {
     title: "البرامج التدريبية",
     description: "قوالب جاهزة أو ابنِ برنامجك من الصفر",
     icon: ClipboardList,
-    route: "/programs",
+    route: `${C}/programs`,
     spotlightSelector: "[data-tour='program-templates']",
   },
   {
     title: "التغذية",
     description: "صمّم جداول غذائية احترافية لعملاءك",
     icon: UtensilsCrossed,
-    route: "/nutrition",
+    route: `${C}/nutrition`,
     spotlightSelector: "[data-tour='create-plan']",
   },
   {
     title: "التقويم",
     description: "نظّم جلساتك وتقويمك هنا",
     icon: CalendarDays,
-    route: "/calendar",
+    route: `${C}/calendar`,
     spotlightSelector: "[data-tour='add-session']",
   },
   {
     title: "المدفوعات والإيرادات",
     description: "تابع مدفوعات عملاءك وإيراداتك",
     icon: CreditCard,
-    route: "/payments",
+    route: `${C}/payments`,
   },
   {
     title: "أنت جاهز للبدء",
@@ -107,7 +109,7 @@ const OnboardingTour = ({ forceShow, onForceClose }: OnboardingTourProps) => {
       if (
         data &&
         !(data as any).onboarding_completed &&
-        (location.pathname === TRAINER_HOME || location.pathname === "/dashboard")
+        (location.pathname === TRAINER_HOME || location.pathname === "/dashboard" || location.pathname === "/trainer-dashboard")
       ) {
         setTimeout(() => setActive(true), 800);
       }

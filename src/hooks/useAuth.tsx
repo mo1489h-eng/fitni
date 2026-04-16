@@ -8,8 +8,12 @@ import type { FitniRole } from "@/lib/auth-service";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
-  /** DB default `coach`; may be `trainee` for linked client accounts */
+  /** Server-only `profiles.role` (coach | trainee); never inferred client-side */
   role?: string | null;
+  /** Trainee acquisition: landing | invite — set only by server metadata / edge */
+  source?: string | null;
+  /** App-level flag synced from auth when email is confirmed; used for sensitive actions */
+  email_verified?: boolean | null;
   full_name: string;
   created_at: string;
   subscription_plan: string | null;
@@ -58,11 +62,11 @@ export const useAuth = () => useContext(AuthContext);
 
 /** Full trainer profile row (includes `role` for Fitni routing). */
 const profileSelectColumns =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role" as const;
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role, source, email_verified" as const;
 
 /** Same row without `role` — used when remote DB has not run role migration yet (42703). */
 const profileSelectColumnsNoRole =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, email_verified" as const;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -133,6 +137,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (r2.data) setProfile(r2.data as Profile);
           else setProfile(null);
         }
+      }
+
+      const { error: syncErr } = await supabase.rpc("sync_profile_email_verification_from_auth");
+      if (syncErr && import.meta.env.DEV) {
+        console.warn("[Auth] sync_profile_email_verification_from_auth", syncErr.message);
+      }
+      if (!syncErr) {
+        let ref = await supabase
+          .from("profiles")
+          .select(profileSelectColumns)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (ref.error && isMissingProfilesRoleColumn(ref.error)) {
+          ref = await supabase
+            .from("profiles")
+            .select(profileSelectColumnsNoRole)
+            .eq("user_id", userId)
+            .maybeSingle();
+        }
+        if (fetchId !== profileFetchRef.current) return null;
+        if (ref.data) setProfile(ref.data as Profile);
       }
 
       // Resolve role

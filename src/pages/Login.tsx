@@ -3,12 +3,13 @@ import { Link, useNavigate, Navigate } from "react-router-dom";
 import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dumbbell, Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, CheckCircle, TrendingUp, Users, CreditCard, ClipboardList } from "lucide-react";
 import { authLogDev } from "@/lib/auth-log";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CLIENT_HOME, TRAINER_HOME } from "@/lib/app-routes";
+import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
+import type { FitniRole } from "@/lib/auth-service";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -18,6 +19,7 @@ const benefits = [
 ];
 
 const Login = () => {
+  const [accountTab, setAccountTab] = useState<FitniRole>("coach");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,8 +31,8 @@ const Login = () => {
   const { user, loading: authLoading, refreshProfile, resolvedFitniRole } = useAuth();
 
   if (!authLoading && user) {
-    if (resolvedFitniRole === "trainee") return <Navigate to={CLIENT_HOME} replace />;
-    if (resolvedFitniRole === "coach") return <Navigate to={TRAINER_HOME} replace />;
+    if (resolvedFitniRole === "trainee") return <Navigate to={TRAINEE_HOME} replace />;
+    if (resolvedFitniRole === "coach") return <Navigate to={COACH_DASHBOARD} replace />;
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -71,14 +73,6 @@ const Login = () => {
 
       const userId = signInData.user?.id;
       if (userId) {
-        const { data: clientProfile } = await supabase.rpc("get_my_client_profile");
-        if (clientProfile && clientProfile.length > 0 && clientProfile[0].portal_token) {
-          navigate(`/client-portal/${clientProfile[0].portal_token}`);
-          return;
-        }
-      }
-
-      if (userId) {
         let r = await refreshProfile();
         if (!r) {
           await new Promise((res) => setTimeout(res, 400));
@@ -88,7 +82,16 @@ const Login = () => {
           console.log("[Login] resolved role:", r);
         }
         if (r) {
-          navigate(r === "trainee" ? CLIENT_HOME : TRAINER_HOME);
+          if (r !== accountTab) {
+            toast({
+              title: r === "coach" ? "حساب مدرب" : "حساب متدرب",
+              description:
+                r === "coach"
+                  ? "تم توجيهك إلى لوحة المدرب حسب بيانات حسابك."
+                  : "تم توجيهك إلى مساحة المتدرب حسب بيانات حسابك.",
+            });
+          }
+          navigate(r === "trainee" ? TRAINEE_HOME : COACH_DASHBOARD);
         } else {
           console.warn("[Login] resolveFitniRole returned null after retries", { userId });
           toast({
@@ -202,10 +205,35 @@ const Login = () => {
 
           <div className="rounded-2xl border border-border bg-card p-8 md:p-10">
             <h2 className="text-2xl font-bold text-foreground text-center mb-2">تسجيل الدخول</h2>
-            <p className="text-muted-foreground text-center text-sm mb-8">
+            <p className="text-muted-foreground text-center text-sm mb-6">
               ليس لديك حساب؟{" "}
               <Link to="/register" className="text-primary hover:underline font-semibold">سجّل الآن</Link>
             </p>
+
+            <div className="flex rounded-xl border border-border p-1 mb-8 bg-muted/30" role="tablist" aria-label="نوع الحساب">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountTab === "coach"}
+                onClick={() => setAccountTab("coach")}
+                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+                  accountTab === "coach" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                مدرب
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={accountTab === "trainee"}
+                onClick={() => setAccountTab("trainee")}
+                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+                  accountTab === "trainee" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                متدرب
+              </button>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>

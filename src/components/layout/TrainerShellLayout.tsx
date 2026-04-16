@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useUIStore } from "@/store/useUIStore";
 
+import { COACH_PREFIX } from "@/lib/app-routes";
 import { desktopNavItems, mobileDockItems } from "./trainerNavConfig";
 import { TrainerSidebar } from "./TrainerSidebar";
 import { TrainerTopbar } from "./TrainerTopbar";
@@ -80,15 +81,16 @@ export function TrainerShellLayout({ children, title, onQuickAdd }: TrainerShell
 
   const isActive = useCallback(
     (href: string) => {
-      if (href === "/trainer-dashboard" || href === "/dashboard") {
-        return location.pathname === "/trainer-dashboard" || location.pathname === "/dashboard";
+      const p = location.pathname;
+      if (href.endsWith("/dashboard")) {
+        return p === href || p === `${COACH_PREFIX}/dashboard` || p === "/dashboard" || p === "/trainer-dashboard";
       }
-      return location.pathname.startsWith(href);
+      return p === href || p.startsWith(`${href}/`);
     },
     [location.pathname],
   );
 
-  const quick = onQuickAdd ?? (() => navigate("/clients"));
+  const quick = onQuickAdd ?? (() => navigate(`${COACH_PREFIX}/clients`));
 
   return (
     <div className="min-h-screen bg-background text-foreground">

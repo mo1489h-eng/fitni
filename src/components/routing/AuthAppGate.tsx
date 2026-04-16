@@ -16,7 +16,7 @@ function delayMs(): number {
  * Race-safe: retries profile fetch up to 3 times with 200–500ms between attempts.
  */
 export function AuthAppGate({ children }: { children: React.ReactNode }) {
-  const { user, profile, profileLoading, loading, signOut, refreshProfile, resolvedFitniRole } = useAuth();
+  const { user, profile, profileLoading, loading, signOut, refreshProfile } = useAuth();
   const [attempt, setAttempt] = useState(0);
   const enteredLogged = useRef(false);
   const roleLogged = useRef<string | null>(null);
@@ -54,7 +54,7 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(id);
   }, [user, loading, profile, profileLoading, attempt, refreshProfile]);
 
-  const role = normalizeFitniRole(profile?.role) ?? resolvedFitniRole;
+  const role = normalizeFitniRole(profile?.role);
   useEffect(() => {
     if (!role) return;
     if (roleLogged.current === role) return;

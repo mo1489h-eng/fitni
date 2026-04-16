@@ -128,7 +128,8 @@ serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: name, is_client: true },
+      user_metadata: { full_name: name, is_client: true, role: "trainee", source: "invite" },
+      app_metadata: { fitni_signup: "invite" },
     });
 
     if (createErr) {
@@ -150,11 +151,22 @@ serve(async (req) => {
       }
       userId = existingId;
 
+      const { data: existingAuth } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const prevApp = (existingAuth?.user?.app_metadata ?? {}) as Record<string, unknown>;
+      const prevUserMeta = (existingAuth?.user?.user_metadata ?? {}) as Record<string, unknown>;
+
       // Update password so signInWithPassword works with the form password
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
         password,
         email_confirm: true,
-        user_metadata: { full_name: name, is_client: true },
+        user_metadata: {
+          ...prevUserMeta,
+          full_name: name,
+          is_client: true,
+          role: "trainee",
+          source: "invite",
+        },
+        app_metadata: { ...prevApp, fitni_signup: "invite" },
       });
       if (updateErr) {
         console.error("updateUserById failed:", updateErr.message);
@@ -191,12 +203,18 @@ serve(async (req) => {
       );
     }
 
+    await supabaseAdmin
+      .from("profiles")
+      .update({ source: "invite", role: "trainee" })
+      .eq("user_id", userId);
+
     // Link client row
     const { error: linkErr } = await supabaseAdmin
       .from("clients")
       .update({
         auth_user_id: userId,
         invite_token: null,
+        payment_pending: true,
         ...(phone ? { phone } : {}),
       })
       .eq("id", client.id);

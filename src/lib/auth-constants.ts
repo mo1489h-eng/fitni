@@ -9,6 +9,8 @@
  *   Supabase sends the confirmation email (configure SMTP or use the built-in sender).
  * - Client invite completion uses the Edge Function `register-client-account` with Admin API and
  *   `email_confirm: true`, so no separate Supabase «signup confirmation» email is required for trainees.
+ * - Sensitive actions (e.g. withdrawals) use `profiles.email_verified`, synced via
+ *   `sync_profile_email_verification_from_auth` when the user confirms in Auth — login is not blocked on it.
  */
 export function getAuthSiteOrigin(): string {
   const fromEnv = typeof import.meta.env.VITE_AUTH_SITE_ORIGIN === "string" ? import.meta.env.VITE_AUTH_SITE_ORIGIN.trim() : "";

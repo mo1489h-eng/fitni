@@ -75,8 +75,13 @@ serve(async (req) => {
     else newEnd.setMonth(newEnd.getMonth() + 1);
 
     await supabase.from("client_payments").insert({
-      client_id, trainer_id: client.trainer_id, amount,
-      moyasar_payment_id: payment_id, status: "paid", billing_cycle: cycle,
+      client_id,
+      trainer_id: client.trainer_id,
+      amount,
+      tap_charge_id: payment_id,
+      payment_method: "tap",
+      status: "paid",
+      billing_cycle: cycle,
       period_start: base.toISOString().split("T")[0],
       period_end: newEnd.toISOString().split("T")[0],
     });

@@ -2,11 +2,10 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, RefreshCw, Loader2, TrendingUp, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TRAINER_HOME } from "@/lib/app-routes";
-import { getAuthSiteOrigin } from "@/lib/auth-constants";
+import { sendSignupConfirmationToEmail, syncVerificationStatus } from "@/lib/auth-verification";
 
 const RESEND_COOLDOWN = 60;
 
@@ -17,15 +16,23 @@ const ConfirmEmail = () => {
   const [countdown, setCountdown] = useState(0);
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
-  // If user is already confirmed, redirect to dashboard
   useEffect(() => {
-    if (user && (user.email_confirmed_at || user.confirmed_at)) {
+    if (!user || (!user.email_confirmed_at && !user.confirmed_at)) return;
+    let cancelled = false;
+    void (async () => {
+      await syncVerificationStatus();
+      if (cancelled) return;
+      await refreshProfile();
+      if (cancelled) return;
       toast.success("تم تأكيد بريدك الإلكتروني بنجاح");
       navigate(TRAINER_HOME, { replace: true });
-    }
-  }, [user, navigate]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, navigate, refreshProfile]);
 
   // Countdown timer
   useEffect(() => {
@@ -39,12 +46,7 @@ const ConfirmEmail = () => {
   const resendEmail = async () => {
     if (!emailParam || countdown > 0) return;
     setSending(true);
-    const emailRedirectTo = `${getAuthSiteOrigin()}${TRAINER_HOME}`;
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: emailParam,
-      options: { emailRedirectTo },
-    });
+    const { error } = await sendSignupConfirmationToEmail(emailParam);
     if (error) {
       toast.error("تعذّر إرسال الرابط", { description: error.message });
     } else {

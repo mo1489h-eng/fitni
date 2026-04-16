@@ -19,6 +19,7 @@ import MobileLogin from "./MobileLogin";
 import TrainerMobileShell from "./trainer/TrainerMobileShell";
 import ClientMobileShell from "./client/ClientMobileShell";
 import TrainerSessionPage from "@/pages/TrainerSessionPage";
+import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 
 const queryClient = new QueryClient();
 
@@ -62,7 +63,7 @@ function MobileAppContent() {
 
   useEffect(() => {
     if (!fitniRole || !session) return;
-    const path = fitniRole === "coach" ? "/coach/dashboard" : "/trainee/dashboard";
+    const path = fitniRole === "coach" ? COACH_DASHBOARD : TRAINEE_HOME;
     if (window.location.pathname !== path) {
       navigate(path, { replace: true });
     }
@@ -108,15 +109,15 @@ function MobileAppContent() {
   }
 
   if (fitniRole === "coach" && location.pathname.startsWith("/trainee")) {
-    return <Navigate to="/coach/dashboard" replace />;
+    return <Navigate to={COACH_DASHBOARD} replace />;
   }
   if (fitniRole === "trainee" && location.pathname.startsWith("/coach")) {
-    return <Navigate to="/trainee/dashboard" replace />;
+    return <Navigate to={TRAINEE_HOME} replace />;
   }
 
-  if (location.pathname === "/trainer/session") {
+  if (location.pathname === "/trainer/session" || location.pathname === "/coach/trainer/session") {
     if (fitniRole !== "coach") {
-      return <Navigate to={fitniRole === "trainee" ? "/trainee/dashboard" : "/coach/dashboard"} replace />;
+      return <Navigate to={fitniRole === "trainee" ? TRAINEE_HOME : COACH_DASHBOARD} replace />;
     }
     return <TrainerSessionPage />;
   }
@@ -151,8 +152,10 @@ function MobileRoutes() {
       <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
       <Route path="/trainer/session" element={<MobileAppGate />} />
+      <Route path="/coach/trainer/session" element={<MobileAppGate />} />
       <Route path="/coach/dashboard" element={<MobileAppGate />} />
-      <Route path="/trainee/dashboard" element={<MobileAppGate />} />
+      <Route path="/trainee/home" element={<MobileAppGate />} />
+      <Route path="/trainee/dashboard" element={<Navigate to={TRAINEE_HOME} replace />} />
       <Route path="/" element={<MobileHomeEntry />} />
       <Route path="/*" element={<MobileAppGate />} />
     </Routes>

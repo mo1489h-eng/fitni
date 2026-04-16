@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { COACH_DASHBOARD } from "@/lib/app-routes";
 import type { TrainerNavItem } from "./trainerNavConfig";
 
 const SIDEBAR_EXPANDED_PX = 290;
@@ -102,7 +103,7 @@ export function TrainerSidebar({
       aria-label="التنقل الرئيسي"
     >
       <div className="border-b border-border px-4 py-6">
-        <Link to="/trainer-dashboard" className="flex items-center gap-3 overflow-hidden">
+        <Link to={COACH_DASHBOARD} className="flex items-center gap-3 overflow-hidden">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 shadow-[0_0_28px_hsl(var(--primary)/0.18)] transition-all duration-300 ease-in-out hover:shadow-[0_12px_40px_-16px_hsl(var(--primary)/0.35)]">
             <span className="text-lg font-black text-primary">CB</span>
           </div>

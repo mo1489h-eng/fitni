@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRegisterTrainerShell } from "@/contexts/trainerShellContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { checkVerification } from "@/lib/auth-verification";
 import {
   useTrainerWallet,
   useTrainerTransactionCount,
@@ -91,7 +92,7 @@ function walletAvailableBalance(wallet: { balance_available?: number | null } | 
 export default function Earnings() {
   usePageTitle("الأرباح");
   useRegisterTrainerShell({ title: "الأرباح" });
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
@@ -120,6 +121,9 @@ export default function Earnings() {
 
   const requestMutation = useMutation({
     mutationFn: async () => {
+      if (!checkVerification(profile)) {
+        throw new Error("يجب تأكيد بريدك الإلكتروني قبل طلب السحب");
+      }
       const amt = Number(form.amount);
       if (!Number.isFinite(amt) || amt < MIN_WITHDRAWAL) {
         throw new Error(`الحد الأدنى للسحب ${MIN_WITHDRAWAL} ريال`);
@@ -165,7 +169,8 @@ export default function Earnings() {
     onError: (e: Error) => toast.error(e.message || "تعذر الإلغاء"),
   });
 
-  const showWithdrawCta = balance >= MIN_WITHDRAWAL && !pendingWithdrawal;
+  const emailVerified = checkVerification(profile);
+  const showWithdrawCta = balance >= MIN_WITHDRAWAL && !pendingWithdrawal && emailVerified;
 
   const typeBadge = (t: string) => {
     const m = TYPE_META[t] ?? { label: t, className: "bg-muted text-muted-foreground" };
@@ -247,6 +252,9 @@ export default function Earnings() {
             <p className="text-sm text-white/45">
               {!pendingWithdrawal && balance < MIN_WITHDRAWAL
                 ? `الحد الأدنى للسحب ${MIN_WITHDRAWAL} ريال`
+                : null}
+              {!pendingWithdrawal && balance >= MIN_WITHDRAWAL && !emailVerified
+                ? "أكّد بريدك الإلكتروني من لوحة الحساب لتمكين السحب."
                 : null}
               {pendingWithdrawal ? "لديك طلب سحب قيد المعالجة." : null}
             </p>

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditTrainerWalletFromTap } from "../_shared/walletCredit.ts";
 import { getResendApiKey, resendFromAddress } from "../_shared/resendConfig.ts";
 
 const corsHeaders = {
@@ -26,24 +27,24 @@ serve(async (req) => {
       });
     }
 
-    // Verify payment with Moyasar
-    const moyasarSecret = Deno.env.get("MOYASAR_SECRET_KEY");
-    if (!moyasarSecret) {
+    const tapSecret = Deno.env.get("TAP_SECRET_KEY");
+    if (!tapSecret) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const moyasarRes = await fetch(`https://api.moyasar.com/v1/payments/${payment_id}`, {
-      headers: { Authorization: `Basic ${btoa(moyasarSecret + ":")}` },
+    const tapRes = await fetch(`https://api.tap.company/v2/charges/${payment_id}`, {
+      headers: { Authorization: `Bearer ${tapSecret}` },
     });
-    if (!moyasarRes.ok) {
+    if (!tapRes.ok) {
       return new Response(JSON.stringify({ error: "Failed to verify payment" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const payment = await moyasarRes.json();
-    if (payment.status !== "paid") {
+
+    const payment = await tapRes.json();
+    if (payment.status !== "CAPTURED") {
       return new Response(JSON.stringify({ error: "Payment not completed" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -53,11 +54,10 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check for payment replay — ensure this payment_id hasn't been used before
     const { data: existingPayment } = await supabase
       .from("client_payments")
       .select("id")
-      .eq("moyasar_payment_id", payment_id)
+      .eq("tap_charge_id", payment_id)
       .maybeSingle();
 
     if (existingPayment) {
@@ -66,7 +66,6 @@ serve(async (req) => {
       });
     }
 
-    // Verify package exists and belongs to trainer
     const { data: pkg, error: pkgError } = await supabase
       .from("trainer_packages")
       .select("*")
@@ -81,14 +80,12 @@ serve(async (req) => {
       });
     }
 
-    // Verify amount matches package price
-    if (payment.amount !== pkg.price * 100) {
+    if (Number(payment.amount) !== Number(pkg.price)) {
       return new Response(JSON.stringify({ error: "Amount mismatch" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 1. Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: client_email,
       password: client_password,
@@ -96,7 +93,6 @@ serve(async (req) => {
     });
 
     if (authError) {
-      // If user already exists, try to get their ID
       if (authError.message?.includes("already been registered")) {
         return new Response(JSON.stringify({ error: "هذا الإيميل مسجل بالفعل. جرب تسجيل الدخول" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -107,7 +103,6 @@ serve(async (req) => {
 
     const authUserId = authData.user.id;
 
-    // 2. Calculate subscription dates
     const now = new Date();
     const endDate = new Date(now);
     const cycle = pkg.billing_cycle || "monthly";
@@ -115,7 +110,6 @@ serve(async (req) => {
     else if (cycle === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
     else endDate.setMonth(endDate.getMonth() + 1);
 
-    // 3. Create client record
     const { data: clientData, error: clientError } = await supabase
       .from("clients")
       .insert({
@@ -140,19 +134,31 @@ serve(async (req) => {
       throw clientError;
     }
 
-    // 4. Record payment
     await supabase.from("client_payments").insert({
       client_id: clientData.id,
       trainer_id: trainer_id,
       amount: pkg.price,
-      moyasar_payment_id: payment_id,
+      tap_charge_id: payment_id,
+      payment_method: "tap",
       status: "paid",
       billing_cycle: cycle,
       period_start: now.toISOString().split("T")[0],
       period_end: endDate.toISOString().split("T")[0],
     });
 
-    // 5. Notify trainer
+    const wallet = await creditTrainerWalletFromTap(supabase, {
+      tapChargeId: payment_id,
+      trainerId: trainer_id,
+      amount: pkg.price,
+      kind: "subscription",
+    });
+    if (!wallet.ok) {
+      console.error("signup-client wallet credit failed:", wallet.error);
+      return new Response(JSON.stringify({ error: "Failed to credit trainer wallet" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     await supabase.from("trainer_notifications").insert({
       trainer_id: trainer_id,
       client_id: clientData.id,
@@ -161,7 +167,6 @@ serve(async (req) => {
       body: `المبلغ: ${pkg.price} ر.س — الهدف: ${client_goal || "غير محدد"}`,
     });
 
-    // 5b. Handle referral tracking
     if (referral_code) {
       const { data: referrer } = await supabase
         .from("clients")
@@ -188,10 +193,8 @@ serve(async (req) => {
       }
     }
 
-    // 6. Send welcome email
     const resendKey = getResendApiKey();
     if (resendKey) {
-      // Get trainer name
       const { data: trainerProfile } = await supabase
         .from("profiles")
         .select("full_name")
@@ -231,7 +234,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, client_id: clientData.id }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("Error:", err);

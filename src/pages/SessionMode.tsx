@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProgramRealtimeSync } from "@/hooks/useProgramRealtimeSync";
 import TrainerWorkoutSession from "@/components/mobile/trainer/TrainerWorkoutSession";
 import { Loader2 } from "lucide-react";
-import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 
 type Props = {
   clientId: string;

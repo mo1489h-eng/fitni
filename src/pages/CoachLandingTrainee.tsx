@@ -56,7 +56,7 @@ export default function CoachLandingTrainee() {
       }
       const { data, error } = await supabase.rpc("get_trainer_by_username" as never, { p_username: coachId } as never);
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
+      const row = Array.isArray(data) ? (data as any[])[0] : data;
       return row as { user_id: string; full_name: string; username: string | null; avatar_url?: string | null; specialization?: string | null } | null;
     },
     enabled: !!coachId,

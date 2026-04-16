@@ -45,7 +45,7 @@ export default function TraineeDashboard() {
       const { data: client, error: cErr } = await supabase
         .from("clients")
         .select(
-          "id, name, portal_token, trainer_id, subscription_end_date, payment_pending, goal, sessions_used, sessions_per_month",
+          "id, name, portal_token, trainer_id, subscription_end_date, goal, sessions_used, sessions_per_month",
         )
         .eq("auth_user_id", user.id)
         .maybeSingle();
@@ -53,15 +53,15 @@ export default function TraineeDashboard() {
       if (!client) return { client: null as TraineeClientRow | null, trainer: null as TrainerProfile | null };
 
       let trainer: TrainerProfile | null = null;
-      if (client.trainer_id) {
+      if ((client as any).trainer_id) {
         const { data: prof } = await supabase
           .from("profiles")
           .select("full_name, avatar_url, username")
-          .eq("user_id", client.trainer_id)
+          .eq("user_id", (client as any).trainer_id)
           .maybeSingle();
         if (prof) trainer = prof;
       }
-      return { client: client as TraineeClientRow, trainer };
+      return { client: client as unknown as TraineeClientRow, trainer };
     },
     enabled: !!user?.id,
   });

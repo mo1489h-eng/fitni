@@ -28,7 +28,6 @@ export default function SessionMode({ clientId, onClose }: Props) {
           `
           id,
           program_id,
-          training_type,
           programs ( id, name )
         `
         )
@@ -36,10 +35,10 @@ export default function SessionMode({ clientId, onClose }: Props) {
         .eq("trainer_id", user.id)
         .maybeSingle();
       if (e) throw e;
-      const prog = row?.programs as { id: string; name: string } | null;
+      const prog = (row as any)?.programs as { id: string; name: string } | null;
       return {
-        programId: row?.program_id ?? null,
-        trainingType: parseClientTrainingType((row as { training_type?: string } | null)?.training_type),
+        programId: (row as any)?.program_id ?? null,
+        trainingType: "online" as ClientTrainingType,
         programName: prog?.name ?? "",
       };
     },

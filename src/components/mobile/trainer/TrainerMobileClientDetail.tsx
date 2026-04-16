@@ -154,8 +154,8 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
             <span
               className="text-[10px] px-2 py-0.5 rounded-full font-medium"
               style={{
-                background: trainingType === "in_person" ? "rgba(34,197,94,0.15)" : "rgba(100,116,139,0.2)",
-                color: trainingType === "in_person" ? "#22C55E" : "#94a3b8",
+                background: "rgba(100,116,139,0.2)",
+                color: "#94a3b8",
               }}
             >
               {TRAINING_TYPE_LABEL_AR[trainingType]}
@@ -204,7 +204,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
 
       <MuscleRecoveryMap clientId={client.id} />
 
-      {trainingType === "in_person" && client.program_id && (
+      {client.program_id && (
         <button
           type="button"
           onClick={() => setSessionModeOpen(true)}

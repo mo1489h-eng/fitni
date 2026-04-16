@@ -1,5 +1,5 @@
-import { LayoutDashboard, ExternalLink, CalendarDays, Dumbbell } from "lucide-react";
-import { Link } from "react-router-dom";
+import { LayoutDashboard, CalendarDays, Dumbbell } from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +75,11 @@ export default function TraineeDashboard() {
         ? `/coach/${client.trainer_id}`
         : null;
 
+  /** Same experience as the native app: full portal (workouts, progress, …) lives under `/portal/*`. */
+  if (!isLoading && !isError && client?.portal_token) {
+    return <Navigate to={`/client-portal/${client.portal_token}`} replace />;
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8" dir="rtl">
       <div className="flex items-center gap-3">
@@ -121,12 +126,12 @@ export default function TraineeDashboard() {
         </Card>
       )}
 
-      {!isLoading && !isError && client && (
+      {!isLoading && !isError && client && !client.portal_token && (
         <div className="space-y-4">
           <Card>
             <CardHeader className="space-y-1">
               <CardTitle className="text-xl">أهلاً، {client.name}</CardTitle>
-              <CardDescription>ملخص اشتراكك ووصولك لبرنامجك.</CardDescription>
+              <CardDescription>ملخص اشتراكك. لا يوجد رمز بوابة بعد — تواصل مع مدربك لتفعيل وصولك للتمارين على الويب.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {trainer && (
@@ -185,21 +190,6 @@ export default function TraineeDashboard() {
                   </AlertDescription>
                 </Alert>
               )}
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                {client.portal_token ? (
-                  <Button asChild className="gap-2">
-                    <Link to={`/client-portal/${client.portal_token}`}>
-                      <span>دخول بوابة التمارين</span>
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    لا يوجد رابط بوابة بعد — تواصل مع مدربك ليُفعّل وصولك.
-                  </p>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>

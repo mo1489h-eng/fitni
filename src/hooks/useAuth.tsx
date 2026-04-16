@@ -10,6 +10,7 @@ import {
   isPostgrestMissingColumnError,
 } from "@/lib/auth-service";
 import type { FitniRole } from "@/lib/auth-service";
+import { syncTraineePortalTokenForUser, clearTraineePortalToken } from "@/lib/trainee-portal-token";
 import { useWorkoutStore } from "@/store/workout-store";
 
 interface Profile {
@@ -170,6 +171,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setResolvedFitniRole(r);
         useWorkoutStore.getState().setFitniRole(r);
         setProfile((prev) => (prev ? { ...prev, role: r } : prev));
+        if (r === "trainee") {
+          await syncTraineePortalTokenForUser(userId);
+        }
       } else {
         setResolvedFitniRole(null);
         useWorkoutStore.getState().clearFitniRole();
@@ -220,6 +224,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setResolvedFitniRole(null);
         useWorkoutStore.getState().clearFitniRole();
         clearStoredFitniRole();
+        clearTraineePortalToken();
       }
     });
 
@@ -265,6 +270,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     queryClient.clear();
     useWorkoutStore.getState().clearFitniRole();
     clearStoredFitniRole();
+    clearTraineePortalToken();
     setSession(null);
     setUser(null);
     setProfile(null);

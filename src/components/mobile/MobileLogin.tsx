@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { describeSignInError } from "@/lib/auth-signin-errors";
 import { TrendingUp, Eye, EyeOff } from "lucide-react";
 
 interface MobileLoginProps {
@@ -30,7 +31,15 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
       });
 
       if (authError) {
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        const { description } = describeSignInError(authError);
+        if (import.meta.env.DEV) {
+          console.warn("[MobileLogin] signIn error", {
+            message: authError.message,
+            code: authError.code,
+            status: authError.status,
+          });
+        }
+        setError(description);
         setLoading(false);
         return;
       }

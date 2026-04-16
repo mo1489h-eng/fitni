@@ -6,6 +6,7 @@ import { Dumbbell, Link2, Mail, Loader2, Eye, EyeOff, Lock, ArrowLeft } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PASSWORD_RESET_REDIRECT_URL } from "@/lib/auth-constants";
+import { describeSignInError } from "@/lib/auth-signin-errors";
 
 const ClientLogin = () => {
   const [portalLink, setPortalLink] = useState("");
@@ -46,12 +47,13 @@ const ClientLogin = () => {
         toast({ title: "لم يتم العثور على بيانات المتدرب", description: "تواصل مع مدربك", variant: "destructive" });
         await supabase.auth.signOut();
       }
-    } catch (err: any) {
-      toast({
-        title: "خطأ في الدخول",
-        description: err.message?.includes("Invalid login") ? "البريد أو كلمة المرور غير صحيحة" : err.message,
-        variant: "destructive",
-      });
+    } catch (err: unknown) {
+      const { title, description } = describeSignInError(err);
+      if (import.meta.env.DEV) {
+        const e = err as { message?: string; code?: string; status?: number };
+        console.warn("[ClientLogin] signIn error", { message: e?.message, code: e?.code, status: e?.status });
+      }
+      toast({ title, description, variant: "destructive" });
     } finally {
       setLoading(false);
     }

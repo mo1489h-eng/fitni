@@ -39,6 +39,7 @@ export const supabase = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: "pkce",
+    // PKCE can break email/password sign-in in some browser setups; implicit is standard for SPA password flow.
+    flowType: "implicit",
   },
 });

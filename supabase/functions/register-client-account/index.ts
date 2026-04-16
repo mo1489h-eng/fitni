@@ -16,10 +16,17 @@ function isDuplicateUserError(err: { message?: string }): boolean {
   return m.includes("already") || m.includes("registered") || m.includes("exists") || m.includes("duplicate");
 }
 
+/** Prefer DB RPC (migration `get_auth_user_id_by_email`); fallback to listUsers if RPC missing. */
 async function findUserIdByEmail(
-  supabaseAdmin: any,
+  supabaseAdmin: ReturnType<typeof createClient>,
   email: string
 ): Promise<string | null> {
+  const { data: rpcId, error: rpcErr } = await supabaseAdmin.rpc("get_auth_user_id_by_email", {
+    p_email: email,
+  });
+  if (!rpcErr && rpcId) return rpcId as string;
+  if (rpcErr) console.warn("[register-client-account] get_auth_user_id_by_email:", rpcErr.message);
+
   const target = email.toLowerCase();
   let page = 1;
   const perPage = 1000;
@@ -164,6 +171,10 @@ serve(async (req) => {
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      const { error: confirmErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email_confirm: true,
+      });
+      if (confirmErr) console.warn("[register-client-account] email_confirm patch:", confirmErr.message);
     }
 
     // Check if auth_user_id is linked to another client

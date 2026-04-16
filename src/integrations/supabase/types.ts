@@ -2756,6 +2756,10 @@ export type Database = {
           week_number: number
         }[]
       }
+      get_auth_user_id_by_email: {
+        Args: { p_email: string }
+        Returns: string | null
+      }
       get_founder_stats: { Args: never; Returns: Json }
       get_my_client_profile: {
         Args: never

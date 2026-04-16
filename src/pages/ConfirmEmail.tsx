@@ -6,13 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { TRAINER_HOME } from "@/lib/app-routes";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
 
 const RESEND_COOLDOWN = 60;
 
 const ConfirmEmail = () => {
   const [searchParams] = useSearchParams();
-  const emailParam = searchParams.get("email") || "";
-  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+  const emailParam = (searchParams.get("email") || "").trim().toLowerCase();
+  /** 0 = user can tap «إعادة الإرسال» immediately after landing from Register */
+  const [countdown, setCountdown] = useState(0);
   const [sending, setSending] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -37,14 +39,16 @@ const ConfirmEmail = () => {
   const resendEmail = async () => {
     if (!emailParam || countdown > 0) return;
     setSending(true);
+    const emailRedirectTo = `${getAuthSiteOrigin()}${TRAINER_HOME}`;
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: emailParam,
+      options: { emailRedirectTo },
     });
     if (error) {
-      toast.error("حدث خطأ في إرسال الرابط");
+      toast.error("تعذّر إرسال الرابط", { description: error.message });
     } else {
-      toast.success("تم إرسال رابط التأكيد مجدداً");
+      toast.success("تم إرسال رابط التأكيد");
       setCountdown(RESEND_COOLDOWN);
     }
     setSending(false);

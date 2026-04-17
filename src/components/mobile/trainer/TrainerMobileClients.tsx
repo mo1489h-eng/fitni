@@ -44,11 +44,11 @@ const TrainerMobileClients = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, goal, phone, last_active_at, email, training_type")
+        .select("id, name, goal, phone, last_active_at, email")
         .eq("trainer_id", user.id)
         .order("name");
       if (error) throw error;
-      return (data || []) as ClientRow[];
+      return (data || []) as unknown as ClientRow[];
     },
     enabled: !!user,
   });

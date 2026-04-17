@@ -16,7 +16,7 @@ function delayMs(): number {
  * Race-safe: retries profile fetch up to 3 times with 200–500ms between attempts.
  */
 export function AuthAppGate({ children }: { children: React.ReactNode }) {
-  const { user, profile, profileLoading, loading, signOut, refreshProfile } = useAuth();
+  const { user, profile, profileLoading, loading, signOut, refreshProfile, resolvedFitniRole } = useAuth();
   const [attempt, setAttempt] = useState(0);
   const enteredLogged = useRef(false);
   const roleLogged = useRef<string | null>(null);
@@ -33,7 +33,7 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user || loading) return;
-    if (profile) {
+    if (profile || resolvedFitniRole) {
       setAttempt(0);
       return;
     }
@@ -52,9 +52,9 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
     }, wait);
 
     return () => window.clearTimeout(id);
-  }, [user, loading, profile, profileLoading, attempt, refreshProfile]);
+  }, [user, loading, profile, profileLoading, resolvedFitniRole, attempt, refreshProfile]);
 
-  const role = normalizeFitniRole(profile?.role);
+  const role = resolvedFitniRole ?? normalizeFitniRole(profile?.role);
   useEffect(() => {
     if (!role) return;
     if (roleLogged.current === role) return;
@@ -82,7 +82,7 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!profile) {
+  if (!profile && !resolvedFitniRole) {
     if (attempt < PROFILE_FETCH_MAX_ATTEMPTS) {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-background px-4" dir="rtl">
@@ -115,7 +115,7 @@ export function AuthAppGate({ children }: { children: React.ReactNode }) {
   if (!role) {
     if (!invalidFailLogged.current) {
       invalidFailLogged.current = true;
-      authLogDev("failure_reason", { reason: "role_invalid", rawRole: profile.role });
+      authLogDev("failure_reason", { reason: "role_invalid", rawRole: profile?.role });
     }
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6" dir="rtl">

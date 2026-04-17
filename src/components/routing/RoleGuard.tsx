@@ -15,9 +15,11 @@ type Props = {
  * Role comes from `profiles.role` only (never localStorage).
  */
 export function RoleGuard({ allowed, children }: Props) {
-  const { loading, profileLoading, user, profile } = useAuth();
+  const { loading, profileLoading, user, profile, resolvedFitniRole } = useAuth();
 
-  const effectiveRole = useMemo((): FitniRole | null => normalizeFitniRole(profile?.role), [profile?.role]);
+  const effectiveRole = useMemo((): FitniRole | null => {
+    return resolvedFitniRole ?? normalizeFitniRole(profile?.role);
+  }, [profile?.role, resolvedFitniRole]);
 
   // Wait for auth session to be determined
   if (loading) {

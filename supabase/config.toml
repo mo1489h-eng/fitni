@@ -80,3 +80,6 @@ verify_jwt = true
 # Password-based admin login must work without a valid user JWT (anon key only).
 [functions.admin-dashboard]
 verify_jwt = false
+
+[functions.send-invite-email]
+verify_jwt = false

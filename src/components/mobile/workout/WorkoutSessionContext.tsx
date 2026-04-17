@@ -190,7 +190,7 @@ export function WorkoutSessionProvider({
     queryKey: ["session-logs-hydrate", sessionId],
     queryFn: async () => {
       if (!sessionId) return null;
-      const { data: sl, error: e1 } = await supabase.from("session_logs").select("*").eq("session_id", sessionId);
+      const { data: sl, error: e1 } = await (supabase as any).from("session_logs").select("*").eq("session_id", sessionId);
       if (e1) throw e1;
       if (sl?.length) return { kind: "logs" as const, rows: sl };
       const { data: wse, error: e2 } = await supabase.from("workout_session_exercises").select("*").eq("session_id", sessionId);
@@ -211,10 +211,10 @@ export function WorkoutSessionProvider({
       const next = { ...prev };
       if (hydratedLogs.kind === "logs") {
         for (const row of hydratedLogs.rows) {
-          const k = setKey(row.exercise_id, row.set_number);
-          const w = Number(row.weight ?? 0);
-          const r = Number(row.reps ?? 0);
-          const at = sessionLogSyncTs(row);
+          const k = setKey((row as any).exercise_id, (row as any).set_number);
+          const w = Number((row as any).weight ?? 0);
+          const r = Number((row as any).reps ?? 0);
+          const at = sessionLogSyncTs(row as any);
           const prevVal = next[k];
           if (prevVal?.syncedAt && new Date(prevVal.syncedAt).getTime() > new Date(at).getTime()) continue;
           next[k] = { weight: w, reps: r, syncedAt: at };
@@ -422,7 +422,7 @@ export function WorkoutSessionProvider({
         const ins = await supabase.from("workout_logs").insert(wl);
         if (ins.error) throw ins.error;
       } else {
-        void supabase.from("workout_logs").insert(wl).catch(() => {});
+        void (supabase as any).from("workout_logs").insert(wl).then(() => {}).catch(() => {});
       }
       await (supabase as any).from("workout_sessions").update({ current_exercise_index: exerciseIndex }).eq("id", sessionId);
       volumeRef.current += vol;

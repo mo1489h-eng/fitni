@@ -3,12 +3,7 @@ import * as Sentry from "@sentry/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  resolveFitniRole,
-  clearStoredFitniRole,
-  isMissingProfilesRoleColumn,
-  isPostgrestMissingColumnError,
-} from "@/lib/auth-service";
+import { resolveFitniRole, clearStoredFitniRole } from "@/lib/auth-service";
 import type { FitniRole } from "@/lib/auth-service";
 import { syncTraineePortalTokenForUser, clearTraineePortalToken } from "@/lib/trainee-portal-token";
 import { useWorkoutStore } from "@/store/workout-store";
@@ -66,46 +61,16 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-/** Full trainer profile row (includes `role` for Fitni routing). */
+/** Profile columns that actually exist on the DB table. */
 const profileSelectColumns =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role, source, email_verified" as const;
-
-/** Same row without `role` — used when remote DB has not run role migration yet (42703). */
-const profileSelectColumnsNoRole =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, email_verified" as const;
-
-/** Oldest-compatible row — no `role`, `source`, or `email_verified` (optional migrations not applied). */
-const profileSelectColumnsLegacy =
   "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
 
 async function selectProfileRow(userId: string) {
-  let r = await supabase
+  return supabase
     .from("profiles")
     .select(profileSelectColumns)
     .eq("user_id", userId)
     .maybeSingle();
-
-  if (!r.error) return r;
-
-  const shouldTryNarrower =
-    isMissingProfilesRoleColumn(r.error) || isPostgrestMissingColumnError(r.error);
-  if (shouldTryNarrower) {
-    r = await supabase
-      .from("profiles")
-      .select(profileSelectColumnsNoRole)
-      .eq("user_id", userId)
-      .maybeSingle();
-  }
-
-  if (!r.error) return r;
-  if (isPostgrestMissingColumnError(r.error)) {
-    r = await supabase
-      .from("profiles")
-      .select(profileSelectColumnsLegacy)
-      .eq("user_id", userId)
-      .maybeSingle();
-  }
-  return r;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -134,32 +99,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
       } else if (data) {
         if (import.meta.env.DEV) console.log("[Auth] profile found");
-        setProfile(data as Profile);
+        setProfile(data as unknown as Profile);
       } else {
-        // No profile — try to create one via RPC
-        if (import.meta.env.DEV) console.log("[Auth] no profile found, calling ensure_user_profile");
-        const { error: ensureErr } = await supabase.rpc("ensure_user_profile");
-        if (fetchId !== profileFetchRef.current) return null;
-
-        if (ensureErr) {
-          console.error("[Auth] ensure_user_profile failed", ensureErr);
-          setProfile(null);
-        } else {
-          const r2 = await selectProfileRow(userId);
-          if (fetchId !== profileFetchRef.current) return null;
-          if (r2.data) setProfile(r2.data as Profile);
-          else setProfile(null);
-        }
-      }
-
-      const { error: syncErr } = await supabase.rpc("sync_profile_email_verification_from_auth");
-      if (syncErr && import.meta.env.DEV) {
-        console.warn("[Auth] sync_profile_email_verification_from_auth", syncErr.message);
-      }
-      if (!syncErr) {
-        const ref = await selectProfileRow(userId);
-        if (fetchId !== profileFetchRef.current) return null;
-        if (ref.data) setProfile(ref.data as Profile);
+        // No profile row — handle_new_user trigger should have created it.
+        // Just set null; the user can still use the app.
+        if (import.meta.env.DEV) console.log("[Auth] no profile found");
+        setProfile(null);
       }
 
       // Resolve role

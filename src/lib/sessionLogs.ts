@@ -1,8 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enqueueSessionLogRetry } from "@/lib/sessionLogRetryQueue";
-import type { Database } from "@/integrations/supabase/types";
 
-export type SessionLogRow = Database["public"]["Tables"]["session_logs"]["Row"];
+/** Generic session log row shape (table may not exist yet in types). */
+export type SessionLogRow = {
+  id: string;
+  session_id: string;
+  exercise_id: string;
+  set_number: number;
+  reps: number;
+  weight: number;
+  completed: boolean;
+  created_at: string;
+  updated_at?: string | null;
+  updated_by?: string | null;
+};
 
 export type UpsertSessionLogParams = {
   sessionId: string;
@@ -17,20 +28,19 @@ export type SessionLogUpsertResult =
   | { status: "synced"; row: SessionLogRow }
   | { status: "queued" };
 
-/** Canonical timestamp for merge / last-write-wins (DB `updated_at`, fallback `created_at`). */
+/** Canonical timestamp for merge / last-write-wins. */
 export function sessionLogSyncTs(row: { updated_at?: string | null; created_at: string }): string {
   return row.updated_at ?? row.created_at;
 }
 
 /**
- * Upserts one set row (last write wins on conflict). Sets `updated_by` from current auth user.
- * DB trigger mirrors into `workout_session_exercises` and maintains `updated_at`.
+ * Upserts one set row. Uses `as any` because session_logs may not be in generated types yet.
  */
 export async function upsertSessionLogInternal(params: UpsertSessionLogParams): Promise<SessionLogRow> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("session_logs")
     .upsert(
       {
@@ -47,13 +57,9 @@ export async function upsertSessionLogInternal(params: UpsertSessionLogParams): 
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as SessionLogRow;
 }
 
-/**
- * Same as {@link upsertSessionLogInternal}, but enqueues for retry when the network write fails.
- * Does not throw on failure — returns `{ status: 'queued' }` after enqueue.
- */
 export async function upsertSessionLog(params: UpsertSessionLogParams): Promise<SessionLogUpsertResult> {
   try {
     const row = await upsertSessionLogInternal(params);

@@ -1,6 +1,13 @@
 import type { WorkoutProgram } from "@/types/workout";
 
 /**
+ * Copilot (trainer → client program) prompts and profile checks live in the edge bundle:
+ * `supabase/functions/_shared/copilotProgramGeneration.ts` (invoked from `copilot-generate`).
+ *
+ * This file only formats/refactors existing `WorkoutProgram` JSON for other LLM flows.
+ */
+
+/**
  * Serializes the program into readable text for LLM context (Arabic labels for coach UX).
  */
 export function formatWorkoutProgramForPrompt(program: WorkoutProgram): string {

@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -2863,11 +2863,15 @@ export type Database = {
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {
+          billing_cycle: string | null
           email: string
           id: string
           name: string
           phone: string
+          subscription_price: number | null
+          trainer_id: string
           trainer_name: string
+          trainer_username: string | null
         }[]
       }
       get_client_by_portal_token: {

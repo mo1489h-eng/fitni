@@ -11,6 +11,8 @@ import {
   duplicateEmailToastContent,
   isEmailAlreadyRegisteredError,
 } from "@/lib/auth-email-errors";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
+import { createPaymentSession } from "@/services/payments";
 
 const ClientRegister = () => {
   const { token: tokenFromPath } = useParams();
@@ -29,6 +31,9 @@ const ClientRegister = () => {
     phone: string;
     trainer_name: string;
     trainer_username: string | null;
+    trainer_id: string;
+    subscription_price: number | string | null;
+    billing_cycle: string | null;
   } | null>(null);
   const [form, setForm] = useState({
     name: "", phone: "", email: "", password: "", confirmPassword: "",
@@ -49,10 +54,16 @@ const ClientRegister = () => {
         phone: string;
         trainer_name: string;
         trainer_username?: string | null;
+        trainer_id?: string;
+        subscription_price?: number | string | null;
+        billing_cycle?: string | null;
       };
       setClientData({
         ...c,
         trainer_username: c.trainer_username ?? null,
+        trainer_id: c.trainer_id ?? "",
+        subscription_price: c.subscription_price ?? null,
+        billing_cycle: c.billing_cycle ?? null,
       });
       setForm(f => ({ ...f, name: c.name || "", email: c.email || "", phone: c.phone || "" }));
       setLoading(false);
@@ -145,12 +156,49 @@ const ClientRegister = () => {
         return;
       }
 
-      // Step 3: Redirect to client portal
+      // Step 3: Paid plans → Tap checkout; free (0) → portal
       toast({ title: "أهلاً بك! تم إنشاء حسابك بنجاح 🎉" });
 
-      if (clientData?.trainer_username) {
-        navigate(`/pay/${clientData.trainer_username}`);
-        return;
+      const subPrice = Number(clientData?.subscription_price ?? 0);
+      const trainerId = clientData?.trainer_id?.trim() ?? "";
+
+      if (subPrice > 0 && trainerId && clientData) {
+        try {
+          const billing = (clientData.billing_cycle && String(clientData.billing_cycle).trim()) || "monthly";
+          const origin = getAuthSiteOrigin();
+          const qs = new URLSearchParams({
+            type: "client_payment",
+            client_id: clientData.id,
+            amount: String(subPrice),
+            billing_cycle: billing,
+            return: "trainee",
+          });
+          const { payment_url } = await createPaymentSession({
+            amount: subPrice,
+            description: `اشتراك تدريب — ${clientData.trainer_name || "مدربك"}`,
+            redirectUrl: `${origin}/payment/callback?${qs.toString()}`,
+            customer: {
+              name: form.name.trim(),
+              email: form.email.trim().toLowerCase(),
+              phone: form.phone || undefined,
+            },
+            metadata: {
+              type: "client_subscription",
+              client_id: clientData.id,
+              trainer_id: trainerId,
+            },
+          });
+          window.location.assign(payment_url);
+          return;
+        } catch (chargeErr) {
+          console.error("[ClientRegister] createPaymentSession:", chargeErr);
+          toast({
+            title: "تعذّر بدء الدفع",
+            description:
+              chargeErr instanceof Error ? chargeErr.message : "يمكنك لاحقاً إكمال الدفع من مساحة المتدرب",
+            variant: "destructive",
+          });
+        }
       }
 
       const { data: profile } = await supabase.rpc("get_my_client_profile");

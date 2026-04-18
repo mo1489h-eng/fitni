@@ -36,6 +36,9 @@ import {
   type MappedImportRow,
   type ClientInsert,
 } from "@/lib/clientSpreadsheetImport";
+import { getAuthSiteOrigin } from "@/lib/auth-constants";
+import { isValidSignupEmail } from "@/lib/email-validation";
+import { parseSendInviteEmailInvoke } from "@/lib/sendInviteEmailResult";
 
 export interface ImportClientsModalProps {
   open: boolean;
@@ -231,14 +234,50 @@ export default function ImportClientsModal({
     const extraSkipped = valid.length - batch.length;
 
     try {
+      type InsertedRow = { id: string; invite_token: string | null; email: string | null; name: string | null };
+      const allInserted: InsertedRow[] = [];
+      let inviteEligible = 0;
+      let invitesSent = 0;
+
       if (batch.length > 0) {
+        const { data: trainerProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        const trainerName = trainerProfile?.full_name?.trim() || "مدربك";
+        const siteOrigin = getAuthSiteOrigin();
+
         const today = new Date().toISOString().split("T")[0];
         const inserts = toClientInserts(batch, user.id, today);
         const CHUNK = 40;
         for (let i = 0; i < inserts.length; i += CHUNK) {
           const chunk = inserts.slice(i, i + CHUNK);
-          const { error } = await supabase.from("clients").insert(chunk as ClientInsert[]);
+          const { data: inserted, error } = await supabase
+            .from("clients")
+            .insert(chunk as ClientInsert[])
+            .select("id, invite_token, email, name");
           if (error) throw error;
+          if (inserted?.length) allInserted.push(...(inserted as InsertedRow[]));
+        }
+
+        for (const row of allInserted) {
+          const emailTrim = (row.email ?? "").trim();
+          if (!emailTrim || !isValidSignupEmail(emailTrim)) continue;
+          if (!row.invite_token || !row.id) continue;
+          inviteEligible += 1;
+          const { data: emailResult, error: fnError } = await supabase.functions.invoke("send-invite-email", {
+            body: {
+              clientId: row.id,
+              clientName: (row.name ?? "عميل").trim() || "عميل",
+              clientEmail: emailTrim,
+              trainerName,
+              inviteToken: row.invite_token,
+              siteOrigin,
+            },
+          });
+          const { payload } = await parseSendInviteEmailInvoke(emailResult, fnError);
+          if (payload?.emailSent) invitesSent += 1;
         }
       }
 
@@ -250,6 +289,12 @@ export default function ImportClientsModal({
       queryClient.invalidateQueries({ queryKey: ["copilot-trainer-clients"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-clients"] });
       setStep("done");
+      if (inviteEligible > 0) {
+        toast({
+          title: "تم إرسال الدعوات",
+          description: `تم إرسال ${invitesSent} دعوة من أصل ${inviteEligible}`,
+        });
+      }
       if (extraSkipped > 0) {
         toast({
           title: "تم الاستيراد مع حد الباقة",

@@ -77,13 +77,26 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: client, error: clientError } = await supabase
-      .from("clients").select("id, trainer_id, name").eq("id", client_id).maybeSingle();
+      .from("clients")
+      .select("id, trainer_id, name, auth_user_id")
+      .eq("id", client_id)
+      .maybeSingle();
 
-    if (clientError || !client || client.trainer_id !== user.id) {
+    if (clientError || !client) {
       return new Response(JSON.stringify({ error: "Client not found or access denied" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const isTrainer = client.trainer_id === user.id;
+    const isLinkedTrainee = client.auth_user_id != null && client.auth_user_id === user.id;
+    if (!isTrainer && !isLinkedTrainee) {
+      return new Response(JSON.stringify({ error: "Client not found or access denied" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const trainerId = client.trainer_id as string;
 
     const now = new Date();
     const endDate = new Date(now);
@@ -94,7 +107,7 @@ serve(async (req) => {
 
     await supabase.from("client_payments").insert({
       client_id,
-      trainer_id: user.id,
+      trainer_id: trainerId,
       amount,
       tap_charge_id: payment_id,
       payment_method: "tap",
@@ -106,12 +119,15 @@ serve(async (req) => {
 
     await supabase.from("clients").update({
       subscription_end_date: endDate.toISOString().split("T")[0],
-      subscription_price: amount, billing_cycle: cycle,
+      subscription_price: amount,
+      billing_cycle: cycle,
+      payment_pending: false,
     }).eq("id", client_id);
 
+    // Subscription: 10% commission, 90% to trainer pending_balance via creditPackageTrainerEarningsFromTap
     const wallet = await creditTrainerWalletFromTap(supabase, {
       tapChargeId: payment_id,
-      trainerId: user.id,
+      trainerId,
       amount: Number(amount),
       kind: "subscription",
     });

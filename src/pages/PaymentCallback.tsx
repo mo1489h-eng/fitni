@@ -72,6 +72,7 @@ const PaymentCallback = () => {
         const clientId = searchParams.get("client_id");
         const amount = searchParams.get("amount");
         const billingCycle = searchParams.get("billing_cycle") || "monthly";
+        const returnTo = searchParams.get("return") || "";
         const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
           "verify-client-payment",
           { payment_id: tapId, client_id: clientId, amount: Number(amount), billing_cycle: billingCycle },
@@ -79,7 +80,11 @@ const PaymentCallback = () => {
         if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
         setStatus("success");
         toast({ title: "تم الدفع بنجاح" });
-        setTimeout(() => navigate(`/clients/${clientId}`), 2000);
+        if (returnTo === "trainee") {
+          setTimeout(() => navigate(TRAINEE_HOME), 2000);
+        } else {
+          setTimeout(() => navigate(`/clients/${clientId}`), 2000);
+        }
 
       } else if (type === "package_purchase") {
         const packageId = searchParams.get("package_id");

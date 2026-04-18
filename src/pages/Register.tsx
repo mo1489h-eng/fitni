@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrendingUp, User, Mail, Lock, Loader2, CheckCircle, Users, ClipboardList, CreditCard, Gift, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { duplicateEmailToastContent, isEmailAlreadyRegisteredError } from "@/lib/auth-email-errors";
+import {
+  describeSupabaseAuthSignUpError,
+  duplicateEmailToastContent,
+  isEmailAlreadyRegisteredError,
+} from "@/lib/auth-email-errors";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +27,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Maps Supabase Auth errors to clear Arabic copy for trainers. */
 function describeAuthSignUpError(message: string): string {
+  const specialized = describeSupabaseAuthSignUpError(message);
+  if (specialized !== message) return specialized;
   const m = message.toLowerCase();
   if (isEmailAlreadyRegisteredError(message)) {
     return "هذا البريد الإلكتروني مستخدم مسبقاً، يرجى تسجيل الدخول أو استخدام بريد آخر";
@@ -163,9 +169,11 @@ const Register = () => {
           toast({ title, description, variant: "destructive" });
           setEmailError("هذا البريد مستخدم بالفعل");
         } else {
+          const description = describeAuthSignUpError(error.message);
+          const isDbProvisioning = error.message.toLowerCase().includes("database error saving new user");
           toast({
-            title: "فشل التسجيل",
-            description: describeAuthSignUpError(error.message),
+            title: isDbProvisioning ? "خطأ في الخادم أثناء التسجيل" : "فشل التسجيل",
+            description,
             variant: "destructive",
           });
         }

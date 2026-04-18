@@ -18,10 +18,20 @@ export function isEmailAlreadyRegisteredError(message: string): boolean {
     m.includes("user already registered") ||
     m.includes("email address is already registered") ||
     m.includes("email already exists") ||
-    m.includes("duplicate key") ||
-    m.includes("already exists") ||
-    m.includes("database error saving new user")
+    m.includes("duplicate key")
   );
+}
+
+/**
+ * GoTrue returns this when the auth.users row insert succeeds but a DB trigger/hook fails
+ * (e.g. handle_new_user). It is NOT a reliable signal that the email is already taken.
+ */
+export function describeSupabaseAuthSignUpError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("database error saving new user")) {
+    return "تعذّر إتمام التسجيل على الخادم أثناء حفظ الحساب في قاعدة البيانات. هذا لا يعني عادة أن البريد مسجّل مسبقاً — راجع هجرات Supabase (مثل عمود profiles.source ودالة handle_new_user) ثم أعد المحاولة أو تواصل مع الدعم.";
+  }
+  return message;
 }
 
 /** Toast content when signup fails because the email is already taken. */

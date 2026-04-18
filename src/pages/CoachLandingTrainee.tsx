@@ -9,7 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Dumbbell, CreditCard, ArrowRight } from "lucide-react";
-import { isEmailAlreadyRegisteredError, duplicateEmailToastContent } from "@/lib/auth-email-errors";
+import {
+  describeSupabaseAuthSignUpError,
+  duplicateEmailToastContent,
+  isEmailAlreadyRegisteredError,
+} from "@/lib/auth-email-errors";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -100,7 +104,11 @@ export default function CoachLandingTrainee() {
           toast({ title, description, variant: "destructive" });
           return;
         }
-        toast({ title: "فشل التسجيل", description: signErr.message, variant: "destructive" });
+        toast({
+          title: "فشل التسجيل",
+          description: describeSupabaseAuthSignUpError(signErr.message),
+          variant: "destructive",
+        });
         return;
       }
 

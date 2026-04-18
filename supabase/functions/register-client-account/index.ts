@@ -83,10 +83,10 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Look up client by invite_token
+    // Look up existing client row (coach created it) — must match invite_token exactly
     const { data: client, error: clientErr } = await supabaseAdmin
       .from("clients")
-      .select("id, email, invite_token, auth_user_id, created_at")
+      .select("id, email, invite_token, auth_user_id, created_at, trainer_id, subscription_price")
       .eq("invite_token", invite_token)
       .maybeSingle();
 
@@ -203,35 +203,72 @@ serve(async (req) => {
       );
     }
 
-    await supabaseAdmin
-      .from("profiles")
-      .update({ source: "invite", role: "trainee" })
-      .eq("user_id", userId);
+    // 1) Link existing clients row first (WHERE invite_token — avoids stale id / partial failures)
+    const linkPayload: Record<string, unknown> = {
+      auth_user_id: userId,
+      invite_token: null,
+      payment_pending: true,
+    };
+    if (phone) linkPayload.phone = phone;
 
-    // Link client row
-    const { error: linkErr } = await supabaseAdmin
+    const { data: linkedRows, error: linkErr } = await supabaseAdmin
       .from("clients")
-      .update({
-        auth_user_id: userId,
-        invite_token: null,
-        payment_pending: true,
-        ...(phone ? { phone } : {}),
-      })
-      .eq("id", client.id);
+      .update(linkPayload)
+      .eq("invite_token", invite_token)
+      .is("auth_user_id", null)
+      .select("id, trainer_id, subscription_price");
 
     if (linkErr) {
-      console.error("linkClientRow error:", linkErr);
+      console.error("[register-client-account] linkClientRow error:", linkErr);
       return new Response(
         JSON.stringify({ success: false, code: "LINK_FAILED", message: linkErr.message }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[register-client-account] success userId=", userId);
-    return new Response(JSON.stringify({ success: true, userId }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const linked = linkedRows?.[0];
+    if (!linked?.id) {
+      console.error("[register-client-account] no row updated for invite_token");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          code: "LINK_FAILED",
+          message: "تعذّر ربط العميل — ربما انتهت الدعوة أو رُبط الحساب مسبقاً.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2) Invited trainees must never stay / become coach in profiles
+    const { error: profErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ role: "trainee", source: "invite" })
+      .eq("user_id", userId);
+
+    if (profErr) {
+      console.error("[register-client-account] profile update error:", profErr);
+      return new Response(
+        JSON.stringify({ success: false, code: "PROFILE_UPDATE_FAILED", message: profErr.message }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[register-client-account] success userId=", userId, "clientId=", linked.id);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        userId,
+        client: {
+          id: linked.id,
+          trainer_id: linked.trainer_id,
+          subscription_price: linked.subscription_price,
+        },
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (err) {
     console.error("[register-client-account] unhandled:", err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {

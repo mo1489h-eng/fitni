@@ -21,9 +21,9 @@ Sentry.init({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <Sentry.ErrorBoundary fallback={<p>حدث خطأ غير متوقع</p>}>
-    <BrowserRouter>
+  <BrowserRouter>
+    <Sentry.ErrorBoundary fallback={<p>حدث خطأ غير متوقع</p>}>
       <App />
-    </BrowserRouter>
-  </Sentry.ErrorBoundary>
+    </Sentry.ErrorBoundary>
+  </BrowserRouter>
 );

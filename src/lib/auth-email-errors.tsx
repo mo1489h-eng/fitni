@@ -1,6 +1,14 @@
-import { Link } from "react-router-dom";
-
+import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Use `<a>` in toast copy — toasts mount outside the route tree in some layouts; `<Link>` requires Router context. */
+function ToastAuthLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <a href={to} className="font-semibold text-primary underline">
+      {children}
+    </a>
+  );
+}
 
 export function isEmailAlreadyRegisteredError(message: string): boolean {
   const m = message.toLowerCase();
@@ -26,9 +34,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
   const unknown = (
     <>
       هذا البريد مستخدم مسبقاً.{" "}
-      <Link to={preferClient ? "/client-login" : "/login"} className="underline font-semibold text-primary">
-        سجّل دخولك من هنا
-      </Link>
+      <ToastAuthLink to={preferClient ? "/client-login" : "/login"}>سجّل دخولك من هنا</ToastAuthLink>
     </>
   );
 
@@ -42,10 +48,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         title: "البريد مستخدم مسبقاً",
         description: (
           <>
-            هذا البريد مسجل كمدرب،{" "}
-            <Link to="/login" className="underline font-semibold text-primary">
-              سجّل دخولك من هنا
-            </Link>
+            هذا البريد مسجل كمدرب، <ToastAuthLink to="/login">سجّل دخولك من هنا</ToastAuthLink>
           </>
         ),
       };
@@ -54,10 +57,7 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         title: "البريد مستخدم مسبقاً",
         description: (
           <>
-            هذا البريد مسجل كمتدرب، تواصل مع مدربك.{" "}
-            <Link to="/client-login" className="underline font-semibold text-primary">
-              سجّل دخولك من هنا
-            </Link>
+            هذا البريد مسجل كمتدرب، تواصل مع مدربك. <ToastAuthLink to="/client-login">سجّل دخولك من هنا</ToastAuthLink>
           </>
         ),
       };
@@ -66,14 +66,9 @@ export async function duplicateEmailToastContent(email: string, options?: { pref
         title: "البريد مستخدم مسبقاً",
         description: (
           <>
-            هذا البريد مسجّل كمدرب وكمتدرب.{" "}
-            <Link to="/login" className="underline font-semibold text-primary">
-              دخول المدرب
-            </Link>
+            هذا البريد مسجّل كمدرب وكمتدرب. <ToastAuthLink to="/login">دخول المدرب</ToastAuthLink>
             {" · "}
-            <Link to="/client-login" className="underline font-semibold text-primary">
-              دخول المتدرب
-            </Link>
+            <ToastAuthLink to="/client-login">دخول المتدرب</ToastAuthLink>
           </>
         ),
       };

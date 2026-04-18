@@ -12,7 +12,8 @@ import {
   isEmailAlreadyRegisteredError,
 } from "@/lib/auth-email-errors";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
-import { createPaymentSession } from "@/services/payments";
+import { useAuth } from "@/hooks/useAuth";
+import { TRAINEE_INVITE_POSTPAY_STORAGE_KEY } from "@/lib/traineeInvitePostPayStorage";
 
 const ClientRegister = () => {
   const { token: tokenFromPath } = useParams();
@@ -20,6 +21,7 @@ const ClientRegister = () => {
   const token = (tokenFromPath ?? searchParams.get("token") ?? "").trim();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session, resolvedFitniRole, profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +40,11 @@ const ClientRegister = () => {
   const [form, setForm] = useState({
     name: "", phone: "", email: "", password: "", confirmPassword: "",
   });
+
+  const coachSessionBlocksInvite =
+    !authLoading &&
+    !!session?.user &&
+    (resolvedFitniRole === "coach" || profile?.role === "coach");
 
   useEffect(() => {
     const fetchClient = async () => {
@@ -73,6 +80,17 @@ const ClientRegister = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (coachSessionBlocksInvite) {
+      toast({
+        title: "أنت مسجّل دخول كمدرب",
+        description: "افتح رابط الدعوة في نافذة خاصة (Incognito) حتى لا يتعارض مع جلسة المدرب.",
+        variant: "destructive",
+        duration: 12_000,
+      });
+      return;
+    }
+
     if (form.password.length < 6) {
       toast({ title: "كلمة المرور يجب أن تكون 6 أحرف على الأقل", variant: "destructive" });
       return;
@@ -88,9 +106,90 @@ const ClientRegister = () => {
       return;
     }
 
+    const subPrice = Number(clientData?.subscription_price ?? 0);
+
+    if (subPrice > 0) {
+      setSubmitting(true);
+      try {
+        const { data: checkout, error: coErr } = await supabase.functions.invoke<{
+          success?: boolean;
+          tap_payment_url?: string;
+          code?: string;
+          message?: string;
+        }>("create-trainee-checkout", {
+          body: {
+            invite_token: token,
+            email,
+            password: form.password,
+            name: form.name.trim(),
+            phone: form.phone?.trim() || undefined,
+            site_origin: getAuthSiteOrigin(),
+          },
+        });
+
+        if (coErr) {
+          if (isEmailAlreadyRegisteredError(coErr.message ?? "")) {
+            const { title, description } = await duplicateEmailToastContent(email, { preferClientLogin: true });
+            toast({ title, description, variant: "destructive" });
+            return;
+          }
+          toast({
+            title: "تعذّر بدء الدفع",
+            description: coErr.message ?? "تحقق من الشبكة",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!checkout?.success) {
+          if (checkout?.code === "NO_PAYMENT_REQUIRED") {
+            await runFreeRegistration(email);
+            return;
+          }
+          if (checkout?.code === "TOKEN_EXPIRED") {
+            setExpired(true);
+            return;
+          }
+          if (checkout?.code === "ALREADY_LINKED") {
+            toast({ title: "هذا الحساب مربوط مسبقاً", description: "سجّل دخولك من صفحة تسجيل الدخول" });
+            navigate("/client-login");
+            return;
+          }
+          toast({
+            title: "تعذّر إكمال الطلب",
+            description: checkout?.message ?? "حاول مرة أخرى",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const url = checkout.tap_payment_url;
+        if (!url) {
+          toast({ title: "خطأ", description: "لم يُرجَع رابط الدفع", variant: "destructive" });
+          return;
+        }
+
+        try {
+          sessionStorage.setItem(
+            TRAINEE_INVITE_POSTPAY_STORAGE_KEY,
+            JSON.stringify({ email, password: form.password }),
+          );
+        } catch {
+          /* ignore quota */
+        }
+        window.location.assign(url);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    await runFreeRegistration(email);
+  };
+
+  async function runFreeRegistration(email: string) {
     setSubmitting(true);
     try {
-      // Step 1: Call edge function to create auth user with exact password
       const { data: fnData, error: fnError } = await supabase.functions.invoke<{
         success?: boolean;
         code?: string;
@@ -143,8 +242,7 @@ const ClientRegister = () => {
         return;
       }
 
-      // Step 2: Sign in with the exact same password
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password: form.password,
       });
@@ -156,54 +254,11 @@ const ClientRegister = () => {
         return;
       }
 
-      // Step 3: Paid plans → Tap checkout; free (0) → portal
       toast({ title: "أهلاً بك! تم إنشاء حسابك بنجاح 🎉" });
 
-      const subPrice = Number(clientData?.subscription_price ?? 0);
-      const trainerId = clientData?.trainer_id?.trim() ?? "";
-
-      if (subPrice > 0 && trainerId && clientData) {
-        try {
-          const billing = (clientData.billing_cycle && String(clientData.billing_cycle).trim()) || "monthly";
-          const origin = getAuthSiteOrigin();
-          const qs = new URLSearchParams({
-            type: "client_payment",
-            client_id: clientData.id,
-            amount: String(subPrice),
-            billing_cycle: billing,
-            return: "trainee",
-          });
-          const { payment_url } = await createPaymentSession({
-            amount: subPrice,
-            description: `اشتراك تدريب — ${clientData.trainer_name || "مدربك"}`,
-            redirectUrl: `${origin}/payment/callback?${qs.toString()}`,
-            customer: {
-              name: form.name.trim(),
-              email: form.email.trim().toLowerCase(),
-              phone: form.phone || undefined,
-            },
-            metadata: {
-              type: "client_subscription",
-              client_id: clientData.id,
-              trainer_id: trainerId,
-            },
-          });
-          window.location.assign(payment_url);
-          return;
-        } catch (chargeErr) {
-          console.error("[ClientRegister] createPaymentSession:", chargeErr);
-          toast({
-            title: "تعذّر بدء الدفع",
-            description:
-              chargeErr instanceof Error ? chargeErr.message : "يمكنك لاحقاً إكمال الدفع من مساحة المتدرب",
-            variant: "destructive",
-          });
-        }
-      }
-
-      const { data: profile } = await supabase.rpc("get_my_client_profile");
-      if (profile && profile.length > 0 && profile[0].portal_token) {
-        navigate(`/client-portal/${profile[0].portal_token}`);
+      const { data: profileRows } = await supabase.rpc("get_my_client_profile");
+      if (profileRows && profileRows.length > 0 && profileRows[0].portal_token) {
+        navigate(`/client-portal/${profileRows[0].portal_token}`);
       } else {
         navigate("/client-login");
       }
@@ -218,9 +273,9 @@ const ClientRegister = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-light" />
@@ -228,7 +283,25 @@ const ClientRegister = () => {
     );
   }
 
-  // Token expired state
+  if (coachSessionBlocksInvite) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4" dir="rtl">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-black">جلسة مدرب نشطة</h1>
+          <p className="text-muted-foreground">
+            أنت مسجّل دخول كمدرب. افتح رابط الدعوة في نافذة خاصة (Incognito) حتى لا يتعارض تسجيل المتدرب مع حسابك.
+          </p>
+          <Button variant="outline" className="w-full" onClick={() => navigate("/coach/dashboard")}>
+            العودة للوحة المدرب
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (expired) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4" dir="rtl">
@@ -250,7 +323,6 @@ const ClientRegister = () => {
     );
   }
 
-  // Invalid token state
   if (!clientData) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4" dir="rtl">
@@ -269,6 +341,16 @@ const ClientRegister = () => {
       </div>
     );
   }
+
+  const subPrice = Number(clientData.subscription_price ?? 0);
+  const primaryCta =
+    subPrice > 0
+      ? submitting
+        ? "جاري التحويل للدفع…"
+        : "ادفع واشترك"
+      : submitting
+        ? "جاري إنشاء حسابك…"
+        : "إنشاء حسابي ←";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col" dir="rtl">
@@ -297,6 +379,11 @@ const ClientRegister = () => {
             <p className="text-muted-foreground">
               ابدأ رحلتك مع <span className="text-primary-light font-bold">{clientData.trainer_name}</span>
             </p>
+            {subPrice > 0 && (
+              <p className="text-sm text-muted-foreground">
+                الاشتراك: <span className="font-semibold text-foreground">{subPrice} ر.س</span> — يُنشأ الحساب بعد نجاح الدفع
+              </p>
+            )}
           </div>
 
           <Card className="bg-card border-border p-6">
@@ -337,7 +424,7 @@ const ClientRegister = () => {
                   placeholder="أعد كتابة كلمة المرور" dir="ltr" minLength={6} />
               </div>
               <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-primary-foreground text-base py-6" disabled={submitting}>
-                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "إنشاء حسابي ←"}
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : primaryCta}
               </Button>
             </form>
           </Card>

@@ -61,6 +61,12 @@ verify_jwt = false
 [functions.register-client-account]
 verify_jwt = false
 
+[functions.create-trainee-checkout]
+verify_jwt = false
+
+[functions.complete-trainee-registration-payment]
+verify_jwt = false
+
 [functions.trainer-delete-client]
 verify_jwt = false
 

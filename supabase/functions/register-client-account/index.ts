@@ -208,6 +208,9 @@ serve(async (req) => {
       auth_user_id: userId,
       invite_token: null,
       payment_pending: true,
+      pending_reg_full_name: null,
+      pending_reg_password_enc: null,
+      pending_reg_phone: null,
     };
     if (phone) linkPayload.phone = phone;
 

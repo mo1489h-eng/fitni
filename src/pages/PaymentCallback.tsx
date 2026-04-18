@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
+import { TRAINEE_INVITE_POSTPAY_STORAGE_KEY } from "@/lib/traineeInvitePostPayStorage";
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -67,6 +68,43 @@ const PaymentCallback = () => {
           }
         }
         throw lastError || new Error("فشل التحقق");
+
+      } else if (type === "trainee_registration") {
+        const { data, error } = await invokeEdgeFunction<{
+          success?: boolean;
+          error?: string;
+          email?: string;
+          idempotent?: boolean;
+        }>("complete-trainee-registration-payment", { payment_id: tapId });
+        if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "فشل التحقق");
+
+        let creds: { email?: string; password?: string } = {};
+        try {
+          const raw = sessionStorage.getItem(TRAINEE_INVITE_POSTPAY_STORAGE_KEY);
+          if (raw) creds = JSON.parse(raw) as { email?: string; password?: string };
+        } catch {
+          /* ignore */
+        }
+        sessionStorage.removeItem(TRAINEE_INVITE_POSTPAY_STORAGE_KEY);
+
+        const em = (data.email ?? creds.email ?? "").trim();
+        const pw = creds.password;
+        if (em && pw) {
+          const { error: signErr } = await supabase.auth.signInWithPassword({ email: em, password: pw });
+          if (signErr) {
+            console.warn("[PaymentCallback] trainee_registration sign-in:", signErr.message);
+            toast({
+              title: "تم الدفع والتسجيل",
+              description: "سجّل دخولك يدوياً ببريدك وكلمة المرور.",
+            });
+            setTimeout(() => navigate("/client-login"), 2500);
+            return;
+          }
+        }
+
+        setStatus("success");
+        toast({ title: "تم الدفع وإنشاء حسابك بنجاح 🎉" });
+        setTimeout(() => navigate(TRAINEE_HOME), 2000);
 
       } else if (type === "client_payment") {
         const clientId = searchParams.get("client_id");

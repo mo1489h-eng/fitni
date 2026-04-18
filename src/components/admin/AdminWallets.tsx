@@ -39,7 +39,7 @@ export function AdminWallets({
             {loading ? (
               <Skeleton className="mt-2 h-9 w-28" />
             ) : (
-              <p className="text-2xl font-black text-emerald-500 tabular-nums">{fmt(walletTotals?.bal)}</p>
+              <p className="text-2xl font-black text-primary tabular-nums">{fmt(walletTotals?.bal)}</p>
             )}
           </CardContent>
         </Card>

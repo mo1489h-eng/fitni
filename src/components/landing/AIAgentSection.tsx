@@ -40,7 +40,7 @@ const AIAgentSection = () => (
           const Icon = ex.icon;
           return (
             <Reveal key={i} delay={i * 120}>
-              <Card className="h-full border-primary/15 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px_hsl(var(--primary)/0.1)]">
+              <Card className="h-full border-primary/15 bg-card/80 backdrop-blur transition-all duration-300 hover:border-primary/30 hover:bg-card-hover">
                 <CardContent className="flex flex-col gap-4 p-5 text-right">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                     <Icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
@@ -70,7 +70,7 @@ const AIAgentSection = () => (
         </div>
         <Button
           asChild
-          className="mt-8 h-14 rounded-full px-8 text-lg font-bold shadow-[0_20px_60px_hsl(var(--primary)/0.28)]"
+          className="mt-8 h-14 rounded-full px-8 text-lg font-bold shadow-none"
         >
           <Link to="/register" className="inline-flex items-center gap-2">
             جرّب الكوبايلت مجانا

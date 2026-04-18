@@ -458,7 +458,7 @@ export default function ImportClientsModal({
                   }`}
                 >
                   {c.valid ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                    <CheckCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                   ) : (
                     <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
                   )}
@@ -485,8 +485,8 @@ export default function ImportClientsModal({
 
         {step === "done" && (
           <div className="text-center space-y-4 py-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-8 h-8 text-emerald-500" />
+            <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-primary" />
             </div>
             <p className="text-lg font-bold text-foreground">تم استيراد {importedCount} عميل</p>
             {(skippedCount > 0 || cappedCount > 0) && (

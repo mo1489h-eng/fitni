@@ -4,9 +4,9 @@ import { Eye, ExternalLink, Lightbulb, Dumbbell, Apple, Flame, Megaphone, Camera
 const POST_BADGES: Record<string, { icon: LucideIcon; color: string }> = {
   "نصيحة": { icon: Lightbulb, color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   "تمرين": { icon: Dumbbell, color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  "وجبة": { icon: Apple, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  "وجبة": { icon: Apple, color: "bg-primary/15 text-primary border-primary/20" },
   "تحفيز": { icon: Flame, color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  "إعلان": { icon: Megaphone, color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  "إعلان": { icon: Megaphone, color: "bg-primary/10 text-muted-foreground border-primary/20" },
 };
 
 const getYouTubeId = (url: string): string | null => {

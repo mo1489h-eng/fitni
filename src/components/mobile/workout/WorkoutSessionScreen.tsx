@@ -240,7 +240,7 @@ export default function WorkoutSessionScreen() {
                 key={n}
                 className="flex items-center justify-between rounded-[12px] px-3 py-2 text-[16px] transition-colors"
                 style={{
-                  background: done ? "rgba(34,197,94,0.12)" : CB.card2,
+                  background: done ? "rgba(79,111,82,0.12)" : CB.card2,
                 }}
               >
                 <span className="font-bold text-white">مجموعة {n}</span>
@@ -315,7 +315,7 @@ export default function WorkoutSessionScreen() {
             type="button"
             onClick={() => goNextExercise()}
             className="mb-6 w-full rounded-[16px] py-5 text-[16px] font-black text-black transition active:scale-95"
-            style={{ background: CB.gradient, boxShadow: "0 12px 40px rgba(34,197,94,0.35)" }}
+            style={{ background: CB.gradient, boxShadow: "0 12px 40px rgba(79,111,82,0.35)" }}
           >
             التمرين التالي
           </button>
@@ -370,7 +370,7 @@ export default function WorkoutSessionScreen() {
               type="button"
               onClick={() => void onCompletePress()}
               className="group mb-6 flex w-full items-center justify-center gap-2 rounded-[16px] py-5 text-[16px] font-black text-black transition active:scale-95"
-              style={{ background: CB.gradient, boxShadow: "0 12px 40px rgba(34,197,94,0.35)" }}
+              style={{ background: CB.gradient, boxShadow: "0 12px 40px rgba(79,111,82,0.35)" }}
             >
               <Check className="h-6 w-6 transition-transform group-active:scale-110" strokeWidth={2.5} />
               إكمال المجموعة
@@ -437,7 +437,7 @@ export default function WorkoutSessionScreen() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:justify-start">
-            <AlertDialogCancel className="border-0 bg-[#161616] text-white">إلغاء</AlertDialogCancel>
+            <AlertDialogCancel className="border-0 bg-card text-foreground">إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => onClose()}
               className="border-0 text-black"

@@ -3,8 +3,8 @@ export const CB = {
   bg: "#0A0A0A",
   card: "#111111",
   card2: "#161616",
-  accent: "#22C55E",
-  accent2: "#16A34A",
+  accent: "#4f6f52",
+  accent2: "#3d5940",
   text: "#FFFFFF",
   muted: "#888888",
   caption: "#666666",
@@ -12,7 +12,7 @@ export const CB = {
   shadow: "0 4px 24px rgba(0,0,0,0.4)",
   radius: { sm: 8, md: 12, lg: 16 },
   font: { display: 32, title: 24, body: 16, caption: 12 },
-  gradient: "linear-gradient(135deg, #22C55E, #16A34A)",
+  gradient: "linear-gradient(135deg, #4f6f52, #3d5940)",
 } as const;
 
 /** Elite tier: 8pt grid alignment, OLED blacks, zinc hierarchy */

@@ -12,7 +12,7 @@ const CATEGORIES = [
   { value: "بناء عضلات", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   { value: "قوة", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   { value: "لياقة عامة", color: "bg-primary/10 text-primary border-primary/20" },
-  { value: "تأهيل", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  { value: "تأهيل", color: "bg-primary/10 text-muted-foreground border-primary/20" },
   { value: "رياضي", color: "bg-red-500/10 text-red-400 border-red-500/20" },
 ];
 

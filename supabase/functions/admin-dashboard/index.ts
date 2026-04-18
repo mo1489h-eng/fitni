@@ -146,18 +146,149 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, session_token: nextSessionToken });
     }
 
+    if (action === "release_pending_balance") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 7);
+      const cutoffIso = cutoff.toISOString();
+
+      const { data: pendingRows, error: pendErr } = await supabase
+        .from("transactions")
+        .select("id, amount")
+        .eq("status", "pending")
+        .eq("type", "subscription")
+        .lte("created_at", cutoffIso);
+
+      if (pendErr) {
+        return jsonResponse({ error: pendErr.message, session_token: nextSessionToken }, 400);
+      }
+
+      const released_count = (pendingRows ?? []).length;
+      const released_amount = (pendingRows ?? []).reduce((s, r) => s + Number((r as { amount?: number }).amount ?? 0), 0);
+
+      const { error: relErr } = await supabase.rpc("release_pending_balance");
+      if (relErr) {
+        return jsonResponse({ error: relErr.message, session_token: nextSessionToken }, 400);
+      }
+
+      return jsonResponse({
+        success: true,
+        released_count,
+        released_amount,
+        session_token: nextSessionToken,
+      });
+    }
+
     if (action === "process_withdrawal" && typeof withdrawal_id === "string" && withdrawal_id) {
       const act = typeof withdrawal_action === "string" ? withdrawal_action : "";
-      const notes = typeof admin_notes === "string" ? admin_notes : null;
-      const { error: rpcErr } = await supabase.rpc("admin_process_withdrawal", {
-        p_withdrawal_id: withdrawal_id,
-        p_action: act,
-        p_admin_notes: notes,
-      });
-      if (rpcErr) {
-        return jsonResponse({ error: rpcErr.message, session_token: nextSessionToken }, 400);
+      const notes = typeof admin_notes === "string" && admin_notes.trim() ? admin_notes.trim() : null;
+
+      const { data: row, error: fetchErr } = await supabase
+        .from("withdrawals")
+        .select("id, trainer_id, amount, status")
+        .eq("id", withdrawal_id)
+        .maybeSingle();
+
+      if (fetchErr || !row) {
+        return jsonResponse({ error: fetchErr?.message ?? "طلب غير موجود", session_token: nextSessionToken }, 400);
       }
-      return jsonResponse({ success: true, session_token: nextSessionToken });
+
+      const amt = Number(row.amount);
+      const tid = row.trainer_id as string;
+      const st = String(row.status);
+
+      const readWallet = async () => {
+        const { data: w, error: wErr } = await supabase
+          .from("wallets")
+          .select("balance, balance_available, pending_balance")
+          .eq("trainer_id", tid)
+          .maybeSingle();
+        if (wErr || !w) return { error: wErr?.message ?? "لا توجد محفظة" as string };
+        const bal = Number((w as Record<string, unknown>).balance ?? (w as Record<string, unknown>).balance_available ?? 0);
+        const pend = Number((w as Record<string, unknown>).pending_balance ?? 0);
+        return { bal, pend };
+      };
+
+      if (act === "approve") {
+        if (st !== "pending") {
+          return jsonResponse({ error: "الحالة لا تسمح بالموافقة", session_token: nextSessionToken }, 400);
+        }
+        const { error: upErr } = await supabase
+          .from("withdrawals")
+          .update({ status: "accepted", admin_notes: notes })
+          .eq("id", withdrawal_id)
+          .eq("status", "pending");
+        if (upErr) return jsonResponse({ error: upErr.message, session_token: nextSessionToken }, 400);
+        return jsonResponse({ success: true, session_token: nextSessionToken });
+      }
+
+      if (act === "reject") {
+        if (st !== "pending") {
+          return jsonResponse({ error: "الحالة لا تسمح بالرفض", session_token: nextSessionToken }, 400);
+        }
+        const { data: wrow, error: wfe } = await supabase.from("wallets").select("*").eq("trainer_id", tid).maybeSingle();
+        if (wfe || !wrow) {
+          return jsonResponse({ error: wfe?.message ?? "لا توجد محفظة", session_token: nextSessionToken }, 400);
+        }
+        const wr = wrow as Record<string, unknown>;
+        const pend = Number(wr.pending_balance ?? 0);
+        if (pend < amt) {
+          return jsonResponse({ error: "Insufficient pending balance to reverse withdrawal", session_token: nextSessionToken }, 400);
+        }
+        const { error: upErr } = await supabase
+          .from("withdrawals")
+          .update({ status: "rejected", admin_notes: notes })
+          .eq("id", withdrawal_id)
+          .eq("status", "pending");
+        if (upErr) return jsonResponse({ error: upErr.message, session_token: nextSessionToken }, 400);
+
+        const patch: Record<string, unknown> = {
+          pending_balance: pend - amt,
+          updated_at: new Date().toISOString(),
+        };
+        if (wr.balance != null) patch.balance = Number(wr.balance) + amt;
+        if (wr.balance_available != null) patch.balance_available = Number(wr.balance_available) + amt;
+        if (patch.balance == null && patch.balance_available == null) {
+          patch.balance = Number(wr.balance ?? wr.balance_available ?? 0) + amt;
+        }
+        const { error: wallErr } = await supabase.from("wallets").update(patch).eq("trainer_id", tid);
+        if (wallErr) return jsonResponse({ error: wallErr.message, session_token: nextSessionToken }, 400);
+
+        return jsonResponse({ success: true, session_token: nextSessionToken });
+      }
+
+      if (act === "mark_paid") {
+        if (st !== "accepted") {
+          return jsonResponse({ error: "يجب الموافقة على الطلب قبل تأكيد التحويل", session_token: nextSessionToken }, 400);
+        }
+        const w = await readWallet();
+        if ("error" in w) return jsonResponse({ error: w.error, session_token: nextSessionToken }, 400);
+        if (w.pend < amt) {
+          return jsonResponse({ error: "Insufficient pending balance for payout", session_token: nextSessionToken }, 400);
+        }
+        const { error: upErr } = await supabase
+          .from("withdrawals")
+          .update({
+            status: "paid",
+            processed_at: new Date().toISOString(),
+            admin_notes: notes ?? undefined,
+          })
+          .eq("id", withdrawal_id)
+          .eq("status", "accepted");
+        if (upErr) return jsonResponse({ error: upErr.message, session_token: nextSessionToken }, 400);
+
+        const { error: wallErr } = await supabase
+          .from("wallets")
+          .update({
+            pending_balance: w.pend - amt,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("trainer_id", tid);
+        if (wallErr) return jsonResponse({ error: wallErr.message, session_token: nextSessionToken }, 400);
+
+        return jsonResponse({ success: true, session_token: nextSessionToken });
+      }
+
+      return jsonResponse({ error: "إجراء غير معروف", session_token: nextSessionToken }, 400);
     }
 
     const [
@@ -169,6 +300,7 @@ Deno.serve(async (req) => {
       { data: npsFeedback },
       coachWithdrawalsRes,
       coachWalletsRes,
+      coachTransactionsRes,
     ] = await Promise.all([
       supabase.from("profiles").select("*"),
       supabase.from("clients").select("id, name, trainer_id, subscription_price, created_at"),
@@ -178,9 +310,11 @@ Deno.serve(async (req) => {
       supabase.from("nps_feedback").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("withdrawals").select("*").order("created_at", { ascending: false }),
       supabase.from("wallets").select("*"),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(8000),
     ]);
     const coachWithdrawals = coachWithdrawalsRes.error ? [] : coachWithdrawalsRes.data;
     const coachWallets = coachWalletsRes.error ? [] : coachWalletsRes.data;
+    const txData = coachTransactionsRes.error ? [] : coachTransactionsRes.data;
 
     // Founder stats
     const allProfiles = profiles || [];
@@ -195,7 +329,9 @@ Deno.serve(async (req) => {
       profile_id: p.id,
       name: p.full_name,
       phone: p.phone || "",
+      role: p.role ?? null,
       plan: p.subscription_plan,
+      payment_status: p.payment_status ?? null,
       subscribed_at: p.subscribed_at,
       subscription_end_date: p.subscription_end_date,
       is_founder: p.is_founder || false,
@@ -249,7 +385,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const trainers = Object.values(trainerMap);
     const monthlyRevenue: Record<string, number> = {};
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -277,7 +412,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const planDist: Record<string, number> = { free: 0, pro: 0 };
+    const planDist: Record<string, number> = { free: 0, basic: 0, pro: 0 };
     for (const p of profiles || []) {
       const plan = p.subscription_plan || "free";
       planDist[plan] = (planDist[plan] || 0) + 1;
@@ -342,7 +477,7 @@ Deno.serve(async (req) => {
       if (!tid) continue;
       const bal = Number(row.balance_available ?? row.balance ?? 0);
       const pend = Number(row.pending_balance ?? 0);
-      const earn = Number(row.total_earnings ?? 0);
+      const earn = Number(row.total_earnings ?? row.total_earned ?? 0);
       const tm = trainerMap[tid];
       if (tm) {
         tm.wallet_balance_available = bal;
@@ -364,14 +499,119 @@ Deno.serve(async (req) => {
       (acc: { bal: number; pend: number; earn: number }, w: Record<string, unknown>) => {
         acc.bal += Number(w.balance_available ?? w.balance ?? 0);
         acc.pend += Number(w.pending_balance ?? 0);
-        acc.earn += Number(w.total_earnings ?? 0);
+        acc.earn += Number(w.total_earnings ?? w.total_earned ?? 0);
         return acc;
       },
       { bal: 0, pend: 0, earn: 0 },
     );
 
+    const trainers = Array.from(
+      new Map((profiles || []).map((p: any) => [String(p.user_id), trainerMap[String(p.user_id)]])).values(),
+    )
+      .filter(Boolean)
+      .map((t: any) => ({
+        ...t,
+        email: emailByUserId.get(String(t.id)) ?? null,
+      }));
+
+    const coach_trainers = (profiles || [])
+      .filter((p: any) => p.role === "coach")
+      .map((p: any) => trainerMap[String(p.user_id)])
+      .filter(Boolean)
+      .map((t: any) => ({
+        ...t,
+        email: emailByUserId.get(String(t.id)) ?? null,
+      }));
+
+    let transactions_gross_sum = 0;
+    let platform_commission_sum = 0;
+    for (const t of txData || []) {
+      const row = t as Record<string, unknown>;
+      const g = Number(row.gross_amount);
+      const comm = Number(row.commission_amount ?? row.commission ?? 0);
+      const gross = g > 0 ? g : Number(row.amount ?? 0) + comm;
+      transactions_gross_sum += gross;
+      platform_commission_sum += comm;
+    }
+
+    const nowDate = new Date();
+    const active_coaches_count = allProfiles.filter((p: any) => {
+      if (p.role !== "coach") return false;
+      if (p.payment_status === "active") return true;
+      const plan = p.subscription_plan;
+      if (plan === "basic" || plan === "pro") {
+        if (!p.subscription_end_date) return false;
+        return new Date(p.subscription_end_date) > nowDate;
+      }
+      return false;
+    }).length;
+
+    const overview_kpis = {
+      total_coaches: allProfiles.filter((p: any) => p.role === "coach").length,
+      total_trainees: allProfiles.filter((p: any) => p.role === "trainee").length,
+      active_coaches: active_coaches_count,
+      transactions_gross_sum,
+      platform_commission_sum,
+      pending_withdrawals_count: withdrawalRows.filter((w: any) => w.status === "pending").length,
+    };
+
+    const txChartKeys = Object.keys(monthlyRevenue);
+    const commissionByMonth: Record<string, number> = Object.fromEntries(txChartKeys.map((k) => [k, 0]));
+    const volumeByMonth: Record<string, number> = Object.fromEntries(txChartKeys.map((k) => [k, 0]));
+    for (const t of txData || []) {
+      const row = t as Record<string, unknown>;
+      const key = String(row.created_at ?? "").substring(0, 7);
+      if (!(key in commissionByMonth)) continue;
+      const comm = Number(row.commission_amount ?? row.commission ?? 0);
+      const g = Number(row.gross_amount);
+      const gross = g > 0 ? g : Number(row.amount ?? 0) + comm;
+      commissionByMonth[key] += comm;
+      volumeByMonth[key] += gross;
+    }
+    const platform_revenue_chart = txChartKeys.map((k) => ({
+      month: k,
+      commission: commissionByMonth[k] ?? 0,
+      volume: volumeByMonth[k] ?? 0,
+    }));
+
+    const transactions_log = (txData || []).map((t: Record<string, unknown>) => {
+      const tid = String(t.trainer_id ?? "");
+      const comm = Number(t.commission_amount ?? t.commission ?? 0);
+      const g = Number(t.gross_amount);
+      const gross = g > 0 ? g : Number(t.amount ?? 0) + comm;
+      const net = Number(t.net_amount) > 0 ? Number(t.net_amount) : Number(t.amount ?? 0);
+      return {
+        ...t,
+        trainer_name: trainerMap[tid]?.name ?? "—",
+        trainer_email: emailByUserId.get(tid) ?? null,
+        display_gross: gross,
+        display_commission: comm,
+        display_net: net,
+      };
+    });
+
+    const sidebar_stats = {
+      last_withdrawals: withdrawalsWithTrainer.slice(0, 5),
+      last_coaches: (profiles || [])
+        .filter((p: any) => p.role === "coach")
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5)
+        .map((p: any) => ({
+          user_id: p.user_id,
+          name: p.full_name,
+          email: emailByUserId.get(p.user_id) ?? null,
+          created_at: p.created_at,
+        })),
+      commission_this_month: commissionByMonth[filterMonth] ?? 0,
+    };
+
     return jsonResponse({
       trainers,
+      coach_trainers,
+      overview_kpis,
+      transactions_log,
+      platform_revenue_chart,
+      sidebar_stats,
       payouts,
       withdrawals: withdrawalsWithTrainer,
       wallets: walletsWithTrainer,
@@ -408,6 +648,7 @@ Deno.serve(async (req) => {
       },
       filter_month: filterMonth,
       session_token: nextSessionToken,
+      clients,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Internal server error";

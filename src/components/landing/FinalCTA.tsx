@@ -16,7 +16,7 @@ const FinalCTA = () => (
         <p className="mx-auto mt-8 max-w-2xl text-xl leading-9 text-foreground/60">
           مجاني 3 شهور. بدون بطاقة ائتمان. ومن أول يوم ستشعر أن التشغيل أصبح جزءاً من علامتك لا عبئاً عليها.
         </p>
-        <Button asChild className="mt-10 h-16 rounded-full px-10 text-xl font-black shadow-[0_24px_80px_hsl(var(--primary)/0.32)]">
+        <Button asChild className="mt-10 h-16 rounded-full px-10 text-xl font-black shadow-none">
           <Link to="/register" className="inline-flex items-center gap-2">
             سجّل الآن مجاناً
             <ArrowLeft className="h-5 w-5" />

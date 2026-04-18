@@ -64,7 +64,7 @@ export const MiniStat = ({ label, value }: { label: string; value: string }) => 
 );
 
 export const DeviceShell = ({ children, className = "" }: { children: ReactNode; className?: string }) => (
-  <div className={`rounded-[2rem] border border-border bg-card/90 p-3 shadow-[0_0_0_1px_hsl(var(--border)),0_30px_90px_hsl(var(--primary)/0.12)] backdrop-blur ${className}`}>
+  <div className={`rounded-[2rem] border border-border bg-card/90 p-3 shadow-sm backdrop-blur ${className}`}>
     <div className="overflow-hidden rounded-[1.55rem] border border-border bg-background">{children}</div>
   </div>
 );

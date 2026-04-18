@@ -408,7 +408,7 @@ const Nutrition = () => {
                     <CalendarIcon className="w-4 h-4 text-primary" /> اليوم
                   </h3>
                   <div className="grid grid-cols-4 gap-4 justify-items-center">
-                    <MacroRing value={todayTotals.calories} target={clientTargets?.calories_target || 2000} color="hsl(142 76% 36%)" label="سعرات" size={72} />
+                    <MacroRing value={todayTotals.calories} target={clientTargets?.calories_target || 2000} color="hsl(125 17% 37%)" label="سعرات" size={72} />
                     <MacroRing value={todayTotals.protein} target={clientTargets?.protein_target || 150} color="hsl(220 70% 55%)" label="بروتين" size={72} />
                     <MacroRing value={todayTotals.carbs} target={clientTargets?.carbs_target || 200} color="hsl(35 90% 55%)" label="كارب" size={72} />
                     <MacroRing value={todayTotals.fat} target={clientTargets?.fat_target || 65} color="hsl(340 70% 55%)" label="دهون" size={72} />

@@ -106,7 +106,7 @@ function ClientPaymentsTab({ client, status, clientId, queryClient: qc }: { clie
           </div>
           <div className="flex flex-col items-end gap-2">
             <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
-              status === "active" ? "bg-emerald-500/10 text-emerald-400" :
+              status === "active" ? "bg-primary/15 text-primary" :
               status === "overdue" ? "bg-red-500/10 text-red-400" :
               "bg-amber-500/10 text-amber-400"
             }`}>
@@ -129,7 +129,7 @@ function ClientPaymentsTab({ client, status, clientId, queryClient: qc }: { clie
                   <p className="text-sm font-medium text-foreground">{Number(p.amount)} ر.س</p>
                   <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString("ar-SA")}</p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${p.status === "paid" ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+                <span className={`text-xs px-2 py-1 rounded-full ${p.status === "paid" ? "bg-primary/15 text-primary" : "bg-red-500/10 text-red-400"}`}>
                   {p.status === "paid" ? "مدفوع" : "معلق"}
                 </span>
               </div>
@@ -347,7 +347,7 @@ const ClientProfile = () => {
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-medium border ${
                     parseClientTrainingType((client as { training_type?: string }).training_type) === "in_person"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                      ? "bg-primary/15 text-primary border-primary/25"
                       : "bg-slate-500/10 text-slate-400 border-slate-500/20"
                   }`}
                 >
@@ -587,7 +587,7 @@ const ClientProfile = () => {
                         <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(0 0% 53%)" }} stroke="hsl(0 0% 11%)" />
                         <YAxis domain={["dataMin - 2", "dataMax + 2"]} tick={{ fontSize: 10, fill: "hsl(0 0% 53%)" }} stroke="hsl(0 0% 11%)" />
                         <Tooltip contentStyle={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 10%)", borderRadius: 8 }} />
-                        <Line type="monotone" dataKey="weight" stroke="hsl(142 76% 36%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(142 76% 36%)" }} name="الوزن" />
+                        <Line type="monotone" dataKey="weight" stroke="hsl(125 17% 37%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(125 17% 37%)" }} name="الوزن" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -607,7 +607,7 @@ const ClientProfile = () => {
                     <p className="text-xs text-muted-foreground">ينتهي: {new Date(client.subscription_end_date).toLocaleDateString("ar-SA")}</p>
                   </div>
                   <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${
-                    status === "active" ? "bg-emerald-500/10 text-emerald-400" :
+                    status === "active" ? "bg-primary/15 text-primary" :
                     status === "overdue" ? "bg-red-500/10 text-red-400" : "bg-amber-500/10 text-amber-400"
                   }`}>
                     {status === "active" ? "نشط" : status === "overdue" ? "متأخر" : "ينتهي قريبا"}
@@ -744,7 +744,7 @@ const ClientProfile = () => {
                             </p>
                           </div>
                           {prev && weightDiff !== 0 && (
-                            <span className={`flex items-center text-xs font-medium ${weightDiff < 0 ? "text-emerald-400" : "text-red-400"}`}>
+                            <span className={`flex items-center text-xs font-medium ${weightDiff < 0 ? "text-primary" : "text-red-400"}`}>
                               {weightDiff < 0 ? <TrendingDown className="w-3 h-3 ml-0.5" strokeWidth={1.5} /> : <TrendingUp className="w-3 h-3 ml-0.5" strokeWidth={1.5} />}
                               {Math.abs(weightDiff).toFixed(1)}
                             </span>

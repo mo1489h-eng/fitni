@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 import { ELITE } from "../workout/designTokens";
 
 const GLOW: Record<"emerald" | "blue" | "amber" | "violet" | "none", string> = {
-  emerald: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(34,197,94,0.22), transparent 65%)",
+  emerald: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(79,111,82,0.22), transparent 65%)",
   blue: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(59,130,246,0.22), transparent 65%)",
   amber: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(245,158,11,0.2), transparent 65%)",
-  violet: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(139,92,246,0.22), transparent 65%)",
+  violet: "radial-gradient(ellipse 120% 80% at 50% 0%, rgba(194,168,120,0.18), transparent 65%)",
   none: "none",
 };
 

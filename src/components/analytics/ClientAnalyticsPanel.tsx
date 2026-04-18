@@ -38,8 +38,8 @@ import { toYmd, streakStats } from "@/lib/analytics/calculations";
 import { Flame, TrendingUp } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const GREEN = "#22C55E";
-const PALETTE = ["#22C55E", "#3B82F6", "#F59E0B", "#8B5CF6", "#EC4899"] as const;
+const GREEN = "#4f6f52";
+const PALETTE = ["#4f6f52", "#3B82F6", "#F59E0B", "#C2A878", "#EC4899"] as const;
 
 const WEEKDAY_SHORT_AR = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
 
@@ -163,9 +163,9 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-12">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[12px] text-[#6b7280]">الفترة:</span>
+        <span className="text-[12px] text-muted-foreground">الفترة:</span>
         <Select value={range} onValueChange={(v) => setRange(v as TimeRangeKey)}>
-          <SelectTrigger className="w-[200px] border-white/10 bg-[#0a0a0a] text-white">
+          <SelectTrigger className="w-[200px] border-border bg-background text-foreground">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -177,9 +177,9 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
         </Select>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.06] bg-[rgba(255,255,255,0.03)] p-6 shadow-sm backdrop-blur-md">
-        <h3 className="text-xl font-semibold text-white">حلقات الأداء</h3>
-        <p className="mt-1 text-[12px] text-[#6b7280]">التزام أسبوعي، حضور ٣٠ يوماً، وحجم التدريب مقارنة بالشهر الماضي</p>
+      <div className="rounded-2xl border border-border/60 bg-[rgba(255,255,255,0.03)] p-6 shadow-sm backdrop-blur-md">
+        <h3 className="text-xl font-semibold text-foreground">حلقات الأداء</h3>
+        <p className="mt-1 text-[12px] text-muted-foreground">التزام أسبوعي، حضور ٣٠ يوماً، وحجم التدريب مقارنة بالشهر الماضي</p>
         <div className="mt-6">
           <FitnessRings
             compliance={ringMetrics.compliancePct}
@@ -218,7 +218,7 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
                   })
                 }
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
-                  on ? "text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]" : "border-white/10 text-white/45 hover:border-white/20"
+                  on ? "text-foreground shadow-[0_0_0_1px_hsl(var(--border))]" : "border-border text-muted-foreground hover:border-border"
                 }`}
                 style={
                   on
@@ -243,20 +243,20 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
                 ))}
               </defs>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fill: "#6b7280", fontSize: 11 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                label={{ value: "كغ", angle: -90, position: "insideLeft", fill: "#6b7280" }}
+                label={{ value: "كغ", angle: -90, position: "insideLeft", fill: "hsl(var(--muted-foreground))" }}
               />
               <Tooltip
                 contentStyle={{
-                  background: "rgba(17,17,17,0.95)",
-                  border: "1px solid #222",
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
                   borderRadius: 12,
                 }}
-                labelStyle={{ color: "#fff" }}
+                labelStyle={{ color: "hsl(var(--foreground))" }}
                 formatter={(v: number, name: string) => [v != null ? `${v} كغ` : "-", String(name).replace(/^w_/, "")]}
               />
               <Legend />
@@ -325,21 +325,21 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={volBarDisplay} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }}
+                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }}
               />
               <Bar dataKey="volume" name="الحجم" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={900}>
                 {volBarDisplay.map((entry, index) => (
-                  <Cell key={`c-${index}`} fill={`rgba(34, 197, 94, ${0.35 + (entry.intensity / 100) * 0.65})`} />
+                  <Cell key={`c-${index}`} fill={`rgba(79,111,82, ${0.35 + (entry.intensity / 100) * 0.65})`} />
                 ))}
               </Bar>
-              <Line type="monotone" dataKey="volume" stroke="#15803d" strokeWidth={2} dot={false} name="اتجاه" />
+              <Line type="monotone" dataKey="volume" stroke="#4F6F52" strokeWidth={2} dot={false} name="اتجاه" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <p className="mt-2 text-[12px] text-[#6b7280]">
+        <p className="mt-2 text-[12px] text-muted-foreground">
           مقارنة الأحجام تساعد على كشف الإفراط أو قلة الحجم عن مدة سابقة (استخدم الفترة أعلاه).
         </p>
       </ChartCard>
@@ -355,7 +355,7 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={radarData} cx="50%" cy="52%" outerRadius="80%">
               <PolarGrid stroke="#ffffff14" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
               <Radar
                 name="الشهر الحالي"
                 dataKey="current"
@@ -378,17 +378,17 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
               />
               <Legend
                 wrapperStyle={{ paddingTop: 16 }}
-                formatter={(value) => <span className="text-[#d1d5db]">{value}</span>}
+                formatter={(value) => <span className="text-foreground">{value}</span>}
               />
-              <Tooltip contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
         <div className="mt-4 flex flex-wrap justify-center gap-6 text-sm">
-          <span className="flex items-center gap-2 text-[#d1d5db]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E]" /> الشهر الحالي
+          <span className="flex items-center gap-2 text-foreground">
+            <span className="h-2.5 w-2.5 rounded-full bg-[#4f6f52]" /> الشهر الحالي
           </span>
-          <span className="flex items-center gap-2 text-[#d1d5db]">
+          <span className="flex items-center gap-2 text-foreground">
             <span className="h-2.5 w-2.5 rounded-full bg-[#3B82F6]" /> الشهر الماضي
           </span>
         </div>
@@ -405,11 +405,11 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={repSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 200]} tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <ReferenceLine y={100} stroke="#22C55E" strokeDasharray="4 4" opacity={0.6} />
+              <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 200]} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <ReferenceLine y={100} stroke="#4f6f52" strokeDasharray="4 4" opacity={0.6} />
               <ReferenceLine y={80} stroke="#ef4444" strokeDasharray="4 4" opacity={0.6} />
-              <Tooltip contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
               <Line
                 type="monotone"
                 dataKey="pct"
@@ -446,10 +446,10 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={compliance} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="weekStart" tick={{ fill: "#6b7280", fontSize: 9 }} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="weekStart" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
               <ReferenceLine y={80} stroke="#eab308" strokeDasharray="4 4" opacity={0.6} />
-              <Tooltip contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
               <Line
                 type="monotone"
                 dataKey="pct"
@@ -472,21 +472,21 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
       </ChartCard>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+        <div className="rounded-2xl border border-border/60 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
           <Flame className="mx-auto mb-2 h-8 w-8 text-orange-500" />
-          <p className="text-[12px] text-[#6b7280]">السلسلة الحالية</p>
-          <p className="text-3xl font-black text-white">{streak.current}</p>
-          <p className="text-xs text-[#6b7280]">يوماً</p>
+          <p className="text-[12px] text-muted-foreground">السلسلة الحالية</p>
+          <p className="text-3xl font-black text-foreground">{streak.current}</p>
+          <p className="text-xs text-muted-foreground">يوماً</p>
         </div>
-        <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-          <TrendingUp className="mx-auto mb-2 h-8 w-8 text-[#22C55E]" />
-          <p className="text-[12px] text-[#6b7280]">أطول سلسلة</p>
-          <p className="text-3xl font-black text-white">{streak.longest}</p>
-          <p className="text-xs text-[#6b7280]">يوماً</p>
+        <div className="rounded-2xl border border-border/60 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+          <TrendingUp className="mx-auto mb-2 h-8 w-8 text-[#4f6f52]" />
+          <p className="text-[12px] text-muted-foreground">أطول سلسلة</p>
+          <p className="text-3xl font-black text-foreground">{streak.longest}</p>
+          <p className="text-xs text-muted-foreground">يوماً</p>
         </div>
-        <div className="rounded-2xl border border-white/[0.06] bg-[#111] p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-          <p className="text-[12px] text-[#6b7280]">معالم</p>
-          <p className="mt-2 text-sm text-[#d1d5db]">7 • 30 • 100 يوماً متتالياً</p>
+        <div className="rounded-2xl border border-border/60 bg-card p-6 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+          <p className="text-[12px] text-muted-foreground">معالم</p>
+          <p className="mt-2 text-sm text-foreground">7 • 30 • 100 يوماً متتالياً</p>
         </div>
       </div>
 
@@ -501,9 +501,9 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={streak.history.map((h, i) => ({ name: `#${i + 1}`, len: h.len, start: h.start }))} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }} />
+              <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
               <Bar dataKey="len" fill={GREEN} name="أيام" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={800} />
             </BarChart>
           </ResponsiveContainer>
@@ -521,9 +521,9 @@ export function ClientAnalyticsPanel({ clientId }: { clientId: string }) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weekdayData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="#ffffff08" />
-              <XAxis dataKey="nameAr" tick={{ fill: "#6b7280", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: "#6b7280", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: "rgba(17,17,17,0.95)", border: "1px solid #222", borderRadius: 12 }} />
+              <XAxis dataKey="nameAr" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
               <Bar dataKey="count" fill={GREEN} name="جلسات" radius={[4, 4, 0, 0]} isAnimationActive animationDuration={800} />
             </BarChart>
           </ResponsiveContainer>
@@ -587,7 +587,7 @@ function PremiumClientHeatmap({ dayMap, volByDay }: { dayMap: Map<string, number
   return (
     <div className="w-full overflow-x-auto" dir="ltr">
       <div className="flex min-w-0 gap-2 pb-2">
-        <div className="flex shrink-0 flex-col justify-between pt-6 text-[10px] leading-none text-[#6b7280]">
+        <div className="flex shrink-0 flex-col justify-between pt-6 text-[10px] leading-none text-muted-foreground">
           {WEEKDAY_SHORT_AR.map((label) => (
             <span key={label} className="flex h-3 items-center">
               {label}
@@ -597,22 +597,22 @@ function PremiumClientHeatmap({ dayMap, volByDay }: { dayMap: Map<string, number
         <div className="flex gap-[3px]">
           {weekCols.map((week, wi) => (
             <div key={wi} className="flex flex-col gap-[3px]">
-              <span className="mb-0.5 h-3 text-center text-[9px] text-[#6b7280]">{monthLabels[wi] || "\u00a0"}</span>
+              <span className="mb-0.5 h-3 text-center text-[9px] text-muted-foreground">{monthLabels[wi] || "\u00a0"}</span>
               {week.map((c, di) => {
                 const isPad = c.key.startsWith("pad-");
-                let bg = "#1a1a1a";
+                let bg = "hsl(var(--card-hover))";
                 if (!isPad && (c.vol > 0 || c.count > 0)) {
                   if (c.isPr) bg = "#F59E0B";
                   else {
                     const r = c.count / max;
-                    bg = r < 0.33 ? "#166534" : r < 0.66 ? "#16a34a" : "#22c55e";
+                    bg = r < 0.33 ? "hsl(var(--primary-hover))" : r < 0.66 ? "hsl(var(--primary-hover))" : "hsl(var(--primary))";
                   }
                 }
                 return (
                   <div
                     key={`${c.key}-${wi}-${di}`}
                     title={isPad ? undefined : `${c.key} — ${c.count} تمرين — ${Math.round(c.vol)} حجم`}
-                    className={`h-3 w-3 rounded-[3px] ${isPad ? "opacity-0" : "analytics-heat-cell transition-transform hover:z-10 hover:scale-125 hover:shadow-[0_0_12px_rgba(34,197,94,0.35)]"}`}
+                    className={`h-3 w-3 rounded-[3px] ${isPad ? "opacity-0" : "analytics-heat-cell transition-transform hover:z-10 hover:scale-125 hover:shadow-[0_0_12px_rgba(79,111,82,0.35)]"}`}
                     style={{
                       background: bg,
                       boxShadow: !isPad && c.isPr ? "0 0 8px rgba(245, 158, 11, 0.35)" : undefined,

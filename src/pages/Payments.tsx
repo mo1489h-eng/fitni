@@ -147,7 +147,7 @@ const Payments = () => {
                         color: "hsl(0 0% 93%)",
                       }}
                     />
-                    <Bar dataKey="amount" fill="hsl(142 76% 36%)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="amount" fill="hsl(125 17% 37%)" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

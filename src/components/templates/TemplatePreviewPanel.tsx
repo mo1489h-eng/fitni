@@ -16,7 +16,7 @@ const getCategoryColor = (cat: string) => {
     "بناء عضلات": "bg-blue-500/10 text-blue-400 border-blue-500/20",
     "قوة": "bg-amber-500/10 text-amber-400 border-amber-500/20",
     "لياقة عامة": "bg-primary/10 text-primary border-primary/20",
-    "تأهيل": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    "تأهيل": "bg-primary/10 text-muted-foreground border-primary/20",
     "رياضي": "bg-red-500/10 text-red-400 border-red-500/20",
   };
   return map[cat] || "bg-muted text-muted-foreground";

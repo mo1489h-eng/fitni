@@ -14,7 +14,7 @@ const MacroRing = ({ value, target, color, label, size = 80, showPercent }: Macr
   const pct = Math.round(progress * 100);
   const dashOffset = circumference * (1 - progress);
 
-  const statusColor = pct <= 80 ? color : pct <= 110 ? "hsl(142 76% 36%)" : pct <= 120 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
+  const statusColor = pct <= 80 ? color : pct <= 110 ? "hsl(125 17% 37%)" : pct <= 120 ? "hsl(45 93% 47%)" : "hsl(0 84% 60%)";
 
   return (
     <div className="flex flex-col items-center">

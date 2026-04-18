@@ -224,13 +224,13 @@ const Reports = () => {
               {clients.map((client, index) => {
                 const r = getClientReport(client);
                 const WeightIcon = r.weightChange < 0 ? TrendingDown : r.weightChange > 0 ? TrendingUp : Minus;
-                const weightColor = r.weightChange < 0 ? "text-emerald-400" : r.weightChange > 0 ? "text-destructive" : "text-muted-foreground";
+                const weightColor = r.weightChange < 0 ? "text-primary" : r.weightChange > 0 ? "text-destructive" : "text-muted-foreground";
 
                 return (
                   <div key={client.id} className="bg-[hsl(0_0%_6%)] rounded-xl border border-[hsl(0_0%_10%)] p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold text-foreground">{client.name}</h3>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-emerald-400 hover:text-emerald-300" onClick={() => window.open(formatWhatsApp(client.phone, getWhatsAppMessage(client)), "_blank")}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-primary hover:text-primary-light" onClick={() => window.open(formatWhatsApp(client.phone, getWhatsAppMessage(client)), "_blank")}>
                         <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
                       </Button>
                     </div>
@@ -259,10 +259,10 @@ const Reports = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {r.isPaid ? <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" strokeWidth={1.5} /> : <XCircle className="w-4 h-4 text-destructive flex-shrink-0" strokeWidth={1.5} />}
+                        {r.isPaid ? <CheckCircle className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} /> : <XCircle className="w-4 h-4 text-destructive flex-shrink-0" strokeWidth={1.5} />}
                         <div>
                           <p className="text-muted-foreground">حالة الدفع</p>
-                          <p className={`font-semibold ${r.isPaid ? "text-emerald-400" : "text-destructive"}`}>{r.isPaid ? "مدفوع" : "متأخر"}</p>
+                          <p className={`font-semibold ${r.isPaid ? "text-primary" : "text-destructive"}`}>{r.isPaid ? "مدفوع" : "متأخر"}</p>
                         </div>
                       </div>
                     </div>

@@ -15,7 +15,7 @@ interface MobileTabBarProps {
   onTabChange: (key: string) => void;
 }
 
-const ACCENT = "#22C55E";
+const ACCENT = "#4f6f52";
 
 const MobileTabBar = ({ tabs, activeTab, onTabChange }: MobileTabBarProps) => {
   return (
@@ -46,7 +46,7 @@ const MobileTabBar = ({ tabs, activeTab, onTabChange }: MobileTabBarProps) => {
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-2xl transition-colors duration-200"
                 style={{
-                  background: active ? "rgba(34,197,94,0.15)" : "transparent",
+                  background: active ? "rgba(79,111,82,0.15)" : "transparent",
                 }}
               >
                 <tab.icon

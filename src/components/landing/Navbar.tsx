@@ -45,7 +45,7 @@ const Navbar = ({ scrolled }: { scrolled: boolean }) => {
           <Button asChild variant="ghost" className="rounded-full text-foreground/75 hover:bg-card hover:text-foreground">
             <Link to="/login">تسجيل الدخول</Link>
           </Button>
-          <Button asChild className="rounded-full px-6 text-base font-bold shadow-[0_16px_50px_hsl(var(--primary)/0.28)]">
+          <Button asChild className="rounded-full px-6 text-base font-bold shadow-none">
             <Link to="/register">ابدأ مجاناً</Link>
           </Button>
         </div>

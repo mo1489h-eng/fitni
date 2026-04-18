@@ -47,38 +47,30 @@ export function isPostgrestMissingColumnError(error: unknown): boolean {
 }
 
 /**
- * Determines coach vs trainee by checking if the user has a linked client row.
- * If the user exists in `clients.auth_user_id`, they are a trainee.
- * Otherwise they are a coach (default for profiles table users).
+ * Single source of truth: `profiles.role` (set by DB). No inference from `clients` or defaults.
  */
 export async function resolveFitniRole(userId: string): Promise<FitniRole | null> {
   try {
-    // Check if user is linked as a trainee (client)
-    const { data: clientRow } = await supabase
-      .from("clients")
-      .select("id")
-      .eq("auth_user_id", userId)
-      .maybeSingle();
-
-    if (clientRow) {
-      authLogDev("role_resolution", { userId, source: "clients.auth_user_id", role: "trainee" });
-      return "trainee";
-    }
-
-    // Check if user has a profile (trainer)
-    const { data: profileRow } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
-      .select("user_id")
+      .select("role")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (profileRow) {
-      authLogDev("role_resolution", { userId, source: "profiles", role: "coach" });
-      return "coach";
+    if (error) {
+      if (import.meta.env.DEV) console.warn("[auth] resolveFitniRole", error);
+      authLogDev("role_resolution", { userId, source: "profiles.role", role: null, error: String((error as Error).message ?? error) });
+      return null;
     }
 
-    authLogDev("role_resolution", { userId, source: "none", role: null });
-    return null;
+    if (!data) {
+      authLogDev("role_resolution", { userId, source: "profiles.role", role: null, reason: "no_profile_row" });
+      return null;
+    }
+
+    const r = normalizeFitniRole(data.role);
+    authLogDev("role_resolution", { userId, source: "profiles.role", role: r });
+    return r;
   } catch (err) {
     console.error("[auth] resolveFitniRole error", err);
     return null;

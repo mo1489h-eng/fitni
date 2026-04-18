@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const COLORS = {
   border: "#1e1e1e",
-  green: "#16a34a",
+  green: "#3d5940",
   text: "#ededed",
   muted: "#888888",
 };

@@ -53,7 +53,7 @@ import Contact from "@/pages/Contact";
 import ReferralRedirect from "@/pages/ReferralRedirect";
 import PaymentCallback from "@/pages/PaymentCallback";
 import PaymentSuccess from "@/pages/payment-success";
-import Earnings from "@/pages/Earnings";
+import Earnings from "@/pages/coach/Earnings";
 import Vault from "@/pages/Vault";
 import VaultUnit from "@/pages/VaultUnit";
 import PortalVault from "@/pages/portal/PortalVault";
@@ -63,6 +63,7 @@ import { TraineeAppLayout } from "@/components/layout/TraineeAppLayout";
 import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 import TrainerSessionPage from "@/pages/TrainerSessionPage";
 import CoachLandingTrainee from "@/pages/CoachLandingTrainee";
+import AuthTestChecklist from "@/pages/dev/AuthTestChecklist";
 
 const WEB_ONBOARDING_LANDING_GATE = false;
 
@@ -113,6 +114,7 @@ export function AppRouter() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/register" element={<Register />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
+      <Route path="/auth-test" element={import.meta.env.DEV ? <AuthTestChecklist /> : <NotFound />} />
 
       {/* Legacy coach URLs → /coach/* */}
       <Route path="/dashboard" element={<Navigate to={COACH_DASHBOARD} replace />} />

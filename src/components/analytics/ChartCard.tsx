@@ -26,17 +26,17 @@ export function ChartCard({
   const [exporting, setExporting] = useState(false);
 
   return (
-    <div className={`rounded-2xl border border-[hsl(0_0%_12%)] bg-[#111111] p-4 md:p-5 ${className}`} dir="rtl">
+    <div className={`rounded-2xl border border-border bg-card p-4 md:p-5 ${className}`} dir="rtl">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="text-xl font-semibold text-white">{title}</h3>
-          {description ? <p className="mt-1 text-[12px] text-[#6b7280]">{description}</p> : null}
+          <h3 className="text-xl font-semibold text-foreground">{title}</h3>
+          {description ? <p className="mt-1 text-[12px] text-muted-foreground">{description}</p> : null}
         </div>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="gap-1.5 border-white/10 bg-white/5 text-white hover:bg-white/10"
+          className="gap-1.5 border-border bg-muted/50 text-foreground hover:bg-muted"
           disabled={empty || loading || exporting}
           onClick={async () => {
             setExporting(true);
@@ -54,7 +54,7 @@ export function ChartCard({
         {loading ? (
           <div className="analytics-shimmer min-h-[280px] w-full rounded-xl" aria-hidden />
         ) : empty ? (
-          <p className="flex h-[220px] items-center justify-center text-center text-sm text-white/45">لا توجد بيانات كافية</p>
+          <p className="flex h-[220px] items-center justify-center text-center text-sm text-muted-foreground">لا توجد بيانات كافية</p>
         ) : (
           <div className="animate-in fade-in duration-500">{children}</div>
         )}

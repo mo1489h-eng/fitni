@@ -17,12 +17,12 @@ export default function CopilotButton() {
         bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))",
         right: "1rem",
         background: CB.gradient,
-        boxShadow: `0 0 24px rgba(34, 197, 94, 0.45), ${CB.shadow}`,
+        boxShadow: `0 0 24px rgba(79,111,82, 0.45), ${CB.shadow}`,
       }}
     >
       <span className="relative flex h-8 w-8 items-center justify-center" aria-hidden>
         <Brain className="absolute h-7 w-7 text-black/85" strokeWidth={1.6} />
-        <Zap className="relative h-5 w-5 text-black" strokeWidth={2.4} style={{ filter: "drop-shadow(0 0 4px rgba(34,197,94,0.9))" }} />
+        <Zap className="relative h-5 w-5 text-black" strokeWidth={2.4} style={{ filter: "drop-shadow(0 0 4px rgba(79,111,82,0.9))" }} />
       </span>
     </button>
   );

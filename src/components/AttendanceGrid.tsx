@@ -133,7 +133,7 @@ const AttendanceGrid = () => {
                     day.isFuture
                       ? "bg-transparent"
                       : day.isWorkout
-                      ? "bg-[#16a34a] hover:brightness-125"
+                      ? "bg-primary-hover hover:brightness-125"
                       : "bg-[hsl(0_0%_10%)] hover:bg-[hsl(0_0%_14%)]"
                   } ${day.isToday ? "ring-1 ring-primary ring-offset-0" : ""}`}
                   onMouseEnter={(e) => {
@@ -183,8 +183,8 @@ const AttendanceGrid = () => {
       <div className="flex items-center gap-3 mt-3 justify-end" dir="rtl">
         <span className="text-[9px] text-[hsl(0_0%_35%)]">أقل</span>
         <div className="w-[10px] h-[10px] rounded-[2px] bg-[hsl(0_0%_10%)]" />
-        <div className="w-[10px] h-[10px] rounded-[2px] bg-[#16a34a]/50" />
-        <div className="w-[10px] h-[10px] rounded-[2px] bg-[#16a34a]" />
+        <div className="w-[10px] h-[10px] rounded-[2px] bg-[#3d5940]/50" />
+        <div className="w-[10px] h-[10px] rounded-[2px] bg-primary-hover" />
         <span className="text-[9px] text-[hsl(0_0%_35%)]">أكثر</span>
       </div>
 

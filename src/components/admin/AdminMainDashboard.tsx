@@ -62,11 +62,11 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
 
   const planChartData = [
     { name: "تجربة مجانية", value: trialCount, color: "#6b7280" },
-    { name: "أساسي", value: basicCount, color: "#16a34a" },
-    { name: "احترافي", value: "#22c55e", realValue: proCount },
+    { name: "أساسي", value: basicCount, color: "#3d5940" },
+    { name: "احترافي", value: "#4f6f52", realValue: proCount },
   ].map(d => ({ name: d.name, value: d.name === "احترافي" ? proCount : d.value }));
 
-  const PIE_COLORS = ["#6b7280", "#16a34a", "#22c55e"];
+  const PIE_COLORS = ["#6b7280", "#3d5940", "#4f6f52"];
 
   return (
     <div className="space-y-6">
@@ -80,7 +80,7 @@ export function AdminMainDashboard({ data }: AdminPageProps) {
         </div>
         <div>
           <p className="text-xs text-muted-foreground">أرصدة المدربين المتاحة (محافظ)</p>
-          <p className="text-lg font-bold tabular-nums text-emerald-600">{trainerWalletsAvail.toLocaleString("ar-SA")} ريال</p>
+          <p className="text-lg font-bold tabular-nums text-primary-hover">{trainerWalletsAvail.toLocaleString("ar-SA")} ريال</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">معلق سحب / إجمالي أرباح مسجّل</p>

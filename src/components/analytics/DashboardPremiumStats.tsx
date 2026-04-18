@@ -13,6 +13,11 @@ export function DashboardPremiumStats() {
 
   const active = useMemo(() => activeClientsNow(clients), [clients]);
   const leaderboard = useMemo(() => leaderboardRows(clients, sessions, vols), [clients, sessions, vols]);
+  const workoutCountByClient = useMemo(() => {
+    const m = new Map<string, number>();
+    sessions.forEach((s) => m.set(s.client_id, (m.get(s.client_id) ?? 0) + 1));
+    return m;
+  }, [sessions]);
   const growth = useMemo(() => {
     // last 8 months active count for spark — from hook we could add; use payment months as proxy
     const now = new Date();
@@ -59,7 +64,14 @@ export function DashboardPremiumStats() {
       .reduce((s, c) => s + (Number(c.subscription_price) || 0), 0);
   }, [clients]);
 
-  const complianceAvg = clients.length ? Math.round(leaderboard.reduce((s, r) => s + r.compliance, 0) / clients.length) : 0;
+  const complianceAvg = useMemo(() => {
+    const eligible = clients.filter((c) => (workoutCountByClient.get(c.id) ?? 0) >= 3);
+    if (eligible.length === 0) return null;
+    const eligibleIds = new Set(eligible.map((c) => c.id));
+    const rows = leaderboard.filter((r) => eligibleIds.has(r.id));
+    if (rows.length === 0) return null;
+    return Math.round(rows.reduce((s, r) => s + r.compliance, 0) / rows.length);
+  }, [clients, leaderboard, workoutCountByClient]);
 
   const now = new Date();
   const y = now.getFullYear();
@@ -151,8 +163,8 @@ export function DashboardPremiumStats() {
       />
       <PremiumStatCard
         label="متوسط الالتزام"
-        value={`${complianceAvg}%`}
-        sublabel="متوسط تقريبي بين العملاء"
+        value={complianceAvg != null ? `${complianceAvg}%` : "—"}
+        sublabel={complianceAvg != null ? "متوسط بين من لديهم 3+ جلسات مكتملة" : "لا توجد بيانات كافية بعد"}
         sparklineData={complianceSpark}
         dataKey="c"
         trendPct={complianceTrend}

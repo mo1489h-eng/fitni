@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy, TrendingDown, Dumbbell, Calendar, Flame, Award } from "lucide-react";
 
 const ACHIEVEMENT_CONFIG: Record<string, { icon: any; color: string }> = {
-  weight_loss: { icon: TrendingDown, color: "text-green-500" },
-  muscle_gain: { icon: Dumbbell, color: "text-blue-500" },
+  weight_loss: { icon: TrendingDown, color: "text-primary" },
+  muscle_gain: { icon: Dumbbell, color: "text-[#60a5fa]" },
   streak: { icon: Flame, color: "text-orange-500" },
   program_complete: { icon: Trophy, color: "text-yellow-500" },
-  consistency: { icon: Calendar, color: "text-purple-500" },
+  consistency: { icon: Calendar, color: "text-primary" },
 };
 
 const PortalAchievements = () => {

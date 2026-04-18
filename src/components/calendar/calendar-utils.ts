@@ -5,7 +5,7 @@ export const MONTHS_AR = [
 ];
 
 export const SESSION_TYPES = [
-  { value: "تدريب شخصي", color: "hsl(142 71% 45%)", bg: "hsl(142 71% 45% / 0.12)", text: "hsl(142 71% 65%)" },
+  { value: "تدريب شخصي", color: "#4F6F52", bg: "rgba(79,111,82,0.12)", text: "#9CB89E" },
   { value: "متابعة", color: "hsl(217 91% 60%)", bg: "hsl(217 91% 60% / 0.12)", text: "hsl(217 91% 75%)" },
   { value: "تقييم", color: "hsl(38 92% 50%)", bg: "hsl(38 92% 50% / 0.12)", text: "hsl(38 92% 70%)" },
   { value: "تغذية", color: "hsl(280 65% 60%)", bg: "hsl(280 65% 60% / 0.12)", text: "hsl(280 65% 75%)" },

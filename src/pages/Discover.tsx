@@ -180,7 +180,7 @@ const Discover = () => {
                         {m.profile?.user_id && (
                           <Button size="sm" asChild><a href={`/trainer/${m.profile.user_id}`}>عرض الملف <ArrowRight className="w-3 h-3 mr-1" /></a></Button>
                         )}
-                        {m.trial_sessions && <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-500/30 flex items-center gap-1"><Gift className="w-3 h-3" />جلسة تجريبية</Badge>}
+                        {m.trial_sessions && <Badge variant="secondary" className="bg-primary/15 text-primary border-primary/30 flex items-center gap-1"><Gift className="w-3 h-3" />جلسة تجريبية</Badge>}
                       </div>
                     </div>
                   </div>

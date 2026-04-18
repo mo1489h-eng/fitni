@@ -149,7 +149,7 @@ const VaultUnit = () => {
             onClick={() => setType(t)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               active
-                ? "bg-primary text-primary-foreground shadow-[0_0_12px_hsl(142_76%_36%/0.2)]"
+                ? "bg-primary text-primary-foreground shadow-none"
                 : "bg-[hsl(0_0%_10%)] text-[hsl(0_0%_45%)] hover:text-white hover:bg-[hsl(0_0%_14%)]"
             }`}
           >

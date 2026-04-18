@@ -42,7 +42,7 @@ const PricingSection = () => (
           </Card>
         </Reveal>
         <Reveal delay={120}>
-          <Card className="relative h-full overflow-hidden border-primary/30 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.15),transparent_45%),hsl(var(--card))] shadow-[0_24px_90px_hsl(var(--primary)/0.18)]">
+          <Card className="relative h-full overflow-hidden border-primary/30 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.15),transparent_45%),hsl(var(--card))] shadow-sm">
             <div className="absolute right-6 top-6 flex flex-col items-end gap-2">
               <Badge className="rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">الأكثر شعبية</Badge>
               <Badge className="rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary">لأول 100 مدرب</Badge>
@@ -67,7 +67,7 @@ const PricingSection = () => (
                   </div>
                 ))}
               </div>
-              <Button asChild className="mt-10 h-14 w-full rounded-full text-base font-bold shadow-[0_20px_60px_hsl(var(--primary)/0.28)]"><Link to="/register">ابدأ مجاناً</Link></Button>
+              <Button asChild className="mt-10 h-14 w-full rounded-full text-base font-bold shadow-none"><Link to="/register">ابدأ مجاناً</Link></Button>
             </CardContent>
           </Card>
         </Reveal>

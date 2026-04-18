@@ -64,19 +64,19 @@ function getPaymentStatus(subscriptionEndDate: string): "active" | "overdue" | "
 }
 
 const statusAccentColors = {
-  active: "border-r-[3px] border-r-emerald-500",
+  active: "border-r-[3px] border-r-primary",
   overdue: "border-r-[3px] border-r-red-500",
   expiring: "border-r-[3px] border-r-amber-500",
 };
 const statusLabels = { active: "نشط", overdue: "منتهي", expiring: "ينتهي قريبا" };
 const statusBadgeColors = {
-  active: "bg-emerald-500/10 text-emerald-400",
+  active: "bg-primary/15 text-primary",
   overdue: "bg-red-500/10 text-red-400",
   expiring: "bg-amber-500/10 text-amber-400",
 };
 
 const AVATAR_COLORS = [
-  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-orange-600",
+  "bg-primary", "bg-blue-600", "bg-elevated", "bg-orange-600",
   "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
 ];
 
@@ -241,15 +241,32 @@ const Clients = () => {
         error = retry.error;
       }
       if (error) throw error;
-      if (newClient?.invite_token) {
+
+      const clientId = newClient?.id ?? null;
+      let inviteToken = (newClient?.invite_token as string | null | undefined) ?? null;
+      if (clientId && !inviteToken) {
+        const { data: refetched } = await supabase.from("clients").select("invite_token").eq("id", clientId).maybeSingle();
+        inviteToken = refetched?.invite_token ?? null;
+      }
+      if (clientId && !inviteToken && emailTrim) {
+        const { data: nudged } = await supabase
+          .from("clients")
+          .update({ email: emailTrim })
+          .eq("id", clientId)
+          .select("invite_token")
+          .maybeSingle();
+        inviteToken = nudged?.invite_token ?? null;
+      }
+
+      if (clientId && inviteToken) {
         try {
           const { data: emailResult, error: fnError } = await supabase.functions.invoke("send-invite-email", {
             body: {
-              clientId: newClient.id,
+              clientId,
               clientName: form.name,
               clientEmail: emailTrim,
               trainerName: profile?.full_name || "مدربك",
-              inviteToken: newClient.invite_token,
+              inviteToken,
               siteOrigin: getAuthSiteOrigin(),
             },
           });
@@ -322,8 +339,14 @@ const Clients = () => {
           console.error("[send-invite-email] Email send error:", e);
           toast({ title: "تمت إضافة العميل", description: "لم يتم إرسال الإيميل، شارك الرابط يدوياً من ملف العميل" });
         }
-      } else {
-        console.warn("[Clients] New client missing invite_token — trigger generate_invite_token may not have run; email was:", emailTrim);
+      } else if (clientId) {
+        console.warn("[Clients] New client missing invite_token after refetch/nudge; email not sent. email:", emailTrim);
+        toast({
+          title: "تمت إضافة العميل",
+          description: "لم يُولَّد رمز الدعوة تلقائياً. افتح ملف العميل وأعد إرسال الدعوة يدوياً.",
+          variant: "destructive",
+          duration: 12_000,
+        });
       }
       if (newClient?.id && form.goal && (form.weight || form.height)) {
         try {

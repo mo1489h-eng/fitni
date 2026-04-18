@@ -79,17 +79,15 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6" style={{ background: "#0A0A0A" }}>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-12 flex flex-col items-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: "rgba(34,197,94,0.12)" }}>
-            <TrendingUp className="h-8 w-8" style={{ color: "#22C55E" }} strokeWidth={1.5} />
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/15">
+            <TrendingUp className="h-8 w-8 text-primary" strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-white">CoachBase</h1>
-          <p className="mt-2 text-sm" style={{ color: "#666" }}>
-            سجّل دخولك للمتابعة
-          </p>
+          <h1 className="text-3xl font-black tracking-tight text-foreground">CoachBase</h1>
+          <p className="mt-2 text-sm text-muted-foreground">سجّل دخولك للمتابعة</p>
         </div>
 
         {/* Form */}
@@ -100,8 +98,7 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
               placeholder="البريد الإلكتروني"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border-0 px-4 py-4 text-sm text-white placeholder-gray-500 outline-none transition-all focus:ring-2"
-              style={{ background: "#161616" }}
+              className="w-full rounded-xl border-0 bg-card px-4 py-4 text-sm text-foreground outline-none ring-primary/30 placeholder:text-muted-foreground transition-all focus:ring-2"
               dir="ltr"
             />
           </div>
@@ -112,26 +109,21 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
               placeholder="كلمة المرور"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border-0 px-4 py-4 text-sm text-white placeholder-gray-500 outline-none transition-all focus:ring-2"
-              style={{ background: "#161616" }}
+              className="w-full rounded-xl border-0 bg-card px-4 py-4 text-sm text-foreground outline-none ring-primary/30 placeholder:text-muted-foreground transition-all focus:ring-2"
               dir="ltr"
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-1"
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground"
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" style={{ color: "#666" }} />
-              ) : (
-                <Eye className="h-4 w-4" style={{ color: "#666" }} />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
 
           {error && (
-            <div className="rounded-lg px-4 py-3 text-center text-sm text-red-400" style={{ background: "rgba(239,68,68,0.1)" }}>
+            <div className="rounded-lg bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
               {error}
             </div>
           )}
@@ -139,11 +131,7 @@ const MobileLogin = ({ onLoginSuccess }: MobileLoginProps) => {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full rounded-xl py-4 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50"
-            style={{
-              background: "linear-gradient(135deg, #22C55E, #16A34A)",
-              boxShadow: "0 8px 32px rgba(34,197,94,0.25)",
-            }}
+            className="w-full rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? "جاري التسجيل..." : "تسجيل الدخول"}
           </button>

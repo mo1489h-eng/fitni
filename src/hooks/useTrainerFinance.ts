@@ -77,3 +77,21 @@ export function useTrainerActiveWithdrawals(trainerId: string | undefined) {
     enabled: !!trainerId,
   });
 }
+
+/** Recent withdrawal requests (all statuses) for earnings UI */
+export function useTrainerWithdrawalsHistory(trainerId: string | undefined, limit = 50) {
+  return useQuery({
+    queryKey: ["withdrawals-history", trainerId, limit],
+    queryFn: async (): Promise<WithdrawalRow[]> => {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("trainer_id", trainerId!)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as WithdrawalRow[];
+    },
+    enabled: !!trainerId,
+  });
+}

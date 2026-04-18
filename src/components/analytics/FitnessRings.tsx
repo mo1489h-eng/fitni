@@ -73,13 +73,13 @@ export function FitnessRings({
   return (
     <div className="mx-auto flex flex-col items-center gap-5" title={tip}>
       <div className="relative mx-auto" style={{ width: size, height: size }}>
-        <svg viewBox="0 0 180 180" className="h-full w-full drop-shadow-[0_0_24px_rgba(34,197,94,0.12)]" aria-label="حلقات الأداء">
-          <circle cx="90" cy="90" r="78" fill="none" stroke="#1f1f1f" strokeWidth="10" />
-          <circle cx="90" cy="90" r="62" fill="none" stroke="#1f1f1f" strokeWidth="10" />
-          <circle cx="90" cy="90" r="46" fill="none" stroke="#1f1f1f" strokeWidth="10" />
+        <svg viewBox="0 0 180 180" className="h-full w-full drop-shadow-[0_0_24px_rgba(79,111,82,0.12)]" aria-label="حلقات الأداء">
+          <circle cx="90" cy="90" r="78" fill="none" stroke="hsl(var(--border-strong))" strokeWidth="10" />
+          <circle cx="90" cy="90" r="62" fill="none" stroke="hsl(var(--border-strong))" strokeWidth="10" />
+          <circle cx="90" cy="90" r="46" fill="none" stroke="hsl(var(--border-strong))" strokeWidth="10" />
           {!empty ? (
             <>
-              <Ring radius={78} pct={compliance} color="#22C55E" strokeWidth={10} show={show} />
+              <Ring radius={78} pct={compliance} color="#4f6f52" strokeWidth={10} show={show} />
               <Ring radius={62} pct={attendance} color="#3B82F6" strokeWidth={10} show={show} />
               <Ring radius={46} pct={volume} color="#F59E0B" strokeWidth={10} show={show} />
             </>
@@ -99,7 +99,7 @@ export function FitnessRings({
       {!empty ? (
         <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[11px] text-[#6b7280]">
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#22C55E]" /> التزام
+            <span className="h-2 w-2 rounded-full bg-primary" /> التزام
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-[#3B82F6]" /> حضور

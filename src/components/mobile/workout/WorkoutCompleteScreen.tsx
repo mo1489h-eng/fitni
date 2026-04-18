@@ -157,7 +157,7 @@ export default function WorkoutCompleteScreen() {
         <div className="mb-6 flex flex-col items-center">
           <div
             className="mb-4 flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: "rgba(34,197,94,0.15)" }}
+            style={{ background: "rgba(79,111,82,0.15)" }}
           >
             <Trophy className="h-10 w-10" style={{ color: CB.accent }} strokeWidth={1.5} />
           </div>
@@ -209,7 +209,7 @@ export default function WorkoutCompleteScreen() {
           className="mb-8 rounded-[16px] p-4"
           style={{
             background: CB.card2,
-            border: "1px solid rgba(34,197,94,0.35)",
+            border: "1px solid rgba(79,111,82,0.35)",
             boxShadow: "inset 0 0 0 1px rgba(124,58,237,0.25)",
           }}
         >

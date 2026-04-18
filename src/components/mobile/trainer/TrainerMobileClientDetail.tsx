@@ -2,22 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import {
-  ChevronRight,
-  Phone,
-  Target,
-  Dumbbell,
-  CalendarDays,
-  MessageCircle,
-  Loader2,
-  Check,
-  X,
-  Play,
-} from "lucide-react";
+import { ChevronRight, Phone, Target, Dumbbell, Loader2, Play } from "lucide-react";
 import TrainerLiveSession from "../workout/TrainerLiveSession";
-import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
 import SessionMode from "@/pages/SessionMode";
-import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 
 type Props = {
   clientId: string;
@@ -37,7 +25,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         .from("clients")
         .select(
           `
-          id, name, goal, phone, email, program_id, week_number, days_per_week,
+          id, name, goal, phone, email, program_id, week_number, days_per_week, training_type,
           programs ( id, name, weeks, delivery_mode )
         `
         )
@@ -54,65 +42,24 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         program_id: string | null;
         week_number: number | null;
         days_per_week: number | null;
+        training_type?: string | null;
         programs: { id: string; name: string; weeks: number | null; delivery_mode?: string } | null;
       };
     },
     enabled: !!user && !!clientId,
   });
 
-  const { data: attendanceRows = [] } = useQuery({
-    queryKey: ["trainer-client-sessions", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trainer_sessions")
-        .select("id, session_date, start_time, session_type, is_completed")
-        .eq("client_id", clientId)
-        .order("session_date", { ascending: false })
-        .limit(40);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!clientId,
-  });
-
-  const { data: lastWorkouts = [] } = useQuery({
-    queryKey: ["trainer-client-last-workouts", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("workout_sessions")
-        .select("id, completed_at, total_volume, duration_minutes, started_at")
-        .eq("client_id", clientId)
-        .not("completed_at", "is", null)
-        .order("completed_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!clientId,
-  });
-
-  const openWhatsApp = () => {
-    if (!client?.phone) return;
-    const n = client.phone.replace(/\D/g, "");
-    const intl = n.startsWith("0") ? `966${n.slice(1)}` : n;
-    window.open(`https://wa.me/${intl}`, "_blank", "noopener,noreferrer");
-  };
-
-  const openEmail = () => {
-    if (!client?.email) return;
-    window.location.href = `mailto:${encodeURIComponent(client.email)}?subject=${encodeURIComponent("CoachBase")}`;
-  };
-
   if (isLoading || !client) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#22C55E" }} />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4f6f52" }} />
       </div>
     );
   }
 
   const program = Array.isArray(client.programs) ? client.programs[0] : client.programs;
-  const trainingType = "online" as const;
+  const trainingType: ClientTrainingType = parseClientTrainingType(client.training_type);
+  const isInPerson = trainingType === "in_person";
 
   if (sessionModeOpen) {
     return <SessionMode clientId={client.id} onClose={() => setSessionModeOpen(false)} />;
@@ -135,7 +82,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-sm font-medium"
-        style={{ color: "#22C55E" }}
+        style={{ color: "#4f6f52" }}
       >
         <ChevronRight className="h-4 w-4" />
         العملاء
@@ -144,18 +91,18 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
       <div className="flex items-center gap-3">
         <div
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-xl font-bold"
-          style={{ background: "rgba(34,197,94,0.15)", color: "#22C55E" }}
+          style={{ background: "rgba(79,111,82,0.15)", color: "#4f6f52" }}
         >
           {client.name?.charAt(0)?.toUpperCase() || "?"}
         </div>
         <div className="min-w-0">
           <h1 className="text-xl font-bold text-white">{client.name}</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-1">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
             <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              className="rounded-full px-2 py-0.5 text-[10px] font-medium"
               style={{
-                background: "rgba(100,116,139,0.2)",
-                color: "#94a3b8",
+                background: isInPerson ? "rgba(79,111,82,0.15)" : "rgba(100,116,139,0.2)",
+                color: isInPerson ? "#4f6f52" : "#94a3b8",
               }}
             >
               {TRAINING_TYPE_LABEL_AR[trainingType]}
@@ -167,9 +114,9 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         </div>
       </div>
 
-      <div className="space-y-3 rounded-2xl p-4" style={{ background: "#111111" }}>
+      <div className="space-y-3 rounded-2xl bg-card p-4">
         <div className="flex gap-3">
-          <Target className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#22C55E" }} />
+          <Target className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#4f6f52" }} />
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "#666" }}>
               الهدف
@@ -178,7 +125,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
           </div>
         </div>
         <div className="flex gap-3">
-          <Phone className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#22C55E" }} />
+          <Phone className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#4f6f52" }} />
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "#666" }}>
               الجوال
@@ -189,7 +136,7 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
           </div>
         </div>
         <div className="flex gap-3">
-          <Dumbbell className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#22C55E" }} />
+          <Dumbbell className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#4f6f52" }} />
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wide" style={{ color: "#666" }}>
               البرنامج الحالي
@@ -202,16 +149,14 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         </div>
       </div>
 
-      <MuscleRecoveryMap clientId={client.id} />
-
-      {client.program_id && (
+      {client.program_id && isInPerson && (
         <button
           type="button"
           onClick={() => setSessionModeOpen(true)}
           className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-black transition active:scale-95"
           style={{
-            background: "linear-gradient(135deg, #22C55E, #16A34A)",
-            boxShadow: "0 8px 32px rgba(34,197,94,0.35)",
+            background: "linear-gradient(135deg, #4f6f52, #3d5940)",
+            boxShadow: "0 8px 32px rgba(79,111,82,0.35)",
           }}
         >
           <Dumbbell className="h-5 w-5" strokeWidth={2.5} />
@@ -219,96 +164,16 @@ const TrainerMobileClientDetail = ({ clientId, onBack }: Props) => {
         </button>
       )}
 
-      <button
-        type="button"
-        onClick={() => setLiveSessionOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[16px] font-bold text-white transition active:scale-95"
-        style={{
-          background: "#1a1a1a",
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <Play className="h-4 w-4" strokeWidth={2.5} />
-        متابعة مباشرة (مزامنة)
-      </button>
-
-      <button
-        type="button"
-        onClick={client.phone ? openWhatsApp : openEmail}
-        disabled={!client.phone && !client.email}
-        className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40"
-        style={{
-          background: "linear-gradient(135deg, #22C55E, #16A34A)",
-          boxShadow: "0 8px 24px rgba(34,197,94,0.2)",
-        }}
-      >
-        <MessageCircle className="h-4 w-4" strokeWidth={2} />
-        {client.phone ? "مراسلة واتساب" : client.email ? "إرسال بريد" : "لا يوجد تواصل"}
-      </button>
-
-      <div>
-        <h2 className="mb-3 flex items-center gap-2 text-[16px] font-bold text-white">
-          <Dumbbell className="h-4 w-4" style={{ color: "#22C55E" }} />
-          آخر التمارين
-        </h2>
-        {lastWorkouts.length === 0 ? (
-          <div className="rounded-[12px] p-4 text-center text-[14px]" style={{ background: "#111111", color: "#666" }}>
-            لا توجد تمارين مكتملة بعد
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {lastWorkouts.map((w) => (
-              <div key={w.id} className="rounded-[12px] px-4 py-3" style={{ background: "#111111" }}>
-                <p className="text-[14px] font-medium text-white">
-                  {w.completed_at ? new Date(w.completed_at).toLocaleString("ar-SA", { dateStyle: "medium" }) : "—"}
-                </p>
-                <p className="text-[12px]" style={{ color: "#666" }}>
-                  {Math.round(Number(w.total_volume) || 0)} كجم
-                  {w.duration_minutes != null ? ` · ${w.duration_minutes} د` : ""}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h2 className="mb-3 flex items-center gap-2 text-[16px] font-bold text-white">
-          <CalendarDays className="h-4 w-4" style={{ color: "#22C55E" }} />
-          سجل الحضور
-        </h2>
-        {attendanceRows.length === 0 ? (
-          <div className="rounded-2xl p-6 text-center text-sm" style={{ background: "#111111", color: "#666" }}>
-            لا توجد جلسات مسجّلة بعد
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {attendanceRows.map((row) => (
-              <div
-                key={row.id}
-                className="flex items-center justify-between rounded-xl px-4 py-3"
-                style={{ background: "#111111" }}
-              >
-                <div>
-                  <p className="text-sm font-medium text-white">{row.session_date}</p>
-                  <p className="text-[11px]" style={{ color: "#666" }}>
-                    {row.start_time?.slice(0, 5)} · {row.session_type || "جلسة"}
-                  </p>
-                </div>
-                {row.is_completed ? (
-                  <span className="flex items-center gap-1 text-[11px] font-medium" style={{ color: "#22C55E" }}>
-                    <Check className="h-3.5 w-3.5" /> حضور
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-[11px]" style={{ color: "#666" }}>
-                    <X className="h-3.5 w-3.5" /> لم يُسجَّل
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {client.program_id && (
+        <button
+          type="button"
+          onClick={() => setLiveSessionOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/[0.08] bg-card-hover py-4 text-[16px] font-bold text-foreground transition active:scale-95"
+        >
+          <Play className="h-4 w-4" strokeWidth={2.5} />
+          متابعة مباشرة (مزامنة)
+        </button>
+      )}
     </div>
   );
 };

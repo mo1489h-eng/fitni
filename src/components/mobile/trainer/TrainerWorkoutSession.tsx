@@ -52,17 +52,9 @@ export default function TrainerWorkoutSession({ clientId, programId, onClose }: 
 
   if (isLoading) {
     return (
-      <div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-        style={{ background: "#050505" }}
-      >
-        <div
-          className="h-10 w-10 animate-spin rounded-full border-2 border-transparent"
-          style={{ borderTopColor: "#22C55E" }}
-        />
-        <p className="mt-4 text-sm" style={{ color: "#888" }}>
-          جاري تحميل خطة التمرين…
-        </p>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-transparent border-t-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">جاري تحميل خطة التمرين…</p>
       </div>
     );
   }
@@ -72,19 +64,14 @@ export default function TrainerWorkoutSession({ clientId, programId, onClose }: 
 
   if (errMsg || empty) {
     return (
-      <div
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6"
-        style={{ background: "#050505" }}
-        dir="rtl"
-      >
-        <p className="text-center text-sm text-white">
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background px-6" dir="rtl">
+        <p className="text-center text-sm text-foreground">
           {errMsg || "لا يوجد تمارين مجدولة ليوم اليوم في هذا البرنامج"}
         </p>
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 rounded-xl px-6 py-3 text-sm font-bold text-white"
-          style={{ background: "#222" }}
+          className="mt-6 rounded-xl bg-card px-6 py-3 text-sm font-bold text-foreground"
         >
           إغلاق
         </button>

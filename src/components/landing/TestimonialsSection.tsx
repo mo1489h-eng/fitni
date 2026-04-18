@@ -44,7 +44,7 @@ const TestimonialsSection = () => (
         {facts.map((f, i) => (
           <Reveal key={f.number} delay={i * 120}>
             <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 transition-all duration-200 hover:border-primary/30"
-              style={{ borderTop: "2px solid hsl(142 71% 45%)" }}>
+              style={{ borderTop: "2px solid #4F6F52" }}>
               <div className="mb-6 flex items-center justify-between">
                 <f.icon className={`h-6 w-6 ${f.iconColor}`} />
               </div>

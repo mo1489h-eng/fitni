@@ -9,7 +9,6 @@ import { getAuthSiteOrigin } from "@/lib/auth-constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
-import type { FitniRole } from "@/lib/auth-service";
 
 const benefits = [
   { icon: Users, text: "إدارة عملاء احترافية" },
@@ -63,7 +62,6 @@ function getPasswordStrength(pw: string): { level: 0 | 1 | 2 | 3; label: string;
 }
 
 const Register = () => {
-  const [accountTab, setAccountTab] = useState<FitniRole>("coach");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -133,11 +131,8 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const selectedRole: FitniRole = accountTab;
-      const isTrainee = selectedRole === "trainee";
-
       let validatedPromo: { valid: boolean; days?: number; message: string } | null = null;
-      if (!isTrainee && promoCode.trim()) {
+      if (promoCode.trim()) {
         validatedPromo = await validatePromo(promoCode, email);
         if (validatedPromo && !validatedPromo.valid) {
           return;
@@ -145,19 +140,22 @@ const Register = () => {
       }
 
       const emailNorm = email.trim().toLowerCase();
-      const postAuthPath = isTrainee ? TRAINEE_HOME : COACH_DASHBOARD;
+      const postAuthPath = COACH_DASHBOARD;
+      const signUpUserMetadata = { full_name: name.trim(), role: "coach" as const, is_client: false };
+      if (import.meta.env.DEV) {
+        console.log("[Register/signUp] coach-only user_metadata", signUpUserMetadata);
+      }
       const { data: signUpData, error } = await supabase.auth.signUp({
         email: emailNorm,
         password,
         options: {
-          data: {
-            full_name: name.trim(),
-            role: selectedRole,
-            is_client: isTrainee,
-          },
+          data: signUpUserMetadata,
           emailRedirectTo: `${getAuthSiteOrigin()}${postAuthPath}`,
         },
       });
+      if (import.meta.env.DEV && signUpData?.user) {
+        console.log("[Register/signUp] user.user_metadata", signUpData.user.user_metadata);
+      }
 
       if (error) {
         if (isEmailAlreadyRegisteredError(error.message)) {
@@ -207,7 +205,7 @@ const Register = () => {
 
       // Profile is auto-created by handle_new_user trigger — no ensure_user_profile RPC needed
 
-      if (!isTrainee && validatedPromo?.valid && promoCode.trim()) {
+      if (validatedPromo?.valid && promoCode.trim()) {
         await supabase.rpc("validate_and_redeem_promo" as any, {
           p_code: promoCode.trim(),
           p_email: emailNorm,
@@ -215,12 +213,7 @@ const Register = () => {
         });
       }
       toast({
-        title:
-          validatedPromo?.valid && !isTrainee
-            ? validatedPromo.message
-            : isTrainee
-              ? "تم إنشاء حساب المتدرب"
-              : "تم إنشاء الحساب بنجاح",
+        title: validatedPromo?.valid ? validatedPromo.message : "تم إنشاء الحساب بنجاح",
       });
       navigate(postAuthPath, { replace: true });
     } catch (e: unknown) {
@@ -293,30 +286,9 @@ const Register = () => {
               <Link to="/login" className="text-primary hover:underline font-semibold">سجّل دخولك</Link>
             </p>
 
-            <div className="flex rounded-xl border border-border p-1 mb-8 bg-muted/30" role="tablist" aria-label="نوع الحساب">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={accountTab === "coach"}
-                onClick={() => setAccountTab("coach")}
-                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
-                  accountTab === "coach" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                مدرب
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={accountTab === "trainee"}
-                onClick={() => setAccountTab("trainee")}
-                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
-                  accountTab === "trainee" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                متدرب
-              </button>
-            </div>
+            <p className="text-muted-foreground text-center text-xs mb-8">
+              هذا النموذج للمدربين فقط. المتدربون ينضمّون عبر دعوة من المدرب أو صفحة المدرب العامة.
+            </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -390,20 +362,18 @@ const Register = () => {
                 )}
               </div>
 
-              {accountTab === "coach" ? (
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-foreground flex items-center gap-1.5">
-                    <Gift className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                    كود ترويجي (اختياري)
-                  </label>
-                  <Input placeholder="أدخل الكود هنا" value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setPromoResult(null); }} dir="ltr" />
-                  {promoResult ? (
-                    <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-primary" : "text-destructive"}`}>{promoResult.message}</p>
-                  ) : (
-                    <p className="text-xs mt-1.5 text-muted-foreground">الكود يُرسل لك شخصياً من فريق فتني</p>
-                  )}
-                </div>
-              ) : null}
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground flex items-center gap-1.5">
+                  <Gift className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                  كود ترويجي (اختياري)
+                </label>
+                <Input placeholder="أدخل الكود هنا" value={promoCode} onChange={(e) => { setPromoCode(e.target.value); setPromoResult(null); }} dir="ltr" />
+                {promoResult ? (
+                  <p className={`text-xs mt-1.5 font-medium ${promoResult.valid ? "text-primary" : "text-destructive"}`}>{promoResult.message}</p>
+                ) : (
+                  <p className="text-xs mt-1.5 text-muted-foreground">الكود يُرسل لك شخصياً من فريق فتني</p>
+                )}
+              </div>
 
               <label className="flex items-start gap-2.5 text-sm text-muted-foreground cursor-pointer pt-1">
                 <input type="checkbox" checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)} className="rounded border-border bg-background h-4 w-4 accent-primary mt-0.5" />

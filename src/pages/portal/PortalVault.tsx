@@ -30,11 +30,11 @@ type PortalUnit = {
 };
 
 const defaultGradients = [
-  "linear-gradient(135deg, hsl(142 76% 20%), hsl(142 76% 36%))",
-  "linear-gradient(135deg, hsl(200 60% 18%), hsl(200 60% 32%))",
-  "linear-gradient(135deg, hsl(260 40% 18%), hsl(260 40% 32%))",
-  "linear-gradient(135deg, hsl(30 50% 18%), hsl(30 50% 32%))",
-  "linear-gradient(135deg, hsl(340 40% 18%), hsl(340 40% 32%))",
+  "linear-gradient(135deg, hsl(125 18% 22%), hsl(125 18% 32%))",
+  "linear-gradient(135deg, hsl(200 35% 18%), hsl(200 35% 28%))",
+  "linear-gradient(135deg, hsl(220 12% 18%), hsl(220 12% 26%))",
+  "linear-gradient(135deg, hsl(30 40% 18%), hsl(30 40% 28%))",
+  "linear-gradient(135deg, hsl(340 25% 18%), hsl(340 25% 26%))",
 ];
 
 const PortalVault = () => {
@@ -95,7 +95,7 @@ const PortalVault = () => {
         ) : (
           <>
             {/* Hero Progress */}
-            <div className="rounded-2xl bg-gradient-to-br from-[hsl(142_76%_20%/0.15)] to-[hsl(0_0%_6%)] border border-[hsl(0_0%_12%)] p-5">
+            <div className="rounded-2xl bg-gradient-to-br from-[rgba(79,111,82,0.15)] to-[hsl(0_0%_6%)] border border-[hsl(0_0%_12%)] p-5">
               <div className="flex items-center justify-between mb-3">
                 <h1 className="text-lg font-bold text-white">المكتبة التعليمية</h1>
                 <span className="text-xs text-[hsl(0_0%_45%)]">{globalPct}%</span>

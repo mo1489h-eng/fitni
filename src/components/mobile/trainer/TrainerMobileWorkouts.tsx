@@ -97,7 +97,7 @@ const TrainerMobileWorkouts = () => {
           type="button"
           onClick={() => setDetailId(null)}
           className="flex items-center gap-2 text-sm font-medium"
-          style={{ color: "#22C55E" }}
+          style={{ color: "#4f6f52" }}
         >
           <ChevronRight className="h-4 w-4" />
           العودة للبرامج
@@ -119,9 +119,9 @@ const TrainerMobileWorkouts = () => {
               onClick={() => deliveryMutation.mutate("online")}
               className="flex-1 rounded-xl py-2.5 text-xs font-bold transition"
               style={{
-                background: dm === "online" ? "rgba(34,197,94,0.2)" : "#1a1a1a",
-                color: dm === "online" ? "#22C55E" : "#888",
-                border: `1px solid ${dm === "online" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`,
+                background: dm === "online" ? "rgba(79,111,82,0.2)" : "#1a1a1a",
+                color: dm === "online" ? "#4f6f52" : "#888",
+                border: `1px solid ${dm === "online" ? "rgba(79,111,82,0.4)" : "rgba(255,255,255,0.06)"}`,
               }}
             >
               أونلاين
@@ -132,9 +132,9 @@ const TrainerMobileWorkouts = () => {
               onClick={() => deliveryMutation.mutate("in_person")}
               className="flex-1 rounded-xl py-2.5 text-xs font-bold transition"
               style={{
-                background: dm === "in_person" ? "rgba(34,197,94,0.2)" : "#1a1a1a",
-                color: dm === "in_person" ? "#22C55E" : "#888",
-                border: `1px solid ${dm === "in_person" ? "rgba(34,197,94,0.4)" : "rgba(255,255,255,0.06)"}`,
+                background: dm === "in_person" ? "rgba(79,111,82,0.2)" : "#1a1a1a",
+                color: dm === "in_person" ? "#4f6f52" : "#888",
+                border: `1px solid ${dm === "in_person" ? "rgba(79,111,82,0.4)" : "rgba(255,255,255,0.06)"}`,
               }}
             >
               حضوري (وضع الجلسة)
@@ -143,7 +143,7 @@ const TrainerMobileWorkouts = () => {
           <div className="mt-2 flex flex-wrap gap-2">
             <span
               className="rounded-lg px-2 py-1 text-[10px] font-medium"
-              style={{ background: "rgba(34,197,94,0.12)", color: "#22C55E" }}
+              style={{ background: "rgba(79,111,82,0.12)", color: "#4f6f52" }}
             >
               {programDetail.weeks ?? "—"} أسابيع
             </span>
@@ -159,7 +159,7 @@ const TrainerMobileWorkouts = () => {
         </div>
         {detailLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#22C55E" }} />
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4f6f52" }} />
           </div>
         ) : (
           <div className="space-y-4">
@@ -171,7 +171,7 @@ const TrainerMobileWorkouts = () => {
                 <div key={day.id} className="overflow-hidden rounded-2xl" style={{ background: "#111111" }}>
                   <div
                     className="border-b px-4 py-3"
-                    style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(34,197,94,0.06)" }}
+                    style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(79,111,82,0.06)" }}
                   >
                     <p className="text-sm font-bold text-white">{day.day_name}</p>
                     <p className="text-[10px]" style={{ color: "#666" }}>
@@ -219,7 +219,7 @@ const TrainerMobileWorkouts = () => {
   if (detailId && detailLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#22C55E" }} />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4f6f52" }} />
       </div>
     );
   }
@@ -263,14 +263,14 @@ const TrainerMobileWorkouts = () => {
                     {p.delivery_mode === "in_person" && (
                       <span
                         className="rounded-lg px-2 py-1 text-[10px] font-medium"
-                        style={{ background: "rgba(34,197,94,0.15)", color: "#22C55E" }}
+                        style={{ background: "rgba(79,111,82,0.15)", color: "#4f6f52" }}
                       >
                         حضوري
                       </span>
                     )}
                     <span
                       className="rounded-lg px-2 py-1 text-[10px] font-medium"
-                      style={{ background: "rgba(34,197,94,0.1)", color: "#22C55E" }}
+                      style={{ background: "rgba(79,111,82,0.1)", color: "#4f6f52" }}
                     >
                       {p.weeks ?? "—"} أسابيع
                     </span>

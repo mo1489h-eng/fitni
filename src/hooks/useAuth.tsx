@@ -40,7 +40,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
-  /** Server-resolved coach/trainee from `resolveFitniRole` only — never from localStorage. */
+  /** Mirrors `profiles.role` from DB after `resolveFitniRole`; for routes outside AuthAppGate. */
   resolvedFitniRole: FitniRole | null;
   loading: boolean;
   profileLoading: boolean;
@@ -61,9 +61,9 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-/** Profile columns that actually exist on the DB table. */
+/** Includes `role` — single source of truth from DB (see `resolveFitniRole`). */
 const profileSelectColumns =
-  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used" as const;
+  "full_name, created_at, subscription_plan, subscribed_at, subscription_end_date, logo_url, phone, specialization, bio, avatar_url, notify_inactive, notify_payments, notify_weekly_report, brand_color, welcome_message, onboarding_completed, username, is_founder, founder_discount_used, role" as const;
 
 async function selectProfileRow(userId: string) {
   return supabase
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("[Auth] fetchProfile query error", error);
         setProfile(null);
       } else if (data) {
-        if (import.meta.env.DEV) console.log("[Auth] profile found");
+        if (import.meta.env.DEV) console.log("[Auth] profile found, profiles.role from select", (data as { role?: string }).role);
         setProfile(data as unknown as Profile);
       } else {
         // No profile row — handle_new_user trigger should have created it.
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const r = await resolveFitniRole(userId);
       if (fetchId !== profileFetchRef.current) return null;
 
-      if (import.meta.env.DEV) console.log("[Auth] resolved role:", r);
+      if (import.meta.env.DEV) console.log("[Auth] resolveFitniRole() →", r, "for userId", userId);
       if (r) {
         setResolvedFitniRole(r);
         useWorkoutStore.getState().setFitniRole(r);

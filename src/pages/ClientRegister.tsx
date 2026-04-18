@@ -174,8 +174,8 @@ const ClientRegister = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#4ade80]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-light" />
       </div>
     );
   }
@@ -183,16 +183,16 @@ const ClientRegister = () => {
   // Token expired state
   if (expired) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4" dir="rtl">
         <div className="text-center space-y-4 max-w-md">
           <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto">
             <AlertTriangle className="w-8 h-8 text-yellow-500" />
           </div>
           <h1 className="text-2xl font-black">انتهت صلاحية الرابط</h1>
-          <p className="text-white/50">تواصل مع مدربك لإعادة إرسال رابط الدعوة</p>
+          <p className="text-muted-foreground">تواصل مع مدربك لإعادة إرسال رابط الدعوة</p>
           <div className="flex flex-col gap-2">
             <Link to="/client-login">
-              <Button className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white">
+              <Button className="w-full bg-primary hover:bg-primary-hover text-primary-foreground">
                 تسجيل الدخول
               </Button>
             </Link>
@@ -205,15 +205,15 @@ const ClientRegister = () => {
   // Invalid token state
   if (!clientData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4" dir="rtl">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#16a34a] flex items-center justify-center mx-auto">
-            <Dumbbell className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mx-auto">
+            <Dumbbell className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-2xl font-black">رابط غير صالح</h1>
-          <p className="text-white/50">هذا الرابط غير صالح أو تم استخدامه مسبقاً</p>
+          <p className="text-muted-foreground">هذا الرابط غير صالح أو تم استخدامه مسبقاً</p>
           <Link to="/client-login">
-            <Button className="bg-[#16a34a] hover:bg-[#15803d] text-white">
+            <Button className="bg-primary hover:bg-primary-hover text-primary-foreground">
               دخول المتدرب
             </Button>
           </Link>
@@ -223,17 +223,17 @@ const ClientRegister = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-background text-foreground flex flex-col" dir="rtl">
       <header className="px-4 py-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-[#16a34a] flex items-center justify-center">
-              <Dumbbell className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+              <Dumbbell className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="text-xl font-black">CoachBase</span>
           </Link>
           <Link to="/client-login">
-            <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10 text-xs">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs">
               عندي حساب
             </Button>
           </Link>
@@ -244,59 +244,59 @@ const ClientRegister = () => {
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-black inline-flex items-center justify-center gap-2">
-              <Dumbbell className="w-7 h-7 text-[#4ade80]" />أنشئ حسابك
+              <Dumbbell className="w-7 h-7 text-primary-light" />أنشئ حسابك
             </h1>
-            <p className="text-white/50">
-              ابدأ رحلتك مع <span className="text-[#4ade80] font-bold">{clientData.trainer_name}</span>
+            <p className="text-muted-foreground">
+              ابدأ رحلتك مع <span className="text-primary-light font-bold">{clientData.trainer_name}</span>
             </p>
           </div>
 
-          <Card className="bg-white/[0.04] border-white/[0.08] p-6">
+          <Card className="bg-card border-border p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-white/70 mb-1 block">الاسم الكامل</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">الاسم الكامل</label>
                 <Input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="اسمك الكامل" />
+                  className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground" placeholder="اسمك الكامل" />
               </div>
               <div>
-                <label className="text-sm font-medium text-white/70 mb-1 block">رقم الجوال</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">رقم الجوال</label>
                 <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="05XXXXXXXX" type="tel" dir="ltr" />
+                  className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground" placeholder="05XXXXXXXX" type="tel" dir="ltr" />
               </div>
               <div>
-                <label className="text-sm font-medium text-white/70 mb-1 block">البريد الإلكتروني</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">البريد الإلكتروني</label>
                 <Input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20" placeholder="email@example.com" dir="ltr" />
+                  className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground" placeholder="email@example.com" dir="ltr" />
               </div>
               <div>
-                <label className="text-sm font-medium text-white/70 mb-1 block">كلمة المرور</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">كلمة المرور</label>
                 <div className="relative">
                   <Input required type={showPassword ? "text" : "password"} value={form.password}
                     onChange={e => setForm({ ...form, password: e.target.value })}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/20 pl-10"
+                    className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground pl-10"
                     placeholder="6 أحرف على الأقل" dir="ltr" minLength={6} />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-white/70 mb-1 block">تأكيد كلمة المرور</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">تأكيد كلمة المرور</label>
                 <Input required type="password" value={form.confirmPassword}
                   onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20"
+                  className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground"
                   placeholder="أعد كتابة كلمة المرور" dir="ltr" minLength={6} />
               </div>
-              <Button type="submit" className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white text-base py-6" disabled={submitting}>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-primary-foreground text-base py-6" disabled={submitting}>
                 {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "إنشاء حسابي ←"}
               </Button>
             </form>
           </Card>
 
-          <p className="text-center text-sm text-white/30">
+          <p className="text-center text-sm text-muted-foreground">
             عندك حساب؟{" "}
-            <Link to="/client-login" className="text-[#4ade80] hover:underline">دخول</Link>
+            <Link to="/client-login" className="text-primary-light hover:underline">دخول</Link>
           </p>
         </div>
       </main>

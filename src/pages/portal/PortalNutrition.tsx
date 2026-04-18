@@ -333,7 +333,7 @@ const PortalNutrition = () => {
         {/* Hero Calorie Ring - Always visible */}
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center justify-center gap-6">
-            <MacroRing value={todayTotals.calories} target={t.calories_target} color="hsl(142 76% 36%)" label="سعرة" size={100} />
+            <MacroRing value={todayTotals.calories} target={t.calories_target} color="hsl(125 17% 37%)" label="سعرة" size={100} />
             <div className="space-y-2 text-sm">
               <p className="text-foreground font-bold">
                 {todayTotals.calories} <span className="text-muted-foreground font-normal">من أصل {t.calories_target}</span>

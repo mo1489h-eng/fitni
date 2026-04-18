@@ -225,7 +225,7 @@ export interface ExerciseDBItem {
 
 // Body part icons/colors for the grid
 export const BODY_PART_CONFIG: Record<string, { color: string }> = {
-  "back": { color: "bg-purple-500/15 text-purple-400 border-purple-500/20" },
+  "back": { color: "bg-primary/10 text-muted-foreground border-primary/20" },
   "cardio": { color: "bg-primary/15 text-primary border-primary/20" },
   "chest": { color: "bg-red-500/15 text-red-400 border-red-500/20" },
   "lower arms": { color: "bg-orange-500/15 text-orange-400 border-orange-500/20" },

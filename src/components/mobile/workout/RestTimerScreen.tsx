@@ -73,7 +73,7 @@ export default function RestTimerScreen() {
           type="button"
           onClick={() => skipRest()}
           className="flex-1 rounded-[12px] border py-3 text-sm font-bold transition active:scale-95"
-          style={{ borderColor: "rgba(34,197,94,0.5)", color: CB.accent }}
+          style={{ borderColor: "rgba(79,111,82,0.5)", color: CB.accent }}
         >
           تخطي
         </button>

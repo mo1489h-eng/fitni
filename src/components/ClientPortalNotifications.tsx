@@ -17,7 +17,7 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string }> = {
   program: { icon: ClipboardList, color: "text-primary" },
   program_update: { icon: Dumbbell, color: "text-blue-400" },
   session_reminder: { icon: Clock, color: "text-yellow-400" },
-  message: { icon: MessageCircle, color: "text-purple-400" },
+  message: { icon: MessageCircle, color: "text-muted-foreground" },
 };
 
 const ClientPortalNotifications = () => {

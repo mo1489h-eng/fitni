@@ -37,7 +37,7 @@ const HeroSection = ({ heroParallax }: { heroParallax: number }) => (
           أدر عملاءك، برامجك، ومدفوعاتك في منصة واحدة مصممة لك بجودة تجربة تليق بعلامة fitness tech premium.
         </p>
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <Button asChild className="h-14 rounded-full px-8 text-lg font-bold shadow-[0_20px_60px_hsl(var(--primary)/0.3)]">
+          <Button asChild className="h-14 rounded-full px-8 text-lg font-bold shadow-none">
             <Link to="/register" className="inline-flex items-center gap-2">
               ابدأ مجاناً
               <ArrowLeft className="h-5 w-5" />
@@ -61,7 +61,7 @@ const HeroSection = ({ heroParallax }: { heroParallax: number }) => (
             src={heroTrainer}
             alt="مدرب شخصي يستخدم منصة CoachBase"
             loading="lazy"
-            className="relative w-full rounded-[1rem] object-cover shadow-[0_30px_90px_hsl(var(--primary)/0.15)]"
+            className="relative w-full rounded-[1rem] object-cover shadow-none"
             style={{ aspectRatio: "4/3" }}
           />
           <div className="absolute inset-0 rounded-[1rem] bg-background/[0.40]" />

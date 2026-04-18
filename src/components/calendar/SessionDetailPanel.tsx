@@ -20,7 +20,7 @@ interface Props {
 }
 
 const confirmationLabels: Record<string, { label: string; color: string; icon: any }> = {
-  confirmed: { label: "مؤكد", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", icon: CheckCircle2 },
+  confirmed: { label: "مؤكد", color: "text-primary bg-primary/15 border-primary/20", icon: CheckCircle2 },
   declined: { label: "رفض", color: "text-red-400 bg-red-500/10 border-red-500/20", icon: XCircle },
   pending: { label: "بدون رد", color: "text-amber-400 bg-amber-500/10 border-amber-500/20", icon: HelpCircle },
 };
@@ -62,9 +62,9 @@ export default function SessionDetailPanel({
           <div className="flex-1 overflow-y-auto p-5 space-y-5">
             {/* Completion badge */}
             {isCompleted && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" strokeWidth={1.5} />
-                <span className="text-sm font-medium text-emerald-400">تم إكمال الجلسة</span>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/15 border border-primary/20">
+                <CheckCircle2 className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                <span className="text-sm font-medium text-primary">تم إكمال الجلسة</span>
               </div>
             )}
 
@@ -134,7 +134,7 @@ export default function SessionDetailPanel({
             {/* Mark as completed */}
             {!isCompleted && onComplete && (
               <Button
-                className="w-full gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="w-full gap-1.5 bg-primary hover:bg-primary-hover text-white"
                 size="sm"
                 onClick={() => onComplete(session)}
               >

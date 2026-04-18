@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { creditPackageTrainerEarningsFromTap } from "../_shared/creditPackageTrainerEarnings.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +52,7 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+    // Trainer pays platform: no wallet credit; commission 0%; profiles only.
     if (type === "trainer_subscription") {
       const userId = metadata.user_id;
       const plan = metadata.plan;
@@ -99,6 +101,32 @@ serve(async (req) => {
       }
 
       console.log("Webhook: Subscription upgraded via webhook:", userId, plan);
+    } else if (type === "package_purchase") {
+      const trainerId = metadata.trainer_id;
+      if (!trainerId) {
+        console.error("package_purchase webhook: missing trainer_id");
+        return new Response(JSON.stringify({ received: true, error: "Missing trainer_id" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const grossAmount = Number(charge.amount);
+      const credited = await creditPackageTrainerEarningsFromTap(supabase, {
+        tapChargeId: chargeId,
+        trainerId: String(trainerId),
+        grossAmount,
+      });
+
+      if (!credited.ok) {
+        console.error("package_purchase wallet credit failed:", credited.error);
+        return new Response(JSON.stringify({ received: true, error: "Wallet credit failed" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log("Webhook: package_purchase credited", chargeId, trainerId, {
+        idempotent: credited.idempotent,
+      });
     }
 
     return new Response(JSON.stringify({ received: true, processed: true }), {

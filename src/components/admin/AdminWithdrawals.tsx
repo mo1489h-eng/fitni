@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,26 @@ type FilterTab = "all" | "pending" | "accepted" | "paid" | "rejected";
 
 const STATUS_AR: Record<string, string> = {
   pending: "معلق",
-  accepted: "مقبول",
+  accepted: "موافق",
   paid: "مدفوع",
   rejected: "مرفوض",
   cancelled: "ملغى",
 };
+
+function statusBadgeClass(status: string) {
+  switch (status) {
+    case "pending":
+      return "bg-amber-500/15 text-amber-400 border border-amber-500/40";
+    case "accepted":
+      return "bg-sky-500/15 text-sky-400 border border-sky-500/40";
+    case "paid":
+      return "bg-primary/15 text-primary border border-primary/40";
+    case "rejected":
+      return "bg-red-500/15 text-red-400 border border-red-500/40";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
 
 export function AdminWithdrawals({
   withdrawals,
@@ -53,7 +68,12 @@ export function AdminWithdrawals({
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const filtered = withdrawals.filter((w) => {
+  const sorted = useMemo(
+    () => [...withdrawals].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    [withdrawals],
+  );
+
+  const filtered = sorted.filter((w) => {
     if (filter === "all") return true;
     return w.status === filter;
   });
@@ -82,7 +102,7 @@ export function AdminWithdrawals({
         <TabsList className="flex flex-wrap gap-1 bg-muted/30">
           <TabsTrigger value="all">الكل</TabsTrigger>
           <TabsTrigger value="pending">معلق</TabsTrigger>
-          <TabsTrigger value="accepted">مقبول</TabsTrigger>
+          <TabsTrigger value="accepted">موافق</TabsTrigger>
           <TabsTrigger value="paid">مدفوع</TabsTrigger>
           <TabsTrigger value="rejected">مرفوض</TabsTrigger>
         </TabsList>
@@ -141,7 +161,7 @@ export function AdminWithdrawals({
                     {new Date(w.created_at).toLocaleString("ar-SA")}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className={`text-[10px] ${statusBadgeClass(w.status)}`}>
                       {STATUS_AR[w.status] ?? w.status}
                     </Badge>
                   </TableCell>
@@ -160,12 +180,12 @@ export function AdminWithdrawals({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1 text-emerald-600 border-emerald-500/40"
+                            className="gap-1 text-primary-hover border-primary/40"
                             disabled={busyId === w.id}
                             onClick={() => void run(w.id, "approve")}
                           >
                             {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <span aria-hidden>✅</span>}
-                            قبول
+                            موافقة
                           </Button>
                           <Button
                             size="sm"
@@ -182,12 +202,12 @@ export function AdminWithdrawals({
                       {w.status === "accepted" && (
                         <Button
                           size="sm"
-                          className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+                          className="gap-1 bg-primary hover:bg-primary-hover"
                           disabled={busyId === w.id}
                           onClick={() => void run(w.id, "mark_paid")}
                         >
                           {busyId === w.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <span aria-hidden>✅</span>}
-                          تأكيد الدفع
+                          تم التحويل
                         </Button>
                       )}
                     </div>

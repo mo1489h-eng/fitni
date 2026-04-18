@@ -81,7 +81,7 @@ const CopilotReports = () => {
 
   const getScoreColor = (color: string) => {
     switch (color) {
-      case "green": return "text-green-500 bg-green-500/10 border-green-500/20";
+      case "green": return "text-primary bg-primary/15 border-primary/20";
       case "yellow": return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
       case "red": return "text-red-500 bg-red-500/10 border-red-500/20";
       default: return "text-primary bg-primary/10 border-primary/20";
@@ -139,14 +139,14 @@ const CopilotReports = () => {
             <CardContent className="pt-0 pb-4 px-4">
               <div className="grid grid-cols-3 gap-2 mb-3">
                 <div className="text-center bg-secondary rounded-lg p-2.5">
-                  <p className={`text-sm font-bold ${(r.physical_progress.weight_change || 0) < 0 ? "text-green-500" : "text-red-500"}`}>
+                  <p className={`text-sm font-bold ${(r.physical_progress.weight_change || 0) < 0 ? "text-primary" : "text-red-500"}`}>
                     {(r.physical_progress.weight_change || 0) > 0 ? "+" : ""}{r.physical_progress.weight_change || 0} كجم
                   </p>
                   <p className="text-[10px] text-muted-foreground">الوزن</p>
                 </div>
                 {r.physical_progress.body_fat_change !== null && (
                   <div className="text-center bg-secondary rounded-lg p-2.5">
-                    <p className={`text-sm font-bold ${(r.physical_progress.body_fat_change || 0) < 0 ? "text-green-500" : "text-red-500"}`}>
+                    <p className={`text-sm font-bold ${(r.physical_progress.body_fat_change || 0) < 0 ? "text-primary" : "text-red-500"}`}>
                       {(r.physical_progress.body_fat_change || 0) > 0 ? "+" : ""}{r.physical_progress.body_fat_change}%
                     </p>
                     <p className="text-[10px] text-muted-foreground">الدهون</p>
@@ -154,7 +154,7 @@ const CopilotReports = () => {
                 )}
                 {r.physical_progress.muscle_change !== null && (
                   <div className="text-center bg-secondary rounded-lg p-2.5">
-                    <p className={`text-sm font-bold ${(r.physical_progress.muscle_change || 0) > 0 ? "text-green-500" : "text-red-500"}`}>
+                    <p className={`text-sm font-bold ${(r.physical_progress.muscle_change || 0) > 0 ? "text-primary" : "text-red-500"}`}>
                       {(r.physical_progress.muscle_change || 0) > 0 ? "+" : ""}{r.physical_progress.muscle_change} كجم
                     </p>
                     <p className="text-[10px] text-muted-foreground">العضلات</p>

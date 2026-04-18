@@ -9,8 +9,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import Onboarding from "@/pages/Onboarding";
 import Splash from "@/pages/Splash";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
 import ConfirmEmail from "@/pages/ConfirmEmail";
 import { isOnboardingComplete } from "@/lib/onboarding";
 import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
@@ -23,14 +21,18 @@ import { COACH_DASHBOARD, TRAINEE_HOME } from "@/lib/app-routes";
 
 const queryClient = new QueryClient();
 
-function LoginGate() {
+function MobileLoginGate() {
   if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
-  return <Login />;
-}
-
-function RegisterGate() {
-  if (!isOnboardingComplete()) return <Navigate to="/onboarding" replace />;
-  return <Register />;
+  const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
+  return (
+    <MobileLogin
+      onLoginSuccess={async () => {
+        await refreshProfile();
+        navigate("/", { replace: true });
+      }}
+    />
+  );
 }
 
 function MobileAppGate() {
@@ -64,18 +66,17 @@ function MobileAppContent() {
   useEffect(() => {
     if (!fitniRole || !session) return;
     const path = fitniRole === "coach" ? COACH_DASHBOARD : TRAINEE_HOME;
-    if (window.location.pathname !== path) {
+    const p = location.pathname;
+    if (p === "/trainer/session" || p === "/coach/trainer/session") return;
+    if (p !== path) {
       navigate(path, { replace: true });
     }
-  }, [fitniRole, session, navigate]);
+  }, [fitniRole, session, navigate, location.pathname]);
 
   if (loading || profileLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: "#000000" }}>
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-transparent"
-          style={{ borderTopColor: "#22C55E" }}
-        />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-transparent border-t-primary" />
       </div>
     );
   }
@@ -92,10 +93,7 @@ function MobileAppContent() {
 
   if (!fitniRole) {
     return (
-      <div
-        className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center"
-        style={{ background: "#000000", color: "#e5e5e5" }}
-      >
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center text-foreground">
         <p className="text-sm">تعذّر تحديد نوع حسابك. تحقق من الشبكة ثم أعد المحاولة.</p>
         <button
           type="button"
@@ -147,8 +145,8 @@ function MobileRoutes() {
     <Routes>
       <Route path="/splash" element={<Splash />} />
       <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/login" element={<LoginGate />} />
-      <Route path="/register" element={<RegisterGate />} />
+      <Route path="/login" element={<MobileLoginGate />} />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/dashboard" element={<Navigate to="/" replace />} />
       <Route path="/trainer/session" element={<MobileAppGate />} />

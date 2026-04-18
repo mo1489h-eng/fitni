@@ -5,18 +5,18 @@ import { TrendingDown, Dumbbell, Calendar, Trophy, Flame, ShieldCheck } from "lu
 const COLORS = {
   card: "#111111",
   border: "#1e1e1e",
-  green: "#16a34a",
+  green: "#3d5940",
   text: "#ededed",
   muted: "#888888",
   dim: "#555555",
 };
 
 const ACHIEVEMENT_ICONS: Record<string, { icon: any; color: string }> = {
-  weight_loss: { icon: TrendingDown, color: "#22c55e" },
+  weight_loss: { icon: TrendingDown, color: "#4f6f52" },
   muscle_gain: { icon: Dumbbell, color: "#3b82f6" },
   streak: { icon: Flame, color: "#f97316" },
   program_complete: { icon: Trophy, color: "#eab308" },
-  workout_milestone: { icon: Calendar, color: "#8b5cf6" },
+  workout_milestone: { icon: Calendar, color: "#C2A878" },
 };
 
 interface Achievement {

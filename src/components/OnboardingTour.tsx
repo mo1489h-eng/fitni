@@ -229,25 +229,20 @@ const OnboardingTour = ({ forceShow, onForceClose }: OnboardingTourProps) => {
     <div className="fixed inset-0 z-[200]" style={{ pointerEvents: "auto" }}>
       {/* Dark overlay with spotlight cutout */}
       <div
-        className="absolute inset-0 transition-all duration-500"
-        style={{
-          backgroundColor: "rgba(0,0,0,0.75)",
-          clipPath,
-        }}
+        className="absolute inset-0 bg-foreground/70 transition-all duration-500"
+        style={{ clipPath }}
         onClick={close}
       />
 
       {/* Spotlight glow border */}
       {spotlightRect && (
         <div
-          className="absolute rounded-xl pointer-events-none transition-all duration-500"
+          className="pointer-events-none absolute rounded-xl border-2 border-primary transition-all duration-500"
           style={{
             top: spotlightRect.top - 8,
             left: spotlightRect.left - 8,
             width: spotlightRect.width + 16,
             height: spotlightRect.height + 16,
-            border: "2px solid hsl(var(--primary))",
-            boxShadow: "0 0 20px hsl(var(--primary) / 0.4), 0 0 40px hsl(var(--primary) / 0.2)",
             zIndex: 205,
           }}
         />
@@ -255,17 +250,15 @@ const OnboardingTour = ({ forceShow, onForceClose }: OnboardingTourProps) => {
 
       {/* Tooltip card */}
       <div
-        className="w-[320px] max-w-[calc(100vw-32px)] rounded-2xl border border-border shadow-2xl animate-scale-in"
-        style={{
-          ...tooltipStyle,
-          backgroundColor: "#1a1a1a",
-        }}
+        className="relative w-[320px] max-w-[calc(100vw-32px)] animate-scale-in rounded-2xl border border-border bg-card-hover shadow-2xl"
+        style={tooltipStyle}
       >
         <div className="p-5">
           {/* Skip button */}
           <button
+            type="button"
             onClick={close}
-            className="absolute top-3 left-3 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute left-3 top-3 text-muted-foreground transition-colors hover:text-foreground"
           >
             <X className="w-4 h-4" />
           </button>

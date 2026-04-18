@@ -9,7 +9,7 @@ import { EmptyStateIllustration } from "../elite/EmptyStateIllustration";
 import { eliteSpring } from "../elite/spring";
 import { ELITE } from "../workout/designTokens";
 
-const ACCENT = "#22C55E";
+const ACCENT = "#4f6f52";
 
 type TrainerMobileHomeProps = {
   onGoSchedule?: () => void;
@@ -104,9 +104,9 @@ const TrainerMobileHome = ({ onGoSchedule }: TrainerMobileHomeProps) => {
                 label: "الأداء",
                 value: dash?.performanceGrade ?? "—",
                 icon: Activity,
-                color: "#8B5CF6",
+                color: "#4F6F52",
                 sub: `درجة مركّبة (${dash?.performanceScore ?? 0}/100)`,
-                glow: "violet" as const,
+                glow: "emerald" as const,
               },
             ].map((stat) => (
               <motion.div
@@ -175,7 +175,7 @@ const TrainerMobileHome = ({ onGoSchedule }: TrainerMobileHomeProps) => {
                 <Pressable
                   onClick={onGoSchedule}
                   className="mt-6 w-full rounded-[20px] py-4 text-sm font-semibold text-[#0a0a0a]"
-                  style={{ background: "linear-gradient(135deg, #22C55E, #16A34A)" }}
+                  style={{ background: "linear-gradient(135deg, #4f6f52, #3d5940)" }}
                 >
                   ابدأ بجدولة جلسة
                 </Pressable>
@@ -205,7 +205,7 @@ const TrainerMobileHome = ({ onGoSchedule }: TrainerMobileHomeProps) => {
                   <div
                     className="shrink-0 rounded-2xl px-3 py-2 text-[10px] font-medium"
                     style={{
-                      background: session.is_completed ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                      background: session.is_completed ? "rgba(79,111,82,0.15)" : "rgba(255,255,255,0.05)",
                       color: session.is_completed ? ACCENT : ELITE.textTertiary,
                     }}
                   >

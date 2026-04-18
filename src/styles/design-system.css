@@ -1,0 +1,71 @@
+/**
+ * CoachBase design tokens (reference + documentation).
+ * Runtime theming uses HSL triplets in index.css for Tailwind hsl(var(--*)) compatibility.
+ */
+:root {
+  /* Light — warm off-white surfaces */
+  --bg-base: #f5f5f0;
+  --bg-card: #ebebe5;
+  --bg-hover: #e0e0da;
+  --bg-elevated: #e8e8e2;
+
+  /* Primary — Muted Olive */
+  --primary: #4f6f52;
+  --primary-hover: #3d5940;
+  --primary-light: #6b8f6e;
+  --primary-foreground: #f0f0f0;
+
+  /* Text */
+  --text-primary: #0e0e0f;
+  --text-secondary: #4b4b4b;
+  --text-muted: #6b7280;
+
+  /* Accent — Warm Sand (financial only) */
+  --accent: #c2a878;
+  --accent-subtle: rgba(194, 168, 120, 0.1);
+
+  /* Status */
+  --success: #4f6f52;
+  --error: #b91c1c;
+  --warning: #92400e;
+  --info: #1e3a5f;
+
+  /* Borders */
+  --border: #d4d4ce;
+  --border-subtle: #e0e0da;
+  --border-strong: #c8c8c2;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}
+
+.dark {
+  --bg-base: #0e0e0f;
+  --bg-card: #141414;
+  --bg-hover: #1a1a1a;
+  --bg-elevated: #1f1f1f;
+
+  --primary: #4f6f52;
+  --primary-hover: #3d5940;
+  --primary-light: #6b8f6e;
+  --primary-foreground: #f0f0f0;
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  --accent: #c2a878;
+  --accent-subtle: rgba(194, 168, 120, 0.1);
+
+  --success: #4f6f52;
+  --error: #b91c1c;
+  --warning: #92400e;
+  --info: #1e3a5f;
+
+  --border: #1f1f1f;
+  --border-subtle: #262626;
+  --border-strong: #2a2a2a;
+}

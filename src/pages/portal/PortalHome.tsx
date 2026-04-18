@@ -199,7 +199,7 @@ const PortalHome = () => {
                       <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[hsl(0_0%_8%)]">
                         <Button
                           size="sm"
-                          className="flex-1 h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                          className="flex-1 h-9 gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs"
                           onClick={async () => {
                             await supabase.rpc("update_session_confirmation" as any, { p_token: token, p_session_id: session.id, p_status: "confirmed" });
                             queryClient.invalidateQueries({ queryKey: ["portal-upcoming-sessions"] });
@@ -223,7 +223,7 @@ const PortalHome = () => {
                       </div>
                     )}
                     {confirmStatus === "confirmed" && (
-                      <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-primary">
                         <CheckCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
                         <span>تم التأكيد</span>
                       </div>

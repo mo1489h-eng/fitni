@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 const CHALLENGE_ICONS: Record<string, any> = {
   weight_loss: { icon: Flame, color: "text-orange-400" },
   consistency: { icon: Activity, color: "text-blue-400" },
-  exercises: { icon: Dumbbell, color: "text-purple-400" },
+  exercises: { icon: Dumbbell, color: "text-muted-foreground" },
   strength: { icon: TrendingUp, color: "text-red-400" },
   duration: { icon: Timer, color: "text-cyan-400" },
 };

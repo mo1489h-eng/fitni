@@ -13,14 +13,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogOut, User, Loader2, Camera, Pencil } from "lucide-react";
+import { LogOut, User, Loader2, Camera, Pencil, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface TrainerMobileProfileProps {
   onLogout: () => void;
 }
 
-const ACCENT = "#22C55E";
+const ACCENT = "#4f6f52";
+
+const WEB_APP_ORIGIN = (import.meta.env.VITE_WEB_APP_ORIGIN as string | undefined)?.replace(/\/$/, "") || "https://coachbase.health";
 
 const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   const navigate = useNavigate();
@@ -35,17 +37,6 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   const trainerName = profile?.full_name || "المدرب";
   const email = user?.email ?? "—";
   const roleLabel = "مدرب";
-  const createdAt = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString("ar-SA", { dateStyle: "medium" })
-    : "—";
-
-  const planLabel =
-    profile?.subscription_plan === "pro"
-      ? "الخطة الاحترافية"
-      : profile?.subscription_plan === "basic"
-        ? "الخطة الأساسية"
-        : "الفترة المجانية";
-
   const updateMutation = useMutation({
     mutationFn: async (payload: { full_name: string; avatar_url?: string | null }) => {
       if (!user) throw new Error("لا يوجد مستخدم");
@@ -108,7 +99,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
         <Loader2 className="h-9 w-9 animate-spin" style={{ color: ACCENT }} />
-        <p className="text-sm text-white/50">جاري تحميل الحساب…</p>
+        <p className="text-sm text-muted-foreground">جاري تحميل الحساب…</p>
       </div>
     );
   }
@@ -116,8 +107,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   return (
     <div className="space-y-6">
       <motion.div
-        className="rounded-2xl p-5"
-        style={{ background: "#111111" }}
+        className="rounded-2xl bg-card p-5"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
@@ -134,7 +124,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
             ) : (
               <div
                 className="flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold"
-                style={{ background: "rgba(34,197,94,0.15)", color: ACCENT }}
+                style={{ background: "rgba(79,111,82,0.15)", color: ACCENT }}
               >
                 {trainerName.charAt(0).toUpperCase()}
               </div>
@@ -144,12 +134,12 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
               aria-label="تغيير الصورة"
               disabled={uploading}
               onClick={() => fileRef.current?.click()}
-              className="absolute -bottom-1 -left-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#1a1a1a] shadow-lg"
+              className="absolute -bottom-1 -left-1 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card-hover shadow-lg"
             >
               {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white/80" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               ) : (
-                <Camera className="h-4 w-4 text-white/90" strokeWidth={1.5} />
+                <Camera className="h-4 w-4 text-foreground" strokeWidth={1.5} />
               )}
             </button>
             <input
@@ -161,14 +151,14 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold text-white">{trainerName}</h2>
-            <p className="mt-1 truncate text-xs text-white/50" dir="ltr">
+            <h2 className="text-lg font-bold text-foreground">{trainerName}</h2>
+            <p className="mt-1 truncate text-xs text-muted-foreground" dir="ltr">
               {email}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <span
                 className="inline-block rounded-full px-3 py-1 text-[11px] font-medium"
-                style={{ background: "rgba(34,197,94,0.12)", color: ACCENT }}
+                style={{ background: "rgba(79,111,82,0.12)", color: ACCENT }}
               >
                 {roleLabel}
               </span>
@@ -179,24 +169,34 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
                 {planLabel}
               </span>
             </div>
-            <p className="mt-3 text-[10px] text-white/35">عضو منذ {createdAt}</p>
+            <p className="mt-3 text-[10px] text-muted-foreground">عضو منذ {createdAt}</p>
           </div>
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="mt-5 w-full border-white/10 bg-white/5 text-white hover:bg-white/10"
+          className="mt-5 w-full border-border bg-muted/40 text-foreground hover:bg-muted"
           onClick={handleOpenEdit}
         >
           <Pencil className="ml-2 h-4 w-4" strokeWidth={1.5} />
           تعديل الملف الشخصي
         </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-3 w-full border-border bg-muted/40 text-foreground hover:bg-muted"
+          onClick={() => window.open(WEB_APP_ORIGIN, "_blank", "noopener,noreferrer")}
+        >
+          <ExternalLink className="ml-2 h-4 w-4" strokeWidth={1.5} />
+          إدارة المنصة
+        </Button>
       </motion.div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#111111" }}>
-        <div className="flex items-center gap-3 px-5 py-4 text-sm text-white/70">
-          <User className="h-5 w-5 shrink-0 text-white/40" strokeWidth={1.5} />
+      <div className="overflow-hidden rounded-2xl bg-card">
+        <div className="flex items-center gap-3 px-5 py-4 text-sm text-muted-foreground">
+          <User className="h-5 w-5 shrink-0 text-muted-foreground/80" strokeWidth={1.5} />
           <span>البيانات مأخوذة من جدول الملفات في Supabase ومتزامنة مع حسابك.</span>
         </div>
       </div>
@@ -212,7 +212,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
       </button>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="border-white/10 bg-[#111111] text-white sm:max-w-md" dir="rtl">
+        <DialogContent className="border-border bg-card text-foreground sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle>تعديل الملف الشخصي</DialogTitle>
           </DialogHeader>
@@ -223,7 +223,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
                 id="full_name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="border-white/10 bg-[#0a0a0a] text-white"
+                className="border-border bg-background text-foreground"
                 placeholder="اسمك الكامل"
               />
             </div>
@@ -236,7 +236,7 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
             <Button
               onClick={() => void handleSave()}
               disabled={saving || !name.trim()}
-              className="bg-[#22C55E] text-black hover:bg-[#16a34a]"
+              className="bg-primary text-primary-foreground hover:bg-primary-hover"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ"}
             </Button>

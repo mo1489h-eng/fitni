@@ -136,7 +136,7 @@ const PortalProgress = () => {
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(0 0% 40%)" }} />
                 <YAxis tick={{ fontSize: 11, fill: "hsl(0 0% 40%)" }} domain={["auto", "auto"]} />
                 <Tooltip contentStyle={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 15%)", borderRadius: 8, color: "white" }} />
-                <Line type="monotone" dataKey="weight" stroke="hsl(142 76% 36%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(142 76% 36%)" }} name="الوزن (كجم)" />
+                <Line type="monotone" dataKey="weight" stroke="hsl(125 17% 37%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(125 17% 37%)" }} name="الوزن (كجم)" />
               </LineChart>
             </ResponsiveContainer>
           </div>

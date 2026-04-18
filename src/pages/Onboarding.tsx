@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { isOnboardingComplete, markOnboardingComplete } from "@/lib/onboarding";
 
 const BG = "#050505";
-const PRIMARY = "#22C55E";
+const PRIMARY = "#4f6f52";
 
 export type OnboardingSlideData = {
   title: string;

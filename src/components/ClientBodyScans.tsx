@@ -96,8 +96,8 @@ const ClientBodyScans = ({ clientId }: Props) => {
   });
 
   const getBmiInfo = (bmi: number) => {
-    if (bmi < 18.5) return { label: "نقص في الوزن", color: "text-blue-500" };
-    if (bmi < 25) return { label: "طبيعي", color: "text-green-500" };
+    if (bmi < 18.5) return { label: "نقص في الوزن", color: "text-[#60a5fa]" };
+    if (bmi < 25) return { label: "طبيعي", color: "text-primary" };
     if (bmi < 30) return { label: "زيادة", color: "text-yellow-500" };
     return { label: "سمنة", color: "text-red-500" };
   };
@@ -158,7 +158,7 @@ const ClientBodyScans = ({ clientId }: Props) => {
                 ].map(c => (
                   <div key={c.label} className="bg-muted/50 rounded-lg p-2">
                     <p className="text-[10px] text-muted-foreground">{c.label}</p>
-                    <p className={`text-sm font-bold flex items-center justify-center gap-0.5 ${c.diff < 0 ? "text-green-500" : c.diff > 0 ? "text-red-500" : "text-muted-foreground"}`}>
+                    <p className={`text-sm font-bold flex items-center justify-center gap-0.5 ${c.diff < 0 ? "text-primary" : c.diff > 0 ? "text-red-500" : "text-muted-foreground"}`}>
                       {c.diff > 0 ? <TrendingUp className="w-3 h-3" /> : c.diff < 0 ? <TrendingDown className="w-3 h-3" /> : null}
                       {c.diff > 0 ? "+" : ""}{c.diff.toFixed(1)} {c.unit}
                     </p>

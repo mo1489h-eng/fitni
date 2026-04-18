@@ -42,7 +42,7 @@ const ACTION_CHIPS = [
 ];
 
 const AVATAR_COLORS = [
-  "bg-emerald-600", "bg-blue-600", "bg-purple-600", "bg-orange-600",
+  "bg-primary", "bg-blue-600", "bg-elevated", "bg-orange-600",
   "bg-pink-600", "bg-teal-600", "bg-indigo-600", "bg-cyan-600",
 ];
 

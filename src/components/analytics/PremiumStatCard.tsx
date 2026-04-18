@@ -44,7 +44,7 @@ export function PremiumStatCard({
       <div
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(59,130,246,0.1) 50%, transparent 70%)",
+          background: "linear-gradient(135deg, rgba(79,111,82,0.12) 0%, rgba(59,130,246,0.1) 50%, transparent 70%)",
           padding: 1,
         }}
       />
@@ -65,7 +65,7 @@ export function PremiumStatCard({
               {trendPct != null && !Number.isNaN(trendPct) ? (
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${
-                    positive ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+                    positive ? "bg-primary/15 text-primary" : "bg-red-500/15 text-red-400"
                   }`}
                 >
                   {positive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
@@ -80,15 +80,15 @@ export function PremiumStatCard({
                 <AreaChart data={chartData} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22C55E" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#22C55E" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#4f6f52" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#4f6f52" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <YAxis hide domain={["dataMin", "dataMax"]} />
                   <Area
                     type="monotone"
                     dataKey={dataKey}
-                    stroke="#22C55E"
+                    stroke="#4f6f52"
                     strokeWidth={1.5}
                     fill={`url(#${gradId})`}
                     isAnimationActive

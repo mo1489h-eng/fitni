@@ -71,8 +71,8 @@ export function RealisticHumanHeatmap({
           onClick={() => setView("front")}
           className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
-            background: view === "front" ? "rgba(34,197,94,0.2)" : "#111",
-            color: view === "front" ? "#4ade80" : "#666",
+            background: view === "front" ? "rgba(79,111,82,0.2)" : "#111",
+            color: view === "front" ? "#6b8f6e" : "#666",
           }}
         >
           أمامي
@@ -82,8 +82,8 @@ export function RealisticHumanHeatmap({
           onClick={() => setView("back")}
           className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
-            background: view === "back" ? "rgba(34,197,94,0.2)" : "#111",
-            color: view === "back" ? "#4ade80" : "#666",
+            background: view === "back" ? "rgba(79,111,82,0.2)" : "#111",
+            color: view === "back" ? "#6b8f6e" : "#666",
           }}
         >
           خلفي

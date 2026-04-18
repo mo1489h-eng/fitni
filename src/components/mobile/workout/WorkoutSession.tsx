@@ -221,36 +221,35 @@ export default function WorkoutSession() {
           <button
             type="button"
             onClick={() => setExitOpen(true)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95"
-            style={{ background: "#0d0d0d", border: "1px solid rgba(255,255,255,0.08)" }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card transition active:scale-95"
             aria-label="إغلاق"
           >
-            <X className="h-5 w-5 text-white" />
+            <X className="h-5 w-5 text-foreground" />
           </button>
-          <p className="max-w-[50%] truncate text-center text-[15px] font-bold tracking-tight text-white">
+          <p className="max-w-[50%] truncate text-center text-[15px] font-bold tracking-tight text-foreground">
             {programName || "التمرين"}
           </p>
           <div className="relative h-11 w-11">
             <svg className="h-11 w-11 -rotate-90" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15" fill="none" stroke="#1f1f1f" strokeWidth="3" />
+              <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--border-strong))" strokeWidth="3" />
               <circle
                 cx="18"
                 cy="18"
                 r="15"
                 fill="none"
-                stroke="#22C55E"
+                stroke="hsl(var(--primary))"
                 strokeWidth="3"
                 strokeDasharray={94.2}
                 strokeDashoffset={94.2 * (1 - progressPct)}
                 className="transition-all duration-500"
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-foreground">
               {exercisesDone}/{totalEx}
             </span>
           </div>
         </div>
-        <p className="text-center text-[11px] tabular-nums text-white/35">{formatMmSs(elapsedMs)}</p>
+        <p className="text-center text-[11px] tabular-nums text-muted-foreground">{formatMmSs(elapsedMs)}</p>
       </header>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-28">
@@ -274,8 +273,7 @@ export default function WorkoutSession() {
                 <button
                   type="button"
                   onClick={() => setInfoOpen(true)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition active:scale-95"
-                  style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)" }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition active:scale-95"
                   aria-label="معلومات"
                 >
                   <Info className="h-4 w-4" />
@@ -283,12 +281,12 @@ export default function WorkoutSession() {
               ) : null}
             </div>
 
-            <h1 className="mb-1 text-[26px] font-bold leading-tight tracking-tight text-white">{ex.name}</h1>
-            <p className="mb-3 text-[13px] text-white/40">
+            <h1 className="mb-1 text-[26px] font-bold leading-tight tracking-tight text-foreground">{ex.name}</h1>
+            <p className="mb-3 text-[13px] text-muted-foreground">
               المجموعة {setWithinExercise} من {ex.sets}
             </p>
 
-            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#050505]">
+            <div className="relative mb-4 aspect-[4/3] w-full overflow-hidden rounded-2xl bg-background">
               {!gifLoading && gifSrc ? (
                 <ExerciseGifImage
                   src={gifSrc}
@@ -297,19 +295,19 @@ export default function WorkoutSession() {
                   objectFit="contain"
                   loading="eager"
                   errorFallback={
-                    <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-[#0a0a0a]">
-                      <Dumbbell className="h-16 w-16 text-white/15" strokeWidth={1} />
+                    <div className="flex h-full min-h-[200px] w-full items-center justify-center bg-background">
+                      <Dumbbell className="h-16 w-16 text-muted-foreground/30" strokeWidth={1} />
                     </div>
                   }
                 />
               ) : (
                 <div className="flex h-full min-h-[200px] items-center justify-center">
-                  <Dumbbell className="h-16 w-16 animate-pulse text-white/10" strokeWidth={1} />
+                  <Dumbbell className="h-16 w-16 animate-pulse text-muted-foreground/20" strokeWidth={1} />
                 </div>
               )}
             </div>
 
-            <div className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] text-white/55">
+            <div className="mb-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
               <span>
                 {trainerOnline ? "🟢" : "⚪"} المدرب {trainerOnline ? "متصل الآن" : "غير متصل"}
               </span>
@@ -325,7 +323,7 @@ export default function WorkoutSession() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.25 }}
-                  className="mb-2 text-center text-[11px] font-medium text-emerald-400/95"
+                  className="mb-2 text-center text-[11px] font-medium text-primary/95"
                 >
                   {lastLiveAction}
                 </motion.p>
@@ -333,8 +331,8 @@ export default function WorkoutSession() {
             </AnimatePresence>
 
             {/* Logging table */}
-            <div className="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-[#0a0a0a]">
-              <div className="grid grid-cols-4 gap-0 border-b border-white/[0.06] px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-white/35">
+            <div className="mb-4 overflow-hidden rounded-xl border border-border/60 bg-background">
+              <div className="grid grid-cols-4 gap-0 border-b border-border/60 px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <span className="text-right">مجموعة</span>
                 <span className="text-center">سابق</span>
                 <span className="text-center col-span-2">الحالي</span>
@@ -355,25 +353,25 @@ export default function WorkoutSession() {
                             scale: [1, 1.02, 1],
                             boxShadow: [
                               "inset 0 0 0 0px transparent",
-                              "inset 0 0 0 1px rgba(34,197,94,0.5), 0 0 14px rgba(34,197,94,0.22)",
-                              "inset 0 0 0 1px rgba(34,197,94,0.2)",
+                              "inset 0 0 0 1px rgba(79,111,82,0.5), 0 0 14px rgba(79,111,82,0.22)",
+                              "inset 0 0 0 1px rgba(79,111,82,0.2)",
                             ],
                           }
                         : { scale: 1, boxShadow: "none" }
                     }
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className={`grid grid-cols-4 items-center gap-0 border-b border-white/[0.04] px-2 py-2.5 text-sm last:border-0 ${
+                    className={`grid grid-cols-4 items-center gap-0 border-b border-border/40 px-2 py-2.5 text-sm last:border-0 ${
                       flash ? "" : ""
                     }`}
                     style={{
-                      background: active ? "rgba(34,197,94,0.06)" : flash ? "rgba(34,197,94,0.1)" : "transparent",
+                      background: active ? "rgba(79,111,82,0.06)" : flash ? "rgba(79,111,82,0.1)" : "transparent",
                     }}
                   >
-                    <span className="font-bold text-white">{n}</span>
-                    <span className="text-center text-white/35">
+                    <span className="font-bold text-foreground">{n}</span>
+                    <span className="text-center text-muted-foreground">
                       {prevW != null && prevR != null ? `${prevW}×${prevR}` : "—"}
                     </span>
-                    <span className="col-span-2 text-center font-semibold text-white">
+                    <span className="col-span-2 text-center font-semibold text-foreground">
                       {done ? `${done.weight}×${done.reps}` : active ? "…" : "—"}
                     </span>
                   </motion.div>
@@ -382,10 +380,10 @@ export default function WorkoutSession() {
             </div>
 
             {/* RPE — after exercise intensity; high RPE adds rest via store */}
-            <div className="mb-4 rounded-xl border border-white/[0.06] bg-[#0a0a0a] px-3 py-3">
+            <div className="mb-4 rounded-xl border border-border/60 bg-background px-3 py-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-bold text-white/50">مجهود (RPE)</span>
-                <span className="text-lg font-black tabular-nums text-emerald-400">{rpe}</span>
+                <span className="text-[11px] font-bold text-muted-foreground">مجهود (RPE)</span>
+                <span className="text-lg font-black tabular-nums text-primary">{rpe}</span>
               </div>
               <input
                 type="range"
@@ -393,18 +391,17 @@ export default function WorkoutSession() {
                 max={10}
                 value={rpe}
                 onChange={(e) => setRpe(Number(e.target.value))}
-                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gradient-to-l from-red-600 via-amber-400 to-emerald-500"
-                style={{ accentColor: "#22c55e" }}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-gradient-to-l from-red-600 via-amber-400 to-primary"
+                style={{ accentColor: "hsl(var(--primary))" }}
               />
-              <p className="mt-1 text-[10px] text-white/30">بعد 8 يُقترح +30 ث راحة تلقائياً</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">بعد 8 يُقترح +30 ث راحة تلقائياً</p>
             </div>
 
             {awaitingNextExercise && exerciseIndex < totalEx - 1 ? (
               <button
                 type="button"
                 onClick={() => goNextExercise()}
-                className="mb-4 w-full rounded-2xl py-4 text-[15px] font-black text-black transition active:scale-[0.99]"
-                style={{ background: "linear-gradient(135deg,#22C55E,#16A34A)", boxShadow: "0 12px 40px rgba(34,197,94,0.3)" }}
+                className="mb-4 w-full rounded-2xl bg-primary py-4 text-[15px] font-black text-primary-foreground transition active:scale-[0.99]"
               >
                 التمرين التالي
               </button>
@@ -413,10 +410,9 @@ export default function WorkoutSession() {
                 <div className="mb-2 flex gap-2">
                   <button
                     type="button"
-                    className="flex-1 rounded-xl border px-3 py-3 text-left transition active:scale-[0.99]"
+                    className="flex-1 rounded-xl border border-border bg-card px-3 py-3 text-left transition active:scale-[0.99]"
                     style={{
-                      borderColor: keypadField === "weight" ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.08)",
-                      background: "#0d0d0d",
+                      borderColor: keypadField === "weight" ? "rgba(79,111,82,0.5)" : undefined,
                       opacity: inputsLockedFromHistory ? 0.65 : 1,
                     }}
                     onClick={() => {
@@ -424,15 +420,14 @@ export default function WorkoutSession() {
                       setKeypadField("weight");
                     }}
                   >
-                    <p className="text-[10px] font-bold text-white/35">وزن kg</p>
-                    <p className="text-xl font-black tabular-nums text-white">{weight || "—"}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground">وزن kg</p>
+                    <p className="text-xl font-black tabular-nums text-foreground">{weight || "—"}</p>
                   </button>
                   <button
                     type="button"
-                    className="flex-1 rounded-xl border px-3 py-3 text-left transition active:scale-[0.99]"
+                    className="flex-1 rounded-xl border border-border bg-card px-3 py-3 text-left transition active:scale-[0.99]"
                     style={{
-                      borderColor: keypadField === "reps" ? "rgba(34,197,94,0.5)" : "rgba(255,255,255,0.08)",
-                      background: "#0d0d0d",
+                      borderColor: keypadField === "reps" ? "rgba(79,111,82,0.5)" : undefined,
                       opacity: inputsLockedFromHistory ? 0.65 : 1,
                     }}
                     onClick={() => {
@@ -440,8 +435,8 @@ export default function WorkoutSession() {
                       setKeypadField("reps");
                     }}
                   >
-                    <p className="text-[10px] font-bold text-white/35">تكرار</p>
-                    <p className="text-xl font-black tabular-nums text-white">{reps || "—"}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground">تكرار</p>
+                    <p className="text-xl font-black tabular-nums text-foreground">{reps || "—"}</p>
                   </button>
                 </div>
 
@@ -455,8 +450,7 @@ export default function WorkoutSession() {
                 <button
                   type="button"
                   onClick={() => void onCompletePress()}
-                  className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-[15px] font-black text-black transition active:scale-[0.99]"
-                  style={{ background: "linear-gradient(135deg,#22C55E,#16A34A)", boxShadow: "0 12px 40px rgba(34,197,94,0.3)" }}
+                  className="mb-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-[15px] font-black text-primary-foreground transition active:scale-[0.99]"
                 >
                   <Check className="h-6 w-6" strokeWidth={2.5} />
                   إكمال المجموعة
@@ -468,13 +462,12 @@ export default function WorkoutSession() {
               <button
                 type="button"
                 onClick={() => setDrawerOpen(true)}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold text-white transition active:scale-95"
-                style={{ background: "#111" }}
+                className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 text-[13px] font-bold text-foreground transition active:scale-95"
               >
                 <List className="h-4 w-4" />
                 القائمة
               </button>
-              <p className="text-[11px] text-white/35">
+              <p className="text-[11px] text-muted-foreground">
                 {setsDone}/{totalSets} مجموعات
               </p>
             </div>
@@ -487,23 +480,21 @@ export default function WorkoutSession() {
       )}
       {drawerOpen && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-[121] max-h-[55vh] overflow-y-auto rounded-t-2xl border border-white/[0.08] p-4"
-          style={{ background: "#0a0a0a" }}
+          className="fixed bottom-0 left-0 right-0 z-[121] max-h-[55vh] overflow-y-auto rounded-t-2xl border border-border/60 bg-background p-4"
           dir="rtl"
         >
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15" />
-          <p className="mb-3 text-base font-bold text-white">التمارين</p>
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted-foreground/25" />
+          <p className="mb-3 text-base font-bold text-foreground">التمارين</p>
           <ul className="space-y-1">
             {plan.map((p, i) => {
               const done = countExercisesFullyDone([p], completed) === 1;
               return (
                 <li
                   key={p.exerciseId}
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-sm"
-                  style={{ background: i === exerciseIndex ? "#141414" : "transparent" }}
+                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${i === exerciseIndex ? "bg-card" : "bg-transparent"}`}
                 >
-                  <span className={done ? "text-white/40 line-through" : "text-white"}>{p.name}</span>
-                  {done && <Check className="h-4 w-4 text-emerald-500" />}
+                  <span className={done ? "text-muted-foreground line-through" : "text-foreground"}>{p.name}</span>
+                  {done && <Check className="h-4 w-4 text-primary" />}
                 </li>
               );
             })}
@@ -512,25 +503,25 @@ export default function WorkoutSession() {
       )}
 
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-        <SheetContent side="bottom" className="border-white/[0.08] bg-[#0a0a0a] text-white" dir="rtl">
+        <SheetContent side="bottom" className="border-border/60 bg-background text-foreground" dir="rtl">
           <SheetHeader>
             <SheetTitle className="text-right text-base">تعليمات المدرب</SheetTitle>
           </SheetHeader>
-          <p className="mt-3 whitespace-pre-wrap text-right text-sm leading-relaxed text-white/70">{ex.instructionsAr || "—"}</p>
+          <p className="mt-3 whitespace-pre-wrap text-right text-sm leading-relaxed text-muted-foreground">{ex.instructionsAr || "—"}</p>
         </SheetContent>
       </Sheet>
 
       <AlertDialog open={exitOpen} onOpenChange={setExitOpen}>
-        <AlertDialogContent className="border-white/[0.08] bg-[#111] text-right text-white" dir="rtl">
+        <AlertDialogContent className="border-border/60 bg-card text-right text-foreground" dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle>إنهاء التمرين؟</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
+            <AlertDialogDescription className="text-muted-foreground">
               يُحفظ تقدمك محلياً وعلى الخادم عند الاتصال.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:justify-start">
-            <AlertDialogCancel className="border-0 bg-[#1a1a1a] text-white">إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onClose()} className="border-0 bg-emerald-500 text-black">
+            <AlertDialogCancel className="border-0 bg-card-hover text-foreground">إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onClose()} className="border-0 bg-primary text-primary-foreground">
               إنهاء
             </AlertDialogAction>
           </AlertDialogFooter>

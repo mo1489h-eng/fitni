@@ -36,16 +36,16 @@ function NavLinkButton({
   const inner = (
     <Link
       to={item.href}
-      className={`group relative flex items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-all duration-300 ease-in-out hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.25)] active:scale-95 ${
+      className={`group relative flex items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-colors duration-200 ease-out active:scale-[0.99] ${
         collapsed ? "justify-center" : ""
       } ${
         active
-          ? "border-primary/20 bg-primary/[0.08] text-foreground shadow-sm"
+          ? "bg-card text-foreground shadow-none"
           : "text-muted-foreground hover:bg-card hover:text-foreground"
       }`}
     >
       <span
-        className={`pointer-events-none absolute inset-y-2 end-0 w-[3px] rounded-full transition-colors ${
+        className={`pointer-events-none absolute inset-y-2 end-0 w-[2px] rounded-full transition-colors ${
           active ? "bg-primary" : "bg-transparent"
         }`}
       />
@@ -104,7 +104,7 @@ export function TrainerSidebar({
     >
       <div className="border-b border-border px-4 py-6">
         <Link to={COACH_DASHBOARD} className="flex items-center gap-3 overflow-hidden">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 shadow-[0_0_28px_hsl(var(--primary)/0.18)] transition-all duration-300 ease-in-out hover:shadow-[0_12px_40px_-16px_hsl(var(--primary)/0.35)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-colors duration-200">
             <span className="text-lg font-black text-primary">CB</span>
           </div>
           {!collapsed ? (

@@ -16,14 +16,14 @@ const features: Feature[] = [
 
 /* ─── Photo-based visual for clients & portal ─── */
 const PhotoVisual = ({ src, alt }: {src: string;alt: string;}) =>
-<div className="relative overflow-hidden rounded-[12px] shadow-[0_0_40px_hsl(var(--primary)/0.12)]">
+<div className="relative overflow-hidden rounded-[12px] shadow-sm">
     <img
     src={src}
     alt={alt}
     loading="lazy"
     className="block w-full h-full object-cover"
     style={{ aspectRatio: "16/10" }} />
-    <div className="absolute inset-0 rounded-[12px] ring-1 ring-inset ring-primary/25 shadow-[inset_0_0_30px_hsl(var(--primary)/0.08)]" />
+    <div className="absolute inset-0 rounded-[12px] ring-1 ring-inset ring-border-strong/40" />
   </div>;
 
 

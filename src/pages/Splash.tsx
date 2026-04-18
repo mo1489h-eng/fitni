@@ -8,7 +8,7 @@ import { hideNativeSplashAfterPaint } from "@/lib/native-splash";
 import { SPLASH_SESSION_KEY } from "@/lib/splash-session";
 
 const BG = "#050505";
-const PRIMARY = "#22C55E";
+const PRIMARY = "#4f6f52";
 
 const MIN_VISIBLE_MS = 1600;
 const MAX_AUTH_WAIT_MS = 6000;

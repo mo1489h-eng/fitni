@@ -65,7 +65,7 @@ const NpsFeedbackModal = ({ open, onOpenChange, triggerType }: NpsFeedbackModalP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-md border-border bg-[#0f0f0f] p-0"
+        className="max-w-md border-border bg-card p-0"
         aria-describedby={undefined}
       >
         <div className="p-6" dir="rtl">

@@ -32,13 +32,12 @@
       (function () {
         try {
           var d = document.documentElement;
-          var t = localStorage.getItem("theme");
-          var dark = false;
-          if (t === "dark") dark = true;
-          else if (t === "light") dark = false;
-          else dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (dark) d.classList.add("dark");
-          else d.classList.remove("dark");
+          var saved = localStorage.getItem("theme");
+          if (saved === "light") {
+            d.classList.remove("dark");
+          } else {
+            d.classList.add("dark");
+          }
         } catch (e) {}
       })();
     </script>
@@ -46,12 +45,12 @@
       html,
       body,
       #root {
-        background-color: hsl(210 40% 98%);
+        background-color: #f5f5f0;
       }
       html.dark,
       html.dark body,
       html.dark #root {
-        background-color: #000000;
+        background-color: #0e0e0f;
       }
     </style>
     <meta property="og:title" content="CoachBase - منصة المدرب الشخصي">

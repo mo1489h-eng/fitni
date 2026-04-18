@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -10,10 +10,31 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       body_scans: {
         Row: {
           activity_level: string
@@ -427,15 +448,7 @@ export type Database = {
           title?: string
           type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "client_notifications_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       client_payments: {
         Row: {
@@ -604,13 +617,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "clients_program_id_fkey"
-            columns: ["program_id"]
-            isOneToOne: false
-            referencedRelation: "programs"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "clients_referred_by_client_id_fkey"
             columns: ["referred_by_client_id"]
             isOneToOne: false
@@ -700,7 +706,7 @@ export type Database = {
           created_at?: string
           id?: string
           messages?: Json
-          role?: string
+          role: string
           updated_at?: string
           user_id: string
         }
@@ -713,7 +719,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "copilot_conversations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       copilot_messages: {
         Row: {
@@ -836,37 +850,37 @@ export type Database = {
       }
       exercisedb_cache: {
         Row: {
-          body_part: string
-          created_at: string
-          equipment: string
+          body_part: string | null
+          created_at: string | null
+          equipment: string | null
           gif_url: string | null
           id: string
           instructions: string[] | null
-          name: string
+          name: string | null
           secondary_muscles: string[] | null
-          target: string
+          target: string | null
         }
         Insert: {
-          body_part?: string
-          created_at?: string
-          equipment?: string
+          body_part?: string | null
+          created_at?: string | null
+          equipment?: string | null
           gif_url?: string | null
           id: string
           instructions?: string[] | null
-          name?: string
+          name?: string | null
           secondary_muscles?: string[] | null
-          target?: string
+          target?: string | null
         }
         Update: {
-          body_part?: string
-          created_at?: string
-          equipment?: string
+          body_part?: string | null
+          created_at?: string | null
+          equipment?: string | null
           gif_url?: string | null
           id?: string
           instructions?: string[] | null
-          name?: string
+          name?: string | null
           secondary_muscles?: string[] | null
-          target?: string
+          target?: string | null
         }
         Relationships: []
       }
@@ -1174,15 +1188,7 @@ export type Database = {
           protein?: number
           quantity?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "meal_items_meal_plan_id_fkey"
-            columns: ["meal_plan_id"]
-            isOneToOne: false
-            referencedRelation: "meal_plans"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       meal_logs: {
         Row: {
@@ -1520,6 +1526,7 @@ export type Database = {
           bio: string | null
           brand_color: string | null
           created_at: string
+          email_verified: boolean
           founder_discount_used: boolean
           full_name: string
           gallery_images: string[] | null
@@ -1534,10 +1541,11 @@ export type Database = {
           onboarding_steps_completed: string[]
           page_config: Json | null
           payment_status: string | null
-          phone: string | null
+          phone: number | null
           referral_enabled: boolean | null
           referral_reward_text: string | null
           referral_reward_type: string | null
+          role: string
           social_links: Json | null
           specialization: string | null
           subscribed_at: string | null
@@ -1554,6 +1562,7 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          email_verified?: boolean
           founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
@@ -1568,10 +1577,11 @@ export type Database = {
           onboarding_steps_completed?: string[]
           page_config?: Json | null
           payment_status?: string | null
-          phone?: string | null
+          phone?: number | null
           referral_enabled?: boolean | null
           referral_reward_text?: string | null
           referral_reward_type?: string | null
+          role?: string
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
@@ -1588,6 +1598,7 @@ export type Database = {
           bio?: string | null
           brand_color?: string | null
           created_at?: string
+          email_verified?: boolean
           founder_discount_used?: boolean
           full_name?: string
           gallery_images?: string[] | null
@@ -1602,10 +1613,11 @@ export type Database = {
           onboarding_steps_completed?: string[]
           page_config?: Json | null
           payment_status?: string | null
-          phone?: string | null
+          phone?: number | null
           referral_enabled?: boolean | null
           referral_reward_text?: string | null
           referral_reward_type?: string | null
+          role?: string
           social_links?: Json | null
           specialization?: string | null
           subscribed_at?: string | null
@@ -1641,15 +1653,7 @@ export type Database = {
           id?: string
           program_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "program_days_program_id_fkey"
-            columns: ["program_id"]
-            isOneToOne: false
-            referencedRelation: "programs"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       program_exercises: {
         Row: {
@@ -1774,10 +1778,9 @@ export type Database = {
       programs: {
         Row: {
           created_at: string
-          delivery_mode: string
           description: string | null
           difficulty: string | null
-          equipment: string
+          equipment: string | null
           goal: string | null
           id: string
           is_template: boolean
@@ -1787,10 +1790,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          delivery_mode?: string
           description?: string | null
           difficulty?: string | null
-          equipment?: string
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1800,10 +1802,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          delivery_mode?: string
           description?: string | null
           difficulty?: string | null
-          equipment?: string
+          equipment?: string | null
           goal?: string | null
           id?: string
           is_template?: boolean
@@ -1931,6 +1932,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      session_logs: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          exercise_id: string | null
+          id: string
+          reps: number | null
+          session_id: string | null
+          set_number: number | null
+          updated_by: string | null
+          weight: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          exercise_id?: string | null
+          id?: string
+          reps?: number | null
+          session_id?: string | null
+          set_number?: number | null
+          updated_by?: string | null
+          weight?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          exercise_id?: string | null
+          id?: string
+          reps?: number | null
+          session_id?: string | null
+          set_number?: number | null
+          updated_by?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          client_id: string
+          id: string
+          started_at: string | null
+          status: string | null
+          trainer_id: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          trainer_id: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          trainer_id?: string
+        }
+        Relationships: []
+      }
+      tap_wallet_settlements: {
+        Row: {
+          amount: number
+          created_at: string
+          kind: string
+          tap_charge_id: string
+          trainer_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          kind: string
+          tap_charge_id: string
+          trainer_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          kind?: string
+          tap_charge_id?: string
+          trainer_id?: string
+        }
+        Relationships: []
       }
       trainer_discovery_profiles: {
         Row: {
@@ -2194,38 +2287,94 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
-          created_at: string
-          currency: string
+          commission: number
+          created_at: string | null
           description: string | null
           id: string
+          net_amount: number
           reference_id: string | null
           status: string
           trainer_id: string
           type: string
         }
         Insert: {
-          amount?: number
-          created_at?: string
-          currency?: string
+          amount: number
+          commission?: number
+          created_at?: string | null
           description?: string | null
           id?: string
+          net_amount: number
           reference_id?: string | null
           status?: string
           trainer_id: string
-          type?: string
+          type: string
         }
         Update: {
           amount?: number
-          created_at?: string
-          currency?: string
+          commission?: number
+          created_at?: string | null
           description?: string | null
           id?: string
+          net_amount?: number
           reference_id?: string | null
           status?: string
           trainer_id?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "transactions_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_muscle_status: {
+        Row: {
+          client_id: string
+          id: string
+          initial_fatigue: number
+          last_stimulus_at: string
+          muscle_group: string
+          total_recovery_hours: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          initial_fatigue: number
+          last_stimulus_at: string
+          muscle_group: string
+          total_recovery_hours: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          initial_fatigue?: number
+          last_stimulus_at?: string
+          muscle_group?: string
+          total_recovery_hours?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_muscle_status_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vault_lessons: {
         Row: {
@@ -2356,56 +2505,75 @@ export type Database = {
       }
       wallets: {
         Row: {
-          balance_available: number
-          created_at: string
+          balance: number
+          created_at: string | null
           id: string
           pending_balance: number
-          total_earnings: number
+          total_earned: number
           trainer_id: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          balance_available?: number
-          created_at?: string
+          balance?: number
+          created_at?: string | null
           id?: string
           pending_balance?: number
-          total_earnings?: number
+          total_earned?: number
           trainer_id: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          balance_available?: number
-          created_at?: string
+          balance?: number
+          created_at?: string | null
           id?: string
           pending_balance?: number
-          total_earnings?: number
+          total_earned?: number
           trainer_id?: string
-          updated_at?: string
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallets_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "wallets_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       withdrawals: {
         Row: {
           account_holder_name: string
           admin_notes: string | null
           amount: number
-          bank_name: string
-          created_at: string
-          iban: string
+          bank_iban: string
+          bank_name: string | null
+          created_at: string | null
           id: string
+          notes: string | null
           processed_at: string | null
+          requested_at: string | null
           status: string
           trainer_id: string
         }
         Insert: {
-          account_holder_name?: string
+          account_holder_name: string
           admin_notes?: string | null
-          amount?: number
-          bank_name?: string
-          created_at?: string
-          iban?: string
+          amount: number
+          bank_iban: string
+          bank_name?: string | null
+          created_at?: string | null
           id?: string
+          notes?: string | null
           processed_at?: string | null
+          requested_at?: string | null
           status?: string
           trainer_id: string
         }
@@ -2413,15 +2581,32 @@ export type Database = {
           account_holder_name?: string
           admin_notes?: string | null
           amount?: number
-          bank_name?: string
-          created_at?: string
-          iban?: string
+          bank_iban?: string
+          bank_name?: string | null
+          created_at?: string | null
           id?: string
+          notes?: string | null
           processed_at?: string | null
+          requested_at?: string | null
           status?: string
           trainer_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "withdrawals_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       workout_logs: {
         Row: {
@@ -2502,35 +2687,52 @@ export type Database = {
           created_at: string
           exercise_id: string
           id: string
-          program_day_id: string | null
-          reps_completed: number
+          notes: string | null
+          program_day_id: string
+          reps_completed: number | null
           session_id: string
           set_number: number
-          weight_used: number
+          weight_used: number | null
         }
         Insert: {
           completed_at?: string
           created_at?: string
           exercise_id: string
           id?: string
-          program_day_id?: string | null
-          reps_completed?: number
+          notes?: string | null
+          program_day_id: string
+          reps_completed?: number | null
           session_id: string
-          set_number?: number
-          weight_used?: number
+          set_number: number
+          weight_used?: number | null
         }
         Update: {
           completed_at?: string
           created_at?: string
           exercise_id?: string
           id?: string
-          program_day_id?: string | null
-          reps_completed?: number
+          notes?: string | null
+          program_day_id?: string
+          reps_completed?: number | null
           session_id?: string
           set_number?: number
-          weight_used?: number
+          weight_used?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_session_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "program_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_session_exercises_program_day_id_fkey"
+            columns: ["program_day_id"]
+            isOneToOne: false
+            referencedRelation: "program_days"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_session_exercises_session_id_fkey"
             columns: ["session_id"]
@@ -2545,46 +2747,37 @@ export type Database = {
           client_id: string
           completed_at: string | null
           created_at: string
-          current_exercise_index: number
           duration_minutes: number | null
           id: string
-          is_active: boolean
           notes: string | null
           program_day_id: string
           started_at: string
           total_sets: number | null
           total_volume: number | null
-          trainer_id: string | null
         }
         Insert: {
           client_id: string
           completed_at?: string | null
           created_at?: string
-          current_exercise_index?: number
           duration_minutes?: number | null
           id?: string
-          is_active?: boolean
           notes?: string | null
           program_day_id: string
           started_at?: string
           total_sets?: number | null
           total_volume?: number | null
-          trainer_id?: string | null
         }
         Update: {
           client_id?: string
           completed_at?: string | null
           created_at?: string
-          current_exercise_index?: number
           duration_minutes?: number | null
           id?: string
-          is_active?: boolean
           notes?: string | null
           program_day_id?: string
           started_at?: string
           total_sets?: number | null
           total_volume?: number | null
-          trainer_id?: string | null
         }
         Relationships: [
           {
@@ -2640,15 +2833,13 @@ export type Database = {
       }
     }
     Functions: {
-      cancel_withdrawal: {
-        Args: { p_withdrawal_id: string }
-        Returns: undefined
-      }
+      check_email_account_type: { Args: { p_email: string }; Returns: string }
       cleanup_copilot_messages: { Args: never; Returns: undefined }
       complete_trainer_session: {
         Args: { p_session_id: string }
         Returns: boolean
       }
+      compute_profile_role: { Args: { p_uid: string }; Returns: string }
       create_client_matches: {
         Args: { p_intake_id: string; p_matches: Json }
         Returns: number
@@ -2666,6 +2857,9 @@ export type Database = {
         }[]
       }
       create_session_reminders: { Args: never; Returns: number }
+      ensure_trainer_profile: { Args: never; Returns: undefined }
+      ensure_user_profile: { Args: never; Returns: undefined }
+      get_auth_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_client_by_invite_token: {
         Args: { p_token: string }
         Returns: {
@@ -2796,14 +2990,9 @@ export type Database = {
           bio: string
           brand_color: string
           full_name: string
-          gallery_images: string[]
           logo_url: string
-          page_config: Json
-          social_links: Json
           specialization: string
-          title: string
           user_id: string
-          username: string
           welcome_message: string
         }[]
       }
@@ -2885,6 +3074,7 @@ export type Database = {
         Returns: string
       }
       is_pro_trainer: { Args: { _user_id: string }; Returns: boolean }
+      is_trainee_to_coach_escalation_allowed: { Args: never; Returns: boolean }
       link_client_account: {
         Args: { p_auth_user_id: string; p_invite_token: string }
         Returns: string
@@ -2918,6 +3108,8 @@ export type Database = {
         }
         Returns: string
       }
+      repair_all_roles: { Args: never; Returns: number }
+      repair_profile_role_from_metadata: { Args: never; Returns: boolean }
       request_withdrawal: {
         Args: {
           p_account_holder_name: string
@@ -2926,6 +3118,12 @@ export type Database = {
           p_iban: string
         }
         Returns: undefined
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      sync_profile_email_verification_from_auth: {
+        Args: never
+        Returns: boolean
       }
       toggle_portal_meal_log: {
         Args: { p_meal_item_id: string; p_token: string }

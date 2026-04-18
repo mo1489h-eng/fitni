@@ -85,8 +85,8 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
           onClick={() => setView("front")}
           className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
-            background: view === "front" ? "rgba(34,197,94,0.2)" : "#111",
-            color: view === "front" ? "#4ade80" : "#666",
+            background: view === "front" ? "rgba(79,111,82,0.2)" : "#111",
+            color: view === "front" ? "#6b8f6e" : "#666",
           }}
         >
           أمامي
@@ -96,8 +96,8 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
           onClick={() => setView("back")}
           className="rounded-full px-4 py-2 text-xs font-bold transition"
           style={{
-            background: view === "back" ? "rgba(34,197,94,0.2)" : "#111",
-            color: view === "back" ? "#4ade80" : "#666",
+            background: view === "back" ? "rgba(79,111,82,0.2)" : "#111",
+            color: view === "back" ? "#6b8f6e" : "#666",
           }}
         >
           خلفي
@@ -171,7 +171,7 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
               <p className="-mt-10 text-[10px] font-black text-white">{tip.recoveryPct}%</p>
             </div>
             <p className="font-bold text-white">{labelAr(tip.id)}</p>
-            <p className="text-[11px] text-emerald-400/90">
+            <p className="text-[11px] text-primary/90">
               الحالة: {tip.status} ({Math.round(tip.fatigue * 100)}% إجهاد)
             </p>
             <p className="mt-1 text-[11px] text-zinc-400">

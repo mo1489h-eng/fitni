@@ -1,7 +1,7 @@
 import { Brain, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ACCENT = "#22C55E";
+const ACCENT = "#4f6f52";
 
 type Props = {
   size?: "sm" | "md";
@@ -26,8 +26,8 @@ export function CoachBaseAIMark({ size = "md", className, showLabel = true }: Pr
       >
         <Brain className={cn(icon, "absolute text-white/90")} strokeWidth={1.5} />
         <Zap
-          className={cn(icon, "relative text-[#22C55E]")}
-          style={{ filter: "drop-shadow(0 0 6px rgba(34,197,94,0.8))" }}
+          className={cn(icon, "relative text-[#4f6f52]")}
+          style={{ filter: "drop-shadow(0 0 6px rgba(79,111,82,0.8))" }}
           strokeWidth={2.2}
         />
       </span>

@@ -67,12 +67,12 @@ export function EmailVerificationBanner() {
     if (successDismissed) return null;
     return (
       <div
-        className="mx-4 mt-4 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-4 py-3 flex items-center justify-between gap-3"
+        className="mx-4 mt-4 rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 flex items-center justify-between gap-3"
         dir="rtl"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 flex-shrink-0">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" strokeWidth={1.5} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 flex-shrink-0">
+            <CheckCircle2 className="h-4 w-4 text-primary" strokeWidth={1.5} />
           </div>
           <p className="text-sm font-medium text-foreground">تم تأكيد بريدك الإلكتروني</p>
         </div>

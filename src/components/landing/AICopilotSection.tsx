@@ -8,7 +8,7 @@ import { Reveal } from "./LandingUtils";
 const AICopilotSection = ({ copilotStep }: { copilotStep: number }) => (
   <section
     className="relative overflow-hidden border-t border-border px-4 py-24 md:px-6 md:py-32"
-    style={{ ["--copilot-glow" as string]: "276 62% 46%" } as React.CSSProperties}
+    style={{ ["--copilot-glow" as string]: "125 17% 37%" } as React.CSSProperties}
   >
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--copilot-glow)/0.16),transparent_35%),radial-gradient(circle_at_bottom_right,hsl(var(--primary)/0.18),transparent_34%)]" />
     <div className="relative mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
@@ -21,7 +21,7 @@ const AICopilotSection = ({ copilotStep }: { copilotStep: number }) => (
         <p className="mt-6 max-w-xl text-xl leading-9 text-foreground/60">
           أدخل بيانات عميلك واحصل على برنامج تدريب كامل في 8 ثوانٍ، بصياغة واضحة وقابلة للتخصيص فوراً.
         </p>
-        <Button asChild className="mt-10 h-14 rounded-full px-8 text-lg font-bold shadow-[0_20px_60px_hsl(var(--primary)/0.28)]">
+        <Button asChild className="mt-10 h-14 rounded-full px-8 text-lg font-bold shadow-none">
           <Link to="/register" className="inline-flex items-center gap-2">جرّب الكوبايلت<ArrowLeft className="h-5 w-5" /></Link>
         </Button>
       </Reveal>
@@ -54,7 +54,7 @@ const AICopilotSection = ({ copilotStep }: { copilotStep: number }) => (
                 <div><div className="font-bold text-foreground">Generated Program</div><div className="text-sm text-foreground/45">Week 1 structure</div></div>
                 <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">جاهز</div>
               </div>
-              <div className={`rounded-[1.75rem] border border-primary/20 bg-background/80 p-4 transition-all duration-500 ${copilotStep === 3 ? "shadow-[0_0_60px_hsl(var(--primary)/0.18)]" : ""}`}>
+              <div className={`rounded-[1.75rem] border border-primary/20 bg-background/80 p-4 transition-all duration-500 ${copilotStep === 3 ? "bg-card/90" : ""}`}>
                 <div className="space-y-3">
                   {["Push · 6 تمارين", "Pull · 6 تمارين", "Legs · 7 تمارين", "Upper · 5 تمارين"].map((item) => (
                     <div key={item} className="flex items-center justify-between rounded-2xl border border-border bg-card/75 px-4 py-3">

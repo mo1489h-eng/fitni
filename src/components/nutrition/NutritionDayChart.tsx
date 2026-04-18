@@ -21,11 +21,11 @@ const NutritionDayChart = ({ data, target }: NutritionDayChartProps) => {
     label: DAYS_AR[new Date(d.day).getDay()] || d.day,
     fill: target
       ? d.calories >= target * 0.8 && d.calories <= target * 1.1
-        ? "hsl(142 76% 36%)"
+        ? "hsl(125 17% 37%)"
         : d.calories > target * 1.2
           ? "hsl(0 84% 60%)"
           : "hsl(45 93% 47%)"
-      : "hsl(142 76% 36%)",
+      : "hsl(125 17% 37%)",
   }));
 
   return (
@@ -41,7 +41,7 @@ const NutritionDayChart = ({ data, target }: NutritionDayChartProps) => {
             formatter={(value: number) => [`${value} سعرة`, "السعرات"]}
           />
           <Bar dataKey="calories" radius={[4, 4, 0, 0]} maxBarSize={32}
-            fill="hsl(142 76% 36%)" />
+            fill="hsl(125 17% 37%)" />
         </BarChart>
       </ResponsiveContainer>
     </div>

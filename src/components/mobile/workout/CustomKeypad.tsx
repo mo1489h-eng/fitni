@@ -120,7 +120,7 @@ function Adj({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="h-10 rounded-xl text-[11px] font-bold text-emerald-400/90 transition active:scale-95"
+      className="h-10 rounded-xl text-[11px] font-bold text-primary/90 transition active:scale-95"
       style={{ background: KEY, border: `1px solid ${BORDER}` }}
     >
       {label}

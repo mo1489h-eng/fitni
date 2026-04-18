@@ -43,7 +43,7 @@ const ClientPdfReport = ({ client, measurements, trainerName }: ClientPdfReportP
       let y = 20;
 
       // Header bar
-      doc.setFillColor(22, 163, 74); // green-600
+      doc.setFillColor(79, 111, 82); // primary olive
       doc.rect(0, 0, pageWidth, 35, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(22);

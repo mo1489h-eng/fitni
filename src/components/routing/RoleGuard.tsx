@@ -15,11 +15,9 @@ type Props = {
  * Role comes from `profiles.role` only (never localStorage).
  */
 export function RoleGuard({ allowed, children }: Props) {
-  const { loading, profileLoading, user, profile, resolvedFitniRole } = useAuth();
+  const { loading, profileLoading, user, profile } = useAuth();
 
-  const effectiveRole = useMemo((): FitniRole | null => {
-    return resolvedFitniRole ?? normalizeFitniRole(profile?.role);
-  }, [profile?.role, resolvedFitniRole]);
+  const effectiveRole = useMemo((): FitniRole | null => normalizeFitniRole(profile?.role), [profile?.role]);
 
   // Wait for auth session to be determined
   if (loading) {
@@ -44,7 +42,7 @@ export function RoleGuard({ allowed, children }: Props) {
     );
   }
 
-  // Session exists but role still null after profile fetch — keep resolving (ensure_user_profile + resolveFitniRole).
+  // Session exists but `profiles.role` still null after profile load — wait for DB/trigger (no client inference).
   if (!effectiveRole) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4">

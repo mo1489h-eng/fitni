@@ -13,15 +13,15 @@ const Footer = () => (
         {/* Social Icons */}
         <div className="flex items-center gap-3 mt-5">
           <a href="https://www.instagram.com/coachbase.health" target="_blank" rel="noopener noreferrer" aria-label="Instagram"
-            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#22c55e]">
+            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#4f6f52]">
             <Instagram className="h-5 w-5" />
           </a>
           <a href="https://x.com/CoachBasehealth" target="_blank" rel="noopener noreferrer" aria-label="Twitter"
-            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#22c55e]">
+            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#4f6f52]">
             <Twitter className="h-5 w-5" />
           </a>
           <a href="https://linkedin.com/company/coachbase" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#22c55e]">
+            className="rounded-full border border-border p-2.5 transition-colors duration-200 text-[#888888] hover:text-[#4f6f52]">
             <Linkedin className="h-5 w-5" />
           </a>
         </div>

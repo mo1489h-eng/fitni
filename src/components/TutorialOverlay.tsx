@@ -156,8 +156,8 @@ const TutorialOverlay = () => {
             left: spotlightRect.left - pad,
             width: spotlightRect.width + pad * 2,
             height: spotlightRect.height + pad * 2,
-            border: "2px solid hsl(var(--primary))",
-            boxShadow: "0 0 24px hsl(var(--primary) / 0.35)",
+            border: "2px solid #4f6f52",
+            boxShadow: "none",
             zIndex: 205,
           }}
         />

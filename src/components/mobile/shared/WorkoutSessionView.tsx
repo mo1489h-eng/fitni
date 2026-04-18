@@ -30,8 +30,7 @@ type Props = {
   variant?: "client" | "trainer";
 };
 
-const ACCENT = "#22C55E";
-const BG = "#050505";
+const ACCENT = "#4f6f52";
 
 export default function WorkoutSessionView({
   clientId,
@@ -300,24 +299,21 @@ export default function WorkoutSessionView({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center" style={{ background: BG }}>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-transparent" style={{ borderTopColor: ACCENT }} />
-        <p className="mt-4 text-sm" style={{ color: "#888" }}>
-          جاري تحميل التمرين…
-        </p>
+        <p className="mt-4 text-sm text-muted-foreground">جاري تحميل التمرين…</p>
       </div>
     );
   }
 
   if (loadError || !plan?.length) {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6" style={{ background: BG }}>
-        <p className="text-center text-sm text-white">{loadError || "لا يوجد تمارين"}</p>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background px-6">
+        <p className="text-center text-sm text-foreground">{loadError || "لا يوجد تمارين"}</p>
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 rounded-xl px-6 py-3 text-sm font-bold text-white"
-          style={{ background: "#222" }}
+          className="mt-6 rounded-xl bg-card px-6 py-3 text-sm font-bold text-foreground"
         >
           إغلاق
         </button>
@@ -328,62 +324,61 @@ export default function WorkoutSessionView({
   if (phase === "summary") {
     const mins = Math.max(1, Math.round((Date.now() - startMsRef.current) / 60000));
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: BG }} dir="rtl">
+      <div className="fixed inset-0 z-[100] flex flex-col bg-background" dir="rtl">
         <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
           <button type="button" onClick={onClose} className="p-2" style={{ color: ACCENT }}>
             <ChevronRight className="h-6 w-6" />
           </button>
-          <span className="text-sm font-medium text-white">اكتمل التمرين</span>
+          <span className="text-sm font-medium text-foreground">اكتمل التمرين</span>
           <span className="w-10" />
         </div>
         <div className="flex flex-1 flex-col items-center justify-center px-6 pb-12">
           <div
             className="mb-6 flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: "rgba(34,197,94,0.15)" }}
+            style={{ background: "rgba(79,111,82,0.15)" }}
           >
             <Trophy className="h-10 w-10" style={{ color: ACCENT }} strokeWidth={1.5} />
           </div>
-          <h2 className="mb-2 text-2xl font-black text-white">أحسنت!</h2>
-          <p className="mb-8 text-center text-sm" style={{ color: "#888" }}>
+          <h2 className="mb-2 text-2xl font-black text-foreground">أحسنت!</h2>
+          <p className="mb-8 text-center text-sm text-muted-foreground">
             ملخص جلستك
           </p>
           <div className="w-full max-w-sm space-y-4">
-            <div className="rounded-2xl p-5" style={{ background: "#111" }}>
-              <p className="text-[11px] uppercase tracking-wide" style={{ color: "#666" }}>
+            <div className="rounded-2xl bg-card p-5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 الحجم الكلي
               </p>
-              <p className="text-3xl font-bold text-white">{Math.round(volumeTotal)}</p>
-              <p className="text-xs" style={{ color: "#666" }}>
+              <p className="text-3xl font-bold text-foreground">{Math.round(volumeTotal)}</p>
+              <p className="text-xs text-muted-foreground">
                 كجم × تكرار
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl p-4" style={{ background: "#111" }}>
-                <p className="text-[10px]" style={{ color: "#666" }}>
+              <div className="rounded-2xl bg-card p-4">
+                <p className="text-[10px] text-muted-foreground">
                   الوقت
                 </p>
-                <p className="text-xl font-bold text-white">{mins} د</p>
+                <p className="text-xl font-bold text-foreground">{mins} د</p>
               </div>
-              <div className="rounded-2xl p-4" style={{ background: "#111" }}>
-                <p className="text-[10px]" style={{ color: "#666" }}>
+              <div className="rounded-2xl bg-card p-4">
+                <p className="text-[10px] text-muted-foreground">
                   المجموعات
                 </p>
-                <p className="text-xl font-bold text-white">{completedSets}</p>
+                <p className="text-xl font-bold text-foreground">{completedSets}</p>
               </div>
             </div>
-            <div className="rounded-2xl p-4" style={{ background: "#111" }}>
-              <p className="text-[10px]" style={{ color: "#666" }}>
+            <div className="rounded-2xl bg-card p-4">
+              <p className="text-[10px] text-muted-foreground">
                 تمارين في الجلسة
               </p>
-              <p className="text-lg font-bold text-white">{plan.length}</p>
+              <p className="text-lg font-bold text-foreground">{plan.length}</p>
             </div>
           </div>
           <button
             type="button"
             disabled={saving}
             onClick={onClose}
-            className="mt-10 w-full max-w-sm rounded-2xl py-4 text-base font-bold text-black"
-            style={{ background: `linear-gradient(135deg, ${ACCENT}, #16A34A)` }}
+            className="mt-10 w-full max-w-sm rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground"
           >
             تم
           </button>
@@ -394,18 +389,14 @@ export default function WorkoutSessionView({
 
   if (phase === "rest") {
     return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center px-6" style={{ background: BG }} dir="rtl">
-        <button type="button" onClick={handleExit} className="absolute right-4 top-[max(12px,env(safe-area-inset-top))] p-2" style={{ color: "#666" }}>
+      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background px-6" dir="rtl">
+        <button type="button" onClick={handleExit} className="absolute right-4 top-[max(12px,env(safe-area-inset-top))] p-2 text-muted-foreground">
           <X className="h-6 w-6" />
         </button>
         <Timer className="mb-4 h-12 w-12" style={{ color: ACCENT }} strokeWidth={1.25} />
-        <p className="mb-2 text-sm font-medium" style={{ color: "#888" }}>
-          راحة
-        </p>
-        <p className="text-7xl font-black tabular-nums text-white">{restRemaining}</p>
-        <p className="mt-2 text-sm" style={{ color: "#666" }}>
-          ثانية
-        </p>
+        <p className="mb-2 text-sm font-medium text-muted-foreground">راحة</p>
+        <p className="text-7xl font-black tabular-nums text-foreground">{restRemaining}</p>
+        <p className="mt-2 text-sm text-muted-foreground">ثانية</p>
         <button
           type="button"
           onClick={() => {
@@ -425,10 +416,10 @@ export default function WorkoutSessionView({
 
   const ex = currentExercise!;
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: BG }} dir="rtl">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-background" dir="rtl">
       <header className="shrink-0 px-4 pt-[max(8px,env(safe-area-inset-top))] pb-3">
         {sessionId ? (
-          <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] text-white/55">
+          <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
             <span>
               {trainerOnline ? "🟢" : "⚪"} المدرب {trainerOnline ? "متصل الآن" : "غير متصل"}
             </span>
@@ -445,10 +436,10 @@ export default function WorkoutSessionView({
         {isTrainer && (
           <div
             className="mb-2 flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-medium"
-            style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}
+            style={{ background: "rgba(79,111,82,0.08)", border: "1px solid rgba(79,111,82,0.2)" }}
           >
             <Radio className="h-3.5 w-3.5 shrink-0 animate-pulse" style={{ color: ACCENT }} />
-            <span style={{ color: "#888" }}>مباشر</span>
+            <span className="text-muted-foreground">مباشر</span>
             <span className="tabular-nums font-semibold" style={{ color: ACCENT }}>
               {liveSyncCount} تحديث
             </span>
@@ -459,14 +450,14 @@ export default function WorkoutSessionView({
             <ChevronRight className="h-5 w-5" />
             خروج
           </button>
-          <span className="text-xs font-medium" style={{ color: "#666" }}>
+          <span className="text-xs font-medium text-muted-foreground">
             {exerciseIndex + 1} / {plan.length}
           </span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "#1a1a1a" }}>
+        <div className="h-1.5 overflow-hidden rounded-full bg-card-hover">
           <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progressPct}%`, background: ACCENT }} />
         </div>
-        <p className="mt-2 text-center text-[11px]" style={{ color: "#555" }}>
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
           {progressPct}% مكتمل
         </p>
       </header>
@@ -475,45 +466,39 @@ export default function WorkoutSessionView({
         <div className="mb-4 flex items-start gap-3">
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
-            style={{ background: "rgba(34,197,94,0.12)" }}
+            style={{ background: "rgba(79,111,82,0.12)" }}
           >
             <Dumbbell className="h-6 w-6" style={{ color: ACCENT }} strokeWidth={1.5} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: "#666" }}>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {ex.isWarmup ? "إحماء" : "تمرين"}
             </p>
-            <h1 className="text-xl font-black leading-tight text-white">{ex.name}</h1>
-            <p className="mt-1 text-sm" style={{ color: "#888" }}>
+            <h1 className="text-xl font-black leading-tight text-foreground">{ex.name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               المجموعة {setWithinExercise} من {ex.sets}
             </p>
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl p-4" style={{ background: "#111" }}>
+        <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl bg-card p-4">
           <div>
-            <p className="text-[10px]" style={{ color: "#666" }}>
-              المجموعات
-            </p>
-            <p className="text-lg font-bold text-white">{ex.sets}</p>
+            <p className="text-[10px] text-muted-foreground">المجموعات</p>
+            <p className="text-lg font-bold text-foreground">{ex.sets}</p>
           </div>
           <div>
-            <p className="text-[10px]" style={{ color: "#666" }}>
-              التكرار
-            </p>
-            <p className="text-lg font-bold text-white">{ex.reps}</p>
+            <p className="text-[10px] text-muted-foreground">التكرار</p>
+            <p className="text-lg font-bold text-foreground">{ex.reps}</p>
           </div>
           <div>
-            <p className="text-[10px]" style={{ color: "#666" }}>
-              الوزن (كجم)
-            </p>
-            <p className="text-lg font-bold text-white">{ex.weight || "—"}</p>
+            <p className="text-[10px] text-muted-foreground">الوزن (كجم)</p>
+            <p className="text-lg font-bold text-foreground">{ex.weight || "—"}</p>
           </div>
         </div>
 
         {isTrainer && (
           <div className="mb-4">
-            <label className="mb-1 block text-[10px] font-medium" style={{ color: "#666" }}>
+            <label className="mb-1 block text-[10px] font-medium text-muted-foreground">
               ملاحظة المدرب (اختياري)
             </label>
             <textarea
@@ -521,40 +506,31 @@ export default function WorkoutSessionView({
               onChange={(e) => setSetNote(e.target.value)}
               rows={2}
               placeholder="تقنية، تعديل، ملاحظة للمجموعة…"
-              className="w-full resize-none rounded-xl border-0 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600"
-              style={{ background: "#161616" }}
+              className="w-full resize-none rounded-xl border-0 bg-card px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
         )}
-        <p className="mb-2 text-xs font-medium" style={{ color: "#888" }}>
-          سجّل ما أنجزته
-        </p>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">سجّل ما أنجزته</p>
         <div className="mb-6 grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-[10px]" style={{ color: "#666" }}>
-              الوزن الفعلي
-            </label>
+            <label className="mb-1 block text-[10px] text-muted-foreground">الوزن الفعلي</label>
             <input
               type="number"
               inputMode="decimal"
               value={actualWeight}
               onChange={(e) => setActualWeight(e.target.value)}
-              className="w-full rounded-xl border-0 px-4 py-4 text-lg font-bold text-white outline-none"
-              style={{ background: "#161616" }}
+              className="w-full rounded-xl border-0 bg-card px-4 py-4 text-lg font-bold text-foreground outline-none"
               dir="ltr"
             />
           </div>
           <div>
-            <label className="mb-1 block text-[10px]" style={{ color: "#666" }}>
-              التكرار الفعلي
-            </label>
+            <label className="mb-1 block text-[10px] text-muted-foreground">التكرار الفعلي</label>
             <input
               type="number"
               inputMode="numeric"
               value={actualReps}
               onChange={(e) => setActualReps(e.target.value)}
-              className="w-full rounded-xl border-0 px-4 py-4 text-lg font-bold text-white outline-none"
-              style={{ background: "#161616" }}
+              className="w-full rounded-xl border-0 bg-card px-4 py-4 text-lg font-bold text-foreground outline-none"
               dir="ltr"
             />
           </div>
@@ -564,8 +540,7 @@ export default function WorkoutSessionView({
           <button
             type="button"
             onClick={() => void logSetAndAdvance()}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl py-5 text-base font-black text-black active:scale-[0.99]"
-            style={{ background: `linear-gradient(135deg, ${ACCENT}, #16A34A)`, boxShadow: "0 12px 40px rgba(34,197,94,0.35)" }}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-5 text-base font-black text-primary-foreground shadow-lg shadow-primary/35 active:scale-[0.99]"
           >
             <Check className="h-5 w-5" strokeWidth={2.5} />
             إكمال المجموعة

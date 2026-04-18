@@ -54,8 +54,8 @@ const ALL_SPECIALTIES = [
 ];
 
 const THEMES = [
-  { value: "dark", label: "داكن", preview: "#050505", accent: "#16a34a" },
-  { value: "light", label: "فاتح", preview: "#ffffff", accent: "#16a34a" },
+  { value: "dark", label: "داكن", preview: "#050505", accent: "#3d5940" },
+  { value: "light", label: "فاتح", preview: "#ffffff", accent: "#3d5940" },
   { value: "gold", label: "ذهبي", preview: "#050505", accent: "#d4a853" },
   { value: "blue", label: "أزرق", preview: "#050505", accent: "#3b82f6" },
 ];
@@ -72,7 +72,7 @@ const SECTION_LABELS: Record<string, string> = {
   testimonials: "آراء العملاء", cta: "دعوة للعمل",
 };
 
-const ACCENT_COLORS = ["#16a34a", "#3b82f6", "#d4a853", "#ef4444", "#8b5cf6", "#ec4899"];
+const ACCENT_COLORS = ["#3d5940", "#3b82f6", "#d4a853", "#ef4444", "#C2A878", "#ec4899"];
 
 const PageBuilder = () => {
   const { user, profile } = useAuth();
@@ -210,47 +210,47 @@ const PageBuilder = () => {
   const pageUrl = profile?.username ? `${publicDomain}/t/${profile.username}` : "";
 
   const themeColors: Record<string, { bg: string; accent: string; text: string; muted: string; card: string; border: string }> = {
-    dark: { bg: "#050505", accent: "#16a34a", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },
-    light: { bg: "#ffffff", accent: "#16a34a", text: "#111", muted: "#666", card: "#f5f5f5", border: "#e5e5e5" },
+    dark: { bg: "#050505", accent: "#3d5940", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },
+    light: { bg: "#ffffff", accent: "#3d5940", text: "#111", muted: "#666", card: "#f5f5f5", border: "#e5e5e5" },
     gold: { bg: "#050505", accent: "#d4a853", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },
     blue: { bg: "#050505", accent: "#3b82f6", text: "#ededed", muted: "#888", card: "#0f0f0f", border: "#1a1a1a" },
   };
   const pt = themeColors[config.theme] || themeColors.dark;
 
   return (
-    <div className="min-h-screen bg-[#050505]" dir="rtl">
+    <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-[hsl(0_0%_10%)] px-4 py-3 bg-[#050505]/90">
+      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-border px-4 py-3 bg-background/90">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-[#888] hover:text-white" onClick={() => navigate("/settings")}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => navigate("/settings")}>
               <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
               الإعدادات
             </Button>
             {autoSaved && (
-              <span className="text-xs text-[#555] flex items-center gap-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <CheckCircle className="w-3 h-3" strokeWidth={1.5} />
                 حُفظ تلقائياً
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 bg-[#0f0f0f] rounded-lg p-1 border border-[hsl(0_0%_10%)]">
+            <div className="flex items-center gap-0.5 bg-card rounded-lg p-1 border border-border">
               <button
                 onClick={() => setPreviewMode("mobile")}
-                className={`p-2 rounded-md transition-colors ${previewMode === "mobile" ? "bg-primary text-primary-foreground" : "text-[#555] hover:text-white"}`}
+                className={`p-2 rounded-md transition-colors ${previewMode === "mobile" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Smartphone className="w-4 h-4" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => setPreviewMode("desktop")}
-                className={`p-2 rounded-md transition-colors ${previewMode === "desktop" ? "bg-primary text-primary-foreground" : "text-[#555] hover:text-white"}`}
+                className={`p-2 rounded-md transition-colors ${previewMode === "desktop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Monitor className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
             {pageUrl && (
-              <Button variant="outline" size="sm" className="gap-1.5 border-[hsl(0_0%_10%)] text-[#888] hover:text-white" onClick={() => window.open(pageUrl, "_blank")}>
+              <Button variant="outline" size="sm" className="gap-1.5 border-border text-muted-foreground hover:text-foreground" onClick={() => window.open(pageUrl, "_blank")}>
                 <Eye className="w-4 h-4" strokeWidth={1.5} />
                 معاينة
               </Button>
@@ -265,22 +265,22 @@ const PageBuilder = () => {
 
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-57px)]">
         {/* ═══ EDITING PANEL (Left 40%) ═══ */}
-        <div className="lg:w-[440px] w-full overflow-y-auto bg-[#0a0a0a] border-l border-[hsl(0_0%_10%)] lg:order-2 lg:max-h-[calc(100vh-57px)]">
+        <div className="lg:w-[440px] w-full overflow-y-auto bg-background border-l border-border lg:order-2 lg:max-h-[calc(100vh-57px)]">
           <Tabs defaultValue="appearance" className="w-full">
-            <TabsList className="w-full rounded-none border-b border-[hsl(0_0%_10%)] bg-[#0a0a0a] h-12 p-0">
-              <TabsTrigger value="appearance" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-[#0f0f0f] data-[state=active]:text-white text-[#555] h-full text-xs">
+            <TabsList className="w-full rounded-none border-b border-border bg-background h-12 p-0">
+              <TabsTrigger value="appearance" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground h-full text-xs">
                 <Palette className="w-3.5 h-3.5" strokeWidth={1.5} />
                 المظهر
               </TabsTrigger>
-              <TabsTrigger value="content" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-[#0f0f0f] data-[state=active]:text-white text-[#555] h-full text-xs">
+              <TabsTrigger value="content" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground h-full text-xs">
                 <Layout className="w-3.5 h-3.5" strokeWidth={1.5} />
                 المحتوى
               </TabsTrigger>
-              <TabsTrigger value="packages" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-[#0f0f0f] data-[state=active]:text-white text-[#555] h-full text-xs">
+              <TabsTrigger value="packages" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground h-full text-xs">
                 <Package className="w-3.5 h-3.5" strokeWidth={1.5} />
                 الباقات
               </TabsTrigger>
-              <TabsTrigger value="share" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-[#0f0f0f] data-[state=active]:text-white text-[#555] h-full text-xs">
+              <TabsTrigger value="share" className="flex-1 gap-1.5 rounded-none data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground h-full text-xs">
                 <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
                 المشاركة
               </TabsTrigger>
@@ -290,28 +290,31 @@ const PageBuilder = () => {
             <TabsContent value="appearance" className="p-4 space-y-5 mt-0">
               {/* Theme */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">القالب</h3>
+                <h3 className="font-bold text-sm text-foreground">القالب</h3>
                 <div className="grid grid-cols-4 gap-2">
                   {THEMES.map(t => (
-                    <button key={t.value} onClick={() => setConfig({ ...config, theme: t.value })}
-                      className={`rounded-xl p-3 text-center transition-all ${config.theme === t.value ? "ring-2 ring-primary ring-offset-2 ring-offset-[#0a0a0a]" : "hover:opacity-80"}`}
-                      style={{ backgroundColor: "#0f0f0f", border: `1px solid ${config.theme === t.value ? t.accent : "#1a1a1a"}` }}>
+                    <button
+                      key={t.value}
+                      onClick={() => setConfig({ ...config, theme: t.value })}
+                      className={`rounded-xl border bg-card p-3 text-center transition-all ${config.theme === t.value ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : "hover:opacity-80"}`}
+                      style={{ borderColor: config.theme === t.value ? t.accent : undefined }}
+                    >
                       <div className="w-8 h-8 rounded-lg mx-auto mb-1.5" style={{ backgroundColor: t.preview, border: `2px solid ${t.accent}` }} />
-                      <span className="text-xs text-[#888]">{t.label}</span>
+                      <span className="text-xs text-muted-foreground">{t.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Font */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">الخط</h3>
+                <h3 className="font-bold text-sm text-foreground">الخط</h3>
                 <div className="flex gap-2">
                   {FONTS.map(f => (
                     <button key={f.value} onClick={() => setConfig({ ...config, font: f.value })}
-                      className={`flex-1 px-3 py-2.5 rounded-xl text-sm transition-all ${config.font === f.value ? "bg-primary text-primary-foreground" : "bg-[#0f0f0f] text-[#888] border border-[hsl(0_0%_10%)] hover:border-[#333]"}`}
+                      className={`flex-1 px-3 py-2.5 rounded-xl text-sm transition-all ${config.font === f.value ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground border border-border hover:border-border"}`}
                       style={{ fontFamily: f.value }}>
                       {f.label}
                     </button>
@@ -319,38 +322,38 @@ const PageBuilder = () => {
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Hero style */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">نمط الهيرو</h3>
+                <h3 className="font-bold text-sm text-foreground">نمط الهيرو</h3>
                 <div className="flex gap-2 flex-wrap">
                   {[{ value: "gradient", label: "تدرج" }, { value: "solid", label: "لون سادة" }, { value: "blur", label: "ضبابي" }].map(s => (
                     <button key={s.value} onClick={() => setConfig({ ...config, hero_style: s.value })}
-                      className={`px-4 py-2 rounded-xl text-sm transition-all ${config.hero_style === s.value ? "bg-primary text-primary-foreground" : "bg-[#0f0f0f] text-[#888] border border-[hsl(0_0%_10%)]"}`}>
+                      className={`px-4 py-2 rounded-xl text-sm transition-all ${config.hero_style === s.value ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground border border-border"}`}>
                       {s.label}
                     </button>
                   ))}
                 </div>
                 {config.hero_style === "solid" && (
                   <div className="flex items-center gap-3">
-                    <input type="color" value={config.hero_color || "#050505"} onChange={e => setConfig({ ...config, hero_color: e.target.value })} className="w-10 h-10 rounded-lg border border-[hsl(0_0%_10%)] cursor-pointer bg-transparent" />
-                    <span className="text-xs text-[#555]">اختر لون الخلفية</span>
+                    <input type="color" value={config.hero_color || "#050505"} onChange={e => setConfig({ ...config, hero_color: e.target.value })} className="w-10 h-10 rounded-lg border border-border cursor-pointer bg-transparent" />
+                    <span className="text-xs text-muted-foreground">اختر لون الخلفية</span>
                   </div>
                 )}
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Cover image */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">صورة الغلاف</h3>
-                <p className="text-xs text-[#555]">تظهر كخلفية في قسم الهيرو بالصفحة العامة</p>
+                <h3 className="font-bold text-sm text-foreground">صورة الغلاف</h3>
+                <p className="text-xs text-muted-foreground">تظهر كخلفية في قسم الهيرو بالصفحة العامة</p>
                 {config.cover_image_url ? (
-                  <div className="relative rounded-xl overflow-hidden border border-[hsl(0_0%_10%)]">
+                  <div className="relative rounded-xl overflow-hidden border border-border">
                     <img src={config.cover_image_url} alt="" className="w-full aspect-video object-cover" />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity">
-                      <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-white hover:bg-white/10" onClick={() => coverRef.current?.click()}>
+                      <Button variant="outline" size="sm" className="gap-1.5 border-border text-foreground hover:bg-muted" onClick={() => coverRef.current?.click()}>
                         <ImageIcon className="w-4 h-4" strokeWidth={1.5} />
                         تغيير
                       </Button>
@@ -364,7 +367,7 @@ const PageBuilder = () => {
                   <button
                     onClick={() => coverRef.current?.click()}
                     disabled={uploadingCover}
-                    className="w-full aspect-video rounded-xl border-2 border-dashed border-[hsl(0_0%_10%)] flex flex-col items-center justify-center gap-2 text-[#555] hover:border-primary hover:text-primary transition-colors"
+                    className="w-full aspect-video rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                   >
                     {uploadingCover ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-6 h-6" strokeWidth={1.5} />}
                     <span className="text-xs">{uploadingCover ? "جاري الرفع..." : "اضغط لرفع صورة الغلاف"}</span>
@@ -378,17 +381,17 @@ const PageBuilder = () => {
             <TabsContent value="content" className="p-4 space-y-5 mt-0">
               {/* Sections order */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">ترتيب الأقسام</h3>
+                <h3 className="font-bold text-sm text-foreground">ترتيب الأقسام</h3>
                 <div className="space-y-1">
                   {config.sections_order.map((section, i) => (
-                    <div key={section} className="flex items-center gap-2 bg-[#0f0f0f] rounded-xl p-3 border border-[hsl(0_0%_10%)]">
+                    <div key={section} className="flex items-center gap-2 bg-card rounded-xl p-3 border border-border">
                       <GripVertical className="w-4 h-4 text-[#333] shrink-0" strokeWidth={1.5} />
-                      <span className="text-sm flex-1 text-white">{SECTION_LABELS[section]}</span>
+                      <span className="text-sm flex-1 text-foreground">{SECTION_LABELS[section]}</span>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => moveSection(i, -1)} className="text-[#555] hover:text-white p-1 disabled:opacity-30" disabled={i === 0}>
+                        <button onClick={() => moveSection(i, -1)} className="text-muted-foreground hover:text-foreground p-1 disabled:opacity-30" disabled={i === 0}>
                           <ChevronUp className="w-3.5 h-3.5" strokeWidth={1.5} />
                         </button>
-                        <button onClick={() => moveSection(i, 1)} className="text-[#555] hover:text-white p-1 disabled:opacity-30" disabled={i === config.sections_order.length - 1}>
+                        <button onClick={() => moveSection(i, 1)} className="text-muted-foreground hover:text-foreground p-1 disabled:opacity-30" disabled={i === config.sections_order.length - 1}>
                           <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
                         </button>
                         <Switch checked={!config.hidden_sections.includes(section)} onCheckedChange={() => toggleSection(section)} />
@@ -398,61 +401,61 @@ const PageBuilder = () => {
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Stats */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">الإحصائيات</h3>
+                <h3 className="font-bold text-sm text-foreground">الإحصائيات</h3>
                 {config.stats.map((stat, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-[#0f0f0f] rounded-xl p-3 border border-[hsl(0_0%_10%)]">
-                    <span className="text-sm flex-1 text-white">{stat.value} — {stat.label}</span>
+                  <div key={i} className="flex items-center gap-2 bg-card rounded-xl p-3 border border-border">
+                    <span className="text-sm flex-1 text-foreground">{stat.value} — {stat.label}</span>
                     <button onClick={() => removeStat(i)} className="text-red-500/60 hover:text-red-500 p-1"><X className="w-4 h-4" strokeWidth={1.5} /></button>
                   </div>
                 ))}
                 <div className="flex gap-2">
-                  <Input value={newStat.value} onChange={e => setNewStat({ ...newStat, value: e.target.value })} placeholder="50+" className="w-24 bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
-                  <Input value={newStat.label} onChange={e => setNewStat({ ...newStat, label: e.target.value })} placeholder="عميل" className="flex-1 bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
-                  <Button variant="outline" size="sm" onClick={addStat} disabled={!newStat.label || !newStat.value} className="border-[hsl(0_0%_10%)]">
+                  <Input value={newStat.value} onChange={e => setNewStat({ ...newStat, value: e.target.value })} placeholder="50+" className="w-24 bg-card border-border text-foreground" />
+                  <Input value={newStat.label} onChange={e => setNewStat({ ...newStat, label: e.target.value })} placeholder="عميل" className="flex-1 bg-card border-border text-foreground" />
+                  <Button variant="outline" size="sm" onClick={addStat} disabled={!newStat.label || !newStat.value} className="border-border">
                     <Plus className="w-4 h-4" strokeWidth={1.5} />
                   </Button>
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Specialties */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">التخصصات</h3>
+                <h3 className="font-bold text-sm text-foreground">التخصصات</h3>
                 <div className="flex flex-wrap gap-2">
                   {ALL_SPECIALTIES.map(s => (
                     <button key={s} onClick={() => setConfig(c => ({ ...c, specialties: c.specialties.includes(s) ? c.specialties.filter(x => x !== s) : [...c.specialties, s] }))}
-                      className={`px-3 py-1.5 rounded-xl text-sm transition-all ${config.specialties.includes(s) ? "bg-primary text-primary-foreground" : "bg-[#0f0f0f] text-[#888] border border-[hsl(0_0%_10%)]"}`}>
+                      className={`px-3 py-1.5 rounded-xl text-sm transition-all ${config.specialties.includes(s) ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground border border-border"}`}>
                       {s}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* About */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">عن المدرب</h3>
-                <Textarea value={config.about_text} onChange={e => setConfig({ ...config, about_text: e.target.value })} placeholder="اكتب نبذة عن خبراتك وأسلوبك..." rows={5} maxLength={1000} className="bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
-                <p className="text-xs text-[#555] text-left" dir="ltr">{config.about_text.length}/1000</p>
+                <h3 className="font-bold text-sm text-foreground">عن المدرب</h3>
+                <Textarea value={config.about_text} onChange={e => setConfig({ ...config, about_text: e.target.value })} placeholder="اكتب نبذة عن خبراتك وأسلوبك..." rows={5} maxLength={1000} className="bg-card border-border text-foreground" />
+                <p className="text-xs text-muted-foreground text-left" dir="ltr">{config.about_text.length}/1000</p>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Gallery */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-white">المعرض</h3>
-                  <span className="text-xs text-[#555]">{galleryImages.length}/12</span>
+                  <h3 className="font-bold text-sm text-foreground">المعرض</h3>
+                  <span className="text-xs text-muted-foreground">{galleryImages.length}/12</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {galleryImages.map((img, i) => (
-                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-[#0f0f0f] group border border-[hsl(0_0%_10%)]">
+                    <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-card group border border-border">
                       <img src={img.startsWith("http") ? img : ""} alt="" className="w-full h-full object-cover" />
                       <button onClick={() => setGalleryImages(galleryImages.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <X className="w-3 h-3" strokeWidth={1.5} />
@@ -461,7 +464,7 @@ const PageBuilder = () => {
                   ))}
                   {galleryImages.length < 12 && (
                     <button onClick={() => galleryRef.current?.click()} disabled={uploadingGallery}
-                      className="aspect-square rounded-xl border-2 border-dashed border-[hsl(0_0%_10%)] flex items-center justify-center text-[#555] hover:border-primary hover:text-primary transition-colors">
+                      className="aspect-square rounded-xl border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
                       {uploadingGallery ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" strokeWidth={1.5} />}
                     </button>
                   )}
@@ -469,18 +472,18 @@ const PageBuilder = () => {
                 <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleGalleryUpload(f); }} />
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* Testimonials */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">آراء العملاء</h3>
+                <h3 className="font-bold text-sm text-foreground">آراء العملاء</h3>
                 {config.testimonials.map((tm, i) => (
-                  <div key={i} className="bg-[#0f0f0f] rounded-xl p-3 space-y-1 border border-[hsl(0_0%_10%)]">
+                  <div key={i} className="bg-card rounded-xl p-3 space-y-1 border border-border">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-white">{tm.name}</span>
+                      <span className="text-sm font-medium text-foreground">{tm.name}</span>
                       <button onClick={() => removeTestimonial(i)} className="text-red-500/60 hover:text-red-500 p-1"><X className="w-3 h-3" strokeWidth={1.5} /></button>
                     </div>
-                    <p className="text-xs text-[#888]">{tm.text}</p>
+                    <p className="text-xs text-muted-foreground">{tm.text}</p>
                     <div className="flex gap-0.5">
                       {Array.from({ length: tm.rating }).map((_, j) => <Star key={j} className="w-3 h-3 fill-yellow-500 text-yellow-500" />)}
                     </div>
@@ -488,10 +491,10 @@ const PageBuilder = () => {
                   </div>
                 ))}
                 <div className="space-y-2">
-                  <Input value={newTestimonial.name} onChange={e => setNewTestimonial({ ...newTestimonial, name: e.target.value })} placeholder="اسم العميل" className="bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
-                  <Textarea value={newTestimonial.text} onChange={e => setNewTestimonial({ ...newTestimonial, text: e.target.value })} placeholder="رأي العميل..." rows={2} className="bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
+                  <Input value={newTestimonial.name} onChange={e => setNewTestimonial({ ...newTestimonial, name: e.target.value })} placeholder="اسم العميل" className="bg-card border-border text-foreground" />
+                  <Textarea value={newTestimonial.text} onChange={e => setNewTestimonial({ ...newTestimonial, text: e.target.value })} placeholder="رأي العميل..." rows={2} className="bg-card border-border text-foreground" />
                   <div className="flex gap-2">
-                    <Input value={newTestimonial.result} onChange={e => setNewTestimonial({ ...newTestimonial, result: e.target.value })} placeholder="النتيجة (اختياري)" className="flex-1 bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
+                    <Input value={newTestimonial.result} onChange={e => setNewTestimonial({ ...newTestimonial, result: e.target.value })} placeholder="النتيجة (اختياري)" className="flex-1 bg-card border-border text-foreground" />
                     <div className="flex items-center gap-0.5">
                       {[1,2,3,4,5].map(r => (
                         <button key={r} onClick={() => setNewTestimonial({ ...newTestimonial, rating: r })}>
@@ -500,30 +503,30 @@ const PageBuilder = () => {
                       ))}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full gap-1.5 border-[hsl(0_0%_10%)] text-[#888]" onClick={addTestimonial} disabled={!newTestimonial.name || !newTestimonial.text}>
+                  <Button variant="outline" size="sm" className="w-full gap-1.5 border-border text-muted-foreground" onClick={addTestimonial} disabled={!newTestimonial.name || !newTestimonial.text}>
                     <Plus className="w-4 h-4" strokeWidth={1.5} /> إضافة رأي
                   </Button>
                 </div>
               </div>
 
-              <Separator className="bg-[hsl(0_0%_10%)]" />
+              <Separator className="bg-border" />
 
               {/* CTA */}
               <div className="space-y-3">
-                <h3 className="font-bold text-sm text-white">دعوة للعمل</h3>
-                <Input value={config.cta_subtitle} onChange={e => setConfig({ ...config, cta_subtitle: e.target.value })} placeholder="أماكن محدودة هذا الشهر" maxLength={100} className="bg-[#0f0f0f] border-[hsl(0_0%_10%)] text-white" />
+                <h3 className="font-bold text-sm text-foreground">دعوة للعمل</h3>
+                <Input value={config.cta_subtitle} onChange={e => setConfig({ ...config, cta_subtitle: e.target.value })} placeholder="أماكن محدودة هذا الشهر" maxLength={100} className="bg-card border-border text-foreground" />
               </div>
             </TabsContent>
 
             {/* PACKAGES TAB */}
             <TabsContent value="packages" className="p-4 space-y-4 mt-0">
-              <h3 className="font-bold text-sm text-white">إدارة الباقات</h3>
-              <p className="text-xs text-[#555]">حدد الباقة الأكثر طلباً لإبرازها في الصفحة</p>
+              <h3 className="font-bold text-sm text-foreground">إدارة الباقات</h3>
+              <p className="text-xs text-muted-foreground">حدد الباقة الأكثر طلباً لإبرازها في الصفحة</p>
               <div className="space-y-2">
-                <div className="bg-[#0f0f0f] rounded-xl p-4 border border-[hsl(0_0%_10%)] text-center">
+                <div className="bg-card rounded-xl p-4 border border-border text-center">
                   <Package className="w-8 h-8 text-[#333] mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="text-sm text-[#888]">باقاتك تظهر تلقائياً من إعدادات الباقات</p>
-                  <Button variant="outline" size="sm" className="mt-3 gap-1.5 border-[hsl(0_0%_10%)] text-[#888]" onClick={() => navigate("/packages")}>
+                  <p className="text-sm text-muted-foreground">باقاتك تظهر تلقائياً من إعدادات الباقات</p>
+                  <Button variant="outline" size="sm" className="mt-3 gap-1.5 border-border text-muted-foreground" onClick={() => navigate("/packages")}>
                     إدارة الباقات
                   </Button>
                 </div>
@@ -532,25 +535,25 @@ const PageBuilder = () => {
 
             {/* SHARE TAB */}
             <TabsContent value="share" className="p-4 space-y-4 mt-0">
-              <h3 className="font-bold text-sm text-white">رابط صفحتك</h3>
+              <h3 className="font-bold text-sm text-foreground">رابط صفحتك</h3>
               {pageUrl ? (
                 <>
-                  <div className="flex items-center gap-2 bg-[#0f0f0f] rounded-xl p-3 border border-[hsl(0_0%_10%)]">
-                    <p className="text-sm text-white flex-1 truncate" dir="ltr">{pageUrl.replace("https://", "")}</p>
-                    <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }} className="text-[#888] hover:text-white">
+                  <div className="flex items-center gap-2 bg-card rounded-xl p-3 border border-border">
+                    <p className="text-sm text-foreground flex-1 truncate" dir="ltr">{pageUrl.replace("https://", "")}</p>
+                    <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(pageUrl); toast({ title: "تم نسخ الرابط" }); }} className="text-muted-foreground hover:text-foreground">
                       <Copy className="w-4 h-4" strokeWidth={1.5} />
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-[hsl(0_0%_10%)] text-[#888] hover:text-white hover:bg-green-600/10 hover:border-green-600/30" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${pageUrl}`)}`, "_blank")}>
+                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-border text-muted-foreground hover:text-foreground hover:bg-primary/10 hover:border-primary/30" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`تفضل رابط صفحتي: ${pageUrl}`)}`, "_blank")}>
                       <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
                       مشاركة عبر واتساب
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-[hsl(0_0%_10%)] text-[#888] hover:text-white" onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`, "_blank")}>
+                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-border text-muted-foreground hover:text-foreground" onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`, "_blank")}>
                       <Share2 className="w-4 h-4" strokeWidth={1.5} />
                       مشاركة عبر لينكد إن
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-[hsl(0_0%_10%)] text-[#888] hover:text-white" onClick={() => {
+                    <Button variant="outline" size="sm" className="w-full gap-1.5 border-border text-muted-foreground hover:text-foreground" onClick={() => {
                       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(pageUrl)}`;
                       window.open(qrUrl, "_blank");
                     }}>
@@ -560,10 +563,10 @@ const PageBuilder = () => {
                   </div>
                 </>
               ) : (
-                <div className="bg-[#0f0f0f] rounded-xl p-4 border border-[hsl(0_0%_10%)] text-center">
+                <div className="bg-card rounded-xl p-4 border border-border text-center">
                   <CloudOff className="w-8 h-8 text-[#333] mx-auto mb-2" strokeWidth={1.5} />
-                  <p className="text-sm text-[#888]">أضف اسم مستخدم من الإعدادات أولاً</p>
-                  <Button variant="outline" size="sm" className="mt-3 gap-1.5 border-[hsl(0_0%_10%)] text-[#888]" onClick={() => navigate("/settings")}>
+                  <p className="text-sm text-muted-foreground">أضف اسم مستخدم من الإعدادات أولاً</p>
+                  <Button variant="outline" size="sm" className="mt-3 gap-1.5 border-border text-muted-foreground" onClick={() => navigate("/settings")}>
                     الإعدادات
                   </Button>
                 </div>
@@ -573,19 +576,19 @@ const PageBuilder = () => {
         </div>
 
         {/* ═══ PREVIEW PANEL (Right 60%) ═══ */}
-        <div className="flex-1 bg-[#0a0a0a] flex items-start justify-center p-4 lg:p-8 overflow-y-auto lg:order-1 lg:max-h-[calc(100vh-57px)]">
-          <div className={`bg-[#050505] rounded-2xl border border-[hsl(0_0%_10%)] overflow-hidden shadow-2xl transition-all duration-300 ${
+        <div className="flex-1 bg-background flex items-start justify-center p-4 lg:p-8 overflow-y-auto lg:order-1 lg:max-h-[calc(100vh-57px)]">
+          <div className={`bg-background rounded-2xl border border-border overflow-hidden shadow-2xl transition-all duration-300 ${
             previewMode === "mobile" ? "w-[375px]" : "w-full max-w-[900px]"
           }`}>
             {/* Browser chrome */}
-            <div className="bg-[#0f0f0f] px-4 py-2.5 flex items-center gap-2 border-b border-[hsl(0_0%_10%)]">
+            <div className="bg-card px-4 py-2.5 flex items-center gap-2 border-b border-border">
               <div className="flex gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+                <div className="w-2.5 h-2.5 rounded-full bg-primary/40" />
               </div>
-              <div className="flex-1 bg-[#1a1a1a] rounded-lg py-1 px-3">
-                <p className="text-[10px] text-[#555] text-center truncate" dir="ltr">
+              <div className="flex-1 bg-card-hover rounded-lg py-1 px-3">
+                <p className="text-[10px] text-muted-foreground text-center truncate" dir="ltr">
                   {pageUrl || "coachbase.health/t/username"}
                 </p>
               </div>
@@ -639,7 +642,7 @@ const PreviewContent = ({ config, profile, galleryImages, pt }: { config: PageCo
                 ))}
               </div>
             )}
-            <div className="mt-4 inline-block px-5 py-2.5 rounded-xl text-xs font-bold text-white" style={{ backgroundColor: t.accent }}>
+            <div className="mt-4 inline-block px-5 py-2.5 rounded-xl text-xs font-bold text-primary-foreground" style={{ backgroundColor: t.accent }}>
               اشترك الآن
             </div>
           </div>
@@ -726,7 +729,7 @@ const PreviewContent = ({ config, profile, galleryImages, pt }: { config: PageCo
           <div key={section} className="px-6 py-8 text-center" style={{ background: `linear-gradient(180deg, ${t.accent}08 0%, ${t.accent}15 100%)` }}>
             <h3 className="text-sm font-bold mb-1" style={{ color: t.text }}>ابدأ رحلتك الآن</h3>
             {config.cta_subtitle && <p className="text-[10px] mb-3" style={{ color: t.muted }}>{config.cta_subtitle}</p>}
-            <div className="inline-block px-5 py-2 rounded-xl text-xs font-bold text-white" style={{ backgroundColor: t.accent }}>
+            <div className="inline-block px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground" style={{ backgroundColor: t.accent }}>
               اشترك الآن
             </div>
           </div>

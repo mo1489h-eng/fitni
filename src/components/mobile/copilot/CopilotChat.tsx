@@ -60,7 +60,7 @@ function AIThinkingIndicator({ className }: { className?: string }) {
       <motion.div
         className="pointer-events-none absolute -inset-1 rounded-[22px]"
         style={{
-          background: "radial-gradient(ellipse at center, rgba(34,197,94,0.35), transparent 70%)",
+          background: "radial-gradient(ellipse at center, rgba(79,111,82,0.35), transparent 70%)",
         }}
         animate={{ opacity: [0.25, 0.55, 0.25], scale: [0.98, 1.02, 0.98] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -70,17 +70,17 @@ function AIThinkingIndicator({ className }: { className?: string }) {
         style={{ background: "rgba(255,255,255,0.05)", boxShadow: ELITE.innerShadow }}
       >
         <motion.span
-          className="h-2 w-2 rounded-full bg-emerald-400/90"
+          className="h-2 w-2 rounded-full bg-primary/80"
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.span
-          className="h-2 w-2 rounded-full bg-emerald-400/90"
+          className="h-2 w-2 rounded-full bg-primary/80"
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut", delay: 0.12 }}
         />
         <motion.span
-          className="h-2 w-2 rounded-full bg-emerald-400/90"
+          className="h-2 w-2 rounded-full bg-primary/80"
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut", delay: 0.24 }}
         />
@@ -309,7 +309,7 @@ export default function CopilotChat() {
                 style={{
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  boxShadow: "0 0 24px rgba(34,197,94,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  boxShadow: "0 0 24px rgba(79,111,82,0.12), inset 0 1px 0 rgba(255,255,255,0.06)",
                 }}
                 onClick={() => void sendMessage(c, "general" as CopilotContextKind)}
                 disabled={isSending}
@@ -335,9 +335,9 @@ export default function CopilotChat() {
                 voiceActive
                   ? {
                       boxShadow: [
-                        "0 0 0 0 rgba(34,197,94,0.45)",
-                        "0 0 0 10px rgba(34,197,94,0)",
-                        "0 0 0 0 rgba(34,197,94,0)",
+                        "0 0 0 0 rgba(79,111,82,0.45)",
+                        "0 0 0 10px rgba(79,111,82,0)",
+                        "0 0 0 0 rgba(79,111,82,0)",
                       ],
                     }
                   : {}
@@ -348,9 +348,9 @@ export default function CopilotChat() {
               <Pressable
                 className={cn(
                   "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl",
-                  voiceActive ? "text-emerald-400" : "text-white/50"
+                  voiceActive ? "text-primary" : "text-white/50"
                 )}
-                style={{ background: voiceActive ? "rgba(34,197,94,0.15)" : CB.card2 }}
+                style={{ background: voiceActive ? "rgba(79,111,82,0.15)" : CB.card2 }}
                 aria-pressed={voiceActive}
                 aria-label="إدخال صوتي"
                 title="تبديل وضع الصوت (قريباً)"

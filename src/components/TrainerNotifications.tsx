@@ -21,7 +21,7 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string }> = {
   payment: { icon: CreditCard, color: "text-primary" },
   new_client: { icon: UserPlus, color: "text-blue-400" },
   expiring: { icon: AlertCircle, color: "text-warning" },
-  copilot: { icon: Sparkles, color: "text-purple-400" },
+  copilot: { icon: Sparkles, color: "text-muted-foreground" },
   workout: { icon: CheckCircle, color: "text-primary" },
   message: { icon: MessageCircle, color: "text-muted-foreground" },
   body_scan: { icon: CheckCircle, color: "text-primary" },

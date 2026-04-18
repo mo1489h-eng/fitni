@@ -105,7 +105,7 @@ const Settings = () => {
     notify_inactive: true,
     notify_payments: true,
     notify_weekly_report: false,
-    brand_color: "#16a34a",
+    brand_color: "#3d5940",
     welcome_message: "",
   });
 
@@ -119,7 +119,7 @@ const Settings = () => {
         notify_inactive: profile.notify_inactive ?? true,
         notify_payments: profile.notify_payments ?? true,
         notify_weekly_report: profile.notify_weekly_report ?? false,
-        brand_color: profile.brand_color || "#16a34a",
+        brand_color: profile.brand_color || "#3d5940",
         welcome_message: profile.welcome_message || "",
       });
     }

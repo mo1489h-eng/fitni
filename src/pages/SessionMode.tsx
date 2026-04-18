@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProgramRealtimeSync } from "@/hooks/useProgramRealtimeSync";
 import TrainerWorkoutSession from "@/components/mobile/trainer/TrainerWorkoutSession";
 import { Loader2 } from "lucide-react";
-import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
+import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR } from "@/lib/training-type";
 
 type Props = {
   clientId: string;
@@ -28,6 +28,7 @@ export default function SessionMode({ clientId, onClose }: Props) {
           `
           id,
           program_id,
+          training_type,
           programs ( id, name )
         `
         )
@@ -38,7 +39,7 @@ export default function SessionMode({ clientId, onClose }: Props) {
       const prog = (row as any)?.programs as { id: string; name: string } | null;
       return {
         programId: (row as any)?.program_id ?? null,
-        trainingType: "online" as ClientTrainingType,
+        trainingType: parseClientTrainingType((row as { training_type?: string | null } | null)?.training_type),
         programName: prog?.name ?? "",
       };
     },
@@ -49,22 +50,18 @@ export default function SessionMode({ clientId, onClose }: Props) {
 
   if (isLoading || !data) {
     return (
-      <div
-        className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-3"
-        style={{ background: "#050505" }}
-        dir="rtl"
-      >
-        <Loader2 className="h-9 w-9 animate-spin" style={{ color: "#22C55E" }} />
-        <p className="text-sm text-white/60">جاري تجهيز وضع الجلسة…</p>
+      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-3 bg-background" dir="rtl">
+        <Loader2 className="h-9 w-9 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">جاري تجهيز وضع الجلسة…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 px-6" style={{ background: "#050505" }} dir="rtl">
-        <p className="text-center text-sm text-white">تعذّر تحميل البيانات</p>
-        <button type="button" onClick={onClose} className="rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: "#222" }}>
+      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 bg-background px-6" dir="rtl">
+        <p className="text-center text-sm text-foreground">تعذّر تحميل البيانات</p>
+        <button type="button" onClick={onClose} className="rounded-xl bg-card px-6 py-3 text-sm font-bold text-foreground">
           إغلاق
         </button>
       </div>
@@ -73,9 +70,9 @@ export default function SessionMode({ clientId, onClose }: Props) {
 
   if (!data.programId) {
     return (
-      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 px-6" style={{ background: "#050505" }} dir="rtl">
-        <p className="text-center text-sm text-white/90">لا يوجد برنامج معيّن لهذا العميل</p>
-        <button type="button" onClick={onClose} className="rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: "#222" }}>
+      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 bg-background px-6" dir="rtl">
+        <p className="text-center text-sm text-foreground/90">لا يوجد برنامج معيّن لهذا العميل</p>
+        <button type="button" onClick={onClose} className="rounded-xl bg-card px-6 py-3 text-sm font-bold text-foreground">
           إغلاق
         </button>
       </div>
@@ -84,13 +81,13 @@ export default function SessionMode({ clientId, onClose }: Props) {
 
   if (data.trainingType !== "in_person") {
     return (
-      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 px-6" style={{ background: "#050505" }} dir="rtl">
-        <p className="text-center text-sm leading-relaxed text-white/85">
+      <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center gap-4 bg-background px-6" dir="rtl">
+        <p className="text-center text-sm leading-relaxed text-foreground/85">
           وضع الجلسة الحضورية متاح فقط عندما يكون نوع التدريب للعميل{" "}
-          <span className="text-[#22C55E] font-semibold">{TRAINING_TYPE_LABEL_AR.in_person}</span>{" "}
+          <span className="font-semibold text-primary">{TRAINING_TYPE_LABEL_AR.in_person}</span>{" "}
           (حاليًا: {TRAINING_TYPE_LABEL_AR[data.trainingType]}).
         </p>
-        <button type="button" onClick={onClose} className="rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: "#222" }}>
+        <button type="button" onClick={onClose} className="rounded-xl bg-card px-6 py-3 text-sm font-bold text-foreground">
           إغلاق
         </button>
       </div>

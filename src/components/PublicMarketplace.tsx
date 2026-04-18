@@ -62,15 +62,15 @@ const PublicMarketplace = () => {
 
   return (
     <section className="px-4 py-20 relative" id="marketplace">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16a34a]/3 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#3d5940]/3 to-transparent" />
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#16a34a]/30 bg-[#16a34a]/10 text-[#4ade80] text-sm mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#3d5940]/30 bg-[#3d5940]/10 text-[#6b8f6e] text-sm mb-4">
             <ShoppingCart className="w-4 h-4" />
             برامج جاهزة للتحميل
           </div>
           <h2 className="text-3xl md:text-4xl font-black mb-3">
-            سوق <span className="text-[#4ade80]">البرامج التدريبية</span>
+            سوق <span className="text-[#6b8f6e]">البرامج التدريبية</span>
           </h2>
           <p className="text-white/30 text-sm tracking-widest uppercase" style={{ fontFamily: "'Inter', sans-serif" }} dir="ltr">
             Training Programs Marketplace
@@ -82,12 +82,12 @@ const PublicMarketplace = () => {
 
         {loading ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-[#4ade80]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#6b8f6e]" />
           </div>
         ) : listings.length === 0 ? (
           <div className="text-center py-16 space-y-6">
             <div className="w-20 h-20 rounded-3xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto">
-              <Package className="w-10 h-10 text-[#4ade80]/40" />
+              <Package className="w-10 h-10 text-[#6b8f6e]/40" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white/80 mb-2">قريباً — برامج احترافية</h3>
@@ -109,7 +109,7 @@ const PublicMarketplace = () => {
               <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <Input
-                  className="pr-10 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-white/30 focus:border-[#16a34a]/50"
+                  className="pr-10 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-white/30 focus:border-[#3d5940]/50"
                   placeholder="ابحث عن برنامج..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -123,10 +123,10 @@ const PublicMarketplace = () => {
                 return (
                   <div
                     key={l.id}
-                    className="group bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden hover:border-[#16a34a]/40 transition-all duration-300 cursor-pointer"
+                    className="group bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden hover:border-[#3d5940]/40 transition-all duration-300 cursor-pointer"
                     onClick={() => setSelectedListing(l)}
                   >
-                    <div className="h-1.5 bg-gradient-to-r from-[#16a34a] to-[#4ade80]" />
+                    <div className="h-1.5 bg-gradient-to-r from-[#3d5940] to-[#6b8f6e]" />
                     <div className="p-5 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="text-base font-bold text-white line-clamp-2 flex-1">{l.title}</h3>
@@ -138,7 +138,7 @@ const PublicMarketplace = () => {
                           {trainer.avatar_url ? (
                             <img src={trainer.avatar_url} className="w-5 h-5 rounded-full object-cover" />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-[#16a34a]/20 flex items-center justify-center text-[9px] font-bold text-[#4ade80]">
+                            <div className="w-5 h-5 rounded-full bg-[#3d5940]/20 flex items-center justify-center text-[9px] font-bold text-[#6b8f6e]">
                               {trainer.full_name?.[0]}
                             </div>
                           )}
@@ -153,17 +153,17 @@ const PublicMarketplace = () => {
                       {(l.tags || []).length > 0 && (
                         <div className="flex gap-1 flex-wrap">
                           {l.tags.slice(0, 3).map((t: string) => (
-                            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[#16a34a]/10 text-[#4ade80]/70">{t}</span>
+                            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-[#3d5940]/10 text-[#6b8f6e]/70">{t}</span>
                           ))}
                         </div>
                       )}
                       <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
-                        <span className="text-lg font-black text-[#4ade80]">
+                        <span className="text-lg font-black text-[#6b8f6e]">
                           {l.price === 0 ? "مجاني" : `${l.price} ر.س`}
                         </span>
                         <Button
                           size="sm"
-                          className="bg-[#16a34a] hover:bg-[#15803d] text-white text-xs h-8 gap-1"
+                          className="bg-[#3d5940] hover:bg-[#3D5940] text-white text-xs h-8 gap-1"
                           onClick={(e) => { e.stopPropagation(); setSelectedListing(l); }}
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -179,7 +179,7 @@ const PublicMarketplace = () => {
         )}
 
         <Dialog open={!!selectedListing} onOpenChange={() => setSelectedListing(null)}>
-          <DialogContent className="max-w-lg bg-[#111] border-white/10 text-white">
+          <DialogContent className="max-w-lg border-border bg-card text-foreground">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-white">{selectedListing?.title}</DialogTitle>
             </DialogHeader>
@@ -192,7 +192,7 @@ const PublicMarketplace = () => {
                     {trainerProfiles[selectedListing.trainer_id].avatar_url ? (
                       <img src={trainerProfiles[selectedListing.trainer_id].avatar_url} className="w-10 h-10 rounded-full object-cover" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#16a34a]/20 flex items-center justify-center text-sm font-bold text-[#4ade80]">
+                      <div className="w-10 h-10 rounded-full bg-[#3d5940]/20 flex items-center justify-center text-sm font-bold text-[#6b8f6e]">
                         {trainerProfiles[selectedListing.trainer_id].full_name?.[0]}
                       </div>
                     )}
@@ -210,7 +210,7 @@ const PublicMarketplace = () => {
                     { label: "المبيعات", value: selectedListing.purchase_count || 0, icon: Users },
                   ].map((d) => (
                     <div key={d.label} className="text-center p-3 rounded-xl bg-white/[0.04] border border-white/[0.06]">
-                      <d.icon className="w-4 h-4 mx-auto mb-1 text-[#4ade80]/60" />
+                      <d.icon className="w-4 h-4 mx-auto mb-1 text-[#6b8f6e]/60" />
                       <p className="text-sm font-bold text-white">{d.value}</p>
                       <p className="text-[10px] text-white/40">{d.label}</p>
                     </div>
@@ -220,7 +220,7 @@ const PublicMarketplace = () => {
                 {(selectedListing.tags || []).length > 0 && (
                   <div className="flex gap-1.5 flex-wrap">
                     {selectedListing.tags.map((t: string) => (
-                      <span key={t} className="text-xs px-3 py-1 rounded-full bg-[#16a34a]/10 text-[#4ade80] border border-[#16a34a]/20">{t}</span>
+                      <span key={t} className="text-xs px-3 py-1 rounded-full bg-[#3d5940]/10 text-[#6b8f6e] border border-[#3d5940]/20">{t}</span>
                     ))}
                   </div>
                 )}
@@ -236,16 +236,16 @@ const PublicMarketplace = () => {
                   </div>
                 )}
 
-                <div className="p-4 rounded-xl bg-gradient-to-r from-[#16a34a]/10 to-[#4ade80]/5 border border-[#16a34a]/20 flex items-center justify-between">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-[#3d5940]/10 to-[#6b8f6e]/5 border border-[#3d5940]/20 flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-black text-[#4ade80]">
+                    <p className="text-2xl font-black text-[#6b8f6e]">
                       {selectedListing.price === 0 ? "مجاني" : `${selectedListing.price} ر.س`}
                     </p>
                     <p className="text-xs text-white/40">تحميل فوري — بدون تسجيل</p>
                   </div>
                   <Button
                     size="lg"
-                    className="bg-[#16a34a] hover:bg-[#15803d] text-white gap-2 shadow-lg shadow-[#16a34a]/30"
+                    className="bg-[#3d5940] hover:bg-[#3D5940] text-white gap-2 shadow-lg shadow-[#3d5940]/30"
                     onClick={() => handleDownload(selectedListing)}
                     disabled={purchasing}
                   >

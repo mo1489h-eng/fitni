@@ -92,7 +92,7 @@ export default function CopilotAlerts() {
   const borderFor = (t: CopilotAlertItem["type"]) => {
     if (t === "warning") return "rgba(245, 158, 11, 0.45)";
     if (t === "info") return "rgba(59, 130, 246, 0.45)";
-    return "rgba(34, 197, 94, 0.45)";
+    return "rgba(79,111,82, 0.45)";
   };
 
   const list = useMemo(() => alerts, [alerts]);

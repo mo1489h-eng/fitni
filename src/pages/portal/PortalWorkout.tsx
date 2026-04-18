@@ -254,7 +254,7 @@ const PortalWorkout = () => {
           <div className="relative w-40 h-40">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(0 0% 10%)" strokeWidth="4" />
-              <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(142 76% 36%)" strokeWidth="4"
+              <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(125 17% 37%)" strokeWidth="4"
                 strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
                 className="transition-all duration-1000 ease-linear" />
             </svg>

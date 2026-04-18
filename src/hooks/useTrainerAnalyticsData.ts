@@ -22,14 +22,17 @@ export type TrainerAnalytics = {
     completed_at: string | null;
     total_volume: number | null;
   }[];
+  /** Completed in-person / scheduled sessions (attendance), last ~45 days for analytics */
+  trainerSessionsCompleted: { client_id: string; session_date: string }[];
   sessionExerciseVolumes: { client_id: string; session_id: string; started_at: string; volume: number }[];
   payments: { created_at: string; amount: number; status: string }[];
 };
 
-async function fetchTrainerAnalytics(): Promise<TrainerAnalytics> {
+async function fetchTrainerAnalytics(trainerId: string): Promise<TrainerAnalytics> {
   const { data: clients, error: cErr } = await supabase
     .from("clients")
     .select("id, name, phone, subscription_end_date, subscription_price, last_workout_date, created_at")
+    .eq("trainer_id", trainerId)
     .order("created_at", { ascending: false });
 
   if (cErr) throw cErr;
@@ -44,6 +47,19 @@ async function fetchTrainerAnalytics(): Promise<TrainerAnalytics> {
     .gte("started_at", since.toISOString());
 
   if (sErr) throw sErr;
+
+  const since45 = new Date();
+  since45.setDate(since45.getDate() - 45);
+  const trainerSessionsSince = since45.toISOString().slice(0, 10);
+
+  const { data: trainerSessionsRows, error: tsErr } = await supabase
+    .from("trainer_sessions")
+    .select("client_id, session_date")
+    .eq("trainer_id", trainerId)
+    .eq("is_completed", true)
+    .gte("session_date", trainerSessionsSince);
+
+  if (tsErr) throw tsErr;
 
   const sessionIds = (sessions ?? []).map((s) => s.id);
   const sessionExerciseVolumes: TrainerAnalytics["sessionExerciseVolumes"] = [];
@@ -94,6 +110,7 @@ async function fetchTrainerAnalytics(): Promise<TrainerAnalytics> {
   return {
     clients: (clients ?? []) as ClientRow[],
     sessions: (sessions ?? []) as TrainerAnalytics["sessions"],
+    trainerSessionsCompleted: (trainerSessionsRows ?? []) as TrainerAnalytics["trainerSessionsCompleted"],
     sessionExerciseVolumes,
     payments: (payments ?? []) as TrainerAnalytics["payments"],
   };
@@ -103,8 +120,8 @@ export function useTrainerAnalyticsData() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["trainer-analytics-v2", user?.id],
-    queryFn: fetchTrainerAnalytics,
-    enabled: !!user,
+    queryFn: () => fetchTrainerAnalytics(user!.id),
+    enabled: !!user?.id,
   });
 }
 
@@ -126,7 +143,7 @@ export function subscriptionDonut(clients: ClientRow[]): { name: string; value: 
     else active += 1;
   });
   return [
-    { name: "نشط", value: active, fill: "#22c55e" },
+    { name: "نشط", value: active, fill: "#4f6f52" },
     { name: "ينتهي ≤7 أيام", value: expiring, fill: "#eab308" },
     { name: "منتهي", value: expired, fill: "#ef4444" },
   ].filter((x) => x.value > 0);

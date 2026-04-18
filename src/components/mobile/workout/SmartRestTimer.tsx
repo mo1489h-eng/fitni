@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWorkoutSession } from "./WorkoutSessionContext";
-import { CB } from "./designTokens";
 import { playRestCompleteBeep } from "@/lib/workoutFeedback";
 import { hapticImpact } from "./haptics";
-
-const OLED = "#000000";
 
 /**
  * Floating rest timer — timestamp-aware via parent `restEndsAtMs` + `restRemaining`,
@@ -14,7 +11,6 @@ export default function SmartRestTimer() {
   const {
     restRemaining,
     restTotalSeconds,
-    restEndsAtMs,
     restPaused,
     skipRest,
     addRestSeconds,
@@ -72,38 +68,31 @@ export default function SmartRestTimer() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[130] flex flex-col items-stretch px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2"
-      style={{
-        background: `linear-gradient(180deg, transparent 0%, ${OLED} 28%)`,
-      }}
+      className="fixed inset-x-0 bottom-0 z-[130] flex flex-col items-stretch bg-gradient-to-b from-transparent to-background px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2"
       dir="rtl"
     >
       <div
-        className="mx-auto mb-3 w-full max-w-md rounded-2xl border px-4 py-4 shadow-2xl transition-transform"
-        style={{
-          background: OLED,
-          borderColor: "rgba(255,255,255,0.1)",
-          transform: pulse ? "scale(1.01)" : "scale(1)",
-        }}
+        className="mx-auto mb-3 w-full max-w-md rounded-2xl border border-border bg-background px-4 py-4 shadow-2xl transition-transform"
+        style={{ transform: pulse ? "scale(1.01)" : "scale(1)" }}
       >
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-2xl font-black tabular-nums text-white">
+          <p className="text-2xl font-black tabular-nums text-foreground">
             {mm}:{ss}
           </p>
-          <p className="text-xs font-medium" style={{ color: CB.muted }}>
+          <p className="text-xs font-medium text-muted-foreground">
             {restPaused ? "متوقف" : "راحة"}
           </p>
         </div>
 
         <div className="relative mx-auto mb-4 flex h-36 w-36 items-center justify-center">
           <svg className="absolute h-full w-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={r} fill="none" stroke="#1a1a1a" strokeWidth="8" />
+            <circle cx="60" cy="60" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
             <circle
               cx="60"
               cy="60"
               r={r}
               fill="none"
-              stroke={CB.accent}
+              stroke="hsl(var(--primary))"
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={c}
@@ -112,8 +101,8 @@ export default function SmartRestTimer() {
             />
           </svg>
           <div className="relative z-[1] text-center">
-            <p className="text-4xl font-black tabular-nums text-white">{restRemaining}</p>
-            <p className="mt-0.5 text-[10px]" style={{ color: CB.muted }}>
+            <p className="text-4xl font-black tabular-nums text-foreground">{restRemaining}</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
               ثانية
             </p>
           </div>
@@ -123,24 +112,21 @@ export default function SmartRestTimer() {
           <button
             type="button"
             onClick={() => (restPaused ? resumeRest() : pauseRest())}
-            className="rounded-xl py-3 text-sm font-bold text-white transition active:scale-95"
-            style={{ background: "#141414" }}
+            className="rounded-xl bg-card py-3 text-sm font-bold text-foreground transition active:scale-95"
           >
             {restPaused ? "استئناف" : "إيقاف"}
           </button>
           <button
             type="button"
             onClick={() => addRestSeconds(30)}
-            className="rounded-xl py-3 text-sm font-bold text-black transition active:scale-95"
-            style={{ background: CB.gradient }}
+            className="rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground transition active:scale-95"
           >
             +30 ث
           </button>
           <button
             type="button"
             onClick={() => skipRest()}
-            className="rounded-xl border py-3 text-sm font-bold transition active:scale-95"
-            style={{ borderColor: "rgba(34,197,94,0.5)", color: CB.accent }}
+            className="rounded-xl border border-primary/50 py-3 text-sm font-bold text-primary transition active:scale-95"
           >
             تخطي
           </button>

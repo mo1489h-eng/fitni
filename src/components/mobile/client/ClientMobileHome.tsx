@@ -119,7 +119,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
         label: "الالتزام",
         value: `${compliancePct ?? 0}%`,
         icon: Target,
-        color: "#22C55E",
+        color: "#4f6f52",
         sub: "آخر 28 يوم",
       },
       {
@@ -138,7 +138,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
         label: "الأسبوع",
         value: String(clientRow?.week_number ?? 1),
         icon: TrendingUp,
-        color: "#8B5CF6",
+        color: "#4F6F52",
       },
     ],
     [compliancePct, workoutStats, clientRow?.week_number]
@@ -186,12 +186,12 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
       <div
         className="rounded-2xl p-5"
         style={{
-          background: "linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.04))",
-          border: "1px solid rgba(34,197,94,0.1)",
+          background: "linear-gradient(135deg, rgba(79,111,82,0.12), rgba(79,111,82,0.04))",
+          border: "1px solid rgba(79,111,82,0.1)",
         }}
       >
         <div className="mb-3 flex items-center gap-2">
-          <Dumbbell className="h-5 w-5" style={{ color: "#22C55E" }} strokeWidth={1.5} />
+          <Dumbbell className="h-5 w-5" style={{ color: "#4f6f52" }} strokeWidth={1.5} />
           <h3 className="text-sm font-bold text-white">تمرين اليوم</h3>
         </div>
         <p className="text-xs leading-relaxed" style={{ color: "#999" }}>
@@ -209,8 +209,8 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
             onClick={onStartWorkout}
             className="mt-4 w-full rounded-[12px] py-4 text-[16px] font-black text-black transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             style={{
-              background: "linear-gradient(135deg, #22C55E, #16A34A)",
-              boxShadow: "0 8px 28px rgba(34,197,94,0.35)",
+              background: "linear-gradient(135deg, #4f6f52, #3d5940)",
+              boxShadow: "0 8px 28px rgba(79,111,82,0.35)",
             }}
           >
             ابدأ تمرين اليوم
@@ -221,7 +221,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
       {lastWorkout && (
         <div className="rounded-[16px] p-4" style={{ background: "#111111", boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}>
           <div className="mb-2 flex items-center gap-2">
-            <Clock className="h-4 w-4" style={{ color: "#22C55E" }} />
+            <Clock className="h-4 w-4" style={{ color: "#4f6f52" }} />
             <h3 className="text-[16px] font-bold text-white">آخر تمرين</h3>
           </div>
           <p className="text-[12px]" style={{ color: "#888" }}>

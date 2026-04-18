@@ -125,7 +125,7 @@ export function PricingPlansModal({ open, onOpenChange, onSubscribeSuccess }: Pr
                     className={cn(
                       "relative flex flex-col border-border/80 bg-[hsl(0_0%_8%)] p-5 shadow-lg transition-shadow",
                       plan.popular && "border-2 border-primary/50 shadow-primary/10 md:scale-[1.02]",
-                      isCurrent && "border-2 border-emerald-500/60",
+                      isCurrent && "border-2 border-primary/50",
                     )}
                   >
                     {plan.popular && !isCurrent ? (
@@ -136,7 +136,7 @@ export function PricingPlansModal({ open, onOpenChange, onSubscribeSuccess }: Pr
                     ) : null}
 
                     {isCurrent ? (
-                      <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                      <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">
                         <ShieldCheck className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
                         باقتك الحالية
                       </span>

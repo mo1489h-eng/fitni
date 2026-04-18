@@ -25,7 +25,7 @@ import { toast } from "@/hooks/use-toast";
 const CHALLENGE_TYPES = [
   { value: "weight_loss", label: "خسارة وزن", icon: Flame, unit: "كجم", color: "text-orange-400" },
   { value: "consistency", label: "التزام تدريبي", icon: Activity, unit: "يوم", color: "text-blue-400" },
-  { value: "exercises", label: "عدد تمارين", icon: Dumbbell, unit: "تمرين", color: "text-purple-400" },
+  { value: "exercises", label: "عدد تمارين", icon: Dumbbell, unit: "تمرين", color: "text-muted-foreground" },
   { value: "strength", label: "قوة", icon: TrendingUp, unit: "كجم", color: "text-red-400" },
   { value: "duration", label: "مدة تمرين", icon: Timer, unit: "دقيقة", color: "text-cyan-400" },
 ];

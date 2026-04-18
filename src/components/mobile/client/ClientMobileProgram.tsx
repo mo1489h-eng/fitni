@@ -55,7 +55,7 @@ const ClientMobileProgram = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#22C55E" }} />
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#4f6f52" }} />
       </div>
     );
   }
@@ -86,7 +86,7 @@ const ClientMobileProgram = () => {
         <div className="mt-2 flex flex-wrap gap-2">
           <span
             className="rounded-lg px-2 py-1 text-[10px] font-medium"
-            style={{ background: "rgba(34,197,94,0.12)", color: "#22C55E" }}
+            style={{ background: "rgba(79,111,82,0.12)", color: "#4f6f52" }}
           >
             الأسبوع {data.week_number ?? 1} من {data.weeks ?? "—"}
           </span>
@@ -100,7 +100,7 @@ const ClientMobileProgram = () => {
             <div key={day.id} className="overflow-hidden rounded-2xl" style={{ background: "#111111" }}>
               <div
                 className="border-b px-4 py-3"
-                style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(34,197,94,0.06)" }}
+                style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(79,111,82,0.06)" }}
               >
                 <p className="text-sm font-bold text-white">{day.day_name}</p>
                 <p className="text-[10px]" style={{ color: "#666" }}>

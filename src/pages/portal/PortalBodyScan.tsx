@@ -36,8 +36,8 @@ function calculateScan(
   const heightM = height / 100;
   const bmi = weight / (heightM * heightM);
   let bmiCategory = "", bmiColor = "";
-  if (bmi < 18.5) { bmiCategory = "نقص في الوزن"; bmiColor = "text-blue-500"; }
-  else if (bmi < 25) { bmiCategory = "وزن طبيعي"; bmiColor = "text-green-500"; }
+  if (bmi < 18.5) { bmiCategory = "نقص في الوزن"; bmiColor = "text-[#60a5fa]"; }
+  else if (bmi < 25) { bmiCategory = "وزن طبيعي"; bmiColor = "text-primary"; }
   else if (bmi < 30) { bmiCategory = "زيادة في الوزن"; bmiColor = "text-yellow-500"; }
   else { bmiCategory = "سمنة"; bmiColor = "text-red-500"; }
   let bodyFat: number;
@@ -150,7 +150,7 @@ const PortalBodyScan = () => {
             const scanResult: ScanResult = {
               bmi: d.bmi || 0,
               bmiCategory: d.bmi < 18.5 ? "نقص في الوزن" : d.bmi < 25 ? "وزن طبيعي" : d.bmi < 30 ? "زيادة في الوزن" : "سمنة",
-              bmiColor: d.bmi < 18.5 ? "text-blue-500" : d.bmi < 25 ? "text-green-500" : d.bmi < 30 ? "text-yellow-500" : "text-red-500",
+              bmiColor: d.bmi < 18.5 ? "text-[#60a5fa]" : d.bmi < 25 ? "text-primary" : d.bmi < 30 ? "text-yellow-500" : "text-red-500",
               bodyFat: d.body_fat || 0, muscleMass: d.muscle_mass || 0,
               bmr: d.bmr || 0, tdee: (d.bmr || 0) * 1.2,
               idealWeightMin: d.height ? Math.round(18.5 * (d.height / 100) ** 2) : 0,
@@ -202,8 +202,8 @@ const PortalBodyScan = () => {
 
   const displayResult = isEditing && editResult ? editResult : result;
   const getBmiCat = (bmi: number) => {
-    if (bmi < 18.5) return { label: "نقص في الوزن", color: "text-blue-500" };
-    if (bmi < 25) return { label: "وزن طبيعي", color: "text-green-500" };
+    if (bmi < 18.5) return { label: "نقص في الوزن", color: "text-[#60a5fa]" };
+    if (bmi < 25) return { label: "وزن طبيعي", color: "text-primary" };
     if (bmi < 30) return { label: "زيادة في الوزن", color: "text-yellow-500" };
     return { label: "سمنة", color: "text-red-500" };
   };
@@ -318,7 +318,7 @@ const PortalBodyScan = () => {
                   ].map(c => (
                     <div key={c.label} className="bg-[hsl(0_0%_4%)] rounded-lg p-2">
                       <p className="text-[10px] text-[hsl(0_0%_40%)]">{c.label}</p>
-                      <p className={`text-sm font-bold flex items-center justify-center gap-0.5 ${c.diff < 0 ? "text-green-500" : c.diff > 0 ? "text-red-500" : "text-[hsl(0_0%_40%)]"}`}>
+                      <p className={`text-sm font-bold flex items-center justify-center gap-0.5 ${c.diff < 0 ? "text-primary" : c.diff > 0 ? "text-red-500" : "text-[hsl(0_0%_40%)]"}`}>
                         {c.diff > 0 ? <TrendingUp className="w-3 h-3" strokeWidth={1.5} /> : c.diff < 0 ? <TrendingDown className="w-3 h-3" strokeWidth={1.5} /> : null}
                         {c.diff > 0 ? "+" : ""}{c.diff.toFixed(1)} {c.unit}
                       </p>
@@ -343,7 +343,7 @@ const PortalBodyScan = () => {
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(0 0% 40%)" }} />
                   <YAxis tick={{ fontSize: 10, fill: "hsl(0 0% 40%)" }} />
                   <Tooltip contentStyle={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 15%)", borderRadius: 8, color: "white" }} />
-                  <Line type="monotone" dataKey="weight" stroke="hsl(142 76% 36%)" strokeWidth={2} dot={{ r: 3 }} name="الوزن" />
+                  <Line type="monotone" dataKey="weight" stroke="hsl(125 17% 37%)" strokeWidth={2} dot={{ r: 3 }} name="الوزن" />
                   <Line type="monotone" dataKey="bodyFat" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name="الدهون %" />
                 </LineChart>
               </ResponsiveContainer>

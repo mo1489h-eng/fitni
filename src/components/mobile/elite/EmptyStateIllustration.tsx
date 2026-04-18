@@ -29,8 +29,8 @@ export function EmptyStateIllustration({ className }: Props) {
         <rect x="12" y="34" width="14" height="28" rx="4" fill="currentColor" opacity="0.35" />
         <rect x="94" y="34" width="14" height="28" rx="4" fill="currentColor" opacity="0.35" />
         <rect x="26" y="38" width="68" height="20" rx="10" fill="currentColor" opacity="0.55" />
-        <circle cx="19" cy="48" r="5" fill="#22C55E" opacity="0.45" />
-        <circle cx="101" cy="48" r="5" fill="#22C55E" opacity="0.45" />
+        <circle cx="19" cy="48" r="5" fill="#4f6f52" opacity="0.45" />
+        <circle cx="101" cy="48" r="5" fill="#4f6f52" opacity="0.45" />
         <path
           d="M40 48h40"
           stroke="currentColor"

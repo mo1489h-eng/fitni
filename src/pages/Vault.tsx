@@ -43,11 +43,11 @@ const lockLabels: Record<string, string> = {
 };
 
 const defaultGradients = [
-  "linear-gradient(135deg, hsl(142 76% 20%), hsl(142 76% 36%))",
-  "linear-gradient(135deg, hsl(200 60% 18%), hsl(200 60% 32%))",
-  "linear-gradient(135deg, hsl(260 40% 18%), hsl(260 40% 32%))",
-  "linear-gradient(135deg, hsl(30 50% 18%), hsl(30 50% 32%))",
-  "linear-gradient(135deg, hsl(340 40% 18%), hsl(340 40% 32%))",
+  "linear-gradient(135deg, hsl(125 18% 22%), hsl(125 18% 32%))",
+  "linear-gradient(135deg, hsl(200 35% 18%), hsl(200 35% 28%))",
+  "linear-gradient(135deg, hsl(220 12% 18%), hsl(220 12% 26%))",
+  "linear-gradient(135deg, hsl(30 40% 18%), hsl(30 40% 28%))",
+  "linear-gradient(135deg, hsl(340 25% 18%), hsl(340 25% 26%))",
 ];
 
 const Vault = () => {

@@ -28,7 +28,7 @@ function clientName(s: SessionRow) {
   return "عميل";
 }
 
-const ACCENT = "#22C55E";
+const ACCENT = "#4f6f52";
 
 function ScheduleSessionSkeleton() {
   return (
@@ -135,8 +135,8 @@ const TrainerMobileSchedule = () => {
                 onClick={() => setSelectedDate(d)}
                 className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-[999px] px-1 py-2"
                 style={{
-                  background: isSelected ? "rgba(34,197,94,0.22)" : "transparent",
-                  boxShadow: isSelected ? "0 0 0 1px rgba(34,197,94,0.45)" : undefined,
+                  background: isSelected ? "rgba(79,111,82,0.22)" : "transparent",
+                  boxShadow: isSelected ? "0 0 0 1px rgba(79,111,82,0.45)" : undefined,
                 }}
               >
                 <span className="text-[10px] font-medium uppercase" style={{ color: ELITE.textSecondary }}>
@@ -218,7 +218,7 @@ const TrainerMobileSchedule = () => {
                   onClick={() => toggleMutation.mutate({ id: s.id, next: !s.is_completed })}
                   className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-2xl px-4 py-3 text-xs font-semibold"
                   style={{
-                    background: s.is_completed ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)",
+                    background: s.is_completed ? "rgba(79,111,82,0.2)" : "rgba(255,255,255,0.06)",
                     color: s.is_completed ? ACCENT : ELITE.textSecondary,
                   }}
                 >

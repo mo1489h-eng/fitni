@@ -57,9 +57,9 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen text-foreground" dir="rtl" style={{ backgroundColor: "#050505" }}>
+    <div className="min-h-screen bg-background text-foreground" dir="rtl">
       {/* Navbar */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/80 backdrop-blur-2xl" style={{ borderColor: "#1e1e1e" }}>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
@@ -88,13 +88,13 @@ const Contact = () => {
           {/* Contact Cards */}
           <div className="grid md:grid-cols-3 gap-4 mb-16">
             {/* Email */}
-            <div className="rounded-2xl border p-6 text-center" style={{ backgroundColor: "#111111", borderColor: "#1e1e1e" }}>
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "#16a34a15" }}>
-                <Mail className="h-5 w-5" style={{ color: "#22c55e" }} strokeWidth={1.5} />
+            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15">
+                <Mail className="h-5 w-5 text-primary" strokeWidth={1.5} />
               </div>
-              <h3 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>راسلنا</h3>
-              <p className="text-sm mb-4" style={{ color: "#888888" }}>support@coachbase.health</p>
-              <Button asChild variant="outline" className="rounded-xl gap-2 w-full" style={{ borderColor: "#1e1e1e", color: "#ededed" }}>
+              <h3 className="mb-1 text-lg font-bold text-foreground">راسلنا</h3>
+              <p className="mb-4 text-sm text-muted-foreground">support@coachbase.health</p>
+              <Button asChild variant="outline" className="w-full gap-2 rounded-xl border-border text-foreground">
                 <a href="mailto:support@coachbase.health">
                   مراسلة
                   <ArrowLeft className="h-4 w-4" />
@@ -103,13 +103,13 @@ const Contact = () => {
             </div>
 
             {/* WhatsApp */}
-            <div className="rounded-2xl border p-6 text-center" style={{ backgroundColor: "#111111", borderColor: "#1e1e1e" }}>
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "#16a34a15" }}>
-                <MessageCircle className="h-5 w-5" style={{ color: "#22c55e" }} strokeWidth={1.5} />
+            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15">
+                <MessageCircle className="h-5 w-5 text-primary" strokeWidth={1.5} />
               </div>
-              <h3 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>واتساب</h3>
-              <p className="text-sm mb-4" style={{ color: "#888888" }}>للردود الفورية</p>
-              <Button asChild variant="outline" className="rounded-xl gap-2 w-full" style={{ borderColor: "#1e1e1e", color: "#ededed" }}>
+              <h3 className="mb-1 text-lg font-bold text-foreground">واتساب</h3>
+              <p className="mb-4 text-sm text-muted-foreground">للردود الفورية</p>
+              <Button asChild variant="outline" className="w-full gap-2 rounded-xl border-border text-foreground">
                 <a href="https://wa.me/966500000000" target="_blank" rel="noopener noreferrer">
                   فتح واتساب
                   <ArrowLeft className="h-4 w-4" />
@@ -118,26 +118,23 @@ const Contact = () => {
             </div>
 
             {/* Social */}
-            <div className="rounded-2xl border p-6 text-center" style={{ backgroundColor: "#111111", borderColor: "#1e1e1e" }}>
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: "#16a34a15" }}>
-                <Share2 className="h-5 w-5" style={{ color: "#22c55e" }} strokeWidth={1.5} />
+            <div className="rounded-2xl border border-border bg-card p-6 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15">
+                <Share2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
               </div>
-              <h3 className="text-lg font-bold mb-1" style={{ color: "#ededed" }}>تابعنا</h3>
-              <p className="text-sm mb-4" style={{ color: "#888888" }}>@coachbase</p>
+              <h3 className="mb-1 text-lg font-bold text-foreground">تابعنا</h3>
+              <p className="mb-4 text-sm text-muted-foreground">@coachbase</p>
               <div className="flex items-center justify-center gap-3">
                 <a href="https://www.instagram.com/coachbase.health" target="_blank" rel="noopener noreferrer"
-                  className="rounded-full border p-2.5 transition-colors duration-200 hover:text-[#22c55e]"
-                  style={{ borderColor: "#1e1e1e", color: "#888888" }}>
+                  className="rounded-full border border-border p-2.5 text-muted-foreground transition-colors duration-200 hover:text-primary">
                   <Instagram className="h-5 w-5" />
                 </a>
                 <a href="https://x.com/CoachBasehealth" target="_blank" rel="noopener noreferrer"
-                  className="rounded-full border p-2.5 transition-colors duration-200 hover:text-[#22c55e]"
-                  style={{ borderColor: "#1e1e1e", color: "#888888" }}>
+                  className="rounded-full border border-border p-2.5 text-muted-foreground transition-colors duration-200 hover:text-primary">
                   <Twitter className="h-5 w-5" />
                 </a>
                 <a href="https://linkedin.com/company/coachbase" target="_blank" rel="noopener noreferrer"
-                  className="rounded-full border p-2.5 transition-colors duration-200 hover:text-[#22c55e]"
-                  style={{ borderColor: "#1e1e1e", color: "#888888" }}>
+                  className="rounded-full border border-border p-2.5 text-muted-foreground transition-colors duration-200 hover:text-primary">
                   <Linkedin className="h-5 w-5" />
                 </a>
               </div>
@@ -145,18 +142,17 @@ const Contact = () => {
           </div>
 
           {/* Contact Form */}
-          <div className="rounded-2xl border p-6 md:p-10" style={{ backgroundColor: "#111111", borderColor: "#1e1e1e" }}>
+          <div className="rounded-2xl border border-border bg-card p-6 md:p-10">
             {submitted ? (
-              <div className="text-center py-10">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: "#16a34a20" }}>
-                  <CheckCircle className="h-8 w-8" style={{ color: "#22c55e" }} />
+              <div className="py-10 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+                  <CheckCircle className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: "#ededed" }}>تم إرسال رسالتك بنجاح</h3>
-                <p style={{ color: "#888888" }}>سنرد عليك خلال 24 ساعة</p>
+                <h3 className="mb-2 text-2xl font-bold text-foreground">تم إرسال رسالتك بنجاح</h3>
+                <p className="text-muted-foreground">سنرد عليك خلال 24 ساعة</p>
                 <Button
                   variant="outline"
-                  className="mt-6 rounded-xl"
-                  style={{ borderColor: "#1e1e1e", color: "#ededed" }}
+                  className="mt-6 rounded-xl border-border text-foreground"
                   onClick={() => { setSubmitted(false); setForm({ name: "", email: "", inquiry_type: "", message: "" }); }}
                 >
                   إرسال رسالة أخرى
@@ -164,24 +160,23 @@ const Contact = () => {
               </div>
             ) : (
               <>
-                <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: "#ededed" }}>
+                <h2 className="mb-6 text-center text-2xl font-bold text-foreground">
                   أو أرسل لنا رسالة
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <Label className="mb-2 block" style={{ color: "#ededed" }}>الاسم الكامل *</Label>
+                    <Label className="mb-2 block text-foreground">الاسم الكامل *</Label>
                     <Input
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder="أدخل اسمك الكامل"
                       maxLength={200}
                       required
-                      className="rounded-xl"
-                      style={{ backgroundColor: "#0a0a0a", borderColor: "#1e1e1e", color: "#ededed" }}
+                      className="rounded-xl border-border bg-background text-foreground"
                     />
                   </div>
                   <div>
-                    <Label className="mb-2 block" style={{ color: "#ededed" }}>البريد الإلكتروني *</Label>
+                    <Label className="mb-2 block text-foreground">البريد الإلكتروني *</Label>
                     <Input
                       type="email"
                       value={form.email}
@@ -190,14 +185,13 @@ const Contact = () => {
                       maxLength={255}
                       required
                       dir="ltr"
-                      className="rounded-xl"
-                      style={{ backgroundColor: "#0a0a0a", borderColor: "#1e1e1e", color: "#ededed" }}
+                      className="rounded-xl border-border bg-background text-foreground"
                     />
                   </div>
                   <div>
-                    <Label className="mb-2 block" style={{ color: "#ededed" }}>نوع الاستفسار</Label>
+                    <Label className="mb-2 block text-foreground">نوع الاستفسار</Label>
                     <Select value={form.inquiry_type} onValueChange={(v) => setForm({ ...form, inquiry_type: v })}>
-                      <SelectTrigger className="rounded-xl" style={{ backgroundColor: "#0a0a0a", borderColor: "#1e1e1e", color: "#ededed" }}>
+                      <SelectTrigger className="rounded-xl border-border bg-background text-foreground">
                         <SelectValue placeholder="اختر نوع الاستفسار" />
                       </SelectTrigger>
                       <SelectContent>
@@ -208,7 +202,7 @@ const Contact = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label className="mb-2 block" style={{ color: "#ededed" }}>رسالتك *</Label>
+                    <Label className="mb-2 block text-foreground">رسالتك *</Label>
                     <Textarea
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
@@ -216,15 +210,13 @@ const Contact = () => {
                       maxLength={5000}
                       required
                       rows={5}
-                      className="rounded-xl"
-                      style={{ backgroundColor: "#0a0a0a", borderColor: "#1e1e1e", color: "#ededed" }}
+                      className="rounded-xl border-border bg-background text-foreground"
                     />
                   </div>
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded-xl h-12 text-base font-bold gap-2"
-                    style={{ backgroundColor: "#22c55e", color: "#fff" }}
+                    className="h-12 w-full gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground"
                   >
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                       <>

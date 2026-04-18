@@ -1,6 +1,7 @@
 import "./lib/supabaseLegacyCleanup";
 import * as Sentry from "@sentry/react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 
@@ -21,6 +22,8 @@ Sentry.init({
 
 createRoot(document.getElementById("root")!).render(
   <Sentry.ErrorBoundary fallback={<p>حدث خطأ غير متوقع</p>}>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </Sentry.ErrorBoundary>
 );

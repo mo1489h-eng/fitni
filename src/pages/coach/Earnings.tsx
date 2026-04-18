@@ -240,7 +240,7 @@ export default function Earnings() {
       }
       const amt = Number(form.amount);
       if (!Number.isFinite(amt) || amt < MIN_WITHDRAWAL) {
-        throw new Error(`الحد الأدنى للسحب ${MIN_WITHDRAWAL} ريال`);
+        throw new Error("الحد الأدنى للسحب 100 ريال");
       }
       if (amt > balance) throw new Error("المبلغ أكبر من الرصيد المتاح");
       const iban = form.iban.replace(/\s/g, "").toUpperCase();
@@ -259,9 +259,9 @@ export default function Earnings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(
-        "تم إرسال طلب السحب بنجاح. سيتم التواصل معك خلال 3-5 أيام عمل لإتمام التحويل",
-      );
+      toast.success("تم إرسال طلب السحب بنجاح ✓", {
+        description: "سيظهر المبلغ في حسابك البنكي خلال 3-5 أيام عمل",
+      });
       setDialogOpen(false);
       setForm({ amount: "", iban: "", bankName: "", accountHolder: "" });
       void queryClient.invalidateQueries({ queryKey: ["wallet"] });
@@ -629,6 +629,9 @@ export default function Earnings() {
                 />
               </div>
             </div>
+            <p className="rounded-lg border border-border/80 bg-muted/40 px-3 py-2.5 text-center text-sm font-medium text-foreground">
+              سيظهر المبلغ في حسابك البنكي خلال 3-5 أيام عمل
+            </p>
             <DialogFooter className="gap-2 sm:justify-start flex-row-reverse">
               <Button
                 className="bg-primary font-bold text-primary-foreground hover:bg-primary-hover"

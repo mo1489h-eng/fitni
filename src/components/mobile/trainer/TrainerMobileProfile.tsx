@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadImage } from "@/lib/image-upload";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +29,7 @@ const WEB_APP_ORIGIN = (import.meta.env.VITE_WEB_APP_ORIGIN as string | undefine
 const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { toast } = useToast();
   const { profile, user, signOut, refreshProfile, loading } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(profile?.full_name ?? "");
@@ -69,20 +72,16 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
     if (!file || !user) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `avatars/${user.id}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("progress-photos").upload(path, file, {
-        upsert: true,
-        cacheControl: "3600",
-        contentType: file.type || "image/jpeg",
+      const path = `avatars/${user.id}/avatar-${Date.now()}.jpg`;
+      const result = await uploadImage(file, "progress-photos", path);
+      await updateMutation.mutateAsync({
+        full_name: profile?.full_name ?? trainerName,
+        avatar_url: result.signedUrl,
       });
-      if (upErr) throw upErr;
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("progress-photos").getPublicUrl(path);
-      await updateMutation.mutateAsync({ full_name: profile?.full_name ?? trainerName, avatar_url: publicUrl });
-    } catch (err) {
-      console.error(err);
+      toast({ title: "تم رفع صورة الملف الشخصي" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "حدث خطأ في رفع الصورة";
+      toast({ title: "فشل رفع الصورة", description: msg, variant: "destructive" });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

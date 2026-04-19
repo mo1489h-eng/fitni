@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { storageUploadErrorMessage } from "@/lib/storage-errors";
 
 export const VAULT_BUCKET = "vault-content";
 
@@ -44,11 +45,11 @@ export async function uploadVaultLessonFile(
     cacheControl: "3600",
     upsert: false,
   });
-  if (upErr) throw new Error(upErr.message);
+  if (upErr) throw new Error(storageUploadErrorMessage(upErr));
 
   const { data } = supabase.storage.from(VAULT_BUCKET).getPublicUrl(path);
   const publicUrl = data.publicUrl;
-  if (!publicUrl) throw new Error("لم يُنشأ رابط الملف");
+  if (!publicUrl) throw new Error("تعذّر إنشاء رابط الملف. حاول مجدداً.");
   return { publicUrl, fileSize: file.size };
 }
 

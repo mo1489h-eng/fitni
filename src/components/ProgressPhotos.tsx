@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, Images, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/image-upload";
+import { storageUploadErrorMessage } from "@/lib/storage-errors";
 
 interface ProgressPhotosProps {
   clientId: string;
@@ -95,8 +96,12 @@ const ProgressPhotos = ({ clientId, uploadedBy, trainerId, portalToken }: Progre
 
       queryClient.invalidateQueries({ queryKey: ["progress-photos", clientId, portalToken] });
       toast({ title: "تم رفع الصورة بنجاح" });
-    } catch (err: any) {
-      toast({ title: "خطأ في رفع الصورة", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "خطأ في رفع الصورة",
+        description: storageUploadErrorMessage(err),
+        variant: "destructive",
+      });
     } finally {
       setUploading(null);
     }

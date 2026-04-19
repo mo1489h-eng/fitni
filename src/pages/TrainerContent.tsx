@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { storageUploadErrorMessage } from "@/lib/storage-errors";
 import {
   Plus, Trash2, Pencil, Copy, ExternalLink, Loader2,
   Image as ImageIcon, Video, Link2, X, Camera,
@@ -181,8 +182,12 @@ const TrainerContent = () => {
       setShowDialog(false);
       resetForm();
       toast({ title: editingPost ? "تم تحديث المنشور" : "تم النشر بنجاح" });
-    } catch (err: any) {
-      toast({ title: "حدث خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({
+        title: "حدث خطأ في النشر",
+        description: storageUploadErrorMessage(err),
+        variant: "destructive",
+      });
     } finally {
       setPublishing(false);
     }

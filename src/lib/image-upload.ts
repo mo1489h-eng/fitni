@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { storageUploadErrorMessage } from "@/lib/storage-errors";
 
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
 const COMPRESS_TARGET = 2 * 1024 * 1024; // 2MB
@@ -72,13 +73,7 @@ export async function uploadImage(
       upsert: options?.upsert ?? true,
     });
   if (error) {
-    if (error.message?.includes("mime")) {
-      throw new Error("نوع الملف غير مدعوم");
-    }
-    if (error.message?.includes("size") || error.message?.includes("payload")) {
-      throw new Error("الملف كبير جداً (الحد الأقصى 10MB)");
-    }
-    throw new Error("حدث خطأ في الرفع، حاول مجدداً");
+    throw new Error(storageUploadErrorMessage(error));
   }
 
   const { data: signedData } = await supabase.storage

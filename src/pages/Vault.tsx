@@ -117,27 +117,36 @@ const Vault = () => {
 
   const fetchUnits = async () => {
     if (!user) return;
-    const { data: unitsData } = await supabase
+    const { data: unitsData, error: unitsErr } = await supabase
       .from("vault_units")
       .select("*")
       .eq("trainer_id", user.id)
       .order("unit_order");
 
-    if (!unitsData) { setLoading(false); return; }
+    if (unitsErr) {
+      toast.error(`تعذر تحميل الوحدات: ${unitsErr.message}`);
+      setLoading(false);
+      return;
+    }
 
-    const unitIds = unitsData.map((u: VaultUnit) => u.id);
+    const list = (unitsData ?? []) as VaultUnit[];
+    const unitIds = list.map((u) => u.id);
     let lessonCounts: Record<string, number> = {};
     if (unitIds.length > 0) {
-      const { data: lessonsData } = await supabase
+      const { data: lessonsData, error: lessonsErr } = await supabase
         .from("vault_lessons")
         .select("unit_id")
         .in("unit_id", unitIds);
-      (lessonsData || []).forEach((l: { unit_id: string }) => {
-        lessonCounts[l.unit_id] = (lessonCounts[l.unit_id] || 0) + 1;
-      });
+      if (lessonsErr) {
+        toast.error(`تعذر تحميل عدد الدروس: ${lessonsErr.message}`);
+      } else {
+        (lessonsData || []).forEach((l: { unit_id: string }) => {
+          lessonCounts[l.unit_id] = (lessonCounts[l.unit_id] || 0) + 1;
+        });
+      }
     }
 
-    setUnits(unitsData.map((u: VaultUnit) => ({ ...u, lessons_count: lessonCounts[u.id] || 0 })));
+    setUnits(list.map((u) => ({ ...u, lessons_count: lessonCounts[u.id] || 0 })));
     setLoading(false);
   };
 
@@ -195,21 +204,41 @@ const Vault = () => {
     }
     const isFreeEffective = newAudience === "platform" ? false : newIsFree;
     const priceEffective = isFreeEffective ? 0 : Math.round(Number(newPrice) * 100) / 100;
-    await supabase.from("vault_units").insert({
-      trainer_id: user.id,
-      title: newTitle.trim(),
-      description: newDesc.trim() || null,
-      visibility: "all",
-      unit_order: units.length,
-      cover_image_url: newCoverUrl,
-      lock_type: newLock,
-      lock_days: newLock === "days" ? newLockDays : 0,
-      lock_after_unit_id: newLock === "unit" && newLockUnitId ? newLockUnitId : null,
-      is_free: isFreeEffective,
-      price: priceEffective,
-      audience: newAudience,
-      audience_client_ids: newAudience === "selected_clients" ? newSelectedClients : [],
-    });
+    const { data: inserted, error: insertErr } = await supabase
+      .from("vault_units")
+      .insert({
+        trainer_id: user.id,
+        title: newTitle.trim(),
+        description: newDesc.trim() || null,
+        visibility: "all",
+        unit_order: units.length,
+        cover_image_url: newCoverUrl,
+        lock_type: newLock,
+        lock_days: newLock === "days" ? newLockDays : 0,
+        lock_after_unit_id: newLock === "unit" && newLockUnitId ? newLockUnitId : null,
+        is_free: isFreeEffective,
+        price: priceEffective,
+        audience: newAudience,
+        audience_client_ids: newAudience === "selected_clients" ? newSelectedClients : [],
+      })
+      .select("*")
+      .single();
+
+    if (insertErr) {
+      toast.error(`لم يُحفظ: ${insertErr.message}`);
+      return;
+    }
+    if (!inserted) {
+      toast.error("لم تُرجع قاعدة البيانات سجل الوحدة. تحقق من صلاحيات RLS أو القيود.");
+      await fetchUnits();
+      return;
+    }
+    if (inserted.trainer_id !== user.id) {
+      toast.error("معرّف المدرب في السجل لا يطابق حسابك. تحقق من بيانات تسجيل الدخول.");
+      await fetchUnits();
+      return;
+    }
+
     toast.success("تم إنشاء الوحدة");
     setCreating(false);
     setNewTitle("");
@@ -220,7 +249,7 @@ const Vault = () => {
     setNewPrice("10");
     setNewAudience("my_clients");
     setNewSelectedClients([]);
-    fetchUnits();
+    await fetchUnits();
   };
 
   const startEdit = (u: VaultUnit) => {
@@ -261,28 +290,39 @@ const Vault = () => {
     }
     const isFreeEffective = editAudience === "platform" ? false : editIsFree;
     const priceEffective = isFreeEffective ? 0 : Math.round(Number(editPrice) * 100) / 100;
-    await supabase.from("vault_units").update({
-      title: editTitle.trim(),
-      description: editDesc.trim() || null,
-      visibility: "all",
-      cover_image_url: editCoverUrl,
-      lock_type: editLock,
-      lock_days: editLock === "days" ? editLockDays : 0,
-      lock_after_unit_id: editLock === "unit" && editLockUnitId ? editLockUnitId : null,
-      is_free: isFreeEffective,
-      price: priceEffective,
-      audience: editAudience,
-      audience_client_ids: editAudience === "selected_clients" ? editSelectedClients : [],
-    }).eq("id", editId);
+    const { error: updateErr } = await supabase
+      .from("vault_units")
+      .update({
+        title: editTitle.trim(),
+        description: editDesc.trim() || null,
+        visibility: "all",
+        cover_image_url: editCoverUrl,
+        lock_type: editLock,
+        lock_days: editLock === "days" ? editLockDays : 0,
+        lock_after_unit_id: editLock === "unit" && editLockUnitId ? editLockUnitId : null,
+        is_free: isFreeEffective,
+        price: priceEffective,
+        audience: editAudience,
+        audience_client_ids: editAudience === "selected_clients" ? editSelectedClients : [],
+      })
+      .eq("id", editId);
+    if (updateErr) {
+      toast.error(`لم يُحفظ التحديث: ${updateErr.message}`);
+      return;
+    }
     toast.success("تم تحديث الوحدة");
     setEditId(null);
-    fetchUnits();
+    await fetchUnits();
   };
 
   const deleteUnit = async (id: string) => {
-    await supabase.from("vault_units").delete().eq("id", id);
+    const { error } = await supabase.from("vault_units").delete().eq("id", id);
+    if (error) {
+      toast.error(`تعذر الحذف: ${error.message}`);
+      return;
+    }
     toast.success("تم حذف الوحدة");
-    fetchUnits();
+    await fetchUnits();
   };
 
   const audienceSection = (

@@ -378,6 +378,9 @@ const Vault = () => {
             </div>
             <input ref={editFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0], true)} />
           </div>
+          <p className="px-4 pt-3 text-[10px] text-[hsl(0_0%_42%)] leading-relaxed border-b border-[hsl(0_0%_10%)] pb-3">
+            <span className="font-medium text-[hsl(0_0%_55%)]">غلاف الوحدة:</span> صورة مصغّرة في قائمة المكتبة فقط. ملفات الدروس (PDF، فيديو، صور) تُرفع داخل كل درس من صفحة الوحدة، وليس هنا.
+          </p>
           <div className="p-4 space-y-3">
             <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="عنوان الوحدة" autoFocus />
             <Textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="وصف (اختياري)" rows={2} />
@@ -531,6 +534,9 @@ const Vault = () => {
               </div>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])} />
             </div>
+            <p className="px-4 pt-3 text-[10px] text-[hsl(0_0%_42%)] leading-relaxed border-b border-[hsl(0_0%_10%)] pb-3">
+              <span className="font-medium text-[hsl(0_0%_55%)]">غلاف الوحدة:</span> صورة مصغّرة في قائمة المكتبة فقط. محتوى الدروس يُضاف لاحقاً من صفحة الوحدة.
+            </p>
             <div className="p-4 space-y-3">
               <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="عنوان الوحدة" autoFocus />
               <Textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="وصف الوحدة (اختياري)" rows={2} />

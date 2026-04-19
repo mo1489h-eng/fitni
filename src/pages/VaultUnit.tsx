@@ -12,13 +12,14 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Plus, ArrowRight, Video, FileText, Type, ChevronUp, ChevronDown,
-  Pencil, Trash2, GripVertical, Save, X, Upload, Image as ImageIcon, Link2, Loader2,
+  Pencil, Trash2, Save, X, Upload, Image as ImageIcon, Link2, Loader2,
 } from "lucide-react";
 import {
   uploadVaultLessonFile,
   isVideoEmbedUrl,
   validateVaultFile,
 } from "@/lib/vaultUpload";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
 
 type VaultLesson = {
   id: string;
@@ -127,6 +128,7 @@ const VaultUnitPage = () => {
   const [newFileSize, setNewFileSize] = useState<number | null>(null);
   const [newUploading, setNewUploading] = useState(false);
   const [newUploadPercent, setNewUploadPercent] = useState<number | null>(null);
+  const [newVideoInputMode, setNewVideoInputMode] = useState<"file" | "url">("file");
 
   const [editId, setEditId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -138,6 +140,7 @@ const VaultUnitPage = () => {
   const [editFileSize, setEditFileSize] = useState<number | null>(null);
   const [editUploading, setEditUploading] = useState(false);
   const [editUploadPercent, setEditUploadPercent] = useState<number | null>(null);
+  const [editVideoInputMode, setEditVideoInputMode] = useState<"file" | "url">("file");
 
   const fetchData = async () => {
     if (!user || !unitId) return;
@@ -188,17 +191,16 @@ const VaultUnitPage = () => {
         vUrl = url.trim() || null;
         content_url = vUrl;
         fUrl = null;
-        fType = vUrl ? "video_url" : null;
+        fType = vUrl ? "video" : null;
         fSize = null;
       } else {
         content_url = fUrl;
+        vUrl = null;
         fType = fUrl ? "video" : null;
       }
     } else if (type === "pdf") {
-      content_url = fUrl || (url.trim() || null);
-      fUrl = fUrl || null;
-      fType = fUrl ? "pdf" : url.trim() ? "pdf" : null;
-      if (!fSize && url.trim()) fSize = null;
+      content_url = fUrl;
+      fType = fUrl ? "pdf" : null;
     } else if (type === "image") {
       content_url = fUrl || null;
       fType = fUrl ? "image" : null;
@@ -217,19 +219,26 @@ const VaultUnitPage = () => {
 
   const saveNewLesson = async () => {
     if (!unitId || !newTitle.trim() || !user) return;
-    if (newType === "video" && !newFileUrl && !newUrl.trim()) {
-      toast.error("أدخل رابط فيديو (YouTube/Vimeo) أو ارفع ملفاً");
-      return;
+    if (newType === "video") {
+      if (newVideoInputMode === "file" && !newFileUrl) {
+        toast.error("ارفع ملف الفيديو");
+        return;
+      }
+      if (newVideoInputMode === "url" && !newUrl.trim()) {
+        toast.error("الصق رابط YouTube أو Vimeo");
+        return;
+      }
     }
-    if (newType === "pdf" && !newFileUrl && !newUrl.trim()) {
-      toast.error("ارفع PDF أو أدخل رابطاً");
+    if (newType === "pdf" && !newFileUrl) {
+      toast.error("ارفع ملف PDF");
       return;
     }
     if (newType === "image" && !newFileUrl) {
       toast.error("ارفع صورة");
       return;
     }
-    const videoMode = newFileUrl ? "file" : "url";
+    const videoMode =
+      newType === "video" ? (newVideoInputMode === "file" ? "file" : "url") : "url";
     const payload = buildLessonPayload(
       newType,
       newUrl,
@@ -251,6 +260,7 @@ const VaultUnitPage = () => {
     setNewUrl("");
     setNewText("");
     setNewType("video");
+    setNewVideoInputMode("file");
     setNewFileUrl(null);
     setNewFileType(null);
     setNewFileSize(null);
@@ -262,23 +272,28 @@ const VaultUnitPage = () => {
     setEditTitle(l.title);
     setEditType(l.content_type);
     setEditText(l.content_text || "");
-    const isEmbed = l.file_type === "video_url" || (!!l.video_url || (!!l.content_url && isVideoEmbedUrl(l.content_url || "")));
+    const isEmbed =
+      !!l.video_url ||
+      l.file_type === "video_url" ||
+      (!!l.content_url && isVideoEmbedUrl(l.content_url || ""));
     if (l.content_type === "video") {
       if (isEmbed) {
+        setEditVideoInputMode("url");
         setEditUrl(l.video_url || l.content_url || "");
         setEditFileUrl(null);
         setEditFileType(null);
         setEditFileSize(null);
       } else {
+        setEditVideoInputMode("file");
         setEditUrl("");
         setEditFileUrl(l.file_url || l.content_url);
         setEditFileType(l.file_type || "video");
         setEditFileSize(l.file_size);
       }
     } else if (l.content_type === "pdf") {
-      setEditUrl(l.file_url ? "" : (l.content_url || ""));
-      setEditFileUrl(l.file_url);
-      setEditFileType(l.file_type);
+      setEditUrl("");
+      setEditFileUrl(l.file_url || l.content_url);
+      setEditFileType(l.file_type || "pdf");
       setEditFileSize(l.file_size);
     } else if (l.content_type === "image") {
       setEditUrl("");
@@ -292,19 +307,26 @@ const VaultUnitPage = () => {
 
   const saveEditLesson = async () => {
     if (!editId || !editTitle.trim() || !user) return;
-    if (editType === "video" && !editFileUrl && !editUrl.trim()) {
-      toast.error("أدخل رابط فيديو (YouTube/Vimeo) أو ارفع ملفاً");
-      return;
+    if (editType === "video") {
+      if (editVideoInputMode === "file" && !editFileUrl) {
+        toast.error("ارفع ملف الفيديو أو انتقل إلى وضع الرابط");
+        return;
+      }
+      if (editVideoInputMode === "url" && !editUrl.trim()) {
+        toast.error("الصق رابط YouTube أو Vimeo");
+        return;
+      }
     }
-    if (editType === "pdf" && !editFileUrl && !editUrl.trim()) {
-      toast.error("ارفع PDF أو أدخل رابطاً");
+    if (editType === "pdf" && !editFileUrl) {
+      toast.error("ارفع ملف PDF");
       return;
     }
     if (editType === "image" && !editFileUrl) {
       toast.error("ارفع صورة");
       return;
     }
-    const editVideoMode = editFileUrl ? "file" : "url";
+    const editVideoMode =
+      editType === "video" ? (editVideoInputMode === "file" ? "file" : "url") : "url";
     const payload = buildLessonPayload(
       editType,
       editUrl,
@@ -357,6 +379,7 @@ const VaultUnitPage = () => {
                 setNewFileUrl(null);
                 setNewFileType(null);
                 setNewFileSize(null);
+                setNewVideoInputMode("file");
               }
               setNewType(t);
             }}
@@ -390,6 +413,7 @@ const VaultUnitPage = () => {
                 setEditFileUrl(null);
                 setEditFileType(null);
                 setEditFileSize(null);
+                setEditVideoInputMode("file");
               }
               setEditType(t);
             }}
@@ -407,87 +431,145 @@ const VaultUnitPage = () => {
     </div>
   );
 
+  const lessonScopeNote = (
+    <div className="rounded-lg border border-dashed border-[hsl(0_0%_18%)] bg-[hsl(0_0%_5%)] px-3 py-2.5 text-[11px] text-[hsl(0_0%_48%)] leading-relaxed">
+      <span className="font-semibold text-[hsl(0_0%_62%)]">محتوى الدرس: </span>
+      ما ترفعه هنا يخص هذا الدرس فقط. صورة{" "}
+      <span className="text-white/85">غلاف الوحدة</span> تُعدّل من صفحة «المكتبة التعليمية»، وليس من هنا.
+    </div>
+  );
+
+  const sectionHeader = (num: string, title: string) => (
+    <div className="flex items-center gap-2 border-b border-[hsl(0_0%_12%)] pb-2 mb-1">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
+        {num}
+      </span>
+      <h3 className="text-sm font-semibold text-white">{title}</h3>
+    </div>
+  );
+
   const renderNewMediaFields = () => {
     if (newType === "article") {
       return (
-        <Textarea value={newText} onChange={(e) => setNewText(e.target.value)} rows={6} placeholder="محتوى المقالة" />
+        <div className="space-y-2">
+          {lessonScopeNote}
+          <Label className="text-xs text-[hsl(0_0%_55%)]">نص المقال</Label>
+          <Textarea value={newText} onChange={(e) => setNewText(e.target.value)} rows={6} placeholder="محتوى المقالة" />
+        </div>
       );
     }
     if (newType === "video") {
       return (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)] flex items-center gap-1.5">
-              <Link2 className="h-3 w-3" strokeWidth={1.5} />
-              رابط YouTube أو Vimeo
-            </Label>
-            <Input
-              value={newUrl}
-              onChange={(e) => {
-                const v = e.target.value;
-                setNewUrl(v);
-                if (v.trim()) {
+          {lessonScopeNote}
+          <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-4">
+            {sectionHeader("٢", "فيديو الدرس")}
+            <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">
+              ملف حتى 500 ميجابايت، أو رابط YouTube / Vimeo
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={newVideoInputMode === "file" ? "default" : "outline"}
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() => {
+                  setNewVideoInputMode("file");
+                  setNewUrl("");
+                }}
+              >
+                <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
+                رفع ملف فيديو
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={newVideoInputMode === "url" ? "default" : "outline"}
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() => {
+                  setNewVideoInputMode("url");
                   setNewFileUrl(null);
                   setNewFileType(null);
                   setNewFileSize(null);
-                }
-              }}
-              placeholder="https://youtube.com/... أو https://vimeo.com/..."
-              dir="ltr"
-              disabled={newUploading}
-            />
-            <p className="text-[10px] text-[hsl(0_0%_38%)]">اترك الحقل فارغاً إن اخترت رفع ملف فيديو فقط.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-[hsl(0_0%_16%)]" />
-            <span className="text-[10px] text-[hsl(0_0%_40%)] shrink-0">أو ارفع ملفاً</span>
-            <div className="h-px flex-1 bg-[hsl(0_0%_16%)]" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)] flex items-center gap-1.5">
-              <Upload className="h-3 w-3" strokeWidth={1.5} />
-              ملف فيديو — حتى 500 ميجابايت
-            </Label>
-            <LessonFileDropZone
-              accept="video/*"
-              label="اسحب الفيديو هنا أو انقر للاختيار"
-              disabled={newUploading}
-              onFile={async (f) => {
-                const err = validateVaultFile(f, "video");
-                if (err) {
-                  toast.error(err);
-                  return;
-                }
-                setNewUrl("");
-                setNewUploading(true);
-                setNewUploadPercent(0);
-                try {
-                  const r = await uploadForLesson(f, "video", (p) => setNewUploadPercent(p));
-                  if (r) {
-                    setNewFileUrl(r.publicUrl);
-                    setNewFileType("video");
-                    setNewFileSize(r.fileSize);
+                }}
+              >
+                <Link2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                رابط YouTube أو Vimeo
+              </Button>
+            </div>
+            {newVideoInputMode === "url" ? (
+              <div className="space-y-3">
+                <Label className="text-xs text-[hsl(0_0%_55%)]">الصق الرابط</Label>
+                <Input
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/... أو https://vimeo.com/..."
+                  dir="ltr"
+                  disabled={newUploading}
+                />
+                {(() => {
+                  const embed = getVideoEmbedUrl(newUrl);
+                  if (!embed) {
+                    return newUrl.trim() ? (
+                      <p className="text-[10px] text-amber-500/90">تأكد أن الرابط من YouTube أو Vimeo</p>
+                    ) : null;
                   }
-                } catch (e: unknown) {
-                  toast.error(e instanceof Error ? e.message : "فشل الرفع");
-                } finally {
-                  setNewUploading(false);
-                  setNewUploadPercent(null);
-                }
-              }}
-            />
-            {newUploading && newUploadPercent !== null && (
-              <div className="space-y-1.5">
-                <Progress value={newUploadPercent} className="h-2" />
-                <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                  جاري الرفع… {newUploadPercent}%
-                </p>
+                  return (
+                    <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
+                      <iframe
+                        src={embed}
+                        title="معاينة الفيديو"
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                })()}
               </div>
-            )}
-            {newFileUrl && !newUploading && (
-              <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
-                <video src={newFileUrl} controls className="w-full h-full" />
+            ) : (
+              <div className="space-y-3">
+                <LessonFileDropZone
+                  accept="video/*"
+                  label="اسحب ملف الفيديو أو انقر — video/*"
+                  disabled={newUploading}
+                  onFile={async (f) => {
+                    const err = validateVaultFile(f, "video");
+                    if (err) {
+                      toast.error(err);
+                      return;
+                    }
+                    setNewUploading(true);
+                    setNewUploadPercent(0);
+                    try {
+                      const r = await uploadForLesson(f, "video", (p) => setNewUploadPercent(p));
+                      if (r) {
+                        setNewFileUrl(r.publicUrl);
+                        setNewFileType("video");
+                        setNewFileSize(r.fileSize);
+                      }
+                    } catch (e: unknown) {
+                      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+                    } finally {
+                      setNewUploading(false);
+                      setNewUploadPercent(null);
+                    }
+                  }}
+                />
+                {newUploading && newUploadPercent !== null && (
+                  <div className="space-y-1.5">
+                    <Progress value={newUploadPercent} className="h-2" />
+                    <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                      جاري الرفع… {newUploadPercent}%
+                    </p>
+                  </div>
+                )}
+                {newFileUrl && !newUploading && (
+                  <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
+                    <video src={newFileUrl} controls className="w-full h-full" playsInline />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -497,10 +579,13 @@ const VaultUnitPage = () => {
     if (newType === "pdf") {
       return (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)]">رفع PDF — حتى 50 ميجابايت</Label>
+          {lessonScopeNote}
+          <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-3">
+            {sectionHeader("١", "رفع ملف PDF")}
+            <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">ملف PDF فقط — حتى 50 ميجابايت</p>
+            <Label className="text-xs text-[hsl(0_0%_55%)]">رفع ملف PDF</Label>
             <LessonFileDropZone
-              accept="application/pdf,.pdf"
+              accept=".pdf,application/pdf"
               label="اسحب ملف PDF أو انقر — .pdf"
               disabled={newUploading}
               onFile={async (f) => {
@@ -509,7 +594,6 @@ const VaultUnitPage = () => {
                   toast.error(err);
                   return;
                 }
-                setNewUrl("");
                 setNewUploading(true);
                 setNewUploadPercent(0);
                 try {
@@ -536,76 +620,66 @@ const VaultUnitPage = () => {
                 </p>
               </div>
             )}
+            {newFileUrl && !newUploading && (
+              <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] h-56 bg-[hsl(0_0%_8%)]">
+                <iframe title="معاينة PDF" src={newFileUrl} className="w-full h-full" />
+              </div>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)]">أو رابط PDF خارجي</Label>
-            <Input
-              value={newUrl}
-              onChange={(e) => {
-                const v = e.target.value;
-                setNewUrl(v);
-                if (v.trim()) {
-                  setNewFileUrl(null);
-                  setNewFileType(null);
-                  setNewFileSize(null);
-                }
-              }}
-              placeholder="https://..."
-              dir="ltr"
-              disabled={newUploading}
-            />
-          </div>
-          {newFileUrl && !newUploading && (
-            <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] h-56 bg-[hsl(0_0%_8%)]">
-              <iframe title="pdf-preview" src={newFileUrl} className="w-full h-full" />
-            </div>
-          )}
         </div>
       );
     }
-    /* image */
     return (
-      <div className="space-y-3">
-        <Label className="text-xs text-[hsl(0_0%_55%)]">صورة — حتى 10 ميجابايت</Label>
-        <LessonFileDropZone
-          accept="image/*"
-          label="اسحب صورة أو انقر — JPG, PNG, …"
-          disabled={newUploading}
-          onFile={async (f) => {
-            const err = validateVaultFile(f, "image");
-            if (err) {
-              toast.error(err);
-              return;
-            }
-            setNewUploading(true);
-            setNewUploadPercent(0);
-            try {
-              const r = await uploadForLesson(f, "image", (p) => setNewUploadPercent(p));
-              if (r) {
-                setNewFileUrl(r.publicUrl);
-                setNewFileType("image");
-                setNewFileSize(r.fileSize);
+      <div className="space-y-4">
+        {lessonScopeNote}
+        <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-3">
+          {sectionHeader("٣", "رفع صورة")}
+          <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">صور فقط — حتى 10 ميجابايت</p>
+          <Label className="text-xs text-[hsl(0_0%_55%)]">رفع صورة</Label>
+          <LessonFileDropZone
+            accept="image/*"
+            label="اسحب صورة أو انقر — image/*"
+            disabled={newUploading}
+            onFile={async (f) => {
+              const err = validateVaultFile(f, "image");
+              if (err) {
+                toast.error(err);
+                return;
               }
-            } catch (e: unknown) {
-              toast.error(e instanceof Error ? e.message : "فشل الرفع");
-            } finally {
-              setNewUploading(false);
-              setNewUploadPercent(null);
-            }
-          }}
-        />
-        {newUploading && newUploadPercent !== null && (
-          <div className="space-y-1.5">
-            <Progress value={newUploadPercent} className="h-2" />
-            <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-              جاري الرفع… {newUploadPercent}%
-            </p>
-          </div>
-        )}
-        {newFileUrl && !newUploading && (
-          <img src={newFileUrl} alt="" className="max-h-64 w-auto rounded-lg border border-[hsl(0_0%_12%)] mx-auto object-contain" />
-        )}
+              setNewUploading(true);
+              setNewUploadPercent(0);
+              try {
+                const r = await uploadForLesson(f, "image", (p) => setNewUploadPercent(p));
+                if (r) {
+                  setNewFileUrl(r.publicUrl);
+                  setNewFileType("image");
+                  setNewFileSize(r.fileSize);
+                }
+              } catch (e: unknown) {
+                toast.error(e instanceof Error ? e.message : "فشل الرفع");
+              } finally {
+                setNewUploading(false);
+                setNewUploadPercent(null);
+              }
+            }}
+          />
+          {newUploading && newUploadPercent !== null && (
+            <div className="space-y-1.5">
+              <Progress value={newUploadPercent} className="h-2" />
+              <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                جاري الرفع… {newUploadPercent}%
+              </p>
+            </div>
+          )}
+          {newFileUrl && !newUploading && (
+            <img
+              src={newFileUrl}
+              alt=""
+              className="max-h-64 w-auto rounded-lg border border-[hsl(0_0%_12%)] mx-auto object-contain"
+            />
+          )}
+        </div>
       </div>
     );
   };
@@ -613,80 +687,125 @@ const VaultUnitPage = () => {
   const renderEditMediaFields = () => {
     if (editType === "article") {
       return (
-        <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={6} placeholder="محتوى المقالة" />
+        <div className="space-y-2">
+          {lessonScopeNote}
+          <Label className="text-xs text-[hsl(0_0%_55%)]">نص المقال</Label>
+          <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={6} placeholder="محتوى المقالة" />
+        </div>
       );
     }
     if (editType === "video") {
       return (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)] flex items-center gap-1.5">
-              <Link2 className="h-3 w-3" strokeWidth={1.5} />
-              رابط YouTube أو Vimeo
-            </Label>
-            <Input
-              value={editUrl}
-              onChange={(e) => {
-                const v = e.target.value;
-                setEditUrl(v);
-                if (v.trim()) {
+          {lessonScopeNote}
+          <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-4">
+            {sectionHeader("٢", "فيديو الدرس")}
+            <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">
+              ملف حتى 500 ميجابايت، أو رابط YouTube / Vimeo
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={editVideoInputMode === "file" ? "default" : "outline"}
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() => {
+                  setEditVideoInputMode("file");
+                  setEditUrl("");
+                }}
+              >
+                <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
+                رفع ملف فيديو
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={editVideoInputMode === "url" ? "default" : "outline"}
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() => {
+                  setEditVideoInputMode("url");
                   setEditFileUrl(null);
                   setEditFileType(null);
                   setEditFileSize(null);
-                }
-              }}
-              placeholder="https://..."
-              dir="ltr"
-              disabled={editUploading}
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-[hsl(0_0%_16%)]" />
-            <span className="text-[10px] text-[hsl(0_0%_40%)] shrink-0">أو ملف فيديو</span>
-            <div className="h-px flex-1 bg-[hsl(0_0%_16%)]" />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)]">رفع أو استبدال ملف فيديو — حتى 500 ميجابايت</Label>
-            <LessonFileDropZone
-              accept="video/*"
-              label="اسحب الفيديو هنا أو انقر"
-              disabled={editUploading}
-              onFile={async (f) => {
-                const err = validateVaultFile(f, "video");
-                if (err) {
-                  toast.error(err);
-                  return;
-                }
-                setEditUrl("");
-                setEditUploading(true);
-                setEditUploadPercent(0);
-                try {
-                  const r = await uploadForLesson(f, "video", (p) => setEditUploadPercent(p));
-                  if (r) {
-                    setEditFileUrl(r.publicUrl);
-                    setEditFileType("video");
-                    setEditFileSize(r.fileSize);
+                }}
+              >
+                <Link2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                رابط YouTube أو Vimeo
+              </Button>
+            </div>
+            {editVideoInputMode === "url" ? (
+              <div className="space-y-3">
+                <Label className="text-xs text-[hsl(0_0%_55%)]">الصق الرابط</Label>
+                <Input
+                  value={editUrl}
+                  onChange={(e) => setEditUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/... أو https://vimeo.com/..."
+                  dir="ltr"
+                  disabled={editUploading}
+                />
+                {(() => {
+                  const embed = getVideoEmbedUrl(editUrl);
+                  if (!embed) {
+                    return editUrl.trim() ? (
+                      <p className="text-[10px] text-amber-500/90">تأكد أن الرابط من YouTube أو Vimeo</p>
+                    ) : null;
                   }
-                } catch (e: unknown) {
-                  toast.error(e instanceof Error ? e.message : "فشل الرفع");
-                } finally {
-                  setEditUploading(false);
-                  setEditUploadPercent(null);
-                }
-              }}
-            />
-            {editUploading && editUploadPercent !== null && (
-              <div className="space-y-1.5">
-                <Progress value={editUploadPercent} className="h-2" />
-                <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                  جاري الرفع… {editUploadPercent}%
-                </p>
+                  return (
+                    <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
+                      <iframe
+                        src={embed}
+                        title="معاينة الفيديو"
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                })()}
               </div>
-            )}
-            {editFileUrl && !editUploading && (
-              <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
-                <video src={editFileUrl} controls className="w-full h-full" />
+            ) : (
+              <div className="space-y-3">
+                <LessonFileDropZone
+                  accept="video/*"
+                  label="اسحب ملف فيديو جديداً أو انقر — video/*"
+                  disabled={editUploading}
+                  onFile={async (f) => {
+                    const err = validateVaultFile(f, "video");
+                    if (err) {
+                      toast.error(err);
+                      return;
+                    }
+                    setEditUploading(true);
+                    setEditUploadPercent(0);
+                    try {
+                      const r = await uploadForLesson(f, "video", (p) => setEditUploadPercent(p));
+                      if (r) {
+                        setEditFileUrl(r.publicUrl);
+                        setEditFileType("video");
+                        setEditFileSize(r.fileSize);
+                      }
+                    } catch (e: unknown) {
+                      toast.error(e instanceof Error ? e.message : "فشل الرفع");
+                    } finally {
+                      setEditUploading(false);
+                      setEditUploadPercent(null);
+                    }
+                  }}
+                />
+                {editUploading && editUploadPercent !== null && (
+                  <div className="space-y-1.5">
+                    <Progress value={editUploadPercent} className="h-2" />
+                    <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                      جاري الرفع… {editUploadPercent}%
+                    </p>
+                  </div>
+                )}
+                {editFileUrl && !editUploading && (
+                  <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] bg-black aspect-video">
+                    <video src={editFileUrl} controls className="w-full h-full" playsInline />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -696,11 +815,14 @@ const VaultUnitPage = () => {
     if (editType === "pdf") {
       return (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)]">رفع أو استبدال PDF — حتى 50 ميجابايت</Label>
+          {lessonScopeNote}
+          <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-3">
+            {sectionHeader("١", "رفع ملف PDF")}
+            <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">ملف PDF فقط — حتى 50 ميجابايت</p>
+            <Label className="text-xs text-[hsl(0_0%_55%)]">رفع ملف PDF</Label>
             <LessonFileDropZone
-              accept="application/pdf,.pdf"
-              label="اسحب PDF أو انقر"
+              accept=".pdf,application/pdf"
+              label="اسحب ملف PDF أو انقر — .pdf"
               disabled={editUploading}
               onFile={async (f) => {
                 const err = validateVaultFile(f, "pdf");
@@ -708,7 +830,6 @@ const VaultUnitPage = () => {
                   toast.error(err);
                   return;
                 }
-                setEditUrl("");
                 setEditUploading(true);
                 setEditUploadPercent(0);
                 try {
@@ -735,75 +856,66 @@ const VaultUnitPage = () => {
                 </p>
               </div>
             )}
+            {editFileUrl && !editUploading && (
+              <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] h-52 bg-[hsl(0_0%_8%)]">
+                <iframe title="معاينة PDF" src={editFileUrl} className="w-full h-full" />
+              </div>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-[hsl(0_0%_55%)]">أو رابط PDF خارجي</Label>
-            <Input
-              value={editUrl}
-              onChange={(e) => {
-                const v = e.target.value;
-                setEditUrl(v);
-                if (v.trim()) {
-                  setEditFileUrl(null);
-                  setEditFileType(null);
-                  setEditFileSize(null);
-                }
-              }}
-              placeholder="https://..."
-              dir="ltr"
-              disabled={editUploading}
-            />
-          </div>
-          {editFileUrl && !editUploading && (
-            <div className="rounded-lg overflow-hidden border border-[hsl(0_0%_12%)] h-52 bg-[hsl(0_0%_8%)]">
-              <iframe title="pdf-edit" src={editFileUrl} className="w-full h-full" />
-            </div>
-          )}
         </div>
       );
     }
     return (
-      <div className="space-y-3">
-        <Label className="text-xs text-[hsl(0_0%_55%)]">صورة — حتى 10 ميجابايت</Label>
-        <LessonFileDropZone
-          accept="image/*"
-          label="اسحب صورة أو انقر لاستبدالها"
-          disabled={editUploading}
-          onFile={async (f) => {
-            const err = validateVaultFile(f, "image");
-            if (err) {
-              toast.error(err);
-              return;
-            }
-            setEditUploading(true);
-            setEditUploadPercent(0);
-            try {
-              const r = await uploadForLesson(f, "image", (p) => setEditUploadPercent(p));
-              if (r) {
-                setEditFileUrl(r.publicUrl);
-                setEditFileType("image");
-                setEditFileSize(r.fileSize);
+      <div className="space-y-4">
+        {lessonScopeNote}
+        <div className="rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%)] p-4 space-y-3">
+          {sectionHeader("٣", "رفع صورة")}
+          <p className="text-[10px] text-[hsl(0_0%_40%)] -mt-2">صور فقط — حتى 10 ميجابايت</p>
+          <Label className="text-xs text-[hsl(0_0%_55%)]">رفع صورة</Label>
+          <LessonFileDropZone
+            accept="image/*"
+            label="اسحب صورة أو انقر — image/*"
+            disabled={editUploading}
+            onFile={async (f) => {
+              const err = validateVaultFile(f, "image");
+              if (err) {
+                toast.error(err);
+                return;
               }
-            } catch (e: unknown) {
-              toast.error(e instanceof Error ? e.message : "فشل الرفع");
-            } finally {
-              setEditUploading(false);
-              setEditUploadPercent(null);
-            }
-          }}
-        />
-        {editUploading && editUploadPercent !== null && (
-          <div className="space-y-1.5">
-            <Progress value={editUploadPercent} className="h-2" />
-            <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
-              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-              جاري الرفع… {editUploadPercent}%
-            </p>
-          </div>
-        )}
-        {editFileUrl && !editUploading && (
-          <img src={editFileUrl} alt="" className="max-h-56 w-auto rounded-lg border border-[hsl(0_0%_12%)] mx-auto object-contain" />
-        )}
+              setEditUploading(true);
+              setEditUploadPercent(0);
+              try {
+                const r = await uploadForLesson(f, "image", (p) => setEditUploadPercent(p));
+                if (r) {
+                  setEditFileUrl(r.publicUrl);
+                  setEditFileType("image");
+                  setEditFileSize(r.fileSize);
+                }
+              } catch (e: unknown) {
+                toast.error(e instanceof Error ? e.message : "فشل الرفع");
+              } finally {
+                setEditUploading(false);
+                setEditUploadPercent(null);
+              }
+            }}
+          />
+          {editUploading && editUploadPercent !== null && (
+            <div className="space-y-1.5">
+              <Progress value={editUploadPercent} className="h-2" />
+              <p className="text-[11px] text-[hsl(0_0%_45%)] flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                جاري الرفع… {editUploadPercent}%
+              </p>
+            </div>
+          )}
+          {editFileUrl && !editUploading && (
+            <img
+              src={editFileUrl}
+              alt=""
+              className="max-h-56 w-auto rounded-lg border border-[hsl(0_0%_12%)] mx-auto object-contain"
+            />
+          )}
+        </div>
       </div>
     );
   };

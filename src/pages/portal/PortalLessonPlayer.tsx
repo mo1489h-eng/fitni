@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import {
   ArrowRight, ArrowLeft, CheckCircle2, Circle, Video, FileText, Type, BookOpen, Image as ImageIcon,
 } from "lucide-react";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { isVideoEmbedUrl } from "@/lib/vaultUpload";
 
 type PortalLesson = {
   id: string;
@@ -34,15 +36,6 @@ const contentTypeIcons: Record<string, React.ElementType> = {
   pdf: FileText,
   article: Type,
   image: ImageIcon,
-};
-
-const getEmbedUrl = (url: string): string | null => {
-  if (!url) return null;
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  const vmMatch = url.match(/vimeo\.com\/(\d+)/);
-  if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
-  return url;
 };
 
 const PortalLessonPlayer = () => {
@@ -173,8 +166,23 @@ const PortalLessonPlayer = () => {
 
         {/* Content player */}
         {lesson.content_type === "video" && (() => {
-          const isUploaded = lesson.file_type === "video";
-          const fileSrc = isUploaded ? (lesson.file_url || lesson.content_url) : null;
+          const tube = lesson.video_url?.trim();
+          if (tube) {
+            const embedSrc = getVideoEmbedUrl(tube);
+            if (embedSrc) {
+              return (
+                <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
+                  <iframe
+                    src={embedSrc}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              );
+            }
+          }
+          const fileSrc = lesson.file_url?.trim() || "";
           if (fileSrc) {
             return (
               <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
@@ -182,16 +190,26 @@ const PortalLessonPlayer = () => {
               </div>
             );
           }
-          const embedSrc = getEmbedUrl(lesson.video_url || lesson.content_url || "") || "";
-          if (embedSrc) {
+          const legacy = lesson.content_url?.trim() || "";
+          if (legacy) {
+            if (isVideoEmbedUrl(legacy)) {
+              const embedSrc = getVideoEmbedUrl(legacy);
+              if (embedSrc) {
+                return (
+                  <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
+                    <iframe
+                      src={embedSrc}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                );
+              }
+            }
             return (
               <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
-                <iframe
-                  src={embedSrc}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                <video src={legacy} controls className="w-full h-full" playsInline />
               </div>
             );
           }

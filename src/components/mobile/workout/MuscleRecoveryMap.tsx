@@ -52,7 +52,7 @@ export default function MuscleRecoveryMap({ clientId }: Props) {
         مركز استشفاء العضلات
       </p>
       <p className="mb-4 text-[12px] leading-relaxed" style={{ color: ELITE.textSecondary }}>
-        إجهاد لحظي بعد كل مجموعة — يتحول من لحمي طازج إلى أصفر ثم برتقالي وأحمر عميق. اضغط عضلة للتفاصيل.
+        خريطة تشريحية: الرمادي الداكن راحة، والأخضر يعكس حجم التدريب والاستشفاء. اضغط عضلة للتفاصيل.
       </p>
       {isError && (
         <p className="mb-3 text-[11px] text-amber-400/90">تعذّر مزامنة السحابة — يُعرض التخزين المحلي.</p>

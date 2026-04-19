@@ -2,15 +2,50 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useWorkoutStore, type MuscleGroupId } from "@/store/workout-store";
 import {
-  fatigueHeatColor,
   formatDurationAr,
   getCurrentFatigue,
   hoursUntilFullRecovery,
   recoveryStatusLabel,
 } from "@/lib/muscle-fatigue-engine";
 import { ELITE } from "./designTokens";
+import {
+  AnatomicalBackMuscles,
+  AnatomicalBodyOutline,
+  AnatomicalFrontMuscles,
+} from "./anatomicalMuscleMapSvg";
 
 const OLED = "#000000";
+/** Heatmap: inactive muscle vs trained / recovering (volume → intensity). */
+const HEAT_INACTIVE = "#2A2A2A";
+const HEAT_ACCENT = "#4F6F52";
+const HEAT_ACCENT_LIGHT = "#6d9471";
+const HEAT_ACCENT_DEEP = "#355738";
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const c = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${c(r)}${c(g)}${c(b)}`;
+}
+
+function lerpRgb(a: string, b: string, t: number): string {
+  const u = Math.max(0, Math.min(1, t));
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  return rgbToHex(lerp(r1, r2, u), lerp(g1, g2, u), lerp(b1, b2, u));
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * Math.max(0, Math.min(1, t));
+}
+
+function recoveryRingColor(fatigue01: number): string {
+  const t = Math.max(0, Math.min(1, fatigue01));
+  return lerpRgb(HEAT_ACCENT, HEAT_ACCENT_LIGHT, 1 - t * 0.65);
+}
 
 type Props = {
   fatigueLevels: Partial<Record<MuscleGroupId, number>>;
@@ -48,7 +83,7 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
     return vals.length ? Math.max(...vals) : 0;
   }, [fatigueLevels]);
 
-  const fatigueGlow = fatigueHeatColor(maxFatigue);
+  const fatigueGlow = lerpRgb(HEAT_INACTIVE, HEAT_ACCENT, Math.min(1, maxFatigue * 0.85 + 0.08));
 
   const openTip = (id: MuscleGroupId) => {
     const t = Date.now();
@@ -162,7 +197,7 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke={fatigueHeatColor(tip.fatigue)}
+                  stroke={recoveryRingColor(tip.fatigue)}
                   strokeWidth="3"
                   strokeDasharray={`${(tip.recoveryPct / 100) * 94.2} 94.2`}
                   strokeLinecap="round"
@@ -184,6 +219,8 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
   );
 }
 
+const MUSCLE_IDS: MuscleGroupId[] = ["chest", "back", "shoulders", "arms", "core", "legs"];
+
 function HeatmapSvg({
   side,
   fatigueLevels,
@@ -196,31 +233,52 @@ function HeatmapSvg({
   const rid = useId().replace(/:/g, "");
   const bloom = `heatBloomAdv-${rid}`;
   const infl = `inflamed-${rid}`;
-  const torso = `torsoShadeAdv-${rid}`;
-  const striae = `striae-${rid}`;
 
-  const fillFor = (id: MuscleGroupId) => fatigueHeatColor(fatigueLevels[id] ?? 0);
-  const opFor = (id: MuscleGroupId) => 0.18 + (fatigueLevels[id] ?? 0) * 0.78;
+  const paint = (id: MuscleGroupId) => {
+    const t = Math.max(0, Math.min(1, fatigueLevels[id] ?? 0));
+    if (t < 0.03) {
+      return { fill: HEAT_INACTIVE, opacity: 1 as number };
+    }
+    return {
+      fill: `url(#${rid}-muscle-${id})`,
+      opacity: 0.82 + t * 0.18,
+    };
+  };
 
   return (
-    <svg viewBox="0 0 200 360" className="h-full w-full" role="img" aria-label="خريطة العضلات" style={{ transform: "translateZ(0)" }}>
+    <svg viewBox="0 0 200 380" className="h-full w-full" role="img" aria-label="خريطة العضلات" style={{ transform: "translateZ(0)" }}>
       <defs>
+        {MUSCLE_IDS.map((id) => {
+          const t = Math.max(0, Math.min(1, fatigueLevels[id] ?? 0));
+          if (t < 0.03) return null;
+          const k = t * 0.92 + 0.08;
+          const top = lerpRgb(HEAT_INACTIVE, HEAT_ACCENT_LIGHT, k);
+          const mid = lerpRgb(HEAT_INACTIVE, HEAT_ACCENT, k);
+          const bot = lerpRgb(HEAT_INACTIVE, HEAT_ACCENT_DEEP, k * 0.95);
+          return (
+            <linearGradient key={id} id={`${rid}-muscle-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={top} />
+              <stop offset="48%" stopColor={mid} />
+              <stop offset="100%" stopColor={bot} />
+            </linearGradient>
+          );
+        })}
         <filter id={bloom} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b" />
           <feColorMatrix
             in="b"
             type="matrix"
-            values="1 0 0 0 0  0 0.85 0 0 0  0 0 0.75 0 0  0 0 0 0.65 0"
+            values="1 0 0 0 0  0 0.9 0 0 0  0 0 0.75 0 0  0 0 0 0.55 0"
             result="c"
           />
           <feBlend in="SourceGraphic" in2="c" mode="screen" />
         </filter>
         <filter id={infl} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
           <feColorMatrix
             in="blur"
             type="matrix"
-            values="1.2 0 0 0 0  0 0.3 0 0 0  0 0 0.25 0 0  0 0 0 0.9 0"
+            values="1.15 0 0 0 0  0 0.45 0 0 0  0 0 0.35 0 0  0 0 0 0.85 0"
             result="glow"
           />
           <feMerge>
@@ -228,161 +286,20 @@ function HeatmapSvg({
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <radialGradient id={torso} cx="50%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#2a2a2a" />
-          <stop offset="100%" stopColor="#0a0a0a" />
-        </radialGradient>
-        <pattern id={striae} patternUnits="userSpaceOnUse" width="6" height="6">
-          <path d="M 0 6 L 6 0" stroke="rgba(255,255,255,0.04)" strokeWidth="0.4" />
-        </pattern>
       </defs>
 
-      <ellipse cx="100" cy="32" rx="22" ry="26" fill="#151515" stroke="#222" strokeWidth="1" />
-      <path
-        d="M 70 58 Q 100 48 130 58 L 128 120 Q 100 128 72 120 Z"
-        fill={`url(#${torso})`}
-        stroke="#1f1f1f"
-        strokeWidth="1"
-      />
-      <path d="M 72 120 L 68 210 L 88 300 L 100 305 L 112 300 L 132 210 L 128 120" fill="#121212" stroke="#1a1a1a" />
+      <rect width="200" height="380" fill={OLED} />
 
-      {side === "front" ? (
-        <g filter={`url(#${bloom})`}>
-          <FrontPaths fillFor={fillFor} opFor={opFor} onTap={onTap} inflamedId={infl} striaeId={striae} />
-        </g>
-      ) : (
-        <g filter={`url(#${bloom})`}>
-          <BackPaths fillFor={fillFor} opFor={opFor} onTap={onTap} inflamedId={infl} />
-        </g>
-      )}
+      <AnatomicalBodyOutline side={side} />
+
+      <g filter={`url(#${bloom})`}>
+        {side === "front" ? (
+          <AnatomicalFrontMuscles paint={paint} onTap={onTap} inflamedId={infl} />
+        ) : (
+          <AnatomicalBackMuscles paint={paint} onTap={onTap} inflamedId={infl} />
+        )}
+      </g>
     </svg>
-  );
-}
-
-function FrontPaths({
-  fillFor,
-  opFor,
-  onTap,
-  inflamedId,
-  striaeId,
-}: {
-  fillFor: (id: MuscleGroupId) => string;
-  opFor: (id: MuscleGroupId) => number;
-  onTap: (id: MuscleGroupId) => void;
-  inflamedId: string;
-  striaeId: string;
-}) {
-  return (
-    <>
-      <path
-        d="M 88 70 Q 100 62 112 70 L 110 100 Q 100 108 90 100 Z"
-        fill={fillFor("chest")}
-        opacity={opFor("chest")}
-        filter={opFor("chest") > 0.5 ? `url(#${inflamedId})` : undefined}
-        className="cursor-pointer"
-        onClick={() => onTap("chest")}
-      />
-      <path fill={`url(#${striaeId})`} d="M 88 70 Q 100 62 112 70 L 110 100 Q 100 108 90 100 Z" opacity={0.35} pointerEvents="none" />
-      <ellipse cx="78" cy="68" rx="10" ry="8" fill={fillFor("shoulders")} opacity={opFor("shoulders")} onClick={() => onTap("shoulders")} className="cursor-pointer" />
-      <ellipse cx="122" cy="68" rx="10" ry="8" fill={fillFor("shoulders")} opacity={opFor("shoulders")} onClick={() => onTap("shoulders")} className="cursor-pointer" />
-      <path
-        d="M 62 76 L 52 150 L 64 155 L 72 80 Z"
-        fill={fillFor("arms")}
-        opacity={opFor("arms")}
-        onClick={() => onTap("arms")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 138 76 L 148 150 L 136 155 L 128 80 Z"
-        fill={fillFor("arms")}
-        opacity={opFor("arms")}
-        onClick={() => onTap("arms")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 92 108 L 108 108 L 106 150 L 94 150 Z"
-        fill={fillFor("core")}
-        opacity={opFor("core")}
-        onClick={() => onTap("core")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 88 200 L 84 290 L 96 295 L 98 205 Z"
-        fill={fillFor("legs")}
-        opacity={opFor("legs")}
-        onClick={() => onTap("legs")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 112 200 L 116 290 L 104 295 L 102 205 Z"
-        fill={fillFor("legs")}
-        opacity={opFor("legs")}
-        onClick={() => onTap("legs")}
-        className="cursor-pointer"
-      />
-    </>
-  );
-}
-
-function BackPaths({
-  fillFor,
-  opFor,
-  onTap,
-  inflamedId,
-}: {
-  fillFor: (id: MuscleGroupId) => string;
-  opFor: (id: MuscleGroupId) => number;
-  onTap: (id: MuscleGroupId) => void;
-  inflamedId: string;
-}) {
-  return (
-    <>
-      <path
-        d="M 82 64 Q 100 52 118 64 L 116 110 Q 100 118 84 110 Z"
-        fill={fillFor("back")}
-        opacity={opFor("back")}
-        filter={opFor("back") > 0.5 ? `url(#${inflamedId})` : undefined}
-        onClick={() => onTap("back")}
-        className="cursor-pointer"
-      />
-      <ellipse cx="76" cy="62" rx="9" ry="7" fill={fillFor("shoulders")} opacity={opFor("shoulders")} onClick={() => onTap("shoulders")} className="cursor-pointer" />
-      <ellipse cx="124" cy="62" rx="9" ry="7" fill={fillFor("shoulders")} opacity={opFor("shoulders")} onClick={() => onTap("shoulders")} className="cursor-pointer" />
-      <path
-        d="M 60 74 L 48 148 L 60 152 L 70 78 Z"
-        fill={fillFor("arms")}
-        opacity={opFor("arms")}
-        onClick={() => onTap("arms")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 140 74 L 152 148 L 140 152 L 130 78 Z"
-        fill={fillFor("arms")}
-        opacity={opFor("arms")}
-        onClick={() => onTap("arms")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 94 112 L 106 112 L 104 155 L 96 155 Z"
-        fill={fillFor("core")}
-        opacity={opFor("core")}
-        onClick={() => onTap("core")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 86 198 L 82 292 L 94 298 L 98 202 Z"
-        fill={fillFor("legs")}
-        opacity={opFor("legs")}
-        onClick={() => onTap("legs")}
-        className="cursor-pointer"
-      />
-      <path
-        d="M 114 198 L 118 292 L 106 298 L 102 202 Z"
-        fill={fillFor("legs")}
-        opacity={opFor("legs")}
-        onClick={() => onTap("legs")}
-        className="cursor-pointer"
-      />
-    </>
   );
 }
 

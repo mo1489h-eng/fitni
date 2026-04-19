@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Dumbbell, List, BarChart3, User } from "lucide-react";
+import { Dumbbell, List, BarChart3, User, UtensilsCrossed } from "lucide-react";
 import { useMobilePortalToken } from "@/hooks/useMobilePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import MobileTabBar from "../MobileTabBar";
@@ -8,12 +8,14 @@ import ClientMobileHome from "./ClientMobileHome";
 import ClientMobileProgram from "./ClientMobileProgram";
 import ClientMobileProgress from "./ClientMobileProgress";
 import ClientMobileAccount from "./ClientMobileAccount";
+import ClientMobileNutrition from "./ClientMobileNutrition";
 import { MobileTabErrorBoundary } from "../MobileTabErrorBoundary";
 import WorkoutSessionFlow from "../workout/WorkoutSessionFlow";
 
 const tabs = [
   { key: "workout", label: "تمريني", icon: Dumbbell },
   { key: "program", label: "برنامجي", icon: List },
+  { key: "nutrition", label: "التغذية", icon: UtensilsCrossed },
   { key: "progress", label: "تقدمي", icon: BarChart3 },
   { key: "account", label: "حسابي", icon: User },
 ];
@@ -52,6 +54,7 @@ const ClientMobileShell = () => {
           />
         )}
         {activeTab === "program" && <ClientMobileProgram />}
+        {activeTab === "nutrition" && <ClientMobileNutrition />}
         {activeTab === "progress" && <ClientMobileProgress />}
         {activeTab === "account" && (
           <MobileTabErrorBoundary tabLabel="حسابي">

@@ -5,6 +5,7 @@ import TrainerMobileSchedule from "./TrainerMobileSchedule";
 import TrainerMobileClients from "./TrainerMobileClients";
 import TrainerMobileSessionHub from "./TrainerMobileSessionHub";
 import TrainerMobileProfile from "./TrainerMobileProfile";
+import { MobileTabErrorBoundary } from "../MobileTabErrorBoundary";
 
 interface TrainerMobileShellProps {
   onLogout: () => void;
@@ -33,7 +34,11 @@ const TrainerMobileShell = ({ onLogout }: TrainerMobileShellProps) => {
         {activeTab === "today" && <TrainerMobileSchedule />}
         {activeTab === "clients" && <TrainerMobileClients />}
         {activeTab === "session" && <TrainerMobileSessionHub />}
-        {activeTab === "profile" && <TrainerMobileProfile onLogout={onLogout} />}
+        {activeTab === "profile" && (
+          <MobileTabErrorBoundary tabLabel="حسابي">
+            <TrainerMobileProfile onLogout={onLogout} />
+          </MobileTabErrorBoundary>
+        )}
       </div>
 
       <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

@@ -26,6 +26,12 @@ const ACCENT = "#4f6f52";
 
 const WEB_APP_ORIGIN = (import.meta.env.VITE_WEB_APP_ORIGIN as string | undefined)?.replace(/\/$/, "") || "https://coachbase.health";
 
+const PLAN_LABELS: Record<string, string> = {
+  free: "مجاني",
+  basic: "أساسي",
+  pro: "احترافي",
+};
+
 const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -40,6 +46,15 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
   const trainerName = profile?.full_name || "المدرب";
   const email = user?.email ?? "—";
   const roleLabel = "مدرب";
+  const planKey = profile?.subscription_plan?.trim() ?? "";
+  const planLabel = planKey ? PLAN_LABELS[planKey] ?? planKey : "—";
+  const createdAt = profile?.created_at
+    ? new Date(profile.created_at).toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "—";
   const updateMutation = useMutation({
     mutationFn: async (payload: { full_name: string; avatar_url?: string | null }) => {
       if (!user) throw new Error("لا يوجد مستخدم");
@@ -99,6 +114,33 @@ const TrainerMobileProfile = ({ onLogout }: TrainerMobileProfileProps) => {
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
         <Loader2 className="h-9 w-9 animate-spin" style={{ color: ACCENT }} />
         <p className="text-sm text-muted-foreground">جاري تحميل الحساب…</p>
+      </div>
+    );
+  }
+
+  if (!loading && !profile) {
+    return (
+      <div className="space-y-4 px-1" dir="rtl">
+        <p className="text-sm text-muted-foreground">
+          تعذر تحميل بيانات الملف الشخصي. تحقق من الاتصال ثم أعد تسجيل الدخول إن لزم.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={() => void refreshProfile()}
+        >
+          إعادة التحميل
+        </Button>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-medium"
+          style={{ background: "rgba(239,68,68,0.08)", color: "#EF4444" }}
+        >
+          <LogOut className="h-4 w-4" strokeWidth={1.5} />
+          تسجيل الخروج
+        </button>
       </div>
     );
   }

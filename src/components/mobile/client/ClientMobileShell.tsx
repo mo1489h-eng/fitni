@@ -8,6 +8,7 @@ import ClientMobileHome from "./ClientMobileHome";
 import ClientMobileProgram from "./ClientMobileProgram";
 import ClientMobileProgress from "./ClientMobileProgress";
 import ClientMobileAccount from "./ClientMobileAccount";
+import { MobileTabErrorBoundary } from "../MobileTabErrorBoundary";
 import WorkoutSessionFlow from "../workout/WorkoutSessionFlow";
 
 const tabs = [
@@ -52,7 +53,11 @@ const ClientMobileShell = () => {
         )}
         {activeTab === "program" && <ClientMobileProgram />}
         {activeTab === "progress" && <ClientMobileProgress />}
-        {activeTab === "account" && <ClientMobileAccount />}
+        {activeTab === "account" && (
+          <MobileTabErrorBoundary tabLabel="حسابي">
+            <ClientMobileAccount />
+          </MobileTabErrorBoundary>
+        )}
       </div>
 
       <MobileTabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />

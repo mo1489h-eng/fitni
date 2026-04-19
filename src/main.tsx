@@ -1,11 +1,10 @@
 import "./lib/supabaseLegacyCleanup";
 import * as Sentry from "@sentry/react";
+import { Capacitor } from "@capacitor/core";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { CapacitorUpdater } from "@capgo/capacitor-updater";
 import App from "./App.tsx";
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
-
-CapacitorUpdater.notifyAppReady();
 import "./index.css";
 
 Sentry.init({
@@ -27,3 +26,12 @@ createRoot(document.getElementById("root")!).render(
     </Sentry.ErrorBoundary>
   </BrowserRouter>
 );
+
+/** Capgo: mark the current bundle healthy after React root is mounted (avoids auto-rollback). */
+if (Capacitor.isNativePlatform()) {
+  queueMicrotask(() => {
+    void CapacitorUpdater.notifyAppReady().catch((err) => {
+      console.warn("[Capgo] notifyAppReady failed", err);
+    });
+  });
+}

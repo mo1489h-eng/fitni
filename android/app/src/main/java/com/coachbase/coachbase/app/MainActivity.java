@@ -1,4 +1,4 @@
-package com.coachbase.app;
+package com.coachbase.coachbase.app;
 
 import com.getcapacitor.BridgeActivity;
 

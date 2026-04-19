@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.coachbase.coachbase',
+  appId: 'com.coachbase.coachbase.app',
   appName: 'CoachBase',
   webDir: 'dist',
   ios: {
@@ -12,7 +12,10 @@ const config: CapacitorConfig = {
   },
   plugins: {
     CapacitorUpdater: {
-      appId: 'com.coachbase.coachbase.app'
+      autoUpdate: true,
+      statsUrl: 'https://api.capgo.app/stats',
+      channelUrl: 'https://api.capgo.app/channel_self',
+      updateUrl: 'https://api.capgo.app/updates'
     },
     SplashScreen: {
       launchShowDuration: 0,

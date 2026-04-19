@@ -5,25 +5,24 @@ const config: CapacitorConfig = {
   appName: 'CoachBase',
   webDir: 'dist',
   ios: {
-    contentInset: 'always',
+    contentInset: 'always'
   },
   android: {
-    backgroundColor: '#050505',
+    backgroundColor: '#050505'
   },
   plugins: {
     CapacitorUpdater: {
-      appId: 'com.coachbase.coachbase'
+      appId: 'com.coachbase.coachbase.app'
     },
     SplashScreen: {
-      /** Native layer stays up until JS calls SplashScreen.hide() (see `hideNativeSplashAfterPaint`). */
       launchShowDuration: 0,
       launchAutoHide: false,
       launchFadeOutDuration: 280,
       backgroundColor: '#050505',
       showSpinner: false,
       androidSplashResourceName: 'splash',
-      androidScaleType: 'FIT_CENTER',
-    },
+      androidScaleType: 'FIT_CENTER'
+    }
   }
 };
 

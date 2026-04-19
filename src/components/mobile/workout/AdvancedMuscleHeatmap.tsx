@@ -246,7 +246,7 @@ function HeatmapSvg({
   };
 
   return (
-    <svg viewBox="0 0 200 380" className="h-full w-full" role="img" aria-label="خريطة العضلات" style={{ transform: "translateZ(0)" }}>
+    <svg viewBox="0 0 200 400" className="h-full w-full" role="img" aria-label="خريطة العضلات" style={{ transform: "translateZ(0)" }}>
       <defs>
         {MUSCLE_IDS.map((id) => {
           const t = Math.max(0, Math.min(1, fatigueLevels[id] ?? 0));
@@ -288,9 +288,7 @@ function HeatmapSvg({
         </filter>
       </defs>
 
-      <rect width="200" height="380" fill={OLED} />
-
-      <AnatomicalBodyOutline side={side} />
+      <rect width="200" height="400" fill={OLED} />
 
       <g filter={`url(#${bloom})`}>
         {side === "front" ? (
@@ -299,6 +297,8 @@ function HeatmapSvg({
           <AnatomicalBackMuscles paint={paint} onTap={onTap} inflamedId={infl} />
         )}
       </g>
+
+      <AnatomicalBodyOutline side={side} />
     </svg>
   );
 }

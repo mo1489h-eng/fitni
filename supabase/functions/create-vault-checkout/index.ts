@@ -77,7 +77,7 @@ serve(async (req) => {
 
     const { data: unit, error: unitErr } = await supabaseUser
       .from("vault_units")
-      .select("id, trainer_id, price, is_free, audience, title")
+      .select("id, trainer_id, price, is_free, audience, title, audience_client_ids")
       .eq("id", unit_id)
       .maybeSingle();
 
@@ -91,14 +91,29 @@ serve(async (req) => {
     const trainerId = unit.trainer_id as string;
     const audience = String(unit.audience ?? "my_clients");
     const clientTrainerId = clientRow.trainer_id as string;
+    const clientId = clientRow.id as string;
+    const selectedIds = (unit as { audience_client_ids?: string[] | null }).audience_client_ids ?? [];
 
-    const canAccess =
-      trainerId === clientTrainerId ||
-      audience === "platform";
+    const isMyCoachUnit = trainerId === clientTrainerId;
+    const inSelectedList =
+      audience === "selected_clients" && Array.isArray(selectedIds) && selectedIds.includes(clientId);
+    const coachAllows =
+      isMyCoachUnit &&
+      (audience === "my_clients" || audience === "platform" || inSelectedList);
+    const platformOtherTrainer = audience === "platform" && trainerId !== clientTrainerId;
+
+    const canAccess = coachAllows || platformOtherTrainer;
 
     if (!canAccess) {
       return new Response(JSON.stringify({ error: "لا يمكنك شراء هذه الوحدة" }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (audience === "platform" && (unit.is_free === true || Number(unit.price) <= 0)) {
+      return new Response(JSON.stringify({ error: "وحدات المنصة العامة يجب أن تكون مدفوعة" }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

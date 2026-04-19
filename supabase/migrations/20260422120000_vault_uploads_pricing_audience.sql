@@ -21,7 +21,10 @@ ALTER TABLE public.vault_units
 ALTER TABLE public.vault_units DROP CONSTRAINT IF EXISTS vault_units_audience_check;
 ALTER TABLE public.vault_units
   ADD CONSTRAINT vault_units_audience_check
-  CHECK (audience IN ('my_clients', 'platform'));
+  CHECK (audience IN ('my_clients', 'selected_clients', 'platform'));
+
+ALTER TABLE public.vault_units
+  ADD COLUMN IF NOT EXISTS audience_client_ids uuid[] NOT NULL DEFAULT '{}';
 
 -- ── tap settlements: vault_sale ───────────────────────────────────────────
 ALTER TABLE public.tap_wallet_settlements DROP CONSTRAINT IF EXISTS tap_wallet_settlements_kind_check;
@@ -101,52 +104,41 @@ CREATE POLICY "Public read vault content"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'vault-content');
 
--- ── get_portal_vault: pricing, audience, locks, lesson file fields ──────────
+-- ── get_portal_vault: SQL function ($1 = token); no PL variables ──────────
 CREATE OR REPLACE FUNCTION public.get_portal_vault(p_token text)
 RETURNS jsonb
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
-DECLARE
-  v_result jsonb;
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM public.clients c
-    WHERE c.portal_token = p_token
-      AND c.portal_token IS NOT NULL
-      AND (c.portal_token_expires_at IS NULL OR c.portal_token_expires_at > now())
-      AND c.auth_user_id IS NOT NULL
-  ) THEN
-    RETURN '[]'::jsonb;
-  END IF;
-
-  SELECT agg.j INTO v_result
-  FROM (
+  SELECT COALESCE((
     WITH ctx AS (
       SELECT
         c.id AS client_id,
         c.trainer_id AS trainer_id,
         c.auth_user_id AS buyer_id,
-        COALESCE(p.subscription_plan, 'basic') AS plan,
         c.created_at::date AS joined_date
       FROM public.clients c
-      LEFT JOIN public.profiles p ON p.user_id = c.trainer_id
-      WHERE c.portal_token = p_token
+      WHERE c.portal_token = $1
         AND c.portal_token IS NOT NULL
-        AND (c.portal_token_expires_at IS NULL OR c.portal_token_expires_at > now())
+        AND (c.portal_token_expires_at IS NULL
+             OR c.portal_token_expires_at > now())
+        AND c.auth_user_id IS NOT NULL
       LIMIT 1
     ),
     candidates AS (
       SELECT vu.*, 0 AS sort_group
       FROM public.vault_units vu, ctx
       WHERE vu.trainer_id = ctx.trainer_id
-        AND (vu.visibility = 'all'
-          OR (vu.visibility = 'pro' AND ctx.plan = 'pro')
-          OR (vu.visibility = 'basic' AND ctx.plan IN ('basic', 'pro')))
-        AND vu.audience IN ('my_clients', 'platform')
+        AND (
+          vu.audience = 'my_clients'
+          OR (
+            vu.audience = 'selected_clients'
+            AND ctx.client_id = ANY (COALESCE(vu.audience_client_ids, ARRAY[]::uuid[]))
+          )
+          OR vu.audience = 'platform'
+        )
       UNION ALL
       SELECT vu.*, 1 AS sort_group
       FROM public.vault_units vu, ctx
@@ -242,12 +234,10 @@ BEGIN
         ORDER BY f.sort_group, f.unit_order, f.created_at
       ),
       '[]'::jsonb
-    ) AS j
+    )
     FROM final f
-  ) agg;
-
-  RETURN COALESCE(v_result, '[]'::jsonb);
-END;
+    WHERE EXISTS (SELECT 1 FROM ctx)
+  ), '[]'::jsonb);
 $$;
 
 -- ── toggle_portal_vault_progress: block unpaid paid units ───────────────────
@@ -257,8 +247,6 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
-DECLARE
-  v_exists boolean;
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.clients c
@@ -270,15 +258,29 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM public.vault_lessons vl
+    SELECT 1
+    FROM public.vault_lessons vl
     JOIN public.vault_units vu ON vu.id = vl.unit_id
     JOIN public.clients c ON c.portal_token = p_token
       AND c.portal_token IS NOT NULL
       AND (c.portal_token_expires_at IS NULL OR c.portal_token_expires_at > now())
     WHERE vl.id = p_lesson_id
       AND (
-        vu.trainer_id = c.trainer_id
-        OR vu.audience = 'platform'
+        (
+          vu.trainer_id = c.trainer_id
+          AND (
+            vu.audience = 'my_clients'
+            OR (
+              vu.audience = 'selected_clients'
+              AND c.id = ANY (COALESCE(vu.audience_client_ids, ARRAY[]::uuid[]))
+            )
+            OR vu.audience = 'platform'
+          )
+        )
+        OR (
+          vu.audience = 'platform'
+          AND vu.trainer_id <> c.trainer_id
+        )
       )
   ) THEN
     RAISE EXCEPTION 'Lesson not found';
@@ -300,16 +302,14 @@ BEGIN
     RAISE EXCEPTION 'Payment required for this unit';
   END IF;
 
-  SELECT EXISTS(
+  IF EXISTS (
     SELECT 1 FROM public.vault_progress vp
     JOIN public.clients c ON c.id = vp.client_id
       AND c.portal_token = p_token
       AND c.portal_token IS NOT NULL
       AND (c.portal_token_expires_at IS NULL OR c.portal_token_expires_at > now())
     WHERE vp.lesson_id = p_lesson_id
-  ) INTO v_exists;
-
-  IF v_exists THEN
+  ) THEN
     DELETE FROM public.vault_progress vp
     USING public.clients c
     WHERE vp.client_id = c.id

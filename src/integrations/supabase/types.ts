@@ -2520,6 +2520,7 @@ export type Database = {
       vault_units: {
         Row: {
           audience: string
+          audience_client_ids: string[]
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -2536,6 +2537,7 @@ export type Database = {
         }
         Insert: {
           audience?: string
+          audience_client_ids?: string[]
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -2552,6 +2554,7 @@ export type Database = {
         }
         Update: {
           audience?: string
+          audience_client_ids?: string[]
           cover_image_url?: string | null
           created_at?: string
           description?: string | null

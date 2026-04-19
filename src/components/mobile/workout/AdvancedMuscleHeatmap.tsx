@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useWorkoutStore, type MuscleGroupId } from "@/store/workout-store";
 import {
@@ -9,43 +9,18 @@ import {
 } from "@/lib/muscle-fatigue-engine";
 import { ELITE } from "./designTokens";
 import {
-  AnatomicalBackMuscles,
-  AnatomicalBodyOutline,
-  AnatomicalFrontMuscles,
-} from "./anatomicalMuscleMapSvg";
-
-const OLED = "#000000";
-/** Heatmap: inactive muscle vs trained / recovering (volume → intensity). */
-const HEAT_INACTIVE = "#2A2A2A";
-const HEAT_ACCENT = "#4F6F52";
-const HEAT_ACCENT_LIGHT = "#6d9471";
-const HEAT_ACCENT_DEEP = "#355738";
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  const c = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
-  return `#${c(r)}${c(g)}${c(b)}`;
-}
-
-function lerpRgb(a: string, b: string, t: number): string {
-  const u = Math.max(0, Math.min(1, t));
-  const [r1, g1, b1] = hexToRgb(a);
-  const [r2, g2, b2] = hexToRgb(b);
-  return rgbToHex(lerp(r1, r2, u), lerp(g1, g2, u), lerp(b1, b2, u));
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * Math.max(0, Math.min(1, t));
-}
-
-function recoveryRingColor(fatigue01: number): string {
-  const t = Math.max(0, Math.min(1, fatigue01));
-  return lerpRgb(HEAT_ACCENT, HEAT_ACCENT_LIGHT, 1 - t * 0.65);
-}
+  HEAT_ACCENT,
+  HEAT_ACCENT_DEEP,
+  HEAT_ACCENT_LIGHT,
+  HEAT_INACTIVE,
+  lerpRgb,
+  MUSCLE_IDS,
+  OLED,
+  recoveryRingColor,
+  WIKIMEDIA_VB_H,
+  WIKIMEDIA_VB_W,
+} from "./muscleHeatmapTheme";
+import { applyWikimediaMusclePaint, mountWikimediaLayer } from "./WikimediaMuscleMapSvg";
 
 type Props = {
   fatigueLevels: Partial<Record<MuscleGroupId, number>>;
@@ -219,8 +194,6 @@ export function AdvancedMuscleHeatmap({ fatigueLevels, muscleState, className }:
   );
 }
 
-const MUSCLE_IDS: MuscleGroupId[] = ["chest", "back", "shoulders", "arms", "core", "legs"];
-
 function HeatmapSvg({
   side,
   fatigueLevels,
@@ -233,21 +206,35 @@ function HeatmapSvg({
   const rid = useId().replace(/:/g, "");
   const bloom = `heatBloomAdv-${rid}`;
   const infl = `inflamed-${rid}`;
+  const defsRef = useRef<SVGDefsElement>(null);
+  const layerRef = useRef<SVGGElement>(null);
 
-  const paint = (id: MuscleGroupId) => {
-    const t = Math.max(0, Math.min(1, fatigueLevels[id] ?? 0));
-    if (t < 0.03) {
-      return { fill: HEAT_INACTIVE, opacity: 1 as number };
-    }
-    return {
-      fill: `url(#${rid}-muscle-${id})`,
-      opacity: 0.82 + t * 0.18,
-    };
-  };
+  useLayoutEffect(() => {
+    const defs = defsRef.current;
+    const host = layerRef.current;
+    if (!defs || !host) return;
+
+    mountWikimediaLayer(host, defs);
+
+    applyWikimediaMusclePaint(host, {
+      side,
+      fatigueLevels,
+      onTap,
+      rid,
+      inflId: infl,
+    });
+  }, [side, fatigueLevels, onTap, rid, infl]);
 
   return (
-    <svg viewBox="0 0 200 400" className="h-full w-full" role="img" aria-label="خريطة العضلات" style={{ transform: "translateZ(0)" }}>
-      <defs>
+    <svg
+      viewBox={`0 0 ${WIKIMEDIA_VB_W} ${WIKIMEDIA_VB_H}`}
+      className="h-full w-full"
+      role="img"
+      aria-label="خريطة العضلات"
+      style={{ transform: "translateZ(0)" }}
+    >
+      <title>Anatomical muscle diagram — Wikimedia Commons (CC BY-SA 4.0), Muscles front and back.svg</title>
+      <defs ref={defsRef}>
         {MUSCLE_IDS.map((id) => {
           const t = Math.max(0, Math.min(1, fatigueLevels[id] ?? 0));
           if (t < 0.03) return null;
@@ -288,17 +275,11 @@ function HeatmapSvg({
         </filter>
       </defs>
 
-      <rect width="200" height="400" fill={OLED} />
+      <rect width={WIKIMEDIA_VB_W} height={WIKIMEDIA_VB_H} fill={OLED} />
 
       <g filter={`url(#${bloom})`}>
-        {side === "front" ? (
-          <AnatomicalFrontMuscles paint={paint} onTap={onTap} inflamedId={infl} />
-        ) : (
-          <AnatomicalBackMuscles paint={paint} onTap={onTap} inflamedId={infl} />
-        )}
+        <g ref={layerRef} />
       </g>
-
-      <AnatomicalBodyOutline side={side} />
     </svg>
   );
 }

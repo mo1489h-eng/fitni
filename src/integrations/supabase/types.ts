@@ -2382,30 +2382,42 @@ export type Database = {
           content_type: string
           content_url: string | null
           created_at: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           id: string
           lesson_order: number
           title: string
           unit_id: string
+          video_url: string | null
         }
         Insert: {
           content_text?: string | null
           content_type?: string
           content_url?: string | null
           created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           lesson_order?: number
           title: string
           unit_id: string
+          video_url?: string | null
         }
         Update: {
           content_text?: string | null
           content_type?: string
           content_url?: string | null
           created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           lesson_order?: number
           title?: string
           unit_id?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -2453,41 +2465,102 @@ export type Database = {
           },
         ]
       }
+      vault_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          id: string
+          tap_charge_id: string | null
+          trainer_id: string
+          unit_id: string
+        }
+        Insert: {
+          amount?: number
+          buyer_id: string
+          created_at?: string
+          id?: string
+          tap_charge_id?: string | null
+          trainer_id: string
+          unit_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          tap_charge_id?: string | null
+          trainer_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_purchases_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vault_purchases_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "vault_purchases_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "vault_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_units: {
         Row: {
+          audience: string
           cover_image_url: string | null
           created_at: string
           description: string | null
           id: string
+          is_free: boolean
           lock_after_unit_id: string | null
           lock_days: number
           lock_type: string
+          price: number
           title: string
           trainer_id: string
           unit_order: number
           visibility: string
         }
         Insert: {
+          audience?: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           lock_after_unit_id?: string | null
           lock_days?: number
           lock_type?: string
+          price?: number
           title: string
           trainer_id: string
           unit_order?: number
           visibility?: string
         }
         Update: {
+          audience?: string
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_free?: boolean
           lock_after_unit_id?: string | null
           lock_days?: number
           lock_type?: string
+          price?: number
           title?: string
           trainer_id?: string
           unit_order?: number

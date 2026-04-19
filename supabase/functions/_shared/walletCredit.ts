@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { creditPackageTrainerEarningsFromTap } from "./creditPackageTrainerEarnings.ts";
 
-export type WalletKind = "program_sale" | "subscription";
+export type WalletKind = "program_sale" | "subscription" | "vault_sale";
 
 export type CreditWalletResult =
   | { ok: true; idempotent?: boolean }
@@ -15,6 +15,7 @@ function round2(n: number): number {
  * Idempotent trainer wallet credit for a Tap charge.
  * subscription: 10% commission, pending_balance + total_earnings (7-day release).
  * program_sale: 20% commission, immediate balance_available + total_earnings.
+ * vault_sale: 10% commission, immediate balance_available + total_earnings.
  */
 export async function creditTrainerWalletFromTap(
   supabase: SupabaseClient,
@@ -34,9 +35,13 @@ export async function creditTrainerWalletFromTap(
   }
 
   const gross = round2(Number(params.amount));
-  const commissionRate = 0.2;
+  const isVault = params.kind === "vault_sale";
+  const commissionRate = isVault ? 0.1 : 0.2;
   const commission = round2(gross * commissionRate);
   const net = round2(gross - commission);
+  const settlementKind = isVault ? "vault_sale" : "program_sale";
+  const txType = isVault ? "vault_sale" : "program_sale";
+  const description = isVault ? "بيع وحدة مكتبة تعليمية" : "بيع برنامج";
 
   const { data: existingTx } = await supabase
     .from("transactions")
@@ -52,7 +57,7 @@ export async function creditTrainerWalletFromTap(
     tap_charge_id: params.tapChargeId,
     trainer_id: params.trainerId,
     amount: gross,
-    kind: "program_sale",
+    kind: settlementKind,
   });
 
   if (claimErr && (claimErr as { code?: string }).code === "23505") {
@@ -70,14 +75,14 @@ export async function creditTrainerWalletFromTap(
 
   const { error: insErr } = await supabase.from("transactions").insert({
     trainer_id: params.trainerId,
-    type: "program_sale",
+    type: txType,
     amount: net,
     gross_amount: gross,
     commission_amount: commission,
     commission_rate: commissionRate,
     commission,
     net_amount: net,
-    description: "بيع برنامج",
+    description,
     status: "completed",
     reference_id: params.tapChargeId,
   });

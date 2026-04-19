@@ -74,6 +74,7 @@ function saIbanValid(iban: string): boolean {
 const TYPE_META: Record<string, { label: string; className: string }> = {
   subscription: { label: "اشتراك", className: "bg-primary/15 text-primary border-primary/30" },
   program_sale: { label: "بيع برنامج", className: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+  vault_sale: { label: "مكتبة تعليمية", className: "bg-violet-500/15 text-violet-300 border-violet-500/30" },
   withdrawal: { label: "سحب", className: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
   reward: { label: "مكافأة", className: "bg-accent-subtle text-accent border-accent/30" },
   bonus: { label: "مكافأة", className: "bg-accent-subtle text-accent border-accent/30" },

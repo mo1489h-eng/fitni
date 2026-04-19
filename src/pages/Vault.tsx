@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { uploadImage, validateImageFile, compressImage } from "@/lib/image-upload";
 import {
   Plus, BookOpen, Video, FileText, Type, Pencil, Trash2,
   Image as ImageIcon, Save, X, Lock, Clock, Layers, Eye
 } from "lucide-react";
+
+const MIN_VAULT_UNIT_PRICE = 10;
 
 type VaultUnit = {
   id: string;
@@ -28,6 +32,9 @@ type VaultUnit = {
   lock_after_unit_id: string | null;
   created_at: string;
   lessons_count?: number;
+  price?: number | null;
+  is_free?: boolean | null;
+  audience?: string | null;
 };
 
 const visibilityLabels: Record<string, string> = {
@@ -40,6 +47,11 @@ const lockLabels: Record<string, string> = {
   immediate: "متاح فوراً",
   days: "يُفتح بعد أيام",
   unit: "يُفتح بعد إكمال وحدة",
+};
+
+const audienceLabels: Record<string, string> = {
+  my_clients: "متدربيّ فقط",
+  platform: "منصة CoachBase",
 };
 
 const defaultGradients = [
@@ -67,6 +79,9 @@ const Vault = () => {
   const [newLockDays, setNewLockDays] = useState(7);
   const [newLockUnitId, setNewLockUnitId] = useState<string>("");
   const [newCoverUrl, setNewCoverUrl] = useState<string | null>(null);
+  const [newIsFree, setNewIsFree] = useState(true);
+  const [newPrice, setNewPrice] = useState<string>("10");
+  const [newAudience, setNewAudience] = useState<"my_clients" | "platform">("my_clients");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -79,6 +94,9 @@ const Vault = () => {
   const [editLockDays, setEditLockDays] = useState(7);
   const [editLockUnitId, setEditLockUnitId] = useState<string>("");
   const [editCoverUrl, setEditCoverUrl] = useState<string | null>(null);
+  const [editIsFree, setEditIsFree] = useState(true);
+  const [editPrice, setEditPrice] = useState<string>("10");
+  const [editAudience, setEditAudience] = useState<"my_clients" | "platform">("my_clients");
   const editFileRef = useRef<HTMLInputElement>(null);
 
   const fetchUnits = async () => {
@@ -126,6 +144,13 @@ const Vault = () => {
 
   const saveNew = async () => {
     if (!user || !newTitle.trim()) return;
+    if (!newIsFree) {
+      const p = Number(newPrice);
+      if (!Number.isFinite(p) || p < MIN_VAULT_UNIT_PRICE) {
+        toast.error(`الحد الأدنى للسعر ${MIN_VAULT_UNIT_PRICE} ر.س`);
+        return;
+      }
+    }
     await supabase.from("vault_units").insert({
       trainer_id: user.id,
       title: newTitle.trim(),
@@ -136,11 +161,17 @@ const Vault = () => {
       lock_type: newLock,
       lock_days: newLock === "days" ? newLockDays : 0,
       lock_after_unit_id: newLock === "unit" && newLockUnitId ? newLockUnitId : null,
+      is_free: newIsFree,
+      price: newIsFree ? 0 : Math.round(Number(newPrice) * 100) / 100,
+      audience: newAudience,
     });
     toast.success("تم إنشاء الوحدة");
     setCreating(false);
     setNewTitle(""); setNewDesc(""); setNewVis("all"); setNewLock("immediate");
     setNewCoverUrl(null);
+    setNewIsFree(true);
+    setNewPrice("10");
+    setNewAudience("my_clients");
     fetchUnits();
   };
 
@@ -153,10 +184,21 @@ const Vault = () => {
     setEditLockDays(u.lock_days || 7);
     setEditLockUnitId(u.lock_after_unit_id || "");
     setEditCoverUrl(u.cover_image_url);
+    const free = u.is_free !== false && (u.price == null || Number(u.price) <= 0);
+    setEditIsFree(free);
+    setEditPrice(String(u.price && Number(u.price) > 0 ? u.price : MIN_VAULT_UNIT_PRICE));
+    setEditAudience(u.audience === "platform" ? "platform" : "my_clients");
   };
 
   const saveEdit = async () => {
     if (!editId || !editTitle.trim()) return;
+    if (!editIsFree) {
+      const p = Number(editPrice);
+      if (!Number.isFinite(p) || p < MIN_VAULT_UNIT_PRICE) {
+        toast.error(`الحد الأدنى للسعر ${MIN_VAULT_UNIT_PRICE} ر.س`);
+        return;
+      }
+    }
     await supabase.from("vault_units").update({
       title: editTitle.trim(),
       description: editDesc.trim() || null,
@@ -165,6 +207,9 @@ const Vault = () => {
       lock_type: editLock,
       lock_days: editLock === "days" ? editLockDays : 0,
       lock_after_unit_id: editLock === "unit" && editLockUnitId ? editLockUnitId : null,
+      is_free: editIsFree,
+      price: editIsFree ? 0 : Math.round(Number(editPrice) * 100) / 100,
+      audience: editAudience,
     }).eq("id", editId);
     toast.success("تم تحديث الوحدة");
     setEditId(null);
@@ -229,6 +274,52 @@ const Vault = () => {
                 </SelectContent>
               </Select>
             )}
+            <div className="space-y-2 rounded-lg border border-[hsl(0_0%_12%)] p-3">
+              <Label className="text-xs text-[hsl(0_0%_45%)]">السعر والوصول</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editIsFree ? "default" : "outline"}
+                  className="flex-1 text-xs"
+                  onClick={() => setEditIsFree(true)}
+                >
+                  مجاني
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!editIsFree ? "default" : "outline"}
+                  className="flex-1 text-xs"
+                  onClick={() => setEditIsFree(false)}
+                >
+                  مدفوع
+                </Button>
+              </div>
+              {!editIsFree && (
+                <div>
+                  <Label className="text-[10px] text-[hsl(0_0%_40%)]">السعر (ر.س) — أدنى {MIN_VAULT_UNIT_PRICE}</Label>
+                  <Input
+                    type="number"
+                    min={MIN_VAULT_UNIT_PRICE}
+                    step={1}
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="mt-1 h-9 text-xs"
+                  />
+                </div>
+              )}
+              <RadioGroup value={editAudience} onValueChange={(v) => setEditAudience(v as "my_clients" | "platform")} className="gap-2">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="my_clients" id="ea-my" />
+                  <Label htmlFor="ea-my" className="text-xs font-normal cursor-pointer">متدربيّ فقط</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="platform" id="ea-plat" />
+                  <Label htmlFor="ea-plat" className="text-xs font-normal cursor-pointer">كل منصة CoachBase</Label>
+                </div>
+              </RadioGroup>
+            </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={saveEdit} disabled={!editTitle.trim()} className="flex-1 gap-1.5">
                 <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -271,10 +362,20 @@ const Vault = () => {
             </button>
           </div>
           {/* Badges */}
-          <div className="absolute bottom-2 right-3 flex items-center gap-1.5">
+          <div className="absolute bottom-2 right-3 flex flex-wrap items-center gap-1.5 justify-end max-w-[95%]">
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/90 text-white font-medium">
               {visibilityLabels[unit.visibility]}
             </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 text-white/90 font-medium">
+              {audienceLabels[unit.audience === "platform" ? "platform" : "my_clients"]}
+            </span>
+            {unit.is_free !== false && (unit.price == null || Number(unit.price) <= 0) ? (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600/90 text-white font-medium">مجاني</span>
+            ) : (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/90 text-white font-medium tabular-nums">
+                {Number(unit.price)} ر.س
+              </span>
+            )}
             {unit.lock_type !== "immediate" && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/60 backdrop-blur text-white/80 flex items-center gap-1">
                 <Lock className="h-2.5 w-2.5" strokeWidth={1.5} />
@@ -364,6 +465,52 @@ const Vault = () => {
                   </SelectContent>
                 </Select>
               )}
+              <div className="space-y-2 rounded-lg border border-[hsl(0_0%_12%)] p-3">
+                <Label className="text-xs text-[hsl(0_0%_45%)]">السعر والوصول</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={newIsFree ? "default" : "outline"}
+                    className="flex-1 text-xs"
+                    onClick={() => setNewIsFree(true)}
+                  >
+                    مجاني
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={!newIsFree ? "default" : "outline"}
+                    className="flex-1 text-xs"
+                    onClick={() => setNewIsFree(false)}
+                  >
+                    مدفوع
+                  </Button>
+                </div>
+                {!newIsFree && (
+                  <div>
+                    <Label className="text-[10px] text-[hsl(0_0%_40%)]">السعر (ر.س) — أدنى {MIN_VAULT_UNIT_PRICE}</Label>
+                    <Input
+                      type="number"
+                      min={MIN_VAULT_UNIT_PRICE}
+                      step={1}
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      className="mt-1 h-9 text-xs"
+                    />
+                  </div>
+                )}
+                <RadioGroup value={newAudience} onValueChange={(v) => setNewAudience(v as "my_clients" | "platform")} className="gap-2">
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="my_clients" id="na-my" />
+                    <Label htmlFor="na-my" className="text-xs font-normal cursor-pointer">متدربيّ فقط</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="platform" id="na-plat" />
+                    <Label htmlFor="na-plat" className="text-xs font-normal cursor-pointer">كل منصة CoachBase</Label>
+                  </div>
+                </RadioGroup>
+              </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={saveNew} disabled={!newTitle.trim() || uploading} className="flex-1 gap-1.5">
                   <Save className="h-3.5 w-3.5" strokeWidth={1.5} />

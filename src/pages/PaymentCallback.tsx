@@ -106,6 +106,18 @@ const PaymentCallback = () => {
         toast({ title: "تم الدفع وإنشاء حسابك بنجاح 🎉" });
         setTimeout(() => navigate(TRAINEE_HOME), 2000);
 
+      } else if (type === "vault_purchase") {
+        const returnBase = searchParams.get("return_base") || "portal";
+        const { data, error } = await invokeEdgeFunction<{ success?: boolean; error?: string }>(
+          "verify-vault-payment",
+          { payment_id: tapId },
+        );
+        if (error || !data?.success) throw new Error(error?.message ?? (data as { error?: string })?.error ?? "فشل التحقق");
+        setStatus("success");
+        toast({ title: "تم الشراء بنجاح", description: "يمكنك الآن فتح الوحدة من المكتبة." });
+        const dest = returnBase === "trainee" ? "/trainee/vault" : "/portal/vault";
+        setTimeout(() => navigate(dest), 2000);
+
       } else if (type === "client_payment") {
         const clientId = searchParams.get("client_id");
         const amount = searchParams.get("amount");

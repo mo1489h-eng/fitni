@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
-  ArrowRight, ArrowLeft, CheckCircle2, Circle, Video, FileText, Type, BookOpen
+  ArrowRight, ArrowLeft, CheckCircle2, Circle, Video, FileText, Type, BookOpen, Image as ImageIcon,
 } from "lucide-react";
 
 type PortalLesson = {
@@ -17,6 +17,9 @@ type PortalLesson = {
   content_text: string | null;
   lesson_order: number;
   completed: boolean;
+  file_url?: string | null;
+  file_type?: string | null;
+  video_url?: string | null;
 };
 
 type PortalUnit = {
@@ -30,6 +33,7 @@ const contentTypeIcons: Record<string, React.ElementType> = {
   video: Video,
   pdf: FileText,
   article: Type,
+  image: ImageIcon,
 };
 
 const getEmbedUrl = (url: string): string | null => {
@@ -168,20 +172,45 @@ const PortalLessonPlayer = () => {
         <h2 className="text-lg font-bold text-white">{lesson.title}</h2>
 
         {/* Content player */}
-        {lesson.content_type === "video" && lesson.content_url && (
-          <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
-            <iframe
-              src={getEmbedUrl(lesson.content_url) || ""}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+        {lesson.content_type === "video" && (() => {
+          const isUploaded = lesson.file_type === "video";
+          const fileSrc = isUploaded ? (lesson.file_url || lesson.content_url) : null;
+          if (fileSrc) {
+            return (
+              <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
+                <video src={fileSrc} controls className="w-full h-full" playsInline />
+              </div>
+            );
+          }
+          const embedSrc = getEmbedUrl(lesson.video_url || lesson.content_url || "") || "";
+          if (embedSrc) {
+            return (
+              <div className="aspect-video rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black">
+                <iframe
+                  src={embedSrc}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {lesson.content_type === "pdf" && (lesson.file_url || lesson.content_url) && (
+          <div className="rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black" style={{ height: "65vh" }}>
+            <iframe src={lesson.file_url || lesson.content_url || ""} className="w-full h-full" title="PDF" />
           </div>
         )}
 
-        {lesson.content_type === "pdf" && lesson.content_url && (
-          <div className="rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-black" style={{ height: "65vh" }}>
-            <iframe src={lesson.content_url} className="w-full h-full" />
+        {lesson.content_type === "image" && (lesson.file_url || lesson.content_url) && (
+          <div className="rounded-xl overflow-hidden border border-[hsl(0_0%_10%)] bg-[hsl(0_0%_5%)] p-2 flex justify-center">
+            <img
+              src={lesson.file_url || lesson.content_url || ""}
+              alt=""
+              className="max-w-full max-h-[70vh] object-contain rounded-lg"
+            />
           </div>
         )}
 

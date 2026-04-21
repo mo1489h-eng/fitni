@@ -4,8 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell, TrendingUp, Flame, Target, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import MuscleRecoveryMap from "../workout/MuscleRecoveryMap";
-
-const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+import {
+  ALL_DAYS_DONE_MESSAGE_AR,
+  NO_WORKOUT_TODAY_MESSAGE_AR,
+  fetchCompletedTodayDayIds,
+  pickTodayWorkoutDay,
+  type ProgramDayLite,
+} from "@/lib/todayWorkoutSelection";
+import {
+  computeProgramDayPosition,
+  formatArabicShortDate,
+  parseStartDate,
+} from "@/lib/programStartDate";
 
 type HomeProps = {
   onStartWorkout?: () => void;
@@ -33,28 +43,75 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
   });
 
   const { data: programSummary } = useQuery({
-    queryKey: ["mobile-portal-program", token],
+    queryKey: ["mobile-portal-program", token, clientRow?.id],
     queryFn: async () => {
-      if (!token) return null;
+      if (!token || !clientRow?.id) return null;
       const { data, error } = await supabase.rpc("get_portal_program" as never, { p_token: token } as never);
       if (error) return null;
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
-      if (!parsed?.days?.length) return { todayLabel: null as string | null, totalDays: 0 };
-      const todayName = WEEKDAYS[new Date().getDay()];
-      const todayDay = parsed.days.find((d: { day_name: string }) =>
-        (d.day_name || "").includes(todayName)
-      );
-      const ex = todayDay?.exercises?.[0];
-      const todayLabel = todayDay
-        ? `${todayDay.day_name}${ex ? ` — ${ex.name}` : ""}`
-        : "لا يوجد تمرين باسم اليوم في البرنامج";
+      const days: ProgramDayLite[] = Array.isArray(parsed?.days) ? parsed.days : [];
+      const programName = (parsed?.name as string | undefined) ?? undefined;
+      const startDate = parseStartDate(parsed?.start_date);
+      const weeks = typeof parsed?.weeks === "number" ? parsed.weeks : null;
+
+      const numWorkoutDays = days.filter((d) => Array.isArray(d.exercises) && d.exercises.length > 0).length;
+      const position = startDate && numWorkoutDays > 0
+        ? computeProgramDayPosition(startDate, numWorkoutDays)
+        : null;
+      const totalProgramDays = weeks && weeks > 0 ? weeks * 7 : numWorkoutDays;
+      const dayCountLabel = position && !position.notStartedYet
+        ? `اليوم ${position.calendarDay} من ${totalProgramDays || position.calendarDay}`
+        : null;
+      const startDateLabel = startDate ? formatArabicShortDate(startDate) : null;
+
+      if (!days.length) {
+        return {
+          todayLabel: null as string | null,
+          allDone: false,
+          totalDays: 0,
+          programName,
+          dayCountLabel,
+          startDateLabel,
+        };
+      }
+
+      const completedToday = await fetchCompletedTodayDayIds(clientRow.id);
+      const pick = pickTodayWorkoutDay(days, completedToday, startDate);
+
+      if (pick.kind === "all_done") {
+        return {
+          todayLabel: null as string | null,
+          allDone: true,
+          totalDays: days.length,
+          programName,
+          dayCountLabel,
+          startDateLabel,
+        };
+      }
+
+      if (pick.kind === "no_program") {
+        return {
+          todayLabel: null as string | null,
+          allDone: false,
+          totalDays: days.length,
+          programName,
+          dayCountLabel,
+          startDateLabel,
+        };
+      }
+
+      const firstExercise = (pick.day.exercises?.[0] as { name?: string } | undefined) ?? undefined;
+      const todayLabel = `${pick.day.day_name ?? "اليوم"}${firstExercise?.name ? ` — ${firstExercise.name}` : ""}`;
       return {
         todayLabel,
-        totalDays: parsed.days?.length ?? 0,
-        programName: parsed.name as string,
+        allDone: false,
+        totalDays: days.length,
+        programName,
+        dayCountLabel,
+        startDateLabel,
       };
     },
-    enabled: !!token,
+    enabled: !!token && !!clientRow?.id,
   });
 
   const { data: workoutStats } = useQuery({
@@ -195,17 +252,29 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
           <h3 className="text-sm font-bold text-white">تمرين اليوم</h3>
         </div>
         <p className="text-xs leading-relaxed" style={{ color: "#999" }}>
-          {programSummary?.todayLabel || "لا يوجد تمرين مجدول لليوم"}
+          {programSummary?.allDone
+            ? ALL_DAYS_DONE_MESSAGE_AR
+            : programSummary?.todayLabel || NO_WORKOUT_TODAY_MESSAGE_AR}
         </p>
+        {programSummary?.dayCountLabel && (
+          <p className="mt-2 text-[11px] font-medium" style={{ color: "#4f6f52" }}>
+            {programSummary.dayCountLabel}
+          </p>
+        )}
+        {programSummary?.startDateLabel && (
+          <p className="mt-1 text-[11px]" style={{ color: "#666" }}>
+            بدأ البرنامج: {programSummary.startDateLabel}
+          </p>
+        )}
         {programSummary?.programName && (
-          <p className="mt-2 text-[11px]" style={{ color: "#666" }}>
+          <p className="mt-1 text-[11px]" style={{ color: "#666" }}>
             البرنامج: {programSummary.programName}
           </p>
         )}
         {onStartWorkout && (
           <button
             type="button"
-            disabled={!canStartWorkout}
+            disabled={!canStartWorkout || !!programSummary?.allDone}
             onClick={onStartWorkout}
             className="mt-4 w-full rounded-[12px] py-4 text-[16px] font-black text-black transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             style={{
@@ -213,7 +282,7 @@ const ClientMobileHome = ({ onStartWorkout, canStartWorkout }: HomeProps) => {
               boxShadow: "0 8px 28px rgba(79,111,82,0.35)",
             }}
           >
-            ابدأ تمرين اليوم
+            {programSummary?.allDone ? "أحسنت! أكملت تمرين اليوم" : "ابدأ تمرين اليوم"}
           </button>
         )}
       </div>

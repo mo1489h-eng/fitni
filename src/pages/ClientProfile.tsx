@@ -15,11 +15,12 @@ import {
   MessageCircle, CreditCard, ClipboardList,
   Loader2, ArrowLeft, Check, Dumbbell, CalendarDays, Copy, Send,
   TrendingUp, TrendingDown, Scale, ChevronDown, ChevronUp, Video, DollarSign,
-  Sparkles, Eye, Activity, UserCheck, BookOpen, BarChart3,
+  Sparkles, Eye, Activity, UserCheck, BookOpen, BarChart3, ShieldCheck,
 } from "lucide-react";
 import ClientPdfReport from "@/components/ClientPdfReport";
 import TemplatesLibrary from "@/components/templates/TemplatesLibrary";
 import CopilotPanel from "@/components/CopilotPanel";
+import ClientComplianceTab from "@/components/clients/ClientComplianceTab";
 import { startImpersonation } from "@/components/ImpersonationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -28,10 +29,16 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "rec
 import { ClientAnalyticsPanel } from "@/components/analytics/ClientAnalyticsPanel";
 import { parseClientTrainingType, TRAINING_TYPE_LABEL_AR, type ClientTrainingType } from "@/lib/training-type";
 import { getAuthSiteOrigin } from "@/lib/auth-constants";
+import {
+  formatArabicLongDate,
+  parseStartDate,
+  todayISODate,
+} from "@/lib/programStartDate";
 
-type TabKey = "overview" | "analytics" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
+type TabKey = "overview" | "compliance" | "analytics" | "copilot" | "program" | "payments" | "measurements" | "bodyscans";
 const tabs: { key: TabKey; label: string; icon: any }[] = [
   { key: "overview", label: "نظرة عامة", icon: Eye },
+  { key: "compliance", label: "الالتزام", icon: ShieldCheck },
   { key: "analytics", label: "التحليلات", icon: BarChart3 },
   { key: "copilot", label: "المساعد", icon: Sparkles },
   { key: "program", label: "البرنامج", icon: ClipboardList },
@@ -168,6 +175,7 @@ const ClientProfile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [showProgramModal, setShowProgramModal] = useState(false);
+  const [programStartInput, setProgramStartInput] = useState<string>(todayISODate());
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newFat, setNewFat] = useState("");
@@ -251,8 +259,14 @@ const ClientProfile = () => {
   });
 
   const assignProgram = useMutation({
-    mutationFn: async (programId: string) => {
-      const { error } = await supabase.from("clients").update({ program_id: programId }).eq("id", id!);
+    mutationFn: async (args: { programId: string; startDate: string }) => {
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          program_id: args.programId,
+          program_start_date: args.startDate,
+        } as never)
+        .eq("id", id!);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -261,6 +275,21 @@ const ClientProfile = () => {
       setShowProgramModal(false);
       toast({ title: "تم تعيين البرنامج" });
     },
+  });
+
+  const updateStartDate = useMutation({
+    mutationFn: async (startDate: string) => {
+      const { error } = await supabase
+        .from("clients")
+        .update({ program_start_date: startDate } as never)
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client", id] });
+      toast({ title: "تم تحديث تاريخ البدء" });
+    },
+    onError: () => toast({ title: "تعذّر التحديث", variant: "destructive" }),
   });
 
   const updateTrainingType = useMutation({
@@ -572,6 +601,14 @@ const ClientProfile = () => {
 
         {/* Tab Content */}
         <div role="tabpanel" id={`client-panel-${activeTab}`} aria-labelledby={`client-tab-${activeTab}`} className="animate-fade-in">
+          {activeTab === "compliance" && (
+            <ClientComplianceTab
+              clientId={id!}
+              clientName={client.name}
+              clientPhone={client.phone}
+            />
+          )}
+
           {activeTab === "analytics" && <ClientAnalyticsPanel clientId={id!} />}
 
           {activeTab === "overview" && (
@@ -658,7 +695,38 @@ const ClientProfile = () => {
                       <h3 className="font-bold text-foreground">{assignedProgram.name}</h3>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{assignedProgram.weeks} أسابيع</span>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setShowProgramModal(true)}>تغيير البرنامج</Button>
+                    <div className="mb-3 flex flex-col gap-1.5 rounded-lg bg-[hsl(0_0%_4%)] p-3 border border-[hsl(0_0%_10%)]">
+                      <label className="text-[11px] text-muted-foreground">تاريخ بداية البرنامج</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          className="h-9 text-sm bg-[hsl(0_0%_6%)]"
+                          value={
+                            (client as any).program_start_date
+                              ? String((client as any).program_start_date).slice(0, 10)
+                              : todayISODate()
+                          }
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v) updateStartDate.mutate(v);
+                          }}
+                          disabled={updateStartDate.isPending}
+                        />
+                        {(client as any).program_start_date && (
+                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                            {(() => {
+                              const d = parseStartDate((client as any).program_start_date);
+                              return d ? formatArabicLongDate(d) : "";
+                            })()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const current = (client as any).program_start_date;
+                      setProgramStartInput(current ? String(current).slice(0, 10) : todayISODate());
+                      setShowProgramModal(true);
+                    }}>تغيير البرنامج</Button>
                   </Card>
                   {(assignedProgram as any).program_days?.sort((a: any, b: any) => a.day_order - b.day_order).map((day: any) => (
                     <Card key={day.id} className="p-4 bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">
@@ -769,25 +837,42 @@ const ClientProfile = () => {
       <Dialog open={showProgramModal} onOpenChange={setShowProgramModal}>
         <DialogContent className="bg-[hsl(0_0%_6%)] border-[hsl(0_0%_10%)]">
           <DialogHeader><DialogTitle>تعيين برنامج</DialogTitle></DialogHeader>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {programs && programs.length > 0 ? programs.map((p) => (
-              <button key={p.id} onClick={() => assignProgram.mutate(p.id)}
-                className={`w-full text-right p-3 rounded-lg border transition-colors ${
-                  client.program_id === p.id ? "border-primary bg-primary/5" : "border-[hsl(0_0%_10%)] hover:border-primary/50"
-                }`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">{p.name}</span>
-                  {client.program_id === p.id && <Check className="w-4 h-4 text-primary" strokeWidth={1.5} />}
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">تاريخ بداية البرنامج</label>
+              <Input
+                type="date"
+                value={programStartInput}
+                onChange={(e) => setProgramStartInput(e.target.value || todayISODate())}
+                className="bg-[hsl(0_0%_4%)]"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                يحتسب اليوم الحالي في البرنامج بناءً على هذا التاريخ.
+              </p>
+            </div>
+            <div className="space-y-2 max-h-72 overflow-y-auto">
+              {programs && programs.length > 0 ? programs.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => assignProgram.mutate({ programId: p.id, startDate: programStartInput || todayISODate() })}
+                  disabled={assignProgram.isPending}
+                  className={`w-full text-right p-3 rounded-lg border transition-colors disabled:opacity-60 ${
+                    client.program_id === p.id ? "border-primary bg-primary/5" : "border-[hsl(0_0%_10%)] hover:border-primary/50"
+                  }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">{p.name}</span>
+                    {client.program_id === p.id && <Check className="w-4 h-4 text-primary" strokeWidth={1.5} />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{p.weeks} أسابيع</p>
+                </button>
+              )) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <ClipboardList className="w-6 h-6 mx-auto mb-2 opacity-40" strokeWidth={1.5} />
+                  <p className="text-sm">لا توجد برامج متاحة</p>
+                  <Link to="/programs"><Button variant="outline" size="sm" className="mt-2">إنشاء برنامج</Button></Link>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">{p.weeks} أسابيع</p>
-              </button>
-            )) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <ClipboardList className="w-6 h-6 mx-auto mb-2 opacity-40" strokeWidth={1.5} />
-                <p className="text-sm">لا توجد برامج متاحة</p>
-                <Link to="/programs"><Button variant="outline" size="sm" className="mt-2">إنشاء برنامج</Button></Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

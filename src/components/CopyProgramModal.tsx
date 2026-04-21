@@ -8,7 +8,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Search, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Users, Search, Loader2, CheckCircle, AlertTriangle, CalendarDays } from "lucide-react";
+import { formatArabicLongDate, parseStartDate, todayISODate } from "@/lib/programStartDate";
 
 interface Client {
   id: string;
@@ -39,6 +40,7 @@ const CopyProgramModal = ({ open, onOpenChange, program, clients, programs }: Co
   const [loading, setLoading] = useState(false);
   const [skipExisting, setSkipExisting] = useState(false);
   const [resultCount, setResultCount] = useState(0);
+  const [startDate, setStartDate] = useState<string>(todayISODate());
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -87,9 +89,13 @@ const CopyProgramModal = ({ open, onOpenChange, program, clients, programs }: Co
       }
 
       const ids = toAssign.map((c) => c.id);
+      const effectiveStart = startDate || todayISODate();
       const { error } = await supabase
         .from("clients")
-        .update({ program_id: program.id })
+        .update({
+          program_id: program.id,
+          program_start_date: effectiveStart,
+        } as never)
         .in("id", ids);
       if (error) throw error;
 
@@ -111,6 +117,7 @@ const CopyProgramModal = ({ open, onOpenChange, program, clients, programs }: Co
       setSearch("");
       setFilter("all");
       setSkipExisting(false);
+      setStartDate(todayISODate());
     }, 300);
   };
 
@@ -130,6 +137,27 @@ const CopyProgramModal = ({ open, onOpenChange, program, clients, programs }: Co
         {step === "select" && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">برنامج: <span className="font-medium text-foreground">{program.name}</span></p>
+
+            {/* Start date */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="w-3.5 h-3.5" />
+                تاريخ بداية البرنامج
+              </label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value || todayISODate())}
+              />
+              {startDate && (() => {
+                const d = parseStartDate(startDate);
+                return d ? (
+                  <p className="text-[10px] text-muted-foreground">
+                    يبدأ {formatArabicLongDate(d)}
+                  </p>
+                ) : null;
+              })()}
+            </div>
 
             {/* Search */}
             <div className="relative">
@@ -204,10 +232,18 @@ const CopyProgramModal = ({ open, onOpenChange, program, clients, programs }: Co
         {/* STEP 2: Confirm */}
         {step === "confirm" && (
           <div className="space-y-4">
-            <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center">
+            <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-center space-y-1">
               <p className="text-sm font-medium text-foreground">
                 سيتم نسخ برنامج <span className="text-primary font-bold">{program.name}</span> لـ {selectedClients.length} عميل
               </p>
+              {(() => {
+                const d = parseStartDate(startDate);
+                return d ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    يبدأ {formatArabicLongDate(d)}
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             {clientsWithProgram.length > 0 && (

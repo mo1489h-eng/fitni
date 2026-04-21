@@ -2,6 +2,11 @@ import { useMobilePortalToken } from "@/hooks/useMobilePortalToken";
 import { supabase } from "@/integrations/supabase/client";
 import { Dumbbell, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  computeProgramDayPosition,
+  formatArabicShortDate,
+  parseStartDate,
+} from "@/lib/programStartDate";
 
 type Exercise = {
   id: string;
@@ -38,6 +43,7 @@ const ClientMobileProgram = () => {
         name: string;
         weeks: number | null;
         week_number: number | null;
+        start_date: string | null;
         days: Day[];
       };
     },
@@ -75,6 +81,15 @@ const ClientMobileProgram = () => {
   }
 
   const days = [...data.days].sort((a, b) => a.day_order - b.day_order);
+  const workoutDaysCount = days.filter((d) => (d.exercises || []).length > 0).length;
+  const startDate = parseStartDate(data.start_date);
+  const position = startDate && workoutDaysCount > 0
+    ? computeProgramDayPosition(startDate, workoutDaysCount)
+    : null;
+  const totalCalendarDays = data.weeks && data.weeks > 0 ? data.weeks * 7 : workoutDaysCount;
+  const todayDayId = position && !position.notStartedYet
+    ? [...days].filter((d) => (d.exercises || []).length > 0).sort((a, b) => a.day_order - b.day_order)[position.dayIndex]?.id
+    : null;
 
   return (
     <div className="space-y-5">
@@ -90,22 +105,61 @@ const ClientMobileProgram = () => {
           >
             الأسبوع {data.week_number ?? 1} من {data.weeks ?? "—"}
           </span>
+          {position && !position.notStartedYet && (
+            <span
+              className="rounded-lg px-2 py-1 text-[10px] font-medium"
+              style={{ background: "rgba(79,111,82,0.12)", color: "#4f6f52" }}
+            >
+              اليوم {position.calendarDay} من {totalCalendarDays || position.calendarDay}
+            </span>
+          )}
+          {position?.notStartedYet && startDate && (
+            <span
+              className="rounded-lg px-2 py-1 text-[10px] font-medium"
+              style={{ background: "rgba(245,158,11,0.12)", color: "#F59E0B" }}
+            >
+              يبدأ {formatArabicShortDate(startDate)}
+            </span>
+          )}
         </div>
+        {startDate && (
+          <p className="mt-2 text-[11px]" style={{ color: "#666" }}>
+            بدأ البرنامج: {formatArabicShortDate(startDate)}
+          </p>
+        )}
       </div>
 
       <div className="space-y-4">
         {days.map((day) => {
           const exercises = [...(day.exercises || [])].sort((a, b) => a.exercise_order - b.exercise_order);
+          const isToday = todayDayId === day.id;
           return (
-            <div key={day.id} className="overflow-hidden rounded-2xl" style={{ background: "#111111" }}>
+            <div
+              key={day.id}
+              className="overflow-hidden rounded-2xl"
+              style={{
+                background: "#111111",
+                border: isToday ? "1px solid rgba(79,111,82,0.5)" : undefined,
+              }}
+            >
               <div
-                className="border-b px-4 py-3"
+                className="border-b px-4 py-3 flex items-center justify-between"
                 style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(79,111,82,0.06)" }}
               >
-                <p className="text-sm font-bold text-white">{day.day_name}</p>
-                <p className="text-[10px]" style={{ color: "#666" }}>
-                  {exercises.length} تمرين
-                </p>
+                <div>
+                  <p className="text-sm font-bold text-white">{day.day_name}</p>
+                  <p className="text-[10px]" style={{ color: "#666" }}>
+                    {exercises.length} تمرين
+                  </p>
+                </div>
+                {isToday && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    style={{ background: "#4f6f52", color: "#ffffff" }}
+                  >
+                    اليوم
+                  </span>
+                )}
               </div>
               <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                 {exercises.map((ex) => (

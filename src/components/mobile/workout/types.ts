@@ -11,6 +11,8 @@ export type CompletedSetValue = {
   reps: number;
   /** ISO timestamp from `session_logs.updated_at` (fallback `created_at`) for last-write-wins merges */
   syncedAt?: string;
+  /** True when this set beat the client's previous best weight for this exercise. */
+  isPr?: boolean;
 };
 
 export type LastSetInfo = {

@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Search, UserCheck, Users } from "lucide-react";
+import { todayISODate } from "@/lib/programStartDate";
 
 interface AssignTemplateModalProps {
   open: boolean;
@@ -26,6 +27,7 @@ const AssignTemplateModal = ({ open, onOpenChange, template }: AssignTemplateMod
   const [search, setSearch] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [startDate, setStartDate] = useState<string>(todayISODate());
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients", user?.id],
@@ -93,8 +95,14 @@ const AssignTemplateModal = ({ open, onOpenChange, template }: AssignTemplateMod
         }
       }
 
-      // Assign to client
-      await supabase.from("clients").update({ program_id: program.id }).eq("id", selectedClientId);
+      // Assign to client (with coach-picked start date)
+      await supabase
+        .from("clients")
+        .update({
+          program_id: program.id,
+          program_start_date: startDate || todayISODate(),
+        } as never)
+        .eq("id", selectedClientId);
 
       // Increment use_count
       await supabase.from("program_templates").update({
@@ -124,6 +132,14 @@ const AssignTemplateModal = ({ open, onOpenChange, template }: AssignTemplateMod
         </DialogHeader>
 
         <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground">تاريخ بداية البرنامج</label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value || todayISODate())}
+            />
+          </div>
           <div className="relative">
             <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="ابحث عن عميل..." value={search} onChange={e => setSearch(e.target.value)} className="pr-10" />

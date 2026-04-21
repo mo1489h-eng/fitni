@@ -57,7 +57,16 @@ export function mapMuscleToBucket(raw: string | null | undefined): MuscleBucket 
     s.includes("عضد")
   )
     return "arms";
-  if (s.includes("core") || s.includes("abs") || s.includes("وسط") || s.includes("بطن")) return "core";
+  if (
+    s.includes("core") ||
+    s.includes("abs") ||
+    s.includes("waist") ||
+    s.includes("oblique") ||
+    s.includes("serratus") ||
+    s.includes("وسط") ||
+    s.includes("بطن")
+  )
+    return "core";
   return "other";
 }
 

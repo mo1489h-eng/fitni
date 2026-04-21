@@ -20,8 +20,13 @@ import type { CompletedSetValue, WorkoutPhase } from "./types";
 import { STORAGE_KEY, type PersistedWorkoutV1 } from "./types";
 import { useWorkoutStore } from "@/store/workout-store";
 import { resolveExerciseMuscleGroups } from "@/lib/exerciseMuscleMapping";
-
-const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+import {
+  ALL_DAYS_DONE_MESSAGE_AR,
+  fetchCompletedTodayDayIds,
+  pickTodayWorkoutDay,
+  type ProgramDayLite,
+} from "@/lib/todayWorkoutSelection";
+import { parseStartDate } from "@/lib/programStartDate";
 
 function setKey(exerciseId: string, setNum: number): string {
   return `${exerciseId}:${setNum}`;
@@ -42,6 +47,8 @@ function countExercisesFullyDone(plan: PlanExercise[], completed: Record<string,
   return n;
 }
 
+export type RestKind = "between_sets" | "between_exercises";
+
 type Ctx = {
   phase: WorkoutPhase;
   loadError: string | null;
@@ -59,6 +66,7 @@ type Ctx = {
   restTotalSeconds: number;
   restEndsAtMs: number | null;
   restPaused: boolean;
+  restKind: RestKind;
   pauseRest: () => void;
   resumeRest: () => void;
   elapsedMs: number;
@@ -69,10 +77,14 @@ type Ctx = {
   previewOffset: number;
   setPreviewOffset: (n: number) => void;
   completeSet: (weight: number, reps: number, opts?: { extraRestSeconds?: number; rpe?: number }) => Promise<void>;
+  completeSetAt: (exIdx: number, setNum: number, weight: number, reps: number, opts?: { extraRestSeconds?: number; rpe?: number }) => Promise<void>;
+  deleteCompletedSet: (exIdx: number, setNum: number) => Promise<void>;
+  addBonusSet: (exIdx: number) => void;
   skipRest: () => void;
   addRestSeconds: (n: number) => void;
   goNextExercise: () => void;
   goPrevExercise: () => void;
+  jumpToExercise: (exIdx: number) => void;
   awaitingNextExercise: boolean;
   finalizeAndExit: () => Promise<void>;
   finalizeWorkout: () => Promise<void>;
@@ -118,6 +130,7 @@ export function WorkoutSessionProvider({
   const [restTotalSeconds, setRestTotalSeconds] = useState(0);
   const [restEndsAtMs, setRestEndsAtMs] = useState<number | null>(null);
   const [restPaused, setRestPaused] = useState(false);
+  const [restKind, setRestKind] = useState<RestKind>("between_sets");
   const pausedRemainingMsRef = useRef(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -147,20 +160,44 @@ export function WorkoutSessionProvider({
       const { data, error } = await supabase.rpc("get_portal_program", { p_token: portalToken });
       if (error) throw error;
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
-      if (!parsed?.days?.length) {
-        return { plan: [] as PlanExercise[], programDayId: "", programName: "", trainerId: client?.trainer_id ?? null };
+      const days: ProgramDayLite[] = Array.isArray(parsed?.days) ? parsed.days : [];
+      const programName = (parsed?.name as string) || "";
+      const startDate = parseStartDate(parsed?.start_date);
+      const trainerId = client?.trainer_id ?? null;
+
+      if (!days.length) {
+        return {
+          plan: [] as PlanExercise[],
+          programDayId: "",
+          programName,
+          trainerId,
+          allDone: false,
+        };
       }
-      const todayName = WEEKDAYS[new Date().getDay()];
-      const day = parsed.days.find((d: { day_name: string }) => (d.day_name || "").includes(todayName));
-      if (!day?.exercises?.length) {
-        return { plan: [] as PlanExercise[], programDayId: "", programName: "", trainerId: client?.trainer_id ?? null };
+
+      const completedToday = await fetchCompletedTodayDayIds(clientId);
+      const pick = pickTodayWorkoutDay(days, completedToday, startDate);
+
+      if (pick.kind !== "ready") {
+        return {
+          plan: [] as PlanExercise[],
+          programDayId: "",
+          programName,
+          trainerId,
+          allDone: pick.kind === "all_done",
+        };
       }
-      const p = buildWorkoutPlanFromDay({ id: day.id, exercises: day.exercises });
+
+      const p = buildWorkoutPlanFromDay({
+        id: pick.day.id,
+        exercises: pick.day.exercises as Parameters<typeof buildWorkoutPlanFromDay>[0]["exercises"],
+      });
       return {
         plan: p,
-        programDayId: day.id as string,
-        programName: (parsed.name as string) || "",
-        trainerId: client?.trainer_id ?? null,
+        programDayId: pick.day.id,
+        programName,
+        trainerId,
+        allDone: false,
       };
     },
     enabled: !!clientId && !!portalToken,
@@ -174,6 +211,11 @@ export function WorkoutSessionProvider({
 
   useEffect(() => {
     if (!bootstrap) return;
+    if (bootstrap.allDone) {
+      setLoadError(ALL_DAYS_DONE_MESSAGE_AR);
+      setPhase("loading");
+      return;
+    }
     if (!bootstrap.plan.length || !bootstrap.programDayId) {
       setLoadError("لا يوجد تمارين مجدولة ليوم اليوم");
       setPhase("loading");
@@ -328,22 +370,31 @@ export function WorkoutSessionProvider({
     const ex = plan[exerciseIndex];
     const isLastSet = setWithinExercise >= (ex?.sets ?? 0);
     const isLastEx = exerciseIndex >= plan.length - 1;
-    if (!ex) {
+    const kindOnFinish = restKind;
+    // Hold overlay for 1s so users see the green flash + feel the haptic,
+    // then transition to the next set / exercise / completion screen.
+    const t = window.setTimeout(() => {
+      if (!ex) {
+        setPhase("complete");
+        return;
+      }
+      if (kindOnFinish === "between_sets" && !isLastSet) {
+        setSetWithinExercise((s) => s + 1);
+        setPhase("work");
+        return;
+      }
+      if (kindOnFinish === "between_exercises" && !isLastEx) {
+        setExerciseIndex((i) => i + 1);
+        setSetWithinExercise(1);
+        setPreviewOffset(0);
+        setAwaitingNextExercise(false);
+        setPhase("work");
+        return;
+      }
       setPhase("complete");
-      return;
-    }
-    if (!isLastSet) {
-      setPhase("work");
-      setSetWithinExercise((s) => s + 1);
-      return;
-    }
-    if (!isLastEx) {
-      setAwaitingNextExercise(true);
-      setPhase("work");
-      return;
-    }
-    setPhase("complete");
-  }, [phase, restRemaining, plan, exerciseIndex, setWithinExercise, sessionId]);
+    }, 1000);
+    return () => window.clearTimeout(t);
+  }, [phase, restRemaining, plan, exerciseIndex, setWithinExercise, sessionId, restKind]);
 
   const persist = useCallback(() => {
     if (!sessionId || !plan.length) return;
@@ -374,16 +425,21 @@ export function WorkoutSessionProvider({
     persist();
   }, [persist]);
 
-  const scheduleRestPhase = useCallback((baseSeconds: number, opts?: { extraRestSeconds?: number }) => {
-    const extra = useWorkoutStore.getState().consumePendingExtraRest();
-    const total = Math.max(0, baseSeconds + extra + (opts?.extraRestSeconds ?? 0));
-    setRestTotalSeconds(total);
-    setRestRemaining(total);
-    setRestEndsAtMs(Date.now() + total * 1000);
-    setRestPaused(false);
-    pausedRemainingMsRef.current = 0;
-    setPhase("rest");
-  }, []);
+  const scheduleRestPhase = useCallback(
+    (baseSeconds: number, opts?: { extraRestSeconds?: number }, kind: RestKind = "between_sets") => {
+      const extra = useWorkoutStore.getState().consumePendingExtraRest();
+      const total = Math.max(0, baseSeconds + extra + (opts?.extraRestSeconds ?? 0));
+      restHandledRef.current = false;
+      setRestKind(kind);
+      setRestTotalSeconds(total);
+      setRestRemaining(total);
+      setRestEndsAtMs(Date.now() + total * 1000);
+      setRestPaused(false);
+      pausedRemainingMsRef.current = 0;
+      setPhase("rest");
+    },
+    []
+  );
 
   const insertSetMutation = useMutation({
     mutationFn: async (payload: {
@@ -391,7 +447,7 @@ export function WorkoutSessionProvider({
       reps: number;
       exercise: PlanExercise;
       setNum: number;
-    }): Promise<{ syncedAt: string } | null> => {
+    }): Promise<{ syncedAt: string; isPr: boolean } | null> => {
       const { weight, reps, exercise, setNum } = payload;
       const vol = weight * reps;
       if (!sessionId) {
@@ -399,6 +455,22 @@ export function WorkoutSessionProvider({
         setsRef.current += 1;
         return null;
       }
+
+      let isPr = false;
+      if (weight > 0) {
+        const { data: prev } = await supabase
+          .from("workout_logs")
+          .select("actual_weight")
+          .eq("client_id", clientId)
+          .eq("exercise_id", exercise.exerciseId)
+          .not("actual_weight", "is", null)
+          .order("actual_weight", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const prevBest = Number(prev?.actual_weight ?? 0);
+        isPr = weight > prevBest;
+      }
+
       const result = await upsertSessionLog({
         sessionId,
         exerciseId: exercise.exerciseId,
@@ -417,9 +489,10 @@ export function WorkoutSessionProvider({
         actual_reps: reps,
         actual_weight: weight,
         completed: true,
-      };
+        is_pr: isPr,
+      } as const;
       if (result.status === "synced") {
-        const ins = await supabase.from("workout_logs").insert(wl);
+        const ins = await (supabase as any).from("workout_logs").insert(wl);
         if (ins.error) throw ins.error;
       } else {
         void (supabase as any).from("workout_logs").insert(wl).then(() => {}).catch(() => {});
@@ -429,6 +502,7 @@ export function WorkoutSessionProvider({
       setsRef.current += 1;
       return {
         syncedAt: result.status === "synced" ? sessionLogSyncTs(result.row) : new Date().toISOString(),
+        isPr,
       };
     },
   });
@@ -446,7 +520,7 @@ export function WorkoutSessionProvider({
         if (sync?.syncedAt) {
           setCompleted((prev) => ({
             ...prev,
-            [k]: { weight, reps, syncedAt: sync.syncedAt },
+            [k]: { weight, reps, syncedAt: sync.syncedAt, isPr: sync.isPr },
           }));
         }
         const rpe =
@@ -466,32 +540,94 @@ export function WorkoutSessionProvider({
       const isLastSet = setWithinExercise >= ex.sets;
       const isLastEx = exerciseIndex >= plan.length - 1;
 
+      // Defaults tuned for Hevy/Strong-style UX:
+      //   90s between sets of the same exercise
+      //  120s between exercises (longer recovery, change of equipment)
+      const setRest = ex.restSeconds > 0 ? ex.restSeconds : 90;
+      const exerciseRest = 120;
+
       if (!isLastSet) {
-        if (ex.restSeconds > 0) {
-          scheduleRestPhase(ex.restSeconds, opts);
-        } else {
-          setSetWithinExercise((s) => s + 1);
-        }
+        scheduleRestPhase(setRest, opts, "between_sets");
         return;
       }
 
       if (!isLastEx) {
-        if (ex.restSeconds > 0) {
-          scheduleRestPhase(ex.restSeconds, opts);
-        } else {
-          setAwaitingNextExercise(true);
-        }
+        scheduleRestPhase(exerciseRest, opts, "between_exercises");
         return;
       }
 
-      if (ex.restSeconds > 0) {
-        scheduleRestPhase(ex.restSeconds, opts);
-      } else {
-        setPhase("complete");
-      }
+      setPhase("complete");
     },
     [plan, exerciseIndex, setWithinExercise, insertSetMutation, scheduleRestPhase, clientId]
   );
+
+  const completeSetAt = useCallback(
+    async (exIdx: number, setNum: number, weight: number, reps: number, opts?: { extraRestSeconds?: number; rpe?: number }) => {
+      const ex = plan[exIdx];
+      if (!ex) return;
+      const isCurrent = exIdx === exerciseIndex && setNum === setWithinExercise;
+      if (isCurrent) {
+        await completeSet(weight, reps, opts);
+        return;
+      }
+      const k = setKey(ex.exerciseId, setNum);
+      const rollback = { ...completedRef.current };
+      setCompleted((prev) => ({ ...prev, [k]: { weight, reps } }));
+      try {
+        const sync = await insertSetMutation.mutateAsync({ weight, reps, exercise: ex, setNum });
+        if (sync?.syncedAt) {
+          setCompleted((prev) => ({
+            ...prev,
+            [k]: { weight, reps, syncedAt: sync.syncedAt, isPr: sync.isPr },
+          }));
+        }
+      } catch {
+        setCompleted(rollback);
+      }
+    },
+    [plan, exerciseIndex, setWithinExercise, insertSetMutation, completeSet]
+  );
+
+  const deleteCompletedSet = useCallback(
+    async (exIdx: number, setNum: number) => {
+      const ex = plan[exIdx];
+      if (!ex) return;
+      const k = setKey(ex.exerciseId, setNum);
+      const prev = completedRef.current[k];
+      setCompleted((c) => {
+        const next = { ...c };
+        delete next[k];
+        return next;
+      });
+      if (!sessionId || !prev) return;
+      try {
+        await (supabase as any)
+          .from("session_logs")
+          .delete()
+          .match({ session_id: sessionId, exercise_id: ex.exerciseId, set_number: setNum });
+        await (supabase as any)
+          .from("workout_logs")
+          .delete()
+          .match({ client_id: clientId, exercise_id: ex.exerciseId, set_number: setNum })
+          .gte("logged_at", new Date(startedAtRef.current).toISOString());
+      } catch {
+        /* keep local deletion; retry on next edit */
+      }
+    },
+    [plan, sessionId, clientId]
+  );
+
+  const addBonusSet = useCallback((exIdx: number) => {
+    setPlan((p) => p.map((ex, i) => (i === exIdx ? { ...ex, sets: ex.sets + 1 } : ex)));
+  }, []);
+
+  const jumpToExercise = useCallback((exIdx: number) => {
+    if (exIdx < 0) return;
+    setAwaitingNextExercise(false);
+    setExerciseIndex(exIdx);
+    setSetWithinExercise(1);
+    setPreviewOffset(0);
+  }, []);
 
   const skipRest = useCallback(() => {
     setRestRemaining(0);
@@ -569,6 +705,11 @@ export function WorkoutSessionProvider({
     await useWorkoutStore.getState().syncMuscleStatusToSupabase(clientId);
     queryClient.invalidateQueries({ queryKey: ["user-muscle-status", clientId] });
     queryClient.invalidateQueries({ queryKey: ["muscle-recovery", clientId] });
+    queryClient.invalidateQueries({ queryKey: ["muscle-heatmap-recovery", clientId] });
+    queryClient.invalidateQueries({ queryKey: ["mobile-portal-workout-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["mobile-portal-recent-workouts"] });
+    queryClient.invalidateQueries({ queryKey: ["mobile-last-workout"] });
+    queryClient.invalidateQueries({ queryKey: ["mobile-compliance"] });
   }, [sessionId, elapsedMs, clientId, queryClient]);
 
   const finalizeAndExit = useCallback(async () => {
@@ -600,6 +741,7 @@ export function WorkoutSessionProvider({
       restTotalSeconds,
       restEndsAtMs,
       restPaused,
+      restKind,
       pauseRest,
       resumeRest,
       elapsedMs,
@@ -610,10 +752,14 @@ export function WorkoutSessionProvider({
       previewOffset,
       setPreviewOffset,
       completeSet,
+      completeSetAt,
+      deleteCompletedSet,
+      addBonusSet,
       skipRest,
       addRestSeconds,
       goNextExercise,
       goPrevExercise,
+      jumpToExercise,
       awaitingNextExercise,
       finalizeAndExit,
       finalizeWorkout,
@@ -640,6 +786,7 @@ export function WorkoutSessionProvider({
       restTotalSeconds,
       restEndsAtMs,
       restPaused,
+      restKind,
       pauseRest,
       resumeRest,
       elapsedMs,
@@ -648,10 +795,14 @@ export function WorkoutSessionProvider({
       drawerOpen,
       previewOffset,
       completeSet,
+      completeSetAt,
+      deleteCompletedSet,
+      addBonusSet,
       skipRest,
       addRestSeconds,
       goNextExercise,
       goPrevExercise,
+      jumpToExercise,
       awaitingNextExercise,
       finalizeAndExit,
       finalizeWorkout,

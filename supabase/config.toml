@@ -12,6 +12,10 @@ verify_jwt = false
 [functions.ai-copilot]
 verify_jwt = false
 
+# Claude-generated muscle diagram; requires ANTHROPIC_API_KEY secret. Auth verified in function body.
+[functions.generate-muscle-svg]
+verify_jwt = false
+
 [functions.copilot-report]
 verify_jwt = false
 

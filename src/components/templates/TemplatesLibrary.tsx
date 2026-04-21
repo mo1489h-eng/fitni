@@ -4,10 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, BookOpen } from "lucide-react";
 import TemplateCard from "./TemplateCard";
 import TemplatePreviewPanel from "./TemplatePreviewPanel";
 import AssignTemplateModal from "./AssignTemplateModal";
+import { todayISODate } from "@/lib/programStartDate";
 
 const CATEGORIES = ["الكل", "تخسيس", "بناء عضلات", "قوة", "لياقة عامة", "تأهيل", "رياضي"];
 
@@ -26,6 +30,11 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
   const [filter, setFilter] = useState("الكل");
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [assignTemplate, setAssignTemplate] = useState<any>(null);
+  // When `forClientId` is set we prompt the coach for a start date before
+  // firing `handleAssignForClient`.
+  const [pendingClientTemplate, setPendingClientTemplate] = useState<any>(null);
+  const [pendingStartDate, setPendingStartDate] = useState<string>(todayISODate());
+  const [assigningForClient, setAssigningForClient] = useState(false);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["program-templates", user?.id],
@@ -78,7 +87,7 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
     }
   };
 
-  const handleAssignForClient = async (template: any) => {
+  const handleAssignForClient = async (template: any, startDate: string) => {
     if (!forClientId || !user) return;
     try {
       const programData = typeof template.program_data === 'string'
@@ -111,9 +120,16 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
         }
       }
 
-      await supabase.from("clients").update({ program_id: program.id }).eq("id", forClientId);
+      await supabase
+        .from("clients")
+        .update({
+          program_id: program.id,
+          program_start_date: startDate || todayISODate(),
+        } as never)
+        .eq("id", forClientId);
       queryClient.invalidateQueries({ queryKey: ["programs"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client", forClientId] });
       toast({ title: "تم تعيين البرنامج للعميل ✅" });
       onAssigned?.();
     } catch (err: any) {
@@ -176,7 +192,14 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
               template={t}
               isOwn={t.trainer_id === user?.id}
               onPreview={() => setPreviewTemplate(t)}
-              onAssign={() => forClientId ? handleAssignForClient(t) : setAssignTemplate(t)}
+              onAssign={() => {
+                if (forClientId) {
+                  setPendingClientTemplate(t);
+                  setPendingStartDate(todayISODate());
+                } else {
+                  setAssignTemplate(t);
+                }
+              }}
               onDuplicate={() => handleDuplicate(t)}
               onDelete={t.trainer_id === user?.id ? () => handleDelete(t.id) : undefined}
             />
@@ -193,7 +216,8 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
           const t = previewTemplate;
           setPreviewTemplate(null);
           if (forClientId) {
-            handleAssignForClient(t);
+            setPendingClientTemplate(t);
+            setPendingStartDate(todayISODate());
           } else {
             setAssignTemplate(t);
           }
@@ -208,6 +232,59 @@ const TemplatesLibrary = ({ forClientId, onAssigned }: TemplatesLibraryProps) =>
           template={assignTemplate}
         />
       )}
+
+      {/* Start-date prompt for in-client-profile assignment */}
+      <Dialog
+        open={!!pendingClientTemplate}
+        onOpenChange={(o) => { if (!o) setPendingClientTemplate(null); }}
+      >
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>تاريخ بداية البرنامج</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              حدد اليوم الذي يبدأ فيه البرنامج رسمياً للعميل. يحتسب "اليوم X من البرنامج" من هذا التاريخ.
+            </p>
+            <Input
+              type="date"
+              value={pendingStartDate}
+              onChange={(e) => setPendingStartDate(e.target.value || todayISODate())}
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPendingClientTemplate(null)}
+                disabled={assigningForClient}
+              >
+                إلغاء
+              </Button>
+              <Button
+                className="flex-1 gap-1"
+                disabled={assigningForClient}
+                onClick={async () => {
+                  if (!pendingClientTemplate) return;
+                  setAssigningForClient(true);
+                  try {
+                    await handleAssignForClient(
+                      pendingClientTemplate,
+                      pendingStartDate || todayISODate(),
+                    );
+                    setPendingClientTemplate(null);
+                  } finally {
+                    setAssigningForClient(false);
+                  }
+                }}
+              >
+                {assigningForClient
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : "تعيين البرنامج"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -9,6 +9,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  ALL_DAYS_DONE_MESSAGE_AR,
+  fetchCompletedTodayDayIds,
+  pickTodayWorkoutDay,
+  type ProgramDayLite,
+} from "@/lib/todayWorkoutSelection";
+import { parseStartDate } from "@/lib/programStartDate";
 
 const PortalHome = () => {
   const navigate = useNavigate();
@@ -36,19 +43,28 @@ const PortalHome = () => {
   });
 
   const { data: program } = useQuery({
-    queryKey: ["portal-program-summary", token],
+    queryKey: ["portal-program-summary", token, client?.id],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_portal_program", { p_token: token! });
       if (error || !data) return null;
       const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-      const days = parsed.days || [];
-      const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
-      const todayName = WEEKDAYS[new Date().getDay()];
-      const todayDay = days.find((d: any) => d.day_name.includes(todayName));
+      const days: ProgramDayLite[] = Array.isArray(parsed?.days) ? parsed.days : [];
+      const startDate = parseStartDate(parsed?.start_date);
+      const completedToday = client?.id
+        ? await fetchCompletedTodayDayIds(client.id)
+        : new Set<string>();
+      const pick = pickTodayWorkoutDay(days, completedToday, startDate);
+      const todayDay = pick.kind === "ready" ? pick.day : null;
       const exerciseCount = todayDay ? (todayDay.exercises || []).length : 0;
-      return { ...parsed, todayDay, exerciseCount, totalDays: days.length };
+      return {
+        ...parsed,
+        todayDay,
+        exerciseCount,
+        totalDays: days.length,
+        allDaysDone: pick.kind === "all_done",
+      };
     },
-    enabled: !!token,
+    enabled: !!token && !!client?.id,
   });
 
   const { data: workoutStats } = useQuery({
@@ -104,6 +120,7 @@ const PortalHome = () => {
 
   const weekNumber = client.week_number || 1;
   const hasWorkoutToday = !!program?.todayDay;
+  const allDaysDone = !!program?.allDaysDone;
   const totalWorkouts = (workoutStats as any)?.total_workouts || 0;
   const currentStreak = (workoutStats as any)?.current_streak || 0;
   const sessions = Array.isArray(upcomingSessions) ? upcomingSessions : [];
@@ -139,6 +156,12 @@ const PortalHome = () => {
                 <Play className="w-5 h-5" strokeWidth={1.5} />
                 ابدأ التمرين
               </Button>
+            </div>
+          ) : allDaysDone ? (
+            <div className="p-5 text-center">
+              <CheckCircle className="w-8 h-8 text-primary mx-auto mb-2" strokeWidth={1.5} />
+              <h2 className="text-lg font-bold text-white mb-1">{ALL_DAYS_DONE_MESSAGE_AR}</h2>
+              <p className="text-sm text-[hsl(0_0%_40%)]">أحسنت، أكملت جميع أيام البرنامج اليوم.</p>
             </div>
           ) : (
             <div className="p-5 text-center">

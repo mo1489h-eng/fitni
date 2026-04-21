@@ -8,10 +8,6 @@ export const HEAT_ACCENT_DEEP = "#355738";
 
 export const MUSCLE_IDS: MuscleGroupId[] = ["chest", "back", "shoulders", "arms", "core", "legs"];
 
-/** Wikimedia "Muscles front and back.svg" viewBox. */
-export const WIKIMEDIA_VB_W = 406.99026;
-export const WIKIMEDIA_VB_H = 354.43411;
-
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];

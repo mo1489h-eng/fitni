@@ -14,8 +14,13 @@ import {
 import { playRestCompleteBeep, vibrateRestComplete } from "@/lib/workoutFeedback";
 import { hapticSuccess } from "../workout/haptics";
 import { ChevronRight, Check, Timer, X, Trophy, Dumbbell, Radio } from "lucide-react";
-
-const WEEKDAYS = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+import {
+  ALL_DAYS_DONE_MESSAGE_AR,
+  fetchCompletedTodayDayIds,
+  pickTodayWorkoutDay,
+  type ProgramDayLite,
+} from "@/lib/todayWorkoutSelection";
+import { parseStartDate } from "@/lib/programStartDate";
 
 type Phase = "work" | "rest" | "summary";
 
@@ -93,21 +98,29 @@ export default function WorkoutSessionView({
         const { data, error } = await supabase.rpc("get_portal_program", { p_token: portalToken });
         if (error) throw error;
         const parsed = typeof data === "string" ? JSON.parse(data) : data;
-        if (!parsed?.days?.length) {
+        const days: ProgramDayLite[] = Array.isArray(parsed?.days) ? parsed.days : [];
+        const startDate = parseStartDate(parsed?.start_date);
+        if (!days.length) {
           setLoadError("لا يوجد برنامج أو يوم تمرين");
           setLoading(false);
           return;
         }
-        const todayName = WEEKDAYS[new Date().getDay()];
-        const day = parsed.days.find((d: { day_name: string }) =>
-          (d.day_name || "").includes(todayName)
-        );
-        if (!day?.exercises?.length) {
+        const completedToday = await fetchCompletedTodayDayIds(clientId);
+        const pick = pickTodayWorkoutDay(days, completedToday, startDate);
+        if (pick.kind === "all_done") {
+          setLoadError(ALL_DAYS_DONE_MESSAGE_AR);
+          setLoading(false);
+          return;
+        }
+        if (pick.kind !== "ready") {
           setLoadError("لا يوجد تمارين مجدولة ليوم اليوم في البرنامج");
           setLoading(false);
           return;
         }
-        const p = buildWorkoutPlanFromDay({ id: day.id, exercises: day.exercises });
+        const p = buildWorkoutPlanFromDay({
+          id: pick.day.id,
+          exercises: pick.day.exercises as Parameters<typeof buildWorkoutPlanFromDay>[0]["exercises"],
+        });
         if (cancelled) return;
         setPlan(p);
       } catch (e) {
@@ -119,7 +132,7 @@ export default function WorkoutSessionView({
     return () => {
       cancelled = true;
     };
-  }, [portalToken, planProp]);
+  }, [portalToken, planProp, clientId]);
 
   useSessionLogsRealtime(
     sessionId,
